@@ -14,8 +14,9 @@ import {
   InputGroupButton,
   InputGroupInput,
 } from "@/components/ui/input-group";
-import { authClient, signIn, signUp } from "@/lib/auth-client";
+import { signIn, signUp } from "@/lib/auth-client";
 import { Label } from "../ui/label";
+import { Progress } from "../ui/progress";
 import { Spinner } from "../ui/spinner";
 
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -308,16 +309,6 @@ function GoogleSignupButton({
   );
 }
 
-function getMethodDisplayName(lastMethod: string | null): string | null {
-  if (lastMethod === "google") {
-    return "Google";
-  }
-  if (lastMethod === "email") {
-    return "Email";
-  }
-  return null;
-}
-
 function getButtonText(loading: boolean, currentStep: number): React.ReactNode {
   if (loading) {
     return <Spinner />;
@@ -341,9 +332,7 @@ export function SignupCard() {
   const [currentStep, setCurrentStep] = useState(0);
   const inputRef = useRef<HTMLInputElement | null>(null);
 
-  const lastMethod = authClient.getLastUsedLoginMethod();
-  const methodDisplayName = getMethodDisplayName(lastMethod);
-  const showGoogleFirst = lastMethod === "google";
+  const progressValue = ((currentStep + 1) / 4) * 100;
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -713,7 +702,7 @@ export function SignupCard() {
       <div className="flex flex-col items-center justify-center gap-4">
         <Image
           alt="Staxk Logo"
-          className="grayscale contrast-200"
+          className="contrast-200 grayscale"
           height={38}
           src="/logo.svg"
           width={38}
@@ -722,21 +711,6 @@ export function SignupCard() {
       </div>
 
       <div className="flex flex-col gap-2">
-        {showGoogleFirst && (
-          <GoogleSignupButton
-            googleLoading={googleLoading}
-            loading={loading}
-            onClick={handleGoogleSignIn}
-            variant="default"
-          />
-        )}
-
-        {methodDisplayName && (
-          <p className="text-center text-muted-foreground text-sm">
-            You last used {methodDisplayName} to login
-          </p>
-        )}
-
         <form
           aria-busy={loading}
           className="flex flex-col gap-2"
@@ -772,16 +746,17 @@ export function SignupCard() {
               {getButtonText(loading, currentStep)}
             </Button>
           </div>
+          <div className="p-1">
+            <Progress className="mb-4 opacity-60" value={progressValue} />
+          </div>
         </form>
 
-        {!showGoogleFirst && (
-          <GoogleSignupButton
-            googleLoading={googleLoading}
-            loading={loading}
-            onClick={handleGoogleSignIn}
-            variant="outline"
-          />
-        )}
+        <GoogleSignupButton
+          googleLoading={googleLoading}
+          loading={loading}
+          onClick={handleGoogleSignIn}
+          variant="outline"
+        />
       </div>
       <div>
         <p className="text-center text-muted-foreground text-sm">

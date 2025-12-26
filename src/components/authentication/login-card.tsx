@@ -507,7 +507,7 @@ export function LoginCard() {
       <div className="flex flex-col items-center justify-center gap-4">
         <Image
           alt="Staxk Logo"
-          className="grayscale contrast-200"
+          className="contrast-200 grayscale"
           height={38}
           src="/logo.svg"
           width={38}
@@ -525,12 +525,6 @@ export function LoginCard() {
           />
         )}
 
-        {methodDisplayName && (
-          <p className="text-center text-muted-foreground text-sm">
-            You last used {methodDisplayName} to login
-          </p>
-        )}
-
         <form
           aria-busy={loading}
           className={`flex flex-col ${showPasswordField ? "gap-2" : "gap-0.5"}`}
@@ -545,6 +539,7 @@ export function LoginCard() {
             </span>
             <Input
               autoComplete="email"
+              autoFocus
               disabled={loading || googleLoading}
               id="email"
               onChange={(e) => setEmail(e.target.value)}
@@ -584,6 +579,12 @@ export function LoginCard() {
             </Button>
           </div>
         </form>
+
+        {methodDisplayName && (
+          <p className="pb-4 text-center font-medium text-muted-foreground text-sm">
+            You last used {methodDisplayName} to login
+          </p>
+        )}
 
         {!showGoogleFirst && (
           <GoogleButton
