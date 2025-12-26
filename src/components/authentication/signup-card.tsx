@@ -1,5 +1,6 @@
 "use client";
 
+import { Eye, EyeOff } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
@@ -13,14 +14,21 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import {
+  InputGroup,
+  InputGroupButton,
+  InputGroupInput,
+} from "@/components/ui/input-group";
 import { Label } from "@/components/ui/label";
 import { signIn, signUp } from "@/lib/auth-client";
+import { Spinner } from "../ui/spinner";
 
 export function SignupCard() {
   const router = useRouter();
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
@@ -45,6 +53,13 @@ export function SignupCard() {
     router.refresh();
   };
 
+  const handleGoogleSignIn = async () => {
+    setError("");
+    setLoading(true);
+    // Google OAuth will automatically create account if user doesn't exist
+    await signIn.social({ provider: "google" });
+  };
+
   return (
     <Card className="w-full max-w-sm">
       <CardHeader className="text-center">
@@ -55,7 +70,8 @@ export function SignupCard() {
         <div className="space-y-4">
           <Button
             className="w-full"
-            onClick={() => signIn.social({ provider: "google" })}
+            disabled={loading}
+            onClick={handleGoogleSignIn}
             type="button"
             variant="outline"
           >
@@ -83,6 +99,8 @@ export function SignupCard() {
             <div className="space-y-2">
               <Label htmlFor="name">Name</Label>
               <Input
+                autoComplete="name"
+                disabled={loading}
                 id="name"
                 onChange={(e) => setName(e.target.value)}
                 placeholder="John Doe"
@@ -95,6 +113,8 @@ export function SignupCard() {
             <div className="space-y-2">
               <Label htmlFor="email">Email</Label>
               <Input
+                autoComplete="email"
+                disabled={loading}
                 id="email"
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="you@example.com"
@@ -106,19 +126,36 @@ export function SignupCard() {
 
             <div className="space-y-2">
               <Label htmlFor="password">Password</Label>
-              <Input
-                id="password"
-                minLength={8}
-                onChange={(e) => setPassword(e.target.value)}
-                placeholder="••••••••"
-                required
-                type="password"
-                value={password}
-              />
+              <InputGroup>
+                <InputGroupInput
+                  autoComplete="new-password"
+                  disabled={loading}
+                  id="password"
+                  minLength={8}
+                  onChange={(e) => setPassword(e.target.value)}
+                  placeholder="••••••••"
+                  required
+                  type={showPassword ? "text" : "password"}
+                  value={password}
+                />
+                <InputGroupButton
+                  aria-label={showPassword ? "Hide password" : "Show password"}
+                  className="h-9.5 w-9 rounded-sm"
+                  onClick={() => setShowPassword(!showPassword)}
+                  type="button"
+                  variant="ghost"
+                >
+                  {showPassword ? (
+                    <EyeOff className="size-4" />
+                  ) : (
+                    <Eye className="size-4" />
+                  )}
+                </InputGroupButton>
+              </InputGroup>
             </div>
 
             <Button className="w-full" disabled={loading} type="submit">
-              {loading ? "Creating account..." : "Create account"}
+              {loading ? <Spinner /> : "Create account"}
             </Button>
           </form>
         </div>

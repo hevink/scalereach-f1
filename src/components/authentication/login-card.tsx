@@ -1,5 +1,6 @@
 "use client";
 
+import { Eye, EyeOff } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
@@ -12,14 +13,23 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
+import {
+  InputGroup,
+  InputGroupButton,
+  InputGroupInput,
+} from "@/components/ui/input-group";
 import { Label } from "@/components/ui/label";
 import { signIn } from "@/lib/auth-client";
+import { Spinner } from "../ui/spinner";
 
 export function LoginCard() {
   const router = useRouter();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
+  const [rememberMe, setRememberMe] = useState(false);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
@@ -43,6 +53,12 @@ export function LoginCard() {
     router.refresh();
   };
 
+  const handleGoogleSignIn = async () => {
+    setError("");
+    setLoading(true);
+    await signIn.social({ provider: "google" });
+  };
+
   return (
     <Card className="w-full max-w-sm">
       <CardHeader className="text-center">
@@ -53,7 +69,8 @@ export function LoginCard() {
         <div className="space-y-4">
           <Button
             className="w-full"
-            onClick={() => signIn.social({ provider: "google" })}
+            disabled={loading}
+            onClick={handleGoogleSignIn}
             type="button"
             variant="outline"
           >
@@ -81,6 +98,8 @@ export function LoginCard() {
             <div className="space-y-2">
               <Label htmlFor="email">Email</Label>
               <Input
+                autoComplete="email"
+                disabled={loading}
                 id="email"
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="you@example.com"
@@ -92,18 +111,46 @@ export function LoginCard() {
 
             <div className="space-y-2">
               <Label htmlFor="password">Password</Label>
-              <Input
-                id="password"
-                onChange={(e) => setPassword(e.target.value)}
-                placeholder="••••••••"
-                required
-                type="password"
-                value={password}
-              />
+              <InputGroup>
+                <InputGroupInput
+                  autoComplete="current-password"
+                  className="h-11"
+                  disabled={loading}
+                  id="password"
+                  onChange={(e) => setPassword(e.target.value)}
+                  placeholder="••••••••"
+                  required
+                  type={showPassword ? "text" : "password"}
+                  value={password}
+                />
+                <InputGroupButton
+                  aria-label={showPassword ? "Hide password" : "Show password"}
+                  className="h-9.5 w-9 rounded-sm"
+                  onClick={() => setShowPassword(!showPassword)}
+                  type="button"
+                  variant="ghost"
+                >
+                  {showPassword ? (
+                    <EyeOff className="size-4" />
+                  ) : (
+                    <Eye className="size-4" />
+                  )}
+                </InputGroupButton>
+              </InputGroup>
             </div>
 
+            <Label className="cursor-pointer" htmlFor="remember-me">
+              <Checkbox
+                checked={rememberMe}
+                disabled={loading}
+                id="remember-me"
+                onCheckedChange={(checked) => setRememberMe(checked === true)}
+              />
+              Remember me
+            </Label>
+
             <Button className="w-full" disabled={loading} type="submit">
-              {loading ? "Signing in..." : "Sign in"}
+              {loading ? <Spinner /> : "Sign in"}
             </Button>
           </form>
         </div>
