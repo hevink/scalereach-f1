@@ -1,6 +1,6 @@
 import { headers } from "next/headers";
 import { notFound, redirect } from "next/navigation";
-import { PreferencesSettings } from "@/components/settings/user-settings/preferences-settings";
+import { PreferencesSettings } from "@/components/settings/user-settings/preferences-settings/preferences-settings";
 import { SettingsSidebar } from "@/components/settings/user-settings/settings-sidebar";
 import { auth } from "@/lib/auth";
 
