@@ -13,7 +13,6 @@ import { usePathname } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { useSession } from "@/lib/auth-client";
 
-// Navigation Link Component
 interface NavLinkProps {
   href: string;
   icon: LucideIcon;
@@ -36,7 +35,6 @@ function NavLink({ href, icon: Icon, children, isActive }: NavLinkProps) {
   );
 }
 
-// Navigation Menu Component
 interface NavMenuProps {
   items: Array<{
     href: string;
@@ -63,7 +61,6 @@ function NavMenu({ items }: NavMenuProps) {
   );
 }
 
-// Settings Sidebar Component
 export function SettingsSidebar() {
   const { data: session, isPending } = useSession();
   const pathname = usePathname();
@@ -71,7 +68,6 @@ export function SettingsSidebar() {
   const user = session?.user;
   const basePath = user?.id ? `/${user.id}/settings` : "";
 
-  // Check if profile should be active (default page)
   const isProfileActive =
     pathname === `${basePath}/profile` || pathname === `${basePath}`;
 

@@ -588,8 +588,6 @@ export function SignupCard() {
         return;
       }
 
-      // Generate username for new Google OAuth users (first-time signup)
-      // This runs after successful Google sign-in, which creates an account on first login
       try {
         const usernameResponse = await fetch("/api/user/generate-username", {
           method: "POST",
@@ -597,14 +595,12 @@ export function SignupCard() {
 
         if (!usernameResponse.ok) {
           console.error("Failed to generate username for Google OAuth user");
-          // Don't block the sign-in flow if username generation fails
         }
       } catch (usernameError) {
         console.error(
           "Error generating username for Google OAuth user:",
           usernameError
         );
-        // Don't block the sign-in flow if username generation fails
       }
     } catch (err) {
       toast.error(
