@@ -512,6 +512,36 @@ export function SignupCard() {
     }
   };
 
+  const generateUsernameForUser = async () => {
+    try {
+      const usernameResponse = await fetch("/api/user/generate-username", {
+        method: "POST",
+      });
+
+      if (!usernameResponse.ok) {
+        console.error("Failed to generate username, but signup was successful");
+      }
+    } catch (usernameError) {
+      console.error("Error generating username:", usernameError);
+    }
+  };
+
+  const performEmailSignup = async () => {
+    const { error } = await signUp.email({
+      name,
+      email,
+      password,
+    });
+
+    if (error) {
+      toast.error(error.message || "Something went wrong. Please try again.");
+      setLoading(false);
+      return false;
+    }
+
+    return true;
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
@@ -527,17 +557,13 @@ export function SignupCard() {
     setLoading(true);
 
     try {
-      const { error } = await signUp.email({
-        name,
-        email,
-        password,
-      });
-
-      if (error) {
-        toast.error(error.message || "Something went wrong. Please try again.");
-        setLoading(false);
+      const success = await performEmailSignup();
+      if (!success) {
         return;
       }
+
+      await generateUsernameForUser();
+
       router.push("/");
       router.refresh();
     } catch (err) {
@@ -559,6 +585,26 @@ export function SignupCard() {
           error.message || "Failed to sign in with Google. Please try again."
         );
         setGoogleLoading(false);
+        return;
+      }
+
+      // Generate username for new Google OAuth users (first-time signup)
+      // This runs after successful Google sign-in, which creates an account on first login
+      try {
+        const usernameResponse = await fetch("/api/user/generate-username", {
+          method: "POST",
+        });
+
+        if (!usernameResponse.ok) {
+          console.error("Failed to generate username for Google OAuth user");
+          // Don't block the sign-in flow if username generation fails
+        }
+      } catch (usernameError) {
+        console.error(
+          "Error generating username for Google OAuth user:",
+          usernameError
+        );
+        // Don't block the sign-in flow if username generation fails
       }
     } catch (err) {
       toast.error(
