@@ -1,4 +1,4 @@
-import { SecuritySettings } from "@/components/settings/user-settings/security-settings";
+import { SecuritySettings } from "@/components/settings/user-settings/security-settings/security-settings";
 import { SettingsSidebar } from "@/components/settings/user-settings/settings-sidebar";
 import { requireSessionForUser } from "@/lib/auth-utils";
 
