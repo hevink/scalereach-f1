@@ -21,10 +21,6 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { useSession } from "@/lib/auth-client";
 
-// ============================================================================
-// UTILITY FUNCTIONS
-// ============================================================================
-
 function getDicebearUrl(seed: string): string {
   return `https://api.dicebear.com/9.x/glass/svg?seed=${encodeURIComponent(seed)}`;
 }
@@ -42,10 +38,6 @@ function getUsername(email?: string | null, name?: string | null): string {
   }
   return "user";
 }
-
-// ============================================================================
-// AVATAR COMPONENTS
-// ============================================================================
 
 interface AnimatedAvatarProps {
   alt?: string;
@@ -96,10 +88,6 @@ function UserAvatar({
     </Avatar>
   );
 }
-
-// ============================================================================
-// NAVIGATION COMPONENTS
-// ============================================================================
 
 interface NavLinkProps {
   children: React.ReactNode;
@@ -158,10 +146,6 @@ function NavMenu({ items, pathname }: NavMenuProps) {
     </ul>
   );
 }
-
-// ============================================================================
-// COLLAPSIBLE COMPONENTS
-// ============================================================================
 
 interface CollapsibleContentProps {
   children: React.ReactNode;
@@ -252,10 +236,6 @@ function ProjectItem({
   );
 }
 
-// ============================================================================
-// USER PROFILE COMPONENTS
-// ============================================================================
-
 interface LoadingUserProfileProps {
   fallbackUrl: string;
 }
@@ -317,10 +297,6 @@ function UserProfile({
     </>
   );
 }
-
-// ============================================================================
-// SIDEBAR SECTIONS
-// ============================================================================
 
 interface SidebarContentProps {
   pathname: string;
@@ -453,10 +429,6 @@ function SidebarFooter({
     </div>
   );
 }
-
-// ============================================================================
-// MAIN COMPONENT
-// ============================================================================
 
 export function DashboardSidebar() {
   const { data: session, isPending } = useSession();

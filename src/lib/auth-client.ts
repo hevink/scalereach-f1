@@ -13,8 +13,6 @@ export const authClient = createAuthClient({
       const { response } = context;
       if (response.status === 429) {
         const retryAfter = response.headers.get("X-Retry-After");
-        console.log(`Rate limit exceeded. Retry after ${retryAfter} seconds`);
-        // You can add toast notification or other error handling here
         toast.error(`Rate limit exceeded. Retry after ${retryAfter} seconds`);
       }
     },

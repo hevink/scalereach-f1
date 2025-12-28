@@ -55,8 +55,7 @@ export async function PATCH(request: Request) {
       .set({ username: normalizedUsername })
       .where(eq(user.id, session.user.id));
 
-    // @ts-expect-error - username might not be in session type yet
-    const oldUsername = session.user.username;
+    const oldUsername = (session.user as { username?: string })?.username;
     if (oldUsername) {
       usernameCache.invalidate(oldUsername);
     }

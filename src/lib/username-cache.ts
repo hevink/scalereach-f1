@@ -11,13 +11,13 @@ interface CacheEntry {
 class UsernameCache {
   private readonly cache: Map<string, CacheEntry>;
   private readonly TTL: number;
+  private cleanupInterval: NodeJS.Timeout | null = null;
 
   constructor(ttl: number = 5 * 60 * 1000) {
     this.cache = new Map();
     this.TTL = ttl;
 
-    // Clean up expired entries every minute
-    setInterval(() => this.cleanup(), 60 * 1000);
+    this.cleanupInterval = setInterval(() => this.cleanup(), 60 * 1000);
   }
 
   /**
@@ -87,6 +87,17 @@ class UsernameCache {
    * Clear all cache entries
    */
   clear(): void {
+    this.cache.clear();
+  }
+
+  /**
+   * Destroy the cache instance and clean up intervals
+   */
+  destroy(): void {
+    if (this.cleanupInterval) {
+      clearInterval(this.cleanupInterval);
+      this.cleanupInterval = null;
+    }
     this.cache.clear();
   }
 }

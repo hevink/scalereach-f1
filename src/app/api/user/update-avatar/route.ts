@@ -7,6 +7,14 @@ import { auth } from "@/lib/auth";
 
 const MAX_BASE64_SIZE = 700_000;
 
+const ALLOWED_MIME_TYPES = [
+  "data:image/jpeg",
+  "data:image/jpg",
+  "data:image/png",
+  "data:image/gif",
+  "data:image/webp",
+];
+
 export async function PATCH(request: Request) {
   try {
     const session = await auth.api.getSession({
@@ -35,9 +43,9 @@ export async function PATCH(request: Request) {
       return NextResponse.json({ error: "Image is required" }, { status: 400 });
     }
 
-    if (!image.startsWith("data:image/")) {
+    if (!ALLOWED_MIME_TYPES.some((type) => image.startsWith(type))) {
       return NextResponse.json(
-        { error: "Invalid image format. Must be a valid image file." },
+        { error: "Invalid image format. Allowed: JPEG, PNG, GIF, WebP." },
         { status: 400 }
       );
     }

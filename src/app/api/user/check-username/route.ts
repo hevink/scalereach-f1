@@ -40,11 +40,11 @@ export async function POST(request: Request) {
 
     if (cachedResult !== null) {
       return NextResponse.json(
-        { available: cachedResult, username, source: "cache" },
+        { available: cachedResult, username },
         {
           status: 200,
           headers: {
-            "Cache-Control": "public, max-age=300",
+            "Cache-Control": "private, max-age=300",
             "X-Cache": "HIT",
           },
         }
@@ -63,11 +63,11 @@ export async function POST(request: Request) {
     usernameCache.set(normalizedUsername, available);
 
     return NextResponse.json(
-      { available, username, source: "database" },
+      { available, username },
       {
         status: 200,
         headers: {
-          "Cache-Control": "public, max-age=300",
+          "Cache-Control": "private, max-age=300",
           "X-Cache": "MISS",
         },
       }

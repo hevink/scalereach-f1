@@ -5,6 +5,8 @@ import { db } from "@/db";
 import { user } from "@/db/schema";
 import { auth } from "@/lib/auth";
 
+const MAX_NAME_LENGTH = 100;
+
 export async function PATCH(request: Request) {
   try {
     const session = await auth.api.getSession({
@@ -21,6 +23,13 @@ export async function PATCH(request: Request) {
     if (!name || typeof name !== "string" || name.trim().length === 0) {
       return NextResponse.json(
         { error: "Name is required and cannot be empty" },
+        { status: 400 }
+      );
+    }
+
+    if (name.trim().length > MAX_NAME_LENGTH) {
+      return NextResponse.json(
+        { error: `Name must be ${MAX_NAME_LENGTH} characters or less` },
         { status: 400 }
       );
     }
