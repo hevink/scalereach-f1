@@ -102,7 +102,9 @@ async function uploadAvatar(
   if (refetch && typeof refetch === "function") {
     try {
       await refetch();
-    } catch {}
+    } catch {
+      // Silently ignore refetch errors - avatar update already succeeded
+    }
   }
 
   onUploadComplete?.();

@@ -34,7 +34,7 @@ export async function GET() {
     const currentSessionToken = currentSession.session?.token;
     const sessionsWithCurrent = activeSessions.map((s) => ({
       id: s.id,
-      tokenPrefix: s.token.substring(0, 8) + "...",
+      tokenPrefix: `${s.token.substring(0, 8)}...`,
       createdAt: s.createdAt,
       updatedAt: s.updatedAt,
       expiresAt: s.expiresAt,

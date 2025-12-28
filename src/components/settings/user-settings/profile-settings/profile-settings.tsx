@@ -346,7 +346,9 @@ export function ProfileSettings() {
     if (refetch && typeof refetch === "function") {
       try {
         await refetch();
-      } catch {}
+      } catch {
+        // Silently ignore refetch errors - profile update already succeeded
+      }
     }
   }, [refetch]);
 
