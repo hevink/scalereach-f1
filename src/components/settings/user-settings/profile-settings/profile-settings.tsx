@@ -15,7 +15,6 @@ import { Spinner } from "@/components/ui/spinner";
 import {
   Tooltip,
   TooltipContent,
-  TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { useSession } from "@/lib/auth-client";
@@ -74,53 +73,57 @@ function UsernameSection({
               />
             </div>
             <div className="flex items-center justify-end gap-1">
-              <TooltipProvider>
-                <Tooltip>
-                  <TooltipTrigger>
-                    <Button
-                      aria-label="Cancel editing username"
-                      disabled={isSavingUsername}
-                      onClick={onCancel}
-                      size="icon"
-                      type="button"
-                      variant="ghost"
-                    >
-                      <X className="size-4" />
-                    </Button>
-                  </TooltipTrigger>
-                  <TooltipContent align="center" side="top" sideOffset={6}>
-                    Cancel
-                  </TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
-              <TooltipProvider>
-                <Tooltip>
-                  <TooltipTrigger>
-                    <Button
-                      aria-label="Save username"
-                      className="h-9"
-                      disabled={
-                        isSavingUsername ||
-                        usernameAvailability.available === false ||
-                        usernameAvailability.checking ||
-                        usernameEditValue.trim().toLowerCase() ===
-                          username.toLowerCase()
-                      }
-                      onClick={onSave}
-                      type="button"
-                    >
-                      {isSavingUsername ? (
-                        <Spinner className="size-4" />
-                      ) : (
-                        "Save"
-                      )}
-                    </Button>
-                  </TooltipTrigger>
-                  <TooltipContent align="center" side="top" sideOffset={6}>
-                    Save username
-                  </TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger
+                  render={(props) => (
+                    <div {...props}>
+                      <Button
+                        aria-label="Cancel editing username"
+                        disabled={isSavingUsername}
+                        onClick={onCancel}
+                        size="icon"
+                        type="button"
+                        variant="ghost"
+                      >
+                        <X className="size-4" />
+                      </Button>
+                    </div>
+                  )}
+                />
+                <TooltipContent align="center" side="top" sideOffset={6}>
+                  Cancel
+                </TooltipContent>
+              </Tooltip>
+              <Tooltip>
+                <TooltipTrigger
+                  render={(props) => (
+                    <div {...props}>
+                      <Button
+                        aria-label="Save username"
+                        className="h-9"
+                        disabled={
+                          isSavingUsername ||
+                          usernameAvailability.available === false ||
+                          usernameAvailability.checking ||
+                          usernameEditValue.trim().toLowerCase() ===
+                            username.toLowerCase()
+                        }
+                        onClick={onSave}
+                        type="button"
+                      >
+                        {isSavingUsername ? (
+                          <Spinner className="size-4" />
+                        ) : (
+                          "Save"
+                        )}
+                      </Button>
+                    </div>
+                  )}
+                />
+                <TooltipContent align="center" side="top" sideOffset={6}>
+                  Save username
+                </TooltipContent>
+              </Tooltip>
             </div>
           </>
         ) : (
@@ -134,24 +137,26 @@ function UsernameSection({
                 value={username}
               />
             </div>
-            <TooltipProvider>
-              <Tooltip>
-                <TooltipTrigger>
-                  <Button
-                    className="flex size-9 items-center gap-2"
-                    onClick={onEdit}
-                    size="icon"
-                    type="button"
-                    variant="outline"
-                  >
-                    <Pencil className="size-4" />
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent align="center" side="top" sideOffset={6}>
-                  Edit username
-                </TooltipContent>
-              </Tooltip>
-            </TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger
+                render={(props) => (
+                  <div {...props}>
+                    <Button
+                      className="flex size-9 items-center gap-2"
+                      onClick={onEdit}
+                      size="icon"
+                      type="button"
+                      variant="outline"
+                    >
+                      <Pencil className="size-4" />
+                    </Button>
+                  </div>
+                )}
+              />
+              <TooltipContent align="center" side="top" sideOffset={6}>
+                Edit username
+              </TooltipContent>
+            </Tooltip>
           </div>
         )}
       </div>
@@ -168,8 +173,15 @@ function ProfileSettingsLoading() {
       <Card className="p-6 sm:p-6">
         <CardContent className="flex flex-col gap-6">
           <div className="flex items-start justify-between">
-            <Label className="font-medium text-sm">Profile picture</Label>
-            <div className="size-9 animate-pulse rounded-full bg-muted" />
+            <div className="flex flex-col gap-1">
+              <Label className="font-medium text-sm" htmlFor="avatar-upload">
+                Profile picture
+              </Label>
+              <p className="text-muted-foreground text-xs">
+                Maximum upload size is 5MB
+              </p>
+            </div>
+            <div className="size-10 animate-pulse rounded-full bg-muted" />
           </div>
           <div className="flex w-full flex-col items-start gap-2">
             <Label className="font-medium text-sm">Full name</Label>
