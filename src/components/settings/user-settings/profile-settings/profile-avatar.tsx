@@ -175,10 +175,11 @@ export function ProfileAvatar({
                     </AvatarFallback>
                   </Avatar>
                   <div
-                    className={`absolute inset-0 flex items-center justify-center rounded-full bg-black/60 transition-opacity ${isUploadingAvatar
+                    className={`absolute inset-0 flex items-center justify-center rounded-full bg-black/60 transition-opacity ${
+                      isUploadingAvatar
                         ? "opacity-100"
                         : "opacity-0 group-hover:opacity-100"
-                      }`}
+                    }`}
                   >
                     {isUploadingAvatar ? (
                       <Spinner className="size-4 text-white" />

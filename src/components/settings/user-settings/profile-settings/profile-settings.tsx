@@ -186,7 +186,7 @@ function ProfileSettingsLoading() {
           <div className="flex w-full flex-col items-start gap-2">
             <Label className="font-medium text-sm">Full name</Label>
             <div className="h-9 w-full animate-pulse rounded-md bg-muted" />
-            <p className="mt-1 text-muted-foreground text-xs">
+            <p className="mt-2 text-muted-foreground text-xs">
               Changes save automatically
             </p>
           </div>

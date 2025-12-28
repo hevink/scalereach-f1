@@ -313,7 +313,7 @@ function GoogleButton({
         {googleLoading ? (
           <Spinner />
         ) : (
-          <span className="flex items-center gap-3">
+          <span className="flex items-center gap-3 font-medium">
             <GoogleLogo className="size-4" /> Login with Google
           </span>
         )}
@@ -464,6 +464,7 @@ export function LoginCard() {
       const { error } = await signIn.email({
         email,
         password,
+        rememberMe,
       });
 
       if (error) {
@@ -510,17 +511,12 @@ export function LoginCard() {
   return (
     <div className="flex w-full max-w-xs flex-col gap-8 bg-transparent">
       <div className="flex flex-col items-center justify-center gap-4">
-        <Image
-          alt="Staxk Logo"
-          className="contrast-200 grayscale"
-          height={38}
-          src="/logo.svg"
-          width={38}
-        />
+        <Image alt="Staxk Logo" height={38} src="/logo.svg" width={38} />
         <h1 className="text-center font-medium text-xl">Login to Staxk</h1>
       </div>
 
       <div className="flex flex-col gap-2">
+        {/* First login method */}
         {showGoogleFirst && (
           <GoogleButton
             googleLoading={googleLoading}
@@ -528,6 +524,12 @@ export function LoginCard() {
             onClick={handleGoogleSignIn}
             variant="default"
           />
+        )}
+
+        {showGoogleFirst && methodDisplayName && (
+          <p className="pb-4 text-center font-medium text-muted-foreground text-sm">
+            You last used {methodDisplayName} to login
+          </p>
         )}
 
         <form
@@ -585,12 +587,13 @@ export function LoginCard() {
           </div>
         </form>
 
-        {methodDisplayName && (
+        {!showGoogleFirst && methodDisplayName && (
           <p className="pb-4 text-center font-medium text-muted-foreground text-sm">
             You last used {methodDisplayName} to login
           </p>
         )}
 
+        {/* Second login method */}
         {!showGoogleFirst && (
           <GoogleButton
             googleLoading={googleLoading}

@@ -69,7 +69,7 @@ export function UsernameInput({
       </div>
       <output aria-live="polite" className="mt-2 min-h-5" id={ariaDescribedBy}>
         {error && (
-          <p className="text-destructive text-xs" role="alert">
+          <p className="mt-2 text-destructive text-xs" role="alert">
             {error}
           </p>
         )}

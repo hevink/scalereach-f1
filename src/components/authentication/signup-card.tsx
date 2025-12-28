@@ -743,13 +743,7 @@ export function SignupCard() {
   return (
     <div className="flex w-full max-w-xs flex-col gap-8 bg-transparent">
       <div className="flex flex-col items-center justify-center gap-4">
-        <Image
-          alt="Staxk Logo"
-          className="contrast-200 grayscale"
-          height={38}
-          src="/logo.svg"
-          width={38}
-        />
+        <Image alt="Staxk Logo" height={38} src="/logo.svg" width={38} />
         <h1 className="text-center font-medium text-xl">Sign up to Staxk</h1>
       </div>
 
