@@ -15,6 +15,7 @@ import {
   sanitizeWorkspaceDescription,
   sanitizeWorkspaceName,
 } from "@/lib/sanitize";
+import { isValidTimezone } from "@/lib/timezone";
 
 const SLUG_REGEX = /^[a-z][a-z0-9-]*$/;
 const MIN_SLUG_LENGTH = 3;
@@ -130,6 +131,26 @@ function validateLogo(logo: unknown): {
 } {
   const validation = validateBase64Image(logo as string | null);
   return validation;
+}
+
+function validateTimezone(timezone: unknown): {
+  valid: boolean;
+  error?: string;
+  value?: string;
+} {
+  if (typeof timezone !== "string") {
+    return { valid: false, error: "Timezone must be a string" };
+  }
+
+  if (!timezone.trim()) {
+    return { valid: false, error: "Timezone cannot be empty" };
+  }
+
+  if (!isValidTimezone(timezone)) {
+    return { valid: false, error: "Invalid timezone identifier" };
+  }
+
+  return { valid: true, value: timezone.trim() };
 }
 
 async function validateSlugAvailability(
@@ -252,12 +273,42 @@ function processLogoField(
   return { success: true };
 }
 
+function processTimezoneField(
+  timezone: unknown,
+  updateData: { timezone?: string }
+): { success: false; error: string } | { success: true } {
+  const validation = validateTimezone(timezone);
+  if (!validation.valid) {
+    return {
+      success: false,
+      error: validation.error || "Invalid timezone",
+    };
+  }
+  updateData.timezone = validation.value;
+  return { success: true };
+}
+
+type FieldProcessor = (
+  value: unknown,
+  updateData: {
+    name?: string;
+    slug?: string;
+    description?: string | null;
+    logo?: string | null;
+    timezone?: string;
+  }
+) =>
+  | Promise<{ success: false; error: string } | { success: true }>
+  | { success: false; error: string }
+  | { success: true };
+
 async function processFieldUpdates(
   body: {
     name?: unknown;
     slug?: unknown;
     description?: unknown;
     logo?: unknown;
+    timezone?: unknown;
   },
   currentWorkspace: { slug: string }
 ): Promise<
@@ -268,6 +319,7 @@ async function processFieldUpdates(
         slug?: string;
         description?: string | null;
         logo?: string | null;
+        timezone?: string;
       };
     }
   | { success: false; error: string }
@@ -277,37 +329,42 @@ async function processFieldUpdates(
     slug?: string;
     description?: string | null;
     logo?: string | null;
+    timezone?: string;
   } = {};
 
-  if (body.name !== undefined) {
-    const result = processNameField(body.name, updateData);
-    if (!result.success) {
-      return result;
-    }
-  }
+  const fieldProcessors: Array<{
+    value: unknown;
+    processor: FieldProcessor;
+  }> = [
+    {
+      value: body.name,
+      processor: (val, data) => processNameField(val, data),
+    },
+    {
+      value: body.slug,
+      processor: async (val, data) =>
+        await processSlugField(val, currentWorkspace.slug, data),
+    },
+    {
+      value: body.description,
+      processor: (val, data) => processDescriptionField(val, data),
+    },
+    {
+      value: body.logo,
+      processor: (val, data) => processLogoField(val, data),
+    },
+    {
+      value: body.timezone,
+      processor: (val, data) => processTimezoneField(val, data),
+    },
+  ];
 
-  if (body.slug !== undefined) {
-    const result = await processSlugField(
-      body.slug,
-      currentWorkspace.slug,
-      updateData
-    );
-    if (!result.success) {
-      return result;
-    }
-  }
-
-  if (body.description !== undefined) {
-    const result = processDescriptionField(body.description, updateData);
-    if (!result.success) {
-      return result;
-    }
-  }
-
-  if (body.logo !== undefined) {
-    const result = processLogoField(body.logo, updateData);
-    if (!result.success) {
-      return result;
+  for (const { value, processor } of fieldProcessors) {
+    if (value !== undefined) {
+      const result = await processor(value, updateData);
+      if (!result.success) {
+        return result;
+      }
     }
   }
 
@@ -401,6 +458,7 @@ export async function PATCH(
         name: workspace.name,
         slug: workspace.slug,
         description: workspace.description,
+        timezone: workspace.timezone,
       })
       .from(workspace)
       .where(eq(workspace.id, workspaceId))

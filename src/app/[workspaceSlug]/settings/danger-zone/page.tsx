@@ -1,7 +1,7 @@
 import { and, eq } from "drizzle-orm";
 import { headers } from "next/headers";
 import { notFound } from "next/navigation";
-import { GeneralSettings } from "@/components/settings/workspace-settings/general-settings";
+import { DangerZone } from "@/components/settings/workspace-settings/danger-zone";
 import { db } from "@/db";
 import { workspace, workspaceMember } from "@/db/schema";
 import { auth } from "@/lib/auth";
@@ -62,7 +62,7 @@ async function getWorkspace(slug: string, userId: string) {
   return ws;
 }
 
-export default async function GeneralSettingsPage({
+export default async function DangerZonePage({
   params,
 }: {
   params: Promise<{ workspaceSlug: string }>;
@@ -80,9 +80,20 @@ export default async function GeneralSettingsPage({
     notFound();
   }
 
+  // Only owners can access the danger zone
+  if (workspaceData.ownerId !== session.user.id) {
+    notFound();
+  }
+
   return (
     <div className="mx-auto max-w-xl p-6">
-      <GeneralSettings workspace={workspaceData} />
+      <DangerZone
+        workspace={{
+          id: workspaceData.id,
+          name: workspaceData.name,
+          slug: workspaceData.slug,
+        }}
+      />
     </div>
   );
 }

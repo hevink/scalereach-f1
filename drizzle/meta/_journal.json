@@ -71,6 +71,13 @@
       "when": 1766998796958,
       "tag": "0009_puzzling_namora",
       "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1767010999615,
+      "tag": "0010_unknown_silhouette",
+      "breakpoints": true
     }
   ]
 }

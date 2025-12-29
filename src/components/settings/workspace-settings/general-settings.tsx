@@ -13,6 +13,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Spinner } from "@/components/ui/spinner";
 import { Textarea } from "@/components/ui/textarea";
+import { TimezoneSelector } from "@/components/ui/timezone-selector";
 import {
   Tooltip,
   TooltipContent,
@@ -274,52 +275,183 @@ interface GeneralSettingsProps {
     slug: string;
     description: string | null;
     logo: string | null;
+    timezone: string;
   };
 }
 
-export function GeneralSettings({ workspace }: GeneralSettingsProps) {
-  const router = useRouter();
-  const [isInitialized, setIsInitialized] = useState(false);
+function NameField({
+  form,
+  saveStatus,
+  nameError,
+}: {
+  form: ReturnType<typeof useForm<WorkspaceFormData>>;
+  saveStatus: "idle" | "saving" | "saved" | "error";
+  nameError?: string;
+}) {
+  return (
+    <div className="flex w-full flex-col items-start">
+      <div className="flex items-center gap-2">
+        <Label className="pb-2 font-medium text-sm" htmlFor="name">
+          Workspace name
+        </Label>
+        {saveStatus === "saving" && (
+          <Loader2
+            aria-hidden="true"
+            className="mb-2 size-3.5 animate-spin text-muted-foreground"
+          />
+        )}
+        {saveStatus === "saved" && (
+          <CheckCircle2
+            aria-hidden="true"
+            className="mb-2 size-3.5 text-green-600 dark:text-green-500"
+          />
+        )}
+      </div>
+      <div className="w-full">
+        <Input
+          id="name"
+          {...form.register("name")}
+          aria-describedby={nameError ? "name-error" : "name-helper"}
+          aria-invalid={nameError ? "true" : "false"}
+          className="h-9 w-full"
+          placeholder="e.g. My Workspace"
+        />
+        {nameError ? (
+          <p
+            className="mt-2 text-destructive text-xs"
+            id="name-error"
+            role="alert"
+          >
+            {nameError}
+          </p>
+        ) : (
+          <p className="mt-2 text-muted-foreground text-xs" id="name-helper">
+            Changes save automatically
+          </p>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function DescriptionField({
+  form,
+  descriptionSaveStatus,
+  descriptionError,
+}: {
+  form: ReturnType<typeof useForm<WorkspaceFormData>>;
+  descriptionSaveStatus: "idle" | "saving" | "saved" | "error";
+  descriptionError?: string;
+}) {
+  return (
+    <div className="flex w-full flex-col items-start">
+      <div className="flex items-center gap-2">
+        <Label className="pb-2 font-medium text-sm" htmlFor="description">
+          Description
+        </Label>
+        {descriptionSaveStatus === "saving" && (
+          <Loader2
+            aria-hidden="true"
+            className="mb-2 size-3.5 animate-spin text-muted-foreground"
+          />
+        )}
+        {descriptionSaveStatus === "saved" && (
+          <CheckCircle2
+            aria-hidden="true"
+            className="mb-2 size-3.5 text-green-600 dark:text-green-500"
+          />
+        )}
+      </div>
+      <div className="w-full">
+        <Textarea
+          id="description"
+          {...form.register("description")}
+          aria-describedby={
+            descriptionError ? "description-error" : "description-helper"
+          }
+          aria-invalid={descriptionError ? "true" : "false"}
+          className="min-h-[80px]"
+          maxLength={500}
+          placeholder="Describe your workspace (optional)"
+          rows={3}
+        />
+        {descriptionError ? (
+          <p
+            className="mt-2 text-destructive text-xs"
+            id="description-error"
+            role="alert"
+          >
+            {descriptionError}
+          </p>
+        ) : (
+          <p
+            className="mt-2 text-muted-foreground text-xs"
+            id="description-helper"
+          >
+            Changes save automatically
+          </p>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function TimezoneField({
+  timezone,
+  timezoneSaveStatus,
+  onTimezoneChange,
+}: {
+  timezone: string;
+  timezoneSaveStatus: "idle" | "saving" | "saved" | "error";
+  onTimezoneChange: (value: string) => void;
+}) {
+  return (
+    <div className="flex w-full flex-col items-start">
+      <div className="flex items-center gap-2">
+        <Label className="pb-2 font-medium text-sm" htmlFor="timezone">
+          Workspace Timezone
+        </Label>
+        {timezoneSaveStatus === "saving" && (
+          <Loader2
+            aria-hidden="true"
+            className="mb-2 size-3.5 animate-spin text-muted-foreground"
+          />
+        )}
+        {timezoneSaveStatus === "saved" && (
+          <CheckCircle2
+            aria-hidden="true"
+            className="mb-2 size-3.5 text-green-600 dark:text-green-500"
+          />
+        )}
+      </div>
+      <div className="w-full">
+        <TimezoneSelector
+          onValueChange={onTimezoneChange}
+          placeholder="Select timezone"
+          value={timezone}
+        />
+        <p className="mt-2 text-muted-foreground text-xs" id="timezone-helper">
+          Changes save automatically
+        </p>
+      </div>
+    </div>
+  );
+}
+
+function useWorkspaceNameSave(
+  workspaceId: string,
+  _initialName: string,
+  router: ReturnType<typeof useRouter>
+) {
   const [saveStatus, setSaveStatus] = useState<
     "idle" | "saving" | "saved" | "error"
   >("idle");
-  const [isEditingSlug, setIsEditingSlug] = useState(false);
-  const [slugEditValue, setSlugEditValue] = useState(workspace.slug);
-  const [isSavingSlug, setIsSavingSlug] = useState(false);
   const saveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const hasUnsavedChangesRef = useRef(false);
 
-  const form = useForm<WorkspaceFormData>({
-    resolver: zodResolver(workspaceSchema),
-    defaultValues: {
-      name: workspace.name,
-      description: workspace.description || "",
-    },
-    mode: "onChange",
-  });
-
-  const { watch, formState } = form;
-  const watchedName = watch("name");
-  const watchedDescription = watch("description");
-
-  const slugAvailability = useSlugAvailability();
-
-  useEffect(() => {
-    setIsInitialized(true);
-  }, []);
-
-  useEffect(() => {
-    if (isEditingSlug && slugEditValue !== workspace.slug) {
-      const timer = setTimeout(() => {
-        slugAvailability.checkAvailability(slugEditValue, workspace.slug);
-      }, 300);
-      return () => clearTimeout(timer);
-    }
-  }, [slugEditValue, workspace.slug, isEditingSlug, slugAvailability]);
-
   const updateName = useCallback(
     async (nameValue: string) => {
-      const response = await fetch(`/api/workspace/${workspace.id}/update`, {
+      const response = await fetch(`/api/workspace/${workspaceId}/update`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ name: nameValue }),
@@ -331,31 +463,8 @@ export function GeneralSettings({ workspace }: GeneralSettingsProps) {
         throw new Error(data.error || "Failed to update workspace name");
       }
     },
-    [workspace.id]
+    [workspaceId]
   );
-
-  const updateDescription = useCallback(
-    async (descriptionValue: string) => {
-      const response = await fetch(`/api/workspace/${workspace.id}/update`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ description: descriptionValue || null }),
-      });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.error || "Failed to update workspace description");
-      }
-    },
-    [workspace.id]
-  );
-
-  const [descriptionSaveStatus, setDescriptionSaveStatus] = useState<
-    "idle" | "saving" | "saved" | "error"
-  >("idle");
-  const descriptionSaveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
-  const hasUnsavedDescriptionChangesRef = useRef(false);
 
   const saveWorkspace = useCallback(
     async (nameValue: string, nameChanged: boolean) => {
@@ -389,6 +498,42 @@ export function GeneralSettings({ workspace }: GeneralSettingsProps) {
     [router, updateName]
   );
 
+  return {
+    saveStatus,
+    setSaveStatus,
+    saveWorkspace,
+    saveTimeoutRef,
+    hasUnsavedChangesRef,
+  };
+}
+
+function useWorkspaceDescriptionSave(
+  workspaceId: string,
+  router: ReturnType<typeof useRouter>
+) {
+  const [descriptionSaveStatus, setDescriptionSaveStatus] = useState<
+    "idle" | "saving" | "saved" | "error"
+  >("idle");
+  const descriptionSaveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const hasUnsavedDescriptionChangesRef = useRef(false);
+
+  const updateDescription = useCallback(
+    async (descriptionValue: string) => {
+      const response = await fetch(`/api/workspace/${workspaceId}/update`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ description: descriptionValue || null }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || "Failed to update workspace description");
+      }
+    },
+    [workspaceId]
+  );
+
   const saveDescription = useCallback(
     async (descriptionValue: string) => {
       setDescriptionSaveStatus("saving");
@@ -416,128 +561,140 @@ export function GeneralSettings({ workspace }: GeneralSettingsProps) {
     [router, updateDescription]
   );
 
-  const handleNameChange = useCallback(
-    (currentName: string, sessionName: string) => {
-      const nameChanged = currentName !== sessionName;
+  return {
+    descriptionSaveStatus,
+    setDescriptionSaveStatus,
+    saveDescription,
+    descriptionSaveTimeoutRef,
+    hasUnsavedDescriptionChangesRef,
+  };
+}
 
-      if (!nameChanged) {
-        hasUnsavedChangesRef.current = false;
-        setSaveStatus("idle");
-        return;
+function useWorkspaceTimezoneSave(
+  workspaceId: string,
+  initialTimezone: string,
+  router: ReturnType<typeof useRouter>
+) {
+  const [timezone, setTimezone] = useState(initialTimezone || "UTC");
+  const [timezoneSaveStatus, setTimezoneSaveStatus] = useState<
+    "idle" | "saving" | "saved" | "error"
+  >("idle");
+  const timezoneSaveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+  const updateTimezone = useCallback(
+    async (timezoneValue: string) => {
+      const response = await fetch(`/api/workspace/${workspaceId}/update`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ timezone: timezoneValue }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || "Failed to update workspace timezone");
       }
-
-      if (formState.errors.name) {
-        hasUnsavedChangesRef.current = true;
-        setSaveStatus("idle");
-        return;
-      }
-
-      hasUnsavedChangesRef.current = true;
-
-      if (saveTimeoutRef.current) {
-        clearTimeout(saveTimeoutRef.current);
-      }
-
-      saveTimeoutRef.current = setTimeout(async () => {
-        await saveWorkspace(currentName, true);
-      }, 500);
     },
-    [formState.errors.name, saveWorkspace]
+    [workspaceId]
   );
 
-  const handleDescriptionChange = useCallback(
-    (currentDescription: string, sessionDescription: string | null) => {
-      const descriptionChanged =
-        currentDescription !== (sessionDescription || "");
+  const saveTimezone = useCallback(
+    async (timezoneValue: string) => {
+      setTimezoneSaveStatus("saving");
 
-      if (!descriptionChanged) {
-        hasUnsavedDescriptionChangesRef.current = false;
-        setDescriptionSaveStatus("idle");
+      try {
+        await updateTimezone(timezoneValue);
+
+        setTimezoneSaveStatus("saved");
+        router.refresh();
+
+        setTimeout(() => {
+          setTimezoneSaveStatus("idle");
+        }, 2000);
+      } catch (error) {
+        safeClientError("Error updating timezone:", error);
+        toast.error(
+          error instanceof Error ? error.message : "Failed to update timezone"
+        );
+        setTimezoneSaveStatus("error");
+      }
+    },
+    [router, updateTimezone]
+  );
+
+  const handleTimezoneChange = useCallback(
+    (newTimezone: string, currentTimezone: string) => {
+      setTimezone(newTimezone);
+
+      if (newTimezone === currentTimezone) {
+        setTimezoneSaveStatus("idle");
         return;
       }
 
-      hasUnsavedDescriptionChangesRef.current = true;
-
-      if (descriptionSaveTimeoutRef.current) {
-        clearTimeout(descriptionSaveTimeoutRef.current);
+      if (timezoneSaveTimeoutRef.current) {
+        clearTimeout(timezoneSaveTimeoutRef.current);
       }
 
-      descriptionSaveTimeoutRef.current = setTimeout(async () => {
-        await saveDescription(currentDescription);
+      timezoneSaveTimeoutRef.current = setTimeout(async () => {
+        await saveTimezone(newTimezone);
       }, 500);
     },
-    [saveDescription]
+    [saveTimezone]
   );
 
-  useEffect(() => {
-    if (!isInitialized) {
-      return;
-    }
+  return {
+    timezone,
+    timezoneSaveStatus,
+    handleTimezoneChange,
+    timezoneSaveTimeoutRef,
+  };
+}
 
-    const currentName = watchedName?.trim() || "";
-    const sessionName = workspace.name || "";
-    handleNameChange(currentName, sessionName);
-
-    return () => {
-      if (saveTimeoutRef.current) {
-        clearTimeout(saveTimeoutRef.current);
-      }
-    };
-  }, [watchedName, workspace.name, isInitialized, handleNameChange]);
-
-  useEffect(() => {
-    if (!isInitialized) {
-      return;
-    }
-
-    const currentDescription = watchedDescription?.trim() || "";
-    const sessionDescription = workspace.description || "";
-    handleDescriptionChange(currentDescription, sessionDescription);
-
-    return () => {
-      if (descriptionSaveTimeoutRef.current) {
-        clearTimeout(descriptionSaveTimeoutRef.current);
-      }
-    };
-  }, [
-    watchedDescription,
-    workspace.description,
-    isInitialized,
-    handleDescriptionChange,
-  ]);
-
-  const handleEditSlug = () => {
+function useSlugHandlers(
+  workspace: { id: string; slug: string },
+  slugEditValue: string,
+  setSlugEditValue: (value: string) => void,
+  _isEditingSlug: boolean,
+  setIsEditingSlug: (value: boolean) => void,
+  setIsSavingSlug: (value: boolean) => void,
+  slugAvailability: ReturnType<typeof useSlugAvailability>,
+  router: ReturnType<typeof useRouter>
+) {
+  const handleEditSlug = useCallback(() => {
     setSlugEditValue(workspace.slug);
     setIsEditingSlug(true);
-  };
+  }, [workspace.slug, setSlugEditValue, setIsEditingSlug]);
 
-  const handleCancelSlugEdit = () => {
+  const handleCancelSlugEdit = useCallback(() => {
     setSlugEditValue(workspace.slug);
     setIsEditingSlug(false);
     slugAvailability.checkAvailability(workspace.slug, workspace.slug);
-  };
+  }, [workspace.slug, setSlugEditValue, setIsEditingSlug, slugAvailability]);
 
-  const validateSlugBeforeSave = (trimmedSlug: string): boolean => {
-    if (trimmedSlug === workspace.slug) {
-      setIsEditingSlug(false);
-      return false;
-    }
+  const validateSlugBeforeSave = useCallback(
+    (trimmedSlug: string): boolean => {
+      if (trimmedSlug === workspace.slug) {
+        setIsEditingSlug(false);
+        return false;
+      }
 
-    const validation = validateSlug(trimmedSlug);
-    if (!validation.valid) {
-      toast.error(validation.error || "Invalid slug");
-      return false;
-    }
+      const validation = validateSlug(trimmedSlug);
+      if (!validation.valid) {
+        toast.error(validation.error || "Invalid slug");
+        return false;
+      }
 
-    if (!slugAvailability.available) {
-      toast.error("Please fix the slug errors before saving");
-      return false;
-    }
+      if (!slugAvailability.available) {
+        toast.error("Please fix the slug errors before saving");
+        return false;
+      }
 
-    return true;
-  };
+      return true;
+    },
+    [workspace.slug, setIsEditingSlug, slugAvailability]
+  );
 
-  const handleSaveSlug = async () => {
+  const handleSaveSlug = useCallback(async () => {
     const trimmedSlug = slugEditValue.trim().toLowerCase();
 
     if (!validateSlugBeforeSave(trimmedSlug)) {
@@ -572,7 +729,207 @@ export function GeneralSettings({ workspace }: GeneralSettingsProps) {
     } finally {
       setIsSavingSlug(false);
     }
+  }, [
+    slugEditValue,
+    validateSlugBeforeSave,
+    workspace.id,
+    setIsEditingSlug,
+    router,
+    setIsSavingSlug,
+  ]);
+
+  return {
+    handleEditSlug,
+    handleCancelSlugEdit,
+    handleSaveSlug,
   };
+}
+
+export function GeneralSettings({ workspace }: GeneralSettingsProps) {
+  const router = useRouter();
+  const [isInitialized, setIsInitialized] = useState(false);
+  const [isEditingSlug, setIsEditingSlug] = useState(false);
+  const [slugEditValue, setSlugEditValue] = useState(workspace.slug);
+  const [isSavingSlug, setIsSavingSlug] = useState(false);
+
+  const {
+    saveStatus,
+    setSaveStatus,
+    saveWorkspace,
+    saveTimeoutRef,
+    hasUnsavedChangesRef,
+  } = useWorkspaceNameSave(workspace.id, workspace.name, router);
+
+  const {
+    descriptionSaveStatus,
+    setDescriptionSaveStatus,
+    saveDescription,
+    descriptionSaveTimeoutRef,
+    hasUnsavedDescriptionChangesRef,
+  } = useWorkspaceDescriptionSave(workspace.id, router);
+
+  const {
+    timezone,
+    timezoneSaveStatus,
+    handleTimezoneChange,
+    timezoneSaveTimeoutRef,
+  } = useWorkspaceTimezoneSave(workspace.id, workspace.timezone, router);
+
+  const form = useForm<WorkspaceFormData>({
+    resolver: zodResolver(workspaceSchema),
+    defaultValues: {
+      name: workspace.name,
+      description: workspace.description || "",
+    },
+    mode: "onChange",
+  });
+
+  const { watch, formState } = form;
+  const watchedName = watch("name");
+  const watchedDescription = watch("description");
+
+  const slugAvailability = useSlugAvailability();
+
+  const { handleEditSlug, handleCancelSlugEdit, handleSaveSlug } =
+    useSlugHandlers(
+      workspace,
+      slugEditValue,
+      setSlugEditValue,
+      isEditingSlug,
+      setIsEditingSlug,
+      setIsSavingSlug,
+      slugAvailability,
+      router
+    );
+
+  useEffect(() => {
+    setIsInitialized(true);
+  }, []);
+
+  useEffect(() => {
+    if (isEditingSlug && slugEditValue !== workspace.slug) {
+      const timer = setTimeout(() => {
+        slugAvailability.checkAvailability(slugEditValue, workspace.slug);
+      }, 300);
+      return () => clearTimeout(timer);
+    }
+  }, [slugEditValue, workspace.slug, isEditingSlug, slugAvailability]);
+
+  const handleNameChange = useCallback(
+    (currentName: string, sessionName: string) => {
+      const nameChanged = currentName !== sessionName;
+
+      if (!nameChanged) {
+        hasUnsavedChangesRef.current = false;
+        setSaveStatus("idle");
+        return;
+      }
+
+      if (formState.errors.name) {
+        hasUnsavedChangesRef.current = true;
+        setSaveStatus("idle");
+        return;
+      }
+
+      hasUnsavedChangesRef.current = true;
+
+      if (saveTimeoutRef.current) {
+        clearTimeout(saveTimeoutRef.current);
+      }
+
+      saveTimeoutRef.current = setTimeout(async () => {
+        await saveWorkspace(currentName, true);
+      }, 500);
+    },
+    [
+      formState.errors.name,
+      saveWorkspace,
+      setSaveStatus,
+      hasUnsavedChangesRef,
+      saveTimeoutRef,
+    ]
+  );
+
+  const handleDescriptionChange = useCallback(
+    (currentDescription: string, sessionDescription: string | null) => {
+      const descriptionChanged =
+        currentDescription !== (sessionDescription || "");
+
+      if (!descriptionChanged) {
+        hasUnsavedDescriptionChangesRef.current = false;
+        setDescriptionSaveStatus("idle");
+        return;
+      }
+
+      hasUnsavedDescriptionChangesRef.current = true;
+
+      if (descriptionSaveTimeoutRef.current) {
+        clearTimeout(descriptionSaveTimeoutRef.current);
+      }
+
+      descriptionSaveTimeoutRef.current = setTimeout(async () => {
+        await saveDescription(currentDescription);
+      }, 500);
+    },
+    [
+      saveDescription,
+      setDescriptionSaveStatus,
+      hasUnsavedDescriptionChangesRef,
+      descriptionSaveTimeoutRef,
+    ]
+  );
+
+  useEffect(() => {
+    if (!isInitialized) {
+      return;
+    }
+
+    const currentName = watchedName?.trim() || "";
+    const sessionName = workspace.name || "";
+    handleNameChange(currentName, sessionName);
+
+    return () => {
+      if (saveTimeoutRef.current) {
+        clearTimeout(saveTimeoutRef.current);
+      }
+    };
+  }, [
+    watchedName,
+    workspace.name,
+    isInitialized,
+    handleNameChange,
+    saveTimeoutRef,
+  ]);
+
+  useEffect(() => {
+    if (!isInitialized) {
+      return;
+    }
+
+    const currentDescription = watchedDescription?.trim() || "";
+    const sessionDescription = workspace.description || "";
+    handleDescriptionChange(currentDescription, sessionDescription);
+
+    return () => {
+      if (descriptionSaveTimeoutRef.current) {
+        clearTimeout(descriptionSaveTimeoutRef.current);
+      }
+    };
+  }, [
+    watchedDescription,
+    workspace.description,
+    isInitialized,
+    handleDescriptionChange,
+    descriptionSaveTimeoutRef,
+  ]);
+
+  useEffect(() => {
+    return () => {
+      if (timezoneSaveTimeoutRef.current) {
+        clearTimeout(timezoneSaveTimeoutRef.current);
+      }
+    };
+  }, [timezoneSaveTimeoutRef]);
 
   if (!isInitialized) {
     return null;
@@ -594,100 +951,16 @@ export function GeneralSettings({ workspace }: GeneralSettingsProps) {
             workspaceId={workspace.id}
             workspaceName={workspace.name}
           />
-          <div className="flex w-full flex-col items-start">
-            <div className="flex items-center gap-2">
-              <Label className="pb-2 font-medium text-sm" htmlFor="name">
-                Workspace name
-              </Label>
-              {saveStatus === "saving" && (
-                <Loader2
-                  aria-hidden="true"
-                  className="mb-2 size-3.5 animate-spin text-muted-foreground"
-                />
-              )}
-              {saveStatus === "saved" && (
-                <CheckCircle2
-                  aria-hidden="true"
-                  className="mb-2 size-3.5 text-green-600 dark:text-green-500"
-                />
-              )}
-            </div>
-            <div className="w-full">
-              <Input
-                id="name"
-                {...form.register("name")}
-                aria-describedby={nameError ? "name-error" : "name-helper"}
-                aria-invalid={nameError ? "true" : "false"}
-                className="h-9 w-full"
-                placeholder="e.g. My Workspace"
-              />
-              {nameError ? (
-                <p
-                  className="mt-2 text-destructive text-xs"
-                  id="name-error"
-                  role="alert"
-                >
-                  {nameError}
-                </p>
-              ) : (
-                <p
-                  className="mt-2 text-muted-foreground text-xs"
-                  id="name-helper"
-                >
-                  Changes save automatically
-                </p>
-              )}
-            </div>
-          </div>
-          <div className="flex w-full flex-col items-start">
-            <div className="flex items-center gap-2">
-              <Label className="pb-2 font-medium text-sm" htmlFor="description">
-                Description
-              </Label>
-              {descriptionSaveStatus === "saving" && (
-                <Loader2
-                  aria-hidden="true"
-                  className="mb-2 size-3.5 animate-spin text-muted-foreground"
-                />
-              )}
-              {descriptionSaveStatus === "saved" && (
-                <CheckCircle2
-                  aria-hidden="true"
-                  className="mb-2 size-3.5 text-green-600 dark:text-green-500"
-                />
-              )}
-            </div>
-            <div className="w-full">
-              <Textarea
-                id="description"
-                {...form.register("description")}
-                aria-describedby={
-                  descriptionError ? "description-error" : "description-helper"
-                }
-                aria-invalid={descriptionError ? "true" : "false"}
-                className="min-h-[80px]"
-                maxLength={500}
-                placeholder="Describe your workspace (optional)"
-                rows={3}
-              />
-              {descriptionError ? (
-                <p
-                  className="mt-2 text-destructive text-xs"
-                  id="description-error"
-                  role="alert"
-                >
-                  {descriptionError}
-                </p>
-              ) : (
-                <p
-                  className="mt-2 text-muted-foreground text-xs"
-                  id="description-helper"
-                >
-                  Changes save automatically
-                </p>
-              )}
-            </div>
-          </div>
+          <NameField
+            form={form}
+            nameError={nameError}
+            saveStatus={saveStatus}
+          />
+          <DescriptionField
+            descriptionError={descriptionError}
+            descriptionSaveStatus={descriptionSaveStatus}
+            form={form}
+          />
           <SlugSection
             error={slugError ?? undefined}
             isEditingSlug={isEditingSlug}
@@ -699,6 +972,13 @@ export function GeneralSettings({ workspace }: GeneralSettingsProps) {
             slug={workspace.slug}
             slugAvailability={slugAvailability}
             slugEditValue={slugEditValue}
+          />
+          <TimezoneField
+            onTimezoneChange={(newTz) =>
+              handleTimezoneChange(newTz, workspace.timezone)
+            }
+            timezone={timezone}
+            timezoneSaveStatus={timezoneSaveStatus}
           />
         </CardContent>
       </Card>

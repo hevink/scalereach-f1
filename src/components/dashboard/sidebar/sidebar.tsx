@@ -38,7 +38,7 @@ export function DashboardSidebar() {
 
   return (
     <aside
-      className={`flex h-screen w-64 flex-col justify-between bg-card ${
+      className={`flex h-screen w-64 flex-col justify-between bg-sidebar ${
         isPending ? "pointer-events-none cursor-not-allowed" : ""
       }`}
     >

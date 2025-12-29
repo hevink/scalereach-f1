@@ -9,10 +9,10 @@
     "check:errors": "tsc --noEmit",
     "check": "bunx ultracite check",
     "fix": "bunx ultracite fix",
-    "drizzle:generate": "bun exec drizzle-kit generate",
-    "drizzle:push": "bun exec drizzle-kit push",
-    "drizzle:migrate": "bun exec drizzle-kit migrate",
-    "drizzle:studio": "bun exec drizzle-kit studio",
+    "drizzle:generate": "bunx drizzle-kit generate",
+    "drizzle:push": "bunx drizzle-kit push",
+    "drizzle:migrate": "bunx drizzle-kit migrate",
+    "drizzle:studio": "bunx drizzle-kit studio",
     "db:check": "tsx scripts/check-db.ts"
   },
   "dependencies": {

@@ -1,7 +1,12 @@
 "use client";
 
 import type { LucideIcon } from "lucide-react";
-import { ChevronLeft, Settings as SettingsIcon, Users } from "lucide-react";
+import {
+  AlertTriangle,
+  ChevronLeft,
+  Settings as SettingsIcon,
+  Users,
+} from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
@@ -71,6 +76,7 @@ export function WorkspaceSettingsSidebar({
   const isGeneralActive =
     pathname === `${basePath}/general` || pathname === basePath;
   const isMembersActive = pathname === `${basePath}/members`;
+  const isDangerZoneActive = pathname === `${basePath}/danger-zone`;
 
   const settingsNavItems = [
     {
@@ -84,6 +90,12 @@ export function WorkspaceSettingsSidebar({
       icon: Users,
       label: "Members",
       isActive: isMembersActive,
+    },
+    {
+      href: `${basePath}/danger-zone`,
+      icon: AlertTriangle,
+      label: "Danger Zone",
+      isActive: isDangerZoneActive,
     },
   ];
 

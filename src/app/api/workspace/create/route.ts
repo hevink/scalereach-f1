@@ -153,6 +153,7 @@ export async function POST(request: Request) {
       name: sanitizedName,
       slug: normalizedSlug,
       description: sanitizedDescription,
+      timezone: "UTC",
       ownerId: session.user.id,
     });
 

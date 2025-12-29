@@ -8,6 +8,7 @@ async function WorkspaceSettingsRedirect({
 }) {
   const { workspaceSlug } = await params;
   redirect(`/${workspaceSlug}/settings/general`);
+  return null;
 }
 
 export default function WorkspaceSettingsPage({

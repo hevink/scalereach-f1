@@ -17,6 +17,7 @@ async function getWorkspaceData(slug: string) {
       slug: workspace.slug,
       description: workspace.description,
       logo: workspace.logo,
+      timezone: workspace.timezone,
       ownerId: workspace.ownerId,
       createdAt: workspace.createdAt,
     })
@@ -96,7 +97,6 @@ function WorkspaceSettingsLoading() {
     <div className="flex h-screen items-center justify-center">
       <div className="flex flex-col items-center gap-4">
         <Spinner />
-        <p className="font-[450] text-muted-foreground text-sm">Loading</p>
       </div>
     </div>
   );

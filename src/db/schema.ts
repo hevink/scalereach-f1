@@ -150,6 +150,7 @@ export const workspace = pgTable(
     slug: text("slug").notNull().unique(),
     description: text("description"),
     logo: text("logo"),
+    timezone: text("timezone").default("UTC").notNull(),
     ownerId: text("owner_id")
       .notNull()
       .references(() => user.id, { onDelete: "cascade" }),

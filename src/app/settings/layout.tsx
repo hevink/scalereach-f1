@@ -23,7 +23,6 @@ function SettingsLoading() {
     <div className="flex h-screen items-center justify-center">
       <div className="flex flex-col items-center gap-4">
         <Spinner />
-        <p className="font-[450] text-muted-foreground text-sm">Loading</p>
       </div>
     </div>
   );
