@@ -214,7 +214,7 @@ function SlugSection({
                           slugAvailability.available === false ||
                           slugAvailability.checking ||
                           slugEditValue.trim().toLowerCase() ===
-                          slug.toLowerCase()
+                            slug.toLowerCase()
                         }
                         onClick={onSave}
                         type="button"
