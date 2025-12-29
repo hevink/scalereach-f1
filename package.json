@@ -6,6 +6,7 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
+    "check:errors": "tsc --noEmit",
     "check": "pnpx ultracite check",
     "fix": "pnpx ultracite fix",
     "drizzle:generate": "pnpm exec drizzle-kit generate",

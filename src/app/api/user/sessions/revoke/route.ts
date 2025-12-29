@@ -3,9 +3,19 @@ import { NextResponse } from "next/server";
 import { db } from "@/db";
 import { session } from "@/db/schema";
 import { getSessionSafe } from "@/lib/auth-utils";
+import { safeError } from "@/lib/logger";
+import {
+  validateBodySize,
+  validateParsedBodySize,
+} from "@/lib/request-validation";
 
 export async function POST(request: Request) {
   try {
+    const sizeError = validateBodySize(request);
+    if (sizeError) {
+      return sizeError;
+    }
+
     const currentSession = await getSessionSafe();
 
     if (!currentSession) {
@@ -13,6 +23,11 @@ export async function POST(request: Request) {
     }
 
     const body = await request.json();
+
+    const parsedSizeError = validateParsedBodySize(body);
+    if (parsedSizeError) {
+      return parsedSizeError;
+    }
     const { sessionId, revokeAll } = body;
 
     if (revokeAll === true) {
@@ -62,7 +77,7 @@ export async function POST(request: Request) {
       { status: 200 }
     );
   } catch (error) {
-    console.error("Error revoking session:", error);
+    safeError("Error revoking session:", error);
     return NextResponse.json(
       { error: "Internal server error" },
       { status: 500 }

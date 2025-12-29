@@ -2,7 +2,7 @@
 
 import imageCompression from "browser-image-compression";
 import { Camera, User as UserIcon } from "lucide-react";
-import { type AppRouterInstance, useRouter } from "next/navigation";
+import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -14,6 +14,7 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { updateUser, useSession } from "@/lib/auth-client";
+import { safeClientError } from "@/lib/client-logger";
 
 const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB in bytes
 const MAX_BASE64_SIZE = 7 * 1024 * 1024; // ~7MB to account for base64 encoding overhead (~33% increase)
@@ -26,7 +27,7 @@ interface ProfileAvatarProps {
 
 function validateFile(
   file: File,
-  fileInputRef: React.RefObject<HTMLInputElement>
+  fileInputRef: React.RefObject<HTMLInputElement | null>
 ): boolean {
   if (!file.type.startsWith("image/")) {
     toast.error("Please select a valid image file");
@@ -46,7 +47,9 @@ function validateFile(
   return true;
 }
 
-function resetFileInput(fileInputRef: React.RefObject<HTMLInputElement>) {
+function resetFileInput(
+  fileInputRef: React.RefObject<HTMLInputElement | null>
+) {
   if (fileInputRef.current) {
     fileInputRef.current.value = "";
   }
@@ -76,7 +79,7 @@ function handleCompressionError(
   setIsUploadingAvatar: (value: boolean) => void,
   onUploadComplete?: () => void
 ) {
-  console.error("Error compressing image:", error);
+  safeClientError("Error compressing image:", error);
   toast.error("Failed to process image. Please try again.");
   setIsUploadingAvatar(false);
   onUploadComplete?.();
@@ -84,7 +87,7 @@ function handleCompressionError(
 
 async function uploadAvatar(
   base64String: string,
-  router: AppRouterInstance,
+  router: ReturnType<typeof useRouter>,
   refetch?: () => Promise<void>,
   onUploadComplete?: () => void
 ) {
@@ -103,7 +106,7 @@ async function uploadAvatar(
     try {
       await refetch();
     } catch {
-      // Silently ignore refetch errors - avatar update already succeeded
+      // empty
     }
   }
 
@@ -114,7 +117,7 @@ function validateBase64Size(
   base64String: string,
   setIsUploadingAvatar: (value: boolean) => void,
   onUploadComplete?: () => void,
-  fileInputRef?: React.RefObject<HTMLInputElement>
+  fileInputRef?: React.RefObject<HTMLInputElement | null>
 ): boolean {
   if (base64String.length > MAX_BASE64_SIZE) {
     toast.error(
@@ -187,7 +190,7 @@ export function ProfileAvatar({
         try {
           await uploadAvatar(base64String, router, refetch, onUploadComplete);
         } catch (error) {
-          console.error("Error uploading avatar:", error);
+          safeClientError("Error uploading avatar:", error);
           toast.error(
             error instanceof Error
               ? error.message

@@ -18,6 +18,7 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { updateUser, useSession } from "@/lib/auth-client";
+import { safeClientError } from "@/lib/client-logger";
 import { ProfileAvatar } from "./profile-avatar";
 import { UsernameInput, useUsernameAvailability } from "./username-input";
 
@@ -347,7 +348,7 @@ export function ProfileSettings() {
       try {
         await refetch();
       } catch {
-        // Silently ignore refetch errors - profile update already succeeded
+        // empty
       }
     }
   }, [refetch]);
@@ -388,7 +389,7 @@ export function ProfileSettings() {
           setSaveStatus("idle");
         }, 2000);
       } catch (error) {
-        console.error("Error updating profile:", error);
+        safeClientError("Error updating profile:", error);
         toast.error(
           error instanceof Error ? error.message : "Failed to update profile"
         );
@@ -522,7 +523,7 @@ export function ProfileSettings() {
     try {
       await saveUsernameUpdate(trimmedUsername);
     } catch (error) {
-      console.error("Error updating username:", error);
+      safeClientError("Error updating username:", error);
       toast.error(
         error instanceof Error ? error.message : "Failed to update username"
       );

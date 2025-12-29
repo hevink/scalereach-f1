@@ -20,6 +20,7 @@ export const user = pgTable(
     username: text("username").unique(),
     displayUsername: text("display_username").unique(),
     twoFactorEnabled: boolean("two_factor_enabled"),
+    isOnboarded: boolean("is_onboarded").default(false).notNull(),
     createdAt: timestamp("created_at").defaultNow().notNull(),
     updatedAt: timestamp("updated_at")
       .defaultNow()
@@ -138,11 +139,77 @@ export const passkey = pgTable(
   ]
 );
 
+export const workspace = pgTable(
+  "workspace",
+  {
+    id: text("id").primaryKey(),
+    name: text("name").notNull(),
+    slug: text("slug").notNull().unique(),
+    description: text("description"),
+    logo: text("logo"),
+    ownerId: text("owner_id")
+      .notNull()
+      .references(() => user.id, { onDelete: "cascade" }),
+    createdAt: timestamp("created_at").defaultNow().notNull(),
+    updatedAt: timestamp("updated_at")
+      .defaultNow()
+      .$onUpdate(() => new Date())
+      .notNull(),
+  },
+  (table) => [
+    index("workspace_slug_idx").on(table.slug),
+    index("workspace_ownerId_idx").on(table.ownerId),
+  ]
+);
+
+export const workspaceMember = pgTable(
+  "workspace_member",
+  {
+    id: text("id").primaryKey(),
+    workspaceId: text("workspace_id")
+      .notNull()
+      .references(() => workspace.id, { onDelete: "cascade" }),
+    userId: text("user_id")
+      .notNull()
+      .references(() => user.id, { onDelete: "cascade" }),
+    role: text("role").notNull().default("member"),
+    createdAt: timestamp("created_at").defaultNow().notNull(),
+  },
+  (table) => [
+    index("workspace_member_workspaceId_idx").on(table.workspaceId),
+    index("workspace_member_userId_idx").on(table.userId),
+  ]
+);
+
 export const userRelations = relations(user, ({ many }) => ({
   sessions: many(session),
   accounts: many(account),
   passkeys: many(passkey),
+  ownedWorkspaces: many(workspace),
+  workspaceMemberships: many(workspaceMember),
 }));
+
+export const workspaceRelations = relations(workspace, ({ one, many }) => ({
+  owner: one(user, {
+    fields: [workspace.ownerId],
+    references: [user.id],
+  }),
+  members: many(workspaceMember),
+}));
+
+export const workspaceMemberRelations = relations(
+  workspaceMember,
+  ({ one }) => ({
+    workspace: one(workspace, {
+      fields: [workspaceMember.workspaceId],
+      references: [workspace.id],
+    }),
+    user: one(user, {
+      fields: [workspaceMember.userId],
+      references: [user.id],
+    }),
+  })
+);
 
 export const passkeyRelations = relations(passkey, ({ one }) => ({
   user: one(user, {

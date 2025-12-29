@@ -14,6 +14,7 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import { safeClientError } from "@/lib/client-logger";
 
 interface Session {
   id: string;
@@ -198,7 +199,7 @@ export function SessionList() {
 
       setSessions(data.sessions || []);
     } catch (error) {
-      console.error("Error fetching sessions:", error);
+      safeClientError("Error fetching sessions:", error);
       toast.error(
         error instanceof Error ? error.message : "Failed to fetch sessions"
       );
@@ -230,7 +231,7 @@ export function SessionList() {
       await fetchSessions();
       router.refresh();
     } catch (error) {
-      console.error("Error revoking session:", error);
+      safeClientError("Error revoking session:", error);
       toast.error(
         error instanceof Error ? error.message : "Failed to revoke session"
       );

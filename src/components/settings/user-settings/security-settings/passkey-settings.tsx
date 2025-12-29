@@ -39,6 +39,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Spinner } from "@/components/ui/spinner";
 import { authClient } from "@/lib/auth-client";
+import { safeClientError } from "@/lib/client-logger";
 
 const renameSchema = z.object({
   name: z.string().min(1, "Name is required").max(50, "Name is too long"),
@@ -406,13 +407,13 @@ export function PasskeySettings() {
       const { data, error } = await authClient.passkey.listUserPasskeys();
 
       if (error) {
-        console.error("Failed to fetch passkeys:", error);
+        safeClientError("Failed to fetch passkeys:", error);
         return;
       }
 
       setPasskeys((data as Passkey[]) || []);
     } catch (err) {
-      console.error("Failed to fetch passkeys:", err);
+      safeClientError("Failed to fetch passkeys:", err);
     } finally {
       setIsLoading(false);
     }

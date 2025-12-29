@@ -24,7 +24,7 @@ function NavLink({ href, icon: Icon, children, isActive }: NavLinkProps) {
   return (
     <li className="flex w-full items-center">
       <Link
-        className={`flex w-full items-center gap-2 rounded px-2 py-1.5 font-medium text-[13px] transition-colors ${
+        className={`flex w-full items-center gap-2 rounded px-2 py-1.5 font-[450] text-[13px] transition-colors ${
           isActive ? "bg-accent text-foreground" : "hover:bg-accent"
         }`}
         href={href}
@@ -62,14 +62,13 @@ function NavMenu({ items }: NavMenuProps) {
 }
 
 export function SettingsSidebar() {
-  const { data: session, isPending } = useSession();
+  const { isPending } = useSession();
   const pathname = usePathname();
 
-  const user = session?.user;
-  const basePath = user?.id ? `/${user.id}/settings` : "";
+  const basePath = "/settings";
 
   const isProfileActive =
-    pathname === `${basePath}/profile` || pathname === `${basePath}`;
+    pathname === `${basePath}/profile` || pathname === basePath;
 
   const settingsNavItems = [
     {

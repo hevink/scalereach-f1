@@ -11,33 +11,43 @@ async function handleAuthRequest(
   try {
     return await handler(request);
   } catch (error) {
-    console.error("Better Auth error:", error);
-
-    if (
+    const isDatabaseError =
       error instanceof Error &&
       (error.message.includes("relation") ||
         error.message.includes("does not exist") ||
         error.message.includes("ECONNREFUSED") ||
-        error.message.includes("connection"))
-    ) {
-      console.error(
-        "Database connection error. Please ensure:\n" +
-          "1. DATABASE_URL is set correctly\n" +
-          "2. Database migrations have been run (pnpm drizzle:push)\n" +
-          "3. The database is accessible"
-      );
+        error.message.includes("connection"));
+
+    if (isDatabaseError) {
+      if (process.env.NODE_ENV !== "production") {
+        console.error(
+          "Database connection error. Please ensure:\n" +
+            "1. DATABASE_URL is set correctly\n" +
+            "2. Database migrations have been run (pnpm drizzle:push)\n" +
+            "3. The database is accessible"
+        );
+      } else {
+        console.error("Database connection error");
+      }
 
       return new Response(
         JSON.stringify({
-          error: "Database connection failed",
-          message:
-            "Please ensure the database is set up and migrations have been run.",
+          error: "Service temporarily unavailable",
+          message: "Please try again later.",
         }),
         {
           status: 500,
           headers: { "Content-Type": "application/json" },
         }
       );
+    }
+
+    if (process.env.NODE_ENV === "production") {
+      const errorMessage =
+        error instanceof Error ? error.message : "Unknown error";
+      console.error("Better Auth error:", errorMessage);
+    } else {
+      console.error("Better Auth error:", error);
     }
 
     throw error;

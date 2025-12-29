@@ -9,17 +9,23 @@ export async function getSessionSafe() {
     });
     return session;
   } catch (error) {
-    console.error("Error fetching session:", error);
+    if (process.env.NODE_ENV !== "production") {
+      console.error("Error fetching session:", error);
 
-    if (
-      error instanceof Error &&
-      (error.message.includes("relation") ||
-        error.message.includes("does not exist") ||
-        error.message.includes("ECONNREFUSED"))
-    ) {
-      console.error(
-        "Database error detected. Please run migrations: pnpm drizzle:push"
-      );
+      if (
+        error instanceof Error &&
+        (error.message.includes("relation") ||
+          error.message.includes("does not exist") ||
+          error.message.includes("ECONNREFUSED"))
+      ) {
+        console.error(
+          "Database error detected. Please run migrations: pnpm drizzle:push"
+        );
+      }
+    } else {
+      const errorMessage =
+        error instanceof Error ? error.message : "Unknown error";
+      console.error("Error fetching session:", errorMessage);
     }
 
     return null;

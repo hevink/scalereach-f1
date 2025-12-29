@@ -17,6 +17,7 @@ import {
 import { Label } from "@/components/ui/label";
 import { Spinner } from "@/components/ui/spinner";
 import { changePassword } from "@/lib/auth-client";
+import { safeClientError } from "@/lib/client-logger";
 
 const changePasswordSchema = z
   .object({
@@ -146,7 +147,7 @@ export function ChangePassword() {
       reset();
       router.refresh();
     } catch (error) {
-      console.error("Error changing password:", error);
+      safeClientError("Error changing password:", error);
       toast.error(
         error instanceof Error ? error.message : "Failed to change password"
       );

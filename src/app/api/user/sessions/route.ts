@@ -1,8 +1,13 @@
+import { createHash } from "node:crypto";
 import { desc, eq } from "drizzle-orm";
 import { NextResponse } from "next/server";
 import { db } from "@/db";
 import { session } from "@/db/schema";
 import { getSessionSafe } from "@/lib/auth-utils";
+
+function hashToken(token: string): string {
+  return createHash("sha256").update(token).digest("hex").substring(0, 16);
+}
 
 export async function GET() {
   try {
@@ -27,28 +32,50 @@ export async function GET() {
       .orderBy(desc(session.createdAt));
 
     const now = new Date();
-    const activeSessions = sessions.filter(
-      (s) => s.expiresAt && new Date(s.expiresAt) > now
-    );
 
     const currentSessionToken = currentSession.session?.token;
-    const sessionsWithCurrent = activeSessions.map((s) => ({
-      id: s.id,
-      tokenPrefix: `${s.token.substring(0, 8)}...`,
-      createdAt: s.createdAt,
-      updatedAt: s.updatedAt,
-      expiresAt: s.expiresAt,
-      ipAddress: s.ipAddress,
-      userAgent: s.userAgent,
-      isCurrent: s.token === currentSessionToken,
-    }));
+    const currentSessionTokenHash = currentSessionToken
+      ? hashToken(currentSessionToken)
+      : null;
+
+    const sessionsWithCurrent: Array<{
+      id: string;
+      tokenPrefix: string;
+      createdAt: Date | null;
+      updatedAt: Date;
+      expiresAt: Date | null;
+      ipAddress: string | null;
+      userAgent: string | null;
+      isCurrent: boolean;
+    }> = [];
+
+    for (const s of sessions) {
+      if (!s.expiresAt || new Date(s.expiresAt) <= now) {
+        continue;
+      }
+
+      const tokenHash = hashToken(s.token);
+
+      sessionsWithCurrent.push({
+        id: s.id,
+        tokenPrefix: `sess_${tokenHash}`,
+        createdAt: s.createdAt,
+        updatedAt: s.updatedAt,
+        expiresAt: s.expiresAt,
+        ipAddress: s.ipAddress,
+        userAgent: s.userAgent,
+        isCurrent: tokenHash === currentSessionTokenHash,
+      });
+    }
 
     return NextResponse.json(
       { sessions: sessionsWithCurrent },
       { status: 200 }
     );
   } catch (error) {
-    console.error("Error fetching sessions:", error);
+    const errorMessage =
+      error instanceof Error ? error.message : "Unknown error";
+    console.error("Error fetching sessions:", errorMessage);
     return NextResponse.json(
       { error: "Internal server error" },
       { status: 500 }

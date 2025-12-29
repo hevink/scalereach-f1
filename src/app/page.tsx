@@ -1,34 +1,58 @@
-import { DashboardSidebar } from "@/components/dashboard/sidebar/sidebar";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import { requireSession } from "@/lib/auth-utils";
+"use client";
 
-export default async function DashboardPage() {
-  const session = await requireSession();
+import { useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
+import { Spinner } from "@/components/ui/spinner";
+import { useSession } from "@/lib/auth-client";
+
+export default function RootPage() {
+  const router = useRouter();
+  const { data: session, isPending } = useSession();
+  const [isRedirecting, setIsRedirecting] = useState(false);
+
+  useEffect(() => {
+    if (isPending || isRedirecting) {
+      return;
+    }
+
+    if (!session) {
+      router.push("/home");
+      return;
+    }
+
+    const lastWorkspace = localStorage.getItem("lastWorkspace");
+
+    if (lastWorkspace) {
+      setIsRedirecting(true);
+      router.push(`/${lastWorkspace}`);
+      return;
+    }
+
+    setIsRedirecting(true);
+
+    fetch("/api/workspace/list")
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.workspaces && data.workspaces.length > 0) {
+          const firstWorkspace = data.workspaces[0];
+          localStorage.setItem("lastWorkspace", firstWorkspace.slug);
+          localStorage.setItem("currentWorkspaceId", firstWorkspace.id);
+          router.push(`/${firstWorkspace.slug}`);
+        } else {
+          router.push("/onboarding");
+        }
+      })
+      .catch(() => {
+        router.push("/onboarding");
+      });
+  }, [session, isPending, router, isRedirecting]);
 
   return (
-    <div className="flex h-screen overflow-hidden bg-background">
-      <DashboardSidebar />
-      <main className="flex-1 overflow-y-auto">
-        <div className="mx-auto max-w-4xl p-6">
-          <Card>
-            <CardHeader>
-              <CardTitle>Welcome, {session.user.name}</CardTitle>
-              <CardDescription>You are now signed in.</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <p className="text-muted-foreground text-sm">
-                Start building your project management dashboard.
-              </p>
-            </CardContent>
-          </Card>
-        </div>
-      </main>
+    <div className="flex min-h-screen flex-col items-center justify-center gap-4 bg-background">
+      <Spinner />
+      <p className="font-[450] text-muted-foreground text-sm">
+        Setting up your workspace
+      </p>
     </div>
   );
 }

@@ -1,16 +1,9 @@
 import { PreferencesSettings } from "@/components/settings/user-settings/preferences-settings/preferences-settings";
 import { SettingsSidebar } from "@/components/settings/user-settings/settings-sidebar";
-import { requireSessionForUser } from "@/lib/auth-utils";
+import { requireSession } from "@/lib/auth-utils";
 
-interface PreferencesPageProps {
-  params: Promise<{ userId: string }>;
-}
-
-export default async function PreferencesPage({
-  params,
-}: PreferencesPageProps) {
-  const { userId } = await params;
-  await requireSessionForUser(userId);
+export default async function PreferencesPage() {
+  await requireSession();
 
   return (
     <div className="flex h-screen overflow-hidden bg-background">
