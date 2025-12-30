@@ -187,6 +187,10 @@ export const workspaceMember = pgTable(
   (table) => [
     index("workspace_member_workspaceId_idx").on(table.workspaceId),
     index("workspace_member_userId_idx").on(table.userId),
+    index("workspace_member_workspaceId_createdAt_idx").on(
+      table.workspaceId,
+      table.createdAt,
+    ),
   ]
 );
 
@@ -213,6 +217,11 @@ export const workspaceInvitation = pgTable(
     index("workspace_invitation_workspaceId_idx").on(table.workspaceId),
     index("workspace_invitation_email_idx").on(table.email),
     index("workspace_invitation_status_idx").on(table.status),
+    index("workspace_invitation_email_status_idx").on(
+      table.email,
+      table.status,
+      table.workspaceId,
+    ),
   ]
 );
 

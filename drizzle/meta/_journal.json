@@ -8,6 +8,13 @@
       "when": 1767079242388,
       "tag": "0000_fluffy_lester",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1767087696813,
+      "tag": "0001_sleepy_captain_flint",
+      "breakpoints": true
     }
   ]
 }
