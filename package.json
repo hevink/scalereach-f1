@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "bun --bun next dev --turbopack",
-    "build": "bun --bun next build",
+    "build": "bun --bun next build --turbopack",
     "start": "bun --bun next start",
     "check:errors": "tsc --noEmit",
     "check": "bunx ultracite check",
@@ -20,6 +20,7 @@
     "@better-auth/passkey": "^1.4.9",
     "@hookform/resolvers": "^5.2.2",
     "@tabler/icons-react": "^3.36.0",
+    "@types/pg": "^8.16.0",
     "better-auth": "^1.4.9",
     "browser-image-compression": "^2.0.2",
     "class-variance-authority": "^0.7.1",

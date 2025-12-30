@@ -131,6 +131,9 @@
   .root {
     @apply isolate;
   }
+  button{
+    @apply cursor-pointer;
+  }
 }
 main {
   scrollbar-gutter: stable;
