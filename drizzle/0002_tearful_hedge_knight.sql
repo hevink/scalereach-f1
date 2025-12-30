@@ -1,0 +1,2 @@
+CREATE INDEX "workspace_invitation_workspaceId_email_status_idx" ON "workspace_invitation" USING btree ("workspace_id","email","status");--> statement-breakpoint
+CREATE INDEX "workspace_member_workspaceId_userId_idx" ON "workspace_member" USING btree ("workspace_id","user_id");

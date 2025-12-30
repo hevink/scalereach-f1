@@ -1,6 +1,6 @@
 {
-  "id": "b0e5a699-daab-422e-b535-1a9a60581455",
-  "prevId": "0812b345-50ae-475b-bdd1-2942dfcf6b55",
+  "id": "3236cc1e-1b83-44cf-9b1e-8ce6421eb358",
+  "prevId": "b0e5a699-daab-422e-b535-1a9a60581455",
   "version": "7",
   "dialect": "postgresql",
   "tables": {
@@ -939,6 +939,33 @@
           "concurrently": false,
           "method": "btree",
           "with": {}
+        },
+        "workspace_invitation_workspaceId_email_status_idx": {
+          "name": "workspace_invitation_workspaceId_email_status_idx",
+          "columns": [
+            {
+              "expression": "workspace_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "email",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "status",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
         }
       },
       "foreignKeys": {
@@ -1046,6 +1073,27 @@
             },
             {
               "expression": "created_at",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "workspace_member_workspaceId_userId_idx": {
+          "name": "workspace_member_workspaceId_userId_idx",
+          "columns": [
+            {
+              "expression": "workspace_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "user_id",
               "isExpression": false,
               "asc": true,
               "nulls": "last"
