@@ -4,6 +4,8 @@ import { Suspense } from "react";
 import { WorkspaceDashboard } from "@/components/workspace/workspace-dashboard";
 import { requireWorkspaceAccess } from "@/lib/workspace-utils";
 
+export const dynamic = "force-dynamic";
+
 async function WorkspaceContent({
   params,
 }: {

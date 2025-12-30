@@ -4,6 +4,8 @@ import { db } from "@/db";
 import { user as userTable, workspace, workspaceMember } from "@/db/schema";
 import { getSessionSafe } from "@/lib/auth-utils";
 
+export const dynamic = "force-dynamic";
+
 export default async function RootPage() {
   const session = await getSessionSafe();
 

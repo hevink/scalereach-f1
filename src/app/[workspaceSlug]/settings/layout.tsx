@@ -8,6 +8,8 @@ import { db } from "@/db";
 import { workspace, workspaceMember } from "@/db/schema";
 import { auth } from "@/lib/auth";
 
+export const dynamic = "force-dynamic";
+
 async function getWorkspaceData(slug: string) {
   const workspaceData = await db
     .select({

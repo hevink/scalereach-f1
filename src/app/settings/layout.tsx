@@ -3,6 +3,8 @@ import { Suspense } from "react";
 import { SettingsSidebar } from "@/components/settings/user-settings/settings-sidebar";
 import { requireSession } from "@/lib/auth-utils";
 
+export const dynamic = "force-dynamic";
+
 function SettingsContentLoading() {
   return (
     <div className="flex h-full items-center justify-center">

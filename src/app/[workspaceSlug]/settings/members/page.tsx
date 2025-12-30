@@ -2,6 +2,8 @@ import { notFound } from "next/navigation";
 import { MembersSettings } from "@/components/settings/workspace-settings/members-settings";
 import { requireWorkspaceAccess } from "@/lib/workspace-utils";
 
+export const dynamic = "force-dynamic";
+
 export default async function MembersSettingsPage({
   params,
 }: {

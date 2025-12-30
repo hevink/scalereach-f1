@@ -8,6 +8,8 @@ import { user, workspace, workspaceMember } from "@/db/schema";
 import { auth } from "@/lib/auth";
 import { OnboardingClient } from "./onboarding-client";
 
+export const dynamic = "force-dynamic";
+
 async function OnboardingContent() {
   const session = await auth.api.getSession({ headers: await headers() });
 
