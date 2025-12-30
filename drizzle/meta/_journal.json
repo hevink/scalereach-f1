@@ -5,78 +5,8 @@
     {
       "idx": 0,
       "version": "7",
-      "when": 1766760877911,
-      "tag": "0000_classy_fat_cobra",
-      "breakpoints": true
-    },
-    {
-      "idx": 1,
-      "version": "7",
-      "when": 1766761078245,
-      "tag": "0001_icy_centennial",
-      "breakpoints": true
-    },
-    {
-      "idx": 2,
-      "version": "7",
-      "when": 1766846746565,
-      "tag": "0002_zippy_wildside",
-      "breakpoints": true
-    },
-    {
-      "idx": 3,
-      "version": "7",
-      "when": 1766936634470,
-      "tag": "0003_sad_cannonball",
-      "breakpoints": true
-    },
-    {
-      "idx": 4,
-      "version": "7",
-      "when": 1766939715522,
-      "tag": "0004_real_red_skull",
-      "breakpoints": true
-    },
-    {
-      "idx": 5,
-      "version": "7",
-      "when": 1766940597016,
-      "tag": "0005_absent_rogue",
-      "breakpoints": true
-    },
-    {
-      "idx": 6,
-      "version": "7",
-      "when": 1766983678764,
-      "tag": "0006_flimsy_norman_osborn",
-      "breakpoints": true
-    },
-    {
-      "idx": 7,
-      "version": "7",
-      "when": 1766989378722,
-      "tag": "0007_workable_wolf_cub",
-      "breakpoints": true
-    },
-    {
-      "idx": 8,
-      "version": "7",
-      "when": 1766994096063,
-      "tag": "0008_slow_skaar",
-      "breakpoints": true
-    },
-    {
-      "idx": 9,
-      "version": "7",
-      "when": 1766998796958,
-      "tag": "0009_puzzling_namora",
-      "breakpoints": true
-    },
-    {
-      "idx": 10,
-      "version": "7",
-      "when": 1767010999615,
-      "tag": "0010_unknown_silhouette",
+      "when": 1767079242388,
+      "tag": "0000_fluffy_lester",
       "breakpoints": true
     }
   ]

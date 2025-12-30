@@ -1,7 +1,12 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { CheckCircle2, Loader2, Pencil, X } from "lucide-react";
+import {
+  IconCircleCheck,
+  IconLoader2,
+  IconPencil,
+  IconX,
+} from "@tabler/icons-react";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
@@ -129,7 +134,7 @@ function UsernameSection({
                         type="button"
                         variant="ghost"
                       >
-                        <X className="size-4" />
+                        <IconX className="size-4" />
                       </Button>
                     </div>
                   )}
@@ -192,7 +197,7 @@ function UsernameSection({
                       type="button"
                       variant="outline"
                     >
-                      <Pencil className="size-4" />
+                      <IconPencil className="size-4" />
                     </Button>
                   </div>
                 )}
@@ -555,13 +560,13 @@ export function ProfileSettings() {
                 Full name
               </Label>
               {saveStatus === "saving" && (
-                <Loader2
+                <IconLoader2
                   aria-hidden="true"
                   className="mb-2 size-3.5 animate-spin text-muted-foreground"
                 />
               )}
               {saveStatus === "saved" && (
-                <CheckCircle2
+                <IconCircleCheck
                   aria-hidden="true"
                   className="mb-2 size-3.5 text-green-600 dark:text-green-500"
                 />

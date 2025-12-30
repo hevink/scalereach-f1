@@ -1,6 +1,11 @@
 "use client";
 
-import { Crown, LogOut, MoreVertical, Trash2 } from "lucide-react";
+import {
+  IconCrown,
+  IconDotsVertical,
+  IconLogout,
+  IconTrash,
+} from "@tabler/icons-react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
@@ -104,7 +109,9 @@ function MemberItem({ member, canManage, onRemove }: MemberItemProps) {
             <p className="truncate font-medium text-sm">
               {member.user.name || username}
             </p>
-            {isOwner && <Crown className="size-3.5 shrink-0 text-yellow-600" />}
+            {isOwner && (
+              <IconCrown className="size-3.5 shrink-0 text-yellow-600" />
+            )}
           </div>
           <p className="truncate text-muted-foreground text-xs">
             {member.user.email}
@@ -125,7 +132,7 @@ function MemberItem({ member, canManage, onRemove }: MemberItemProps) {
                   size="icon"
                   variant="ghost"
                 >
-                  <MoreVertical className="size-4" />
+                  <IconDotsVertical className="size-4" />
                 </Button>
               )}
             />
@@ -136,7 +143,7 @@ function MemberItem({ member, canManage, onRemove }: MemberItemProps) {
                 }
                 variant="destructive"
               >
-                <Trash2 className="size-4" />
+                <IconTrash className="size-4" />
                 Remove
               </DropdownMenuItem>
             </DropdownMenuContent>
@@ -459,7 +466,7 @@ export function MembersSettings({ workspace, userRole }: MembersSettingsProps) {
               onClick={() => setShowLeaveDialog(true)}
               variant="destructive"
             >
-              <LogOut className="size-4" />
+              <IconLogout className="size-4" />
               Leave Workspace
             </Button>
           </CardContent>

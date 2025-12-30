@@ -1,7 +1,7 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Eye, EyeOff } from "lucide-react";
+import { IconEye, IconEyeOff } from "@tabler/icons-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
@@ -90,9 +90,9 @@ function PasswordField({
           variant="ghost"
         >
           {showPassword ? (
-            <EyeOff className="size-4" />
+            <IconEyeOff className="size-4" />
           ) : (
-            <Eye className="size-4" />
+            <IconEye className="size-4" />
           )}
         </InputGroupButton>
       </InputGroup>

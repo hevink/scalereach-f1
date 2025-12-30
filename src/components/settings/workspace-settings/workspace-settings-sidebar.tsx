@@ -1,21 +1,21 @@
 "use client";
 
-import type { LucideIcon } from "lucide-react";
 import {
-  AlertTriangle,
-  ChevronLeft,
-  Settings as SettingsIcon,
-  Users,
-} from "lucide-react";
+  IconAlertTriangle,
+  IconChevronLeft,
+  IconSettings,
+  IconUsers,
+} from "@tabler/icons-react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
+import type { ComponentType, ReactNode, SVGProps } from "react";
 import { Button } from "@/components/ui/button";
 import { useSession } from "@/lib/auth-client";
 
 interface NavLinkProps {
   href: string;
-  icon: LucideIcon;
-  children: React.ReactNode;
+  icon: ComponentType<SVGProps<SVGSVGElement>>;
+  children: ReactNode;
   isActive: boolean;
 }
 
@@ -37,7 +37,7 @@ function NavLink({ href, icon: Icon, children, isActive }: NavLinkProps) {
 interface NavMenuProps {
   items: Array<{
     href: string;
-    icon: LucideIcon;
+    icon: ComponentType<SVGProps<SVGSVGElement>>;
     label: string;
     isActive: boolean;
   }>;
@@ -81,19 +81,19 @@ export function WorkspaceSettingsSidebar({
   const settingsNavItems = [
     {
       href: `${basePath}/general`,
-      icon: SettingsIcon,
+      icon: IconSettings,
       label: "General",
       isActive: isGeneralActive,
     },
     {
       href: `${basePath}/members`,
-      icon: Users,
+      icon: IconUsers,
       label: "Members",
       isActive: isMembersActive,
     },
     {
       href: `${basePath}/danger-zone`,
-      icon: AlertTriangle,
+      icon: IconAlertTriangle,
       label: "Danger Zone",
       isActive: isDangerZoneActive,
     },
@@ -112,7 +112,7 @@ export function WorkspaceSettingsSidebar({
           size={"sm"}
           variant="ghost"
         >
-          <ChevronLeft /> Go back
+          <IconChevronLeft /> Go back
         </Button>
         <NavMenu items={settingsNavItems} />
       </div>

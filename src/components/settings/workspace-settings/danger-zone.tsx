@@ -1,6 +1,6 @@
 "use client";
 
-import { AlertTriangle, Loader2 } from "lucide-react";
+import { IconAlertTriangle, IconLoader2 } from "@tabler/icons-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { toast } from "sonner";
@@ -77,7 +77,7 @@ export function DangerZone({ workspace }: DangerZoneProps) {
         </div>
 
         <Alert variant="destructive">
-          <AlertTriangle className="size-4" />
+          <IconAlertTriangle className="size-4" />
           <AlertTitle>Delete Workspace</AlertTitle>
           <AlertDescription>
             Once you delete a workspace, there is no going back. Please be
@@ -119,7 +119,7 @@ export function DangerZone({ workspace }: DangerZoneProps) {
             >
               {isDeleting ? (
                 <>
-                  <Loader2 className="mr-2 size-4 animate-spin" />
+                  <IconLoader2 className="mr-2 size-4 animate-spin" />
                   Deleting...
                 </>
               ) : (
@@ -155,7 +155,7 @@ export function DangerZone({ workspace }: DangerZoneProps) {
             >
               {isDeleting ? (
                 <>
-                  <Loader2 className="mr-2 size-4 animate-spin" />
+                  <IconLoader2 className="mr-2 size-4 animate-spin" />
                   Deleting...
                 </>
               ) : (

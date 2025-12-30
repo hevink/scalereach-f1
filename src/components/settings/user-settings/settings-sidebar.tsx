@@ -1,23 +1,23 @@
 "use client";
 
-import type { LucideIcon } from "lucide-react";
 import {
-  Bell,
-  ChevronLeft,
-  Lock,
-  Settings as SettingsIcon,
-  User,
-} from "lucide-react";
+  IconBell,
+  IconChevronLeft,
+  IconLock,
+  IconSettings,
+  IconUser,
+} from "@tabler/icons-react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
+import type { ComponentType, ReactNode, SVGProps } from "react";
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { useSession } from "@/lib/auth-client";
 
 interface NavLinkProps {
   href: string;
-  icon: LucideIcon;
-  children: React.ReactNode;
+  icon: ComponentType<SVGProps<SVGSVGElement>>;
+  children: ReactNode;
   isActive: boolean;
 }
 
@@ -39,7 +39,7 @@ function NavLink({ href, icon: Icon, children, isActive }: NavLinkProps) {
 interface NavMenuProps {
   items: Array<{
     href: string;
-    icon: LucideIcon;
+    icon: ComponentType<SVGProps<SVGSVGElement>>;
     label: string;
     isActive: boolean;
   }>;
@@ -76,25 +76,25 @@ export function SettingsSidebar() {
   const settingsNavItems = [
     {
       href: `${basePath}/profile`,
-      icon: User,
+      icon: IconUser,
       label: "Profile",
       isActive: isProfileActive,
     },
     {
       href: `${basePath}/preferences`,
-      icon: SettingsIcon,
+      icon: IconSettings,
       label: "Preferences",
       isActive: pathname === `${basePath}/preferences`,
     },
     {
       href: `${basePath}/notification`,
-      icon: Bell,
+      icon: IconBell,
       label: "Notification",
       isActive: pathname === `${basePath}/notification`,
     },
     {
       href: `${basePath}/security`,
-      icon: Lock,
+      icon: IconLock,
       label: "Security",
       isActive: pathname === `${basePath}/security`,
     },
@@ -154,7 +154,7 @@ export function SettingsSidebar() {
           size={"sm"}
           variant="ghost"
         >
-          <ChevronLeft /> Go back
+          <IconChevronLeft /> Go back
         </Button>
         <NavMenu items={settingsNavItems} />
       </div>

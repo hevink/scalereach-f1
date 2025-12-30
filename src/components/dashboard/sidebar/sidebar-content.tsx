@@ -1,6 +1,6 @@
 "use client";
 
-import { Home, Inbox } from "lucide-react";
+import { IconHome, IconInbox } from "@tabler/icons-react";
 import { useInvitationsCount } from "@/hooks/use-invitations-count";
 import { NavMenu } from "./nav-menu";
 
@@ -16,10 +16,10 @@ export function SidebarContent({
   const { count: invitationCount } = useInvitationsCount();
 
   const mainNavItems = [
-    { href: "/", icon: Home, label: "Home" },
+    { href: "/", icon: IconHome, label: "Home" },
     {
       href: "/inbox",
-      icon: Inbox,
+      icon: IconInbox,
       label: "Inbox",
       isWorkspaceAware: false,
       notificationCount: invitationCount,

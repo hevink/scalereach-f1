@@ -1,7 +1,7 @@
 "use client";
 
+import { IconCamera, IconUser } from "@tabler/icons-react";
 import imageCompression from "browser-image-compression";
-import { Camera, User as UserIcon } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
@@ -246,7 +246,7 @@ export function ProfileAvatar({
                     />
                     <AvatarFallback className="text-lg">
                       {name?.charAt(0).toUpperCase() || (
-                        <UserIcon className="size-6 opacity-50" />
+                        <IconUser className="size-6 opacity-50" />
                       )}
                     </AvatarFallback>
                   </Avatar>
@@ -260,7 +260,7 @@ export function ProfileAvatar({
                     {isUploadingAvatar ? (
                       <Spinner className="size-4 text-white" />
                     ) : (
-                      <Camera className="size-4 text-white" />
+                      <IconCamera className="size-4 text-white" />
                     )}
                   </div>
                 </button>

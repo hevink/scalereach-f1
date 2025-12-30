@@ -1,12 +1,12 @@
 "use client";
 
-import type { LucideIcon } from "lucide-react";
 import Link from "next/link";
+import type { ComponentType, SVGProps } from "react";
 
 interface NavLinkProps {
   children: React.ReactNode;
   href: string;
-  icon: LucideIcon;
+  icon: ComponentType<SVGProps<SVGSVGElement>>;
   isActive?: boolean;
   notificationCount?: number;
 }

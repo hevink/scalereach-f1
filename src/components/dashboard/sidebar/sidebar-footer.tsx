@@ -1,6 +1,6 @@
 "use client";
 
-import { Bug, HelpCircle, Settings } from "lucide-react";
+import { IconBug, IconHelpCircle, IconSettings } from "@tabler/icons-react";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { NavMenu } from "./nav-menu";
 import { LoadingUserProfile, UserProfile } from "./user-profile";
@@ -39,19 +39,19 @@ export function SidebarFooter({
   const bottomNavItems = [
     {
       href: workspaceSettingsHref,
-      icon: Settings,
+      icon: IconSettings,
       label: "Settings",
       isWorkspaceAware: false,
     },
     {
       href: "/help",
-      icon: HelpCircle,
+      icon: IconHelpCircle,
       label: "Get Help",
       isWorkspaceAware: true,
     },
     {
       href: "/bug",
-      icon: Bug,
+      icon: IconBug,
       label: "Report Bug",
       isWorkspaceAware: true,
     },

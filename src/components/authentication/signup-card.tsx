@@ -1,6 +1,6 @@
 "use client";
 
-import { Eye, EyeOff } from "lucide-react";
+import { IconEye, IconEyeOff } from "@tabler/icons-react";
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -422,9 +422,9 @@ export function SignupCard() {
             variant="ghost"
           >
             {showPassword ? (
-              <EyeOff className="size-4" />
+              <IconEyeOff className="size-4" />
             ) : (
-              <Eye className="size-4" />
+              <IconEye className="size-4" />
             )}
           </InputGroupButton>
         </InputGroup>
@@ -457,9 +457,9 @@ export function SignupCard() {
             variant="ghost"
           >
             {showPassword ? (
-              <EyeOff className="size-4" />
+              <IconEyeOff className="size-4" />
             ) : (
-              <Eye className="size-4" />
+              <IconEye className="size-4" />
             )}
           </InputGroupButton>
         </InputGroup>

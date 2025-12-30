@@ -1,6 +1,6 @@
 "use client";
 
-import { Monitor, Moon, Sun } from "lucide-react";
+import { IconDeviceDesktop, IconMoon, IconSun } from "@tabler/icons-react";
 import { useTheme } from "next-themes";
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
@@ -33,9 +33,9 @@ export function ThemeSwitcher() {
   }
 
   const themes = [
-    { value: "light", label: "Light", icon: Sun },
-    { value: "dark", label: "Dark", icon: Moon },
-    { value: "system", label: "System", icon: Monitor },
+    { value: "light", label: "Light", icon: IconSun },
+    { value: "dark", label: "Dark", icon: IconMoon },
+    { value: "system", label: "System", icon: IconDeviceDesktop },
   ] as const;
 
   return (

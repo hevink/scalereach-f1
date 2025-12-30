@@ -1,7 +1,7 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { KeyRound, Smartphone } from "lucide-react";
+import { IconDeviceMobile, IconKey } from "@tabler/icons-react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
@@ -166,7 +166,7 @@ export function TwoFactorVerify() {
                 Backup Code
               </Label>
               <div className="relative">
-                <KeyRound className="absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground" />
+                <IconKey className="absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground" />
                 <Input
                   {...backupForm.register("code")}
                   autoComplete="off"
@@ -226,12 +226,12 @@ export function TwoFactorVerify() {
         >
           {method === "totp" ? (
             <>
-              <KeyRound className="size-4" />
+              <IconKey className="size-4" />
               Use backup code
             </>
           ) : (
             <>
-              <Smartphone className="size-4" />
+              <IconDeviceMobile className="size-4" />
               Use authenticator app
             </>
           )}

@@ -1,6 +1,10 @@
 "use client";
 
-import { LogOut, Monitor, Smartphone } from "lucide-react";
+import {
+  IconDeviceDesktop,
+  IconDeviceMobile,
+  IconLogout,
+} from "@tabler/icons-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
@@ -28,7 +32,7 @@ interface Session {
 }
 
 interface DeviceInfo {
-  icon: typeof Monitor;
+  icon: typeof IconDeviceDesktop;
   deviceType: string;
   browser: string;
   os: string;
@@ -37,15 +41,15 @@ interface DeviceInfo {
 
 function getDeviceTypeAndIcon(ua: string): {
   deviceType: string;
-  icon: typeof Monitor;
+  icon: typeof IconDeviceDesktop;
 } {
   if (ua.includes("mobile") && !ua.includes("tablet")) {
-    return { deviceType: "Mobile", icon: Smartphone };
+    return { deviceType: "Mobile", icon: IconDeviceMobile };
   }
   if (ua.includes("tablet") || ua.includes("ipad")) {
-    return { deviceType: "Tablet", icon: Smartphone };
+    return { deviceType: "Tablet", icon: IconDeviceMobile };
   }
-  return { deviceType: "Desktop", icon: Monitor };
+  return { deviceType: "Desktop", icon: IconDeviceDesktop };
 }
 
 function getBrowser(ua: string): string {
@@ -92,7 +96,7 @@ function getOS(ua: string): string {
 function parseUserAgent(userAgent: string | null): DeviceInfo {
   if (!userAgent) {
     return {
-      icon: Monitor,
+      icon: IconDeviceDesktop,
       deviceType: "Unknown",
       browser: "Unknown",
       os: "Unknown",
@@ -324,7 +328,7 @@ export function SessionList() {
                               type="button"
                               variant="outline"
                             >
-                              <LogOut className="size-4" />
+                              <IconLogout className="size-4" />
                             </Button>
                           </Link>
                         </div>
@@ -393,7 +397,7 @@ export function SessionList() {
                             {revokingSessionId === session.id ? (
                               <Spinner className="size-3" />
                             ) : (
-                              <LogOut className="size-4" />
+                              <IconLogout className="size-4" />
                             )}
                           </Button>
                         </div>

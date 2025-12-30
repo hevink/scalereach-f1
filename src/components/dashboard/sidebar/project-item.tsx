@@ -1,6 +1,6 @@
 "use client";
 
-import { ChevronDown, ChevronRight } from "lucide-react";
+import { IconChevronDown, IconChevronRight } from "@tabler/icons-react";
 import { useState } from "react";
 import { CollapsibleContent } from "./collapsible-group";
 
@@ -36,9 +36,9 @@ export function ProjectItem({
         </div>
         {hasChildren &&
           (isOpen ? (
-            <ChevronDown className="size-3 shrink-0" />
+            <IconChevronDown className="size-3 shrink-0" />
           ) : (
-            <ChevronRight className="size-3 shrink-0" />
+            <IconChevronRight className="size-3 shrink-0" />
           ))}
       </button>
       {hasChildren && (

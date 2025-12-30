@@ -2,15 +2,15 @@
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
-  Check,
-  Copy,
-  Eye,
-  EyeOff,
-  RefreshCw,
-  Shield,
-  ShieldCheck,
-  ShieldOff,
-} from "lucide-react";
+  IconCheck,
+  IconCopy,
+  IconEye,
+  IconEyeOff,
+  IconRefresh,
+  IconShield,
+  IconShieldCheck,
+  IconShieldOff,
+} from "@tabler/icons-react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
@@ -67,9 +67,9 @@ function CopyButton({ text, label }: { text: string; label: string }) {
       variant="ghost"
     >
       {copied ? (
-        <Check className="size-4 text-green-500" />
+        <IconCheck className="size-4 text-green-500" />
       ) : (
-        <Copy className="size-4" />
+        <IconCopy className="size-4" />
       )}
       <span className="sr-only">{label}</span>
     </Button>
@@ -145,12 +145,12 @@ function BackupCodesDisplay({ codes }: { codes: string[] }) {
       >
         {copied ? (
           <>
-            <Check className="mr-2 size-4" />
+            <IconCheck className="mr-2 size-4" />
             Copied!
           </>
         ) : (
           <>
-            <Copy className="mr-2 size-4" />
+            <IconCopy className="mr-2 size-4" />
             Copy all codes
           </>
         )}
@@ -197,9 +197,9 @@ function PasswordStep({
             variant="ghost"
           >
             {showPassword ? (
-              <EyeOff className="size-4" />
+              <IconEyeOff className="size-4" />
             ) : (
-              <Eye className="size-4" />
+              <IconEye className="size-4" />
             )}
           </InputGroupButton>
         </InputGroup>
@@ -429,7 +429,7 @@ function EnableTwoFactorDialog({
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
-            <Shield className="size-5" />
+            <IconShield className="size-5" />
             {getStepTitle(step)}
           </DialogTitle>
           <DialogDescription>{getStepDescription(step)}</DialogDescription>
@@ -510,7 +510,7 @@ function DisableTwoFactorDialog({
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
-            <ShieldOff className="size-5" />
+            <IconShieldOff className="size-5" />
             Disable Two-Factor Authentication
           </DialogTitle>
           <DialogDescription>
@@ -542,9 +542,9 @@ function DisableTwoFactorDialog({
                 variant="ghost"
               >
                 {showPassword ? (
-                  <EyeOff className="size-4" />
+                  <IconEyeOff className="size-4" />
                 ) : (
-                  <Eye className="size-4" />
+                  <IconEye className="size-4" />
                 )}
               </InputGroupButton>
             </InputGroup>
@@ -627,7 +627,7 @@ function RegenerateBackupCodesDialog({
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
-            <RefreshCw className="size-5" />
+            <IconRefresh className="size-5" />
             Regenerate Backup Codes
           </DialogTitle>
           <DialogDescription>
@@ -662,9 +662,9 @@ function RegenerateBackupCodesDialog({
                   variant="ghost"
                 >
                   {showPassword ? (
-                    <EyeOff className="size-4" />
+                    <IconEyeOff className="size-4" />
                   ) : (
-                    <Eye className="size-4" />
+                    <IconEye className="size-4" />
                   )}
                 </InputGroupButton>
               </InputGroup>
@@ -736,12 +736,12 @@ export function TwoFactorSettings() {
         </Label>
         {is2FAEnabled ? (
           <span className="flex items-center gap-1 text-green-600 text-sm">
-            <ShieldCheck className="size-4" />
+            <IconShieldCheck className="size-4" />
             Enabled
           </span>
         ) : (
           <span className="flex items-center gap-1 text-muted-foreground text-sm">
-            <ShieldOff className="size-4" />
+            <IconShieldOff className="size-4" />
             Disabled
           </span>
         )}
@@ -760,7 +760,7 @@ export function TwoFactorSettings() {
               onClick={() => setShowBackupCodesDialog(true)}
               variant="outline"
             >
-              <RefreshCw className="size-4" />
+              <IconRefresh className="size-4" />
               Regenerate backup codes
             </Button>
             <Button
@@ -768,7 +768,7 @@ export function TwoFactorSettings() {
               onClick={() => setShowDisableDialog(true)}
               variant="outline"
             >
-              <ShieldOff className="size-4" />
+              <IconShieldOff className="size-4" />
               Disable 2FA
             </Button>
           </>
@@ -778,7 +778,7 @@ export function TwoFactorSettings() {
             onClick={() => setShowEnableDialog(true)}
             variant="outline"
           >
-            <Shield className="size-4" />
+            <IconShield className="size-4" />
             Enable 2FA
           </Button>
         )}

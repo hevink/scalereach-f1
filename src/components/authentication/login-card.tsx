@@ -1,6 +1,6 @@
 "use client";
 
-import { Eye, EyeOff, Fingerprint } from "lucide-react";
+import { IconEye, IconEyeOff, IconFingerprint } from "@tabler/icons-react";
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -118,9 +118,9 @@ function PasswordFieldSection({
             variant="ghost"
           >
             {showPassword ? (
-              <EyeOff className="size-4" />
+              <IconEyeOff className="size-4" />
             ) : (
-              <Eye className="size-4" />
+              <IconEye className="size-4" />
             )}
           </InputGroupButton>
         </InputGroup>
@@ -173,7 +173,7 @@ function PasskeyButton({
           <Spinner />
         ) : (
           <span className="flex items-center gap-3 font-medium">
-            <Fingerprint className="size-4" />
+            <IconFingerprint className="size-4" />
             Sign in with passkey
           </span>
         )}

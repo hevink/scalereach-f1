@@ -2,15 +2,15 @@
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
-  Edit2,
-  Fingerprint,
-  Key,
-  Laptop,
-  MoreHorizontal,
-  Plus,
-  Smartphone,
-  Trash2,
-} from "lucide-react";
+  IconDeviceLaptop,
+  IconDeviceMobile,
+  IconDots,
+  IconEdit,
+  IconFingerprint,
+  IconKey,
+  IconPlus,
+  IconTrash,
+} from "@tabler/icons-react";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
@@ -57,9 +57,9 @@ interface Passkey {
 
 function getDeviceIcon(deviceType: string) {
   if (deviceType === "singleDevice") {
-    return <Smartphone className="size-5" />;
+    return <IconDeviceMobile className="size-5" />;
   }
-  return <Laptop className="size-5" />;
+  return <IconDeviceLaptop className="size-5" />;
 }
 
 function formatDate(date: Date | null) {
@@ -106,7 +106,7 @@ function PasskeyItem({
           size="icon"
           variant="ghost"
         >
-          <MoreHorizontal className="size-4" />
+          <IconDots className="size-4" />
         </Button>
         {showMenu && (
           <>
@@ -130,7 +130,7 @@ function PasskeyItem({
                 }}
                 type="button"
               >
-                <Edit2 className="size-4" />
+                <IconEdit className="size-4" />
                 Rename
               </button>
               <button
@@ -141,7 +141,7 @@ function PasskeyItem({
                 }}
                 type="button"
               >
-                <Trash2 className="size-4" />
+                <IconTrash className="size-4" />
                 Delete
               </button>
             </div>
@@ -192,7 +192,7 @@ function AddPasskeyDialog({
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
-            <Fingerprint className="size-5" />
+            <IconFingerprint className="size-5" />
             Add Passkey
           </DialogTitle>
           <DialogDescription>
@@ -285,7 +285,7 @@ function RenamePasskeyDialog({
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
-            <Edit2 className="size-5" />
+            <IconEdit className="size-5" />
             Rename Passkey
           </DialogTitle>
           <DialogDescription>
@@ -443,7 +443,7 @@ export function PasskeySettings() {
       <div className="flex w-full items-center justify-between">
         <Label className="font-medium text-base">Passkeys</Label>
         <span className="flex items-center gap-2 text-muted-foreground text-sm">
-          <Key className="size-4" />
+          <IconKey className="size-4" />
           {passkeys.length} registered
         </span>
       </div>
@@ -477,7 +477,7 @@ export function PasskeySettings() {
             onClick={() => setShowAddDialog(true)}
             variant="outline"
           >
-            <Plus className="size-4" />
+            <IconPlus className="size-4" />
             Add a passkey
           </Button>
         </div>

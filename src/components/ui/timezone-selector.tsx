@@ -1,6 +1,6 @@
 "use client";
 
-import { ChevronDownIcon } from "lucide-react";
+import { IconChevronDown } from "@tabler/icons-react";
 import { useMemo, useState } from "react";
 import { getGroupedTimezoneOptions } from "@/lib/timezone";
 import { cn } from "@/lib/utils";
@@ -79,7 +79,7 @@ export function TimezoneSelector({
           </ComboboxPopup>
         </ComboboxPositioner>
         <div className="pointer-events-none absolute top-1/2 right-3 z-10 -translate-y-1/2">
-          <ChevronDownIcon
+          <IconChevronDown
             className={cn(
               "size-4 opacity-50 transition-transform duration-200",
               open && "rotate-180"

@@ -9,7 +9,6 @@ import { workspace, workspaceMember } from "@/db/schema";
 import { auth } from "@/lib/auth";
 
 async function getWorkspaceData(slug: string) {
-  "use cache";
   const workspaceData = await db
     .select({
       id: workspace.id,
@@ -29,7 +28,6 @@ async function getWorkspaceData(slug: string) {
 }
 
 async function checkMembership(workspaceId: string, userId: string) {
-  "use cache";
   const membership = await db
     .select({ id: workspaceMember.id })
     .from(workspaceMember)

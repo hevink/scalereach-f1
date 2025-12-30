@@ -1,6 +1,6 @@
 "use client";
 
-import { ChevronDown, ChevronRight } from "lucide-react";
+import { IconChevronDown, IconChevronRight } from "@tabler/icons-react";
 import { useState } from "react";
 
 interface CollapsibleContentProps {
@@ -38,9 +38,9 @@ export function CollapsibleGroup({
       >
         <span>{label}</span>
         {isOpen ? (
-          <ChevronDown className="size-3 shrink-0" />
+          <IconChevronDown className="size-3 shrink-0" />
         ) : (
-          <ChevronRight className="size-3 shrink-0" />
+          <IconChevronRight className="size-3 shrink-0" />
         )}
       </button>
       <CollapsibleContent isOpen={isOpen}>{children}</CollapsibleContent>

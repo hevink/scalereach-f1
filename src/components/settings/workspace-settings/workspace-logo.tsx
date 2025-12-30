@@ -1,7 +1,7 @@
 "use client";
 
+import { IconBuilding, IconCamera } from "@tabler/icons-react";
 import imageCompression from "browser-image-compression";
-import { Building2, Camera } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
@@ -223,7 +223,7 @@ export function WorkspaceLogo({
                     />
                     <AvatarFallback className="text-lg">
                       {workspaceName?.charAt(0).toUpperCase() || (
-                        <Building2 className="size-6 opacity-50" />
+                        <IconBuilding className="size-6 opacity-50" />
                       )}
                     </AvatarFallback>
                   </Avatar>
@@ -237,7 +237,7 @@ export function WorkspaceLogo({
                     {isUploadingLogo ? (
                       <Spinner className="size-4 text-white" />
                     ) : (
-                      <Camera className="size-4 text-white" />
+                      <IconCamera className="size-4 text-white" />
                     )}
                   </div>
                 </button>

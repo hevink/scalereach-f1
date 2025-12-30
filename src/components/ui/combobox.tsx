@@ -1,5 +1,5 @@
 import { Combobox as ComboboxPrimitive } from "@base-ui/react/combobox";
-import { CheckIcon, XIcon } from "lucide-react";
+import { IconCheck, IconX } from "@tabler/icons-react";
 import type { RefObject } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -51,7 +51,7 @@ function ComboboxClear({
       data-slot="combobox-clear"
       {...props}
     >
-      {children ?? <XIcon className="size-4" />}
+      {children ?? <IconX className="size-4" />}
     </ComboboxPrimitive.Clear>
   );
 }
@@ -105,7 +105,7 @@ function ComboboxChipRemove({
       data-slot="combobox-chip-remove"
       {...props}
     >
-      {children ?? <XIcon className="size-3.5" />}
+      {children ?? <IconX className="size-3.5" />}
     </ComboboxPrimitive.ChipRemove>
   );
 }
@@ -203,7 +203,7 @@ function ComboboxItemIndicator({
       data-slot="combobox-item-indicator"
       {...props}
     >
-      {children ?? <CheckIcon className="size-4" />}
+      {children ?? <IconCheck className="size-4" />}
     </ComboboxPrimitive.ItemIndicator>
   );
 }

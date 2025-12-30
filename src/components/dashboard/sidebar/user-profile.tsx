@@ -1,6 +1,6 @@
 "use client";
 
-import { Settings } from "lucide-react";
+import { IconSettings } from "@tabler/icons-react";
 import Image from "next/image";
 import Link from "next/link";
 import { useState } from "react";
@@ -111,7 +111,7 @@ export function UserProfile({
             size="icon"
             variant="ghost"
           >
-            <Settings className="size-4" />
+            <IconSettings className="size-4" />
           </Button>
         </Link>
       </div>

@@ -1,6 +1,6 @@
 "use client";
 
-import { Inbox as InboxIcon } from "lucide-react";
+import { IconInbox } from "@tabler/icons-react";
 import { DashboardSidebar } from "@/components/dashboard/sidebar/sidebar";
 import { InvitationList } from "@/components/inbox/invitation-list";
 import { Card, CardContent } from "@/components/ui/card";
@@ -22,7 +22,7 @@ export default function InboxPage() {
                 </div>
                 <Card>
                   <CardContent className="flex flex-col items-center justify-center py-12">
-                    <InboxIcon className="mb-3 size-8 text-muted-foreground" />
+                    <IconInbox className="mb-3 size-8 text-muted-foreground" />
                     <p className="text-muted-foreground text-sm">
                       Your Inbox is empty
                     </p>

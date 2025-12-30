@@ -1,6 +1,6 @@
 "use client";
 
-import { Building2, ChevronDown } from "lucide-react";
+import { IconBuilding, IconChevronDown } from "@tabler/icons-react";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
@@ -257,7 +257,7 @@ export function WorkspaceSelector({ pathname }: WorkspaceSelectorProps) {
                 />
                 <AvatarFallback className="rounded-xs bg-primary/10 font-medium text-primary text-xs">
                   {currentWorkspace?.name?.charAt(0).toUpperCase() || (
-                    <Building2 className="size-3" />
+                    <IconBuilding className="size-3" />
                   )}
                 </AvatarFallback>
               </Avatar>
@@ -266,7 +266,7 @@ export function WorkspaceSelector({ pathname }: WorkspaceSelectorProps) {
               </p>
             </div>
             <div className="p-2">
-              <ChevronDown className="size-4" />
+              <IconChevronDown className="size-4" />
             </div>
           </DropdownMenuTrigger>
           <DropdownMenuContent

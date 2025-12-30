@@ -1,7 +1,7 @@
 #!/usr/bin/env tsx
 
 import "dotenv/config";
-import { neon } from "@neondatabase/serverless";
+import { Pool } from "pg";
 
 if (!process.env.DATABASE_URL) {
   console.error("❌ DATABASE_URL environment variable is not defined");
@@ -21,7 +21,9 @@ async function checkDatabase() {
   if (!databaseUrl) {
     throw new Error("DATABASE_URL environment variable is not defined");
   }
-  const sql = neon(databaseUrl);
+  const pool = new Pool({
+    connectionString: databaseUrl,
+  });
 
   console.log("🔍 Checking database tables...\n");
 
@@ -30,15 +32,16 @@ async function checkDatabase() {
 
   for (const table of requiredTables) {
     try {
-      const result = await sql`
-        SELECT EXISTS (
+      const result = await pool.query(
+        `SELECT EXISTS (
           SELECT FROM information_schema.tables 
           WHERE table_schema = 'public' 
-          AND table_name = ${table}
-        ) as exists;
-      `;
+          AND table_name = $1
+        ) as exists`,
+        [table]
+      );
 
-      const exists = (result as { exists: boolean }[])[0]?.exists ?? false;
+      const exists = (result.rows as { exists: boolean }[])[0]?.exists ?? false;
 
       if (exists) {
         existingTables.push(table);
@@ -52,6 +55,8 @@ async function checkDatabase() {
       missingTables.push(table);
     }
   }
+
+  await pool.end();
 
   console.log(`\n${"=".repeat(50)}`);
 

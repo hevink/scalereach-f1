@@ -1,12 +1,12 @@
 "use client";
 
-import type { LucideIcon } from "lucide-react";
+import type { ComponentType, SVGProps } from "react";
 import { NavLink } from "./nav-link";
 import { buildWorkspaceUrl, isWorkspaceRouteActive } from "./utils";
 
 interface NavMenuItem {
   href: string;
-  icon: LucideIcon;
+  icon: ComponentType<SVGProps<SVGSVGElement>>;
   label: string;
   isWorkspaceAware?: boolean;
   notificationCount?: number;

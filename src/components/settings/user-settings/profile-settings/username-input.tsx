@@ -1,6 +1,6 @@
 "use client";
 
-import { CheckCircle2, Loader2, XCircle } from "lucide-react";
+import { IconCircleCheck, IconCircleX, IconLoader2 } from "@tabler/icons-react";
 import { useEffect, useRef, useState } from "react";
 import { Input } from "@/components/ui/input";
 import { authClient } from "@/lib/auth-client";
@@ -96,19 +96,19 @@ export function UsernameInput({
         {value && (
           <div className="pointer-events-none absolute top-1/2 right-3 -translate-y-1/2">
             {isChecking && (
-              <Loader2
+              <IconLoader2
                 aria-hidden="true"
                 className="size-4 animate-spin text-muted-foreground"
               />
             )}
             {!isChecking && isValid === true && (
-              <CheckCircle2
+              <IconCircleCheck
                 aria-label="Username is available"
                 className="size-4 text-green-600 dark:text-green-500"
               />
             )}
             {!isChecking && isValid === false && (
-              <XCircle
+              <IconCircleX
                 aria-label="Username is not available"
                 className="size-4 text-destructive"
               />
