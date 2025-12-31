@@ -7,9 +7,7 @@ interface TeamIssuesPageProps {
   params: Promise<{ workspaceSlug: string; teamSlug: string }>;
 }
 
-export default async function TeamIssuesPage({
-  params,
-}: TeamIssuesPageProps) {
+export default async function TeamIssuesPage({ params }: TeamIssuesPageProps) {
   const { workspaceSlug, teamSlug } = await params;
 
   try {
@@ -31,7 +29,7 @@ export default async function TeamIssuesPage({
           </div>
         </div>
         <div className="rounded-lg border bg-card p-6">
-          <h2 className="font-medium text-lg mb-4">Issues</h2>
+          <h2 className="mb-4 font-medium text-lg">Issues</h2>
           <p className="text-muted-foreground text-sm">
             Issues for this team will be displayed here.
           </p>
@@ -42,4 +40,3 @@ export default async function TeamIssuesPage({
     notFound();
   }
 }
-

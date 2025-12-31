@@ -149,14 +149,11 @@ function UsernameSection({
                           usernameEditValue.trim().toLowerCase() ===
                             username.toLowerCase()
                         }
+                        loading={isSavingUsername}
                         onClick={onSave}
                         type="button"
                       >
-                        {isSavingUsername ? (
-                          <Spinner className="size-4" />
-                        ) : (
-                          "Save"
-                        )}
+                        Save
                       </Button>
                     </div>
                   )}

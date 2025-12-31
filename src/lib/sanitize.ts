@@ -1,3 +1,5 @@
+const TEAM_IDENTIFIER_REGEX = /^[A-Z0-9]+$/;
+
 export function sanitizeText(input: string): string {
   if (typeof input !== "string") {
     return "";
@@ -101,7 +103,7 @@ export function sanitizeTeamIdentifier(identifier: unknown): string | null {
     return null;
   }
 
-  if (!/^[A-Z0-9]+$/.test(sanitized)) {
+  if (!TEAM_IDENTIFIER_REGEX.test(sanitized)) {
     return null;
   }
 

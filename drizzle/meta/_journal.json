@@ -36,6 +36,13 @@
       "when": 1767160361248,
       "tag": "0004_dry_pride",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1767162746495,
+      "tag": "0005_uneven_strong_guy",
+      "breakpoints": true
     }
   ]
 }

@@ -132,7 +132,6 @@ function validateLogo(logo: unknown): {
   return validation;
 }
 
-
 async function validateSlugAvailability(
   slug: string,
   currentSlug: string
@@ -252,7 +251,6 @@ function processLogoField(
   updateData.logo = validation.value;
   return { success: true };
 }
-
 
 type FieldProcessor = (
   value: unknown,

@@ -5,6 +5,7 @@ const nextConfig: NextConfig = {
   poweredByHeader: false,
   compress: true,
   images: {
+    qualities: [10, 20, 30, 40, 50, 60, 70, 80, 90, 100],
     remotePatterns: [
       {
         protocol: "https",

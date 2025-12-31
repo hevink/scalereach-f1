@@ -62,7 +62,14 @@ const invitationsFetcher = async (url: string): Promise<Invitation[]> => {
 
 export function InvitationList() {
   const router = useRouter();
-  const [processingIds, setProcessingIds] = useState<Set<string>>(new Set());
+
+  // Separate states for accept & decline processing
+  const [acceptProcessingIds, setAcceptProcessingIds] = useState<Set<string>>(
+    new Set()
+  );
+  const [declineProcessingIds, setDeclineProcessingIds] = useState<Set<string>>(
+    new Set()
+  );
 
   const {
     data: invitations = [],
@@ -75,7 +82,7 @@ export function InvitationList() {
   });
 
   const handleAccept = async (invitationId: string, workspaceSlug: string) => {
-    setProcessingIds((prev) => new Set(prev).add(invitationId));
+    setAcceptProcessingIds((prev) => new Set(prev).add(invitationId));
 
     try {
       const response = await fetch(`/api/invitations/${invitationId}/accept`, {
@@ -102,7 +109,7 @@ export function InvitationList() {
           : "Failed to accept invitation. Please try again."
       );
     } finally {
-      setProcessingIds((prev) => {
+      setAcceptProcessingIds((prev) => {
         const next = new Set(prev);
         next.delete(invitationId);
         return next;
@@ -111,7 +118,7 @@ export function InvitationList() {
   };
 
   const handleDecline = async (invitationId: string) => {
-    setProcessingIds((prev) => new Set(prev).add(invitationId));
+    setDeclineProcessingIds((prev) => new Set(prev).add(invitationId));
 
     try {
       const response = await fetch(`/api/invitations/${invitationId}/decline`, {
@@ -135,7 +142,7 @@ export function InvitationList() {
           : "Failed to decline invitation. Please try again."
       );
     } finally {
-      setProcessingIds((prev) => {
+      setDeclineProcessingIds((prev) => {
         const next = new Set(prev);
         next.delete(invitationId);
         return next;
@@ -182,11 +189,16 @@ export function InvitationList() {
   return (
     <div className="flex flex-col gap-4">
       {invitations.map((invitation) => {
-        const isProcessing = processingIds.has(invitation.id);
+        // Use separate processing states for accept and decline
+        const isAcceptProcessing = acceptProcessingIds.has(invitation.id);
+        const isDeclineProcessing = declineProcessingIds.has(invitation.id);
         const expiresAt = invitation.expiresAt
           ? new Date(invitation.expiresAt)
           : null;
         const isExpired = expiresAt ? expiresAt < new Date() : false;
+
+        // Any button is disabled if either action is ongoing
+        const isAnyProcessing = isAcceptProcessing || isDeclineProcessing;
 
         return (
           <Card className="p-4 sm:p-4" key={invitation.id}>
@@ -214,22 +226,24 @@ export function InvitationList() {
               <div className="flex items-center gap-2">
                 <Button
                   className="flex items-center justify-center gap-1 text-xs"
-                  disabled={isProcessing || isExpired}
+                  disabled={isAnyProcessing || isExpired}
+                  loading={isAcceptProcessing}
                   onClick={() =>
                     handleAccept(invitation.id, invitation.workspace.slug)
                   }
                   size="sm"
                 >
-                  {isProcessing ? <Spinner /> : <>Accept</>}
+                  <>Accept</>
                 </Button>
                 <Button
                   className="flex items-center justify-center gap-1 text-xs"
-                  disabled={isProcessing}
+                  disabled={isAnyProcessing}
+                  loading={isDeclineProcessing}
                   onClick={() => handleDecline(invitation.id)}
                   size="sm"
                   variant="outline"
                 >
-                  {isProcessing ? <Spinner /> : <>Decline</>}
+                  <>Decline</>
                 </Button>
               </div>
             </CardContent>

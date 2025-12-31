@@ -13,7 +13,10 @@ function SettingsContentLoading() {
           alt="Logo"
           className="animate-pulse grayscale"
           height={32}
+          priority
+          quality={10}
           src="/logo.svg"
+          unoptimized
           width={32}
         />
         <p className="font-[450] text-muted-foreground text-sm">

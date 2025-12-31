@@ -25,17 +25,22 @@ export function NavLink({
       const IconComponent = icon as ComponentType<SVGProps<SVGSVGElement>>;
       return <IconComponent className="size-4 shrink-0" />;
     }
-    return <div className="flex size-4 items-center justify-center shrink-0">{icon}</div>;
+    return (
+      <div className="flex size-4 shrink-0 items-center justify-center">
+        {icon}
+      </div>
+    );
   };
 
   return (
     <li className="list-none">
       <Link
         aria-label={`${children} ${notificationCount > 0 ? `(${notificationCount})` : ""}`}
-        className={`flex items-center gap-2 rounded-md px-2 py-1.5 font-[480] text-[13.5px] transition-colors ${isActive
-          ? "bg-sidebar-accent text-sidebar-accent-foreground"
-          : "hover:bg-sidebar-accent"
-          }`}
+        className={`flex items-center gap-2 rounded-md px-2 py-1.5 font-[480] text-[13.5px] transition-colors ${
+          isActive
+            ? "bg-sidebar-accent text-sidebar-accent-foreground"
+            : "hover:bg-sidebar-accent"
+        }`}
         href={href}
       >
         <div className="relative">

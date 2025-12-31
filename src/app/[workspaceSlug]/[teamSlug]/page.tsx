@@ -10,4 +10,3 @@ export default async function TeamPage({ params }: TeamPageProps) {
   const { workspaceSlug, teamSlug } = await params;
   redirect(`/${workspaceSlug}/${teamSlug}/issues`);
 }
-

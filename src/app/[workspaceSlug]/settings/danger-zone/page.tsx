@@ -79,10 +79,6 @@ export default async function DangerZonePage({
     notFound();
   }
 
-  if (workspaceData.ownerId !== session.user.id) {
-    notFound();
-  }
-
   return (
     <div className="mx-auto max-w-xl p-6">
       <DangerZone

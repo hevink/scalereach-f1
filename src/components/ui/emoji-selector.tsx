@@ -1,15 +1,11 @@
 "use client";
 
-import { useState } from "react";
-import { EmojiPicker } from "frimousse";
 import { IconMoodSmile } from "@tabler/icons-react";
-import { Button } from "./button";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "./popover";
+import { EmojiPicker } from "frimousse";
+import { useState } from "react";
 import { cn } from "@/lib/utils";
+import { Button } from "./button";
+import { Popover, PopoverContent, PopoverTrigger } from "./popover";
 
 interface EmojiSelectorProps {
   value?: string | null;
@@ -32,25 +28,25 @@ export function EmojiSelector({
   };
 
   return (
-    <Popover open={isOpen} onOpenChange={setIsOpen}>
+    <Popover onOpenChange={setIsOpen} open={isOpen}>
       <PopoverTrigger
         render={
           <Button
-            type="button"
-            variant="outline"
-            size="icon"
             className={cn("size-10 text-xl", className)}
             disabled={disabled}
+            size="icon"
+            type="button"
+            variant="outline"
           >
             {value || <IconMoodSmile className="size-5" />}
           </Button>
         }
       />
-      <PopoverContent className="w-fit p-0" align="start">
+      <PopoverContent align="start" className="w-fit p-0">
         <EmojiPicker.Root
           className="flex h-[368px] w-[352px] flex-col"
-          onEmojiSelect={handleEmojiSelect}
           columns={10}
+          onEmojiSelect={handleEmojiSelect}
         >
           <EmojiPicker.Search
             className="mx-4 my-2 mt-4 h-10 w-[calc(100%-2rem)] min-w-0 rounded-md border border-input bg-transparent px-3.5 py-1 font-normal text-base outline-none transition-[color,box-shadow] placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50 disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50 md:text-sm dark:bg-input/30"

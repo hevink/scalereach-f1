@@ -11,9 +11,7 @@ interface CollapsibleContentProps {
 function CollapsibleContent({ children, isOpen }: CollapsibleContentProps) {
   return (
     <div
-      className={`
-        grid transition-[grid-template-rows,opacity] duration-200 ease-out
-        ${isOpen ? "grid-rows-[1fr] opacity-100" : "grid-rows-[0fr] opacity-0"}
+      className={`grid transition-[grid-template-rows,opacity] duration-200 ease-out ${isOpen ? "grid-rows-[1fr] opacity-100" : "grid-rows-[0fr] opacity-0"}
       `}
     >
       <div className="overflow-hidden">
@@ -44,9 +42,9 @@ export function CollapsibleGroup({
     <div className="flex flex-col">
       <div className="flex w-full items-center justify-between rounded-md px-2 py-1.5">
         <button
-          type="button"
-          onClick={() => setIsOpen(!isOpen)}
           className="flex flex-1 items-center gap-2 font-medium text-muted-foreground text-xs transition-colors hover:text-foreground"
+          onClick={() => setIsOpen(!isOpen)}
+          type="button"
         >
           <span>{label}</span>
           <IconChevronDown
@@ -55,13 +53,18 @@ export function CollapsibleGroup({
         </button>
 
         {headerAction && (
-          <div onClick={(e) => e.stopPropagation()}>{headerAction}</div>
+          <button
+            className="contents"
+            onMouseDown={(e) => e.stopPropagation()}
+            onPointerDown={(e) => e.stopPropagation()}
+            type="button"
+          >
+            {headerAction}
+          </button>
         )}
       </div>
 
-      <CollapsibleContent isOpen={isOpen}>
-        {children}
-      </CollapsibleContent>
+      <CollapsibleContent isOpen={isOpen}>{children}</CollapsibleContent>
     </div>
   );
 }

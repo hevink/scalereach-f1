@@ -3,6 +3,7 @@
 import {
   IconAlertTriangle,
   IconSettings,
+  IconShield,
   IconUsers,
 } from "@tabler/icons-react";
 import { usePathname, useRouter } from "next/navigation";
@@ -31,6 +32,7 @@ export function WorkspaceSettingsSidebar({
   const isGeneralActive =
     pathname === `${basePath}/general` || pathname === basePath;
   const isMembersActive = pathname === `${basePath}/members`;
+  const isRolesActive = pathname === `${basePath}/roles`;
   const isDangerZoneActive = pathname === `${basePath}/danger-zone`;
 
   const settingsNavItems: NavItem[] = [
@@ -46,6 +48,13 @@ export function WorkspaceSettingsSidebar({
       icon: IconUsers,
       label: "Members",
       isActive: isMembersActive,
+      isWorkspaceAware: false,
+    },
+    {
+      href: `${basePath}/roles`,
+      icon: IconShield,
+      label: "Roles",
+      isActive: isRolesActive,
       isWorkspaceAware: false,
     },
     {

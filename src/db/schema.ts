@@ -280,6 +280,7 @@ export const workspaceRelations = relations(workspace, ({ one, many }) => ({
   members: many(workspaceMember),
   invitations: many(workspaceInvitation),
   teams: many(team),
+  roles: many(workspaceRole),
 }));
 
 export const workspaceMemberRelations = relations(
@@ -337,3 +338,69 @@ export const teamRelations = relations(team, ({ one }) => ({
     references: [workspace.id],
   }),
 }));
+
+export const workspaceRole = pgTable(
+  "workspace_role",
+  {
+    id: text("id").primaryKey(),
+    workspaceId: text("workspace_id")
+      .notNull()
+      .references(() => workspace.id, { onDelete: "cascade" }),
+    name: text("name").notNull(),
+    identifier: text("identifier").notNull(), // e.g., "owner", "admin", "manager", "member", "guest"
+    isSystem: boolean("is_system").default(false).notNull(), // System roles cannot be deleted
+    description: text("description"),
+    createdAt: timestamp("created_at").defaultNow().notNull(),
+    updatedAt: timestamp("updated_at")
+      .defaultNow()
+      .$onUpdate(() => new Date())
+      .notNull(),
+  },
+  (table) => [
+    index("workspace_role_workspaceId_idx").on(table.workspaceId),
+    unique("workspace_role_workspaceId_identifier_unique").on(
+      table.workspaceId,
+      table.identifier
+    ),
+  ]
+);
+
+export const workspaceRolePermission = pgTable(
+  "workspace_role_permission",
+  {
+    id: text("id").primaryKey(),
+    roleId: text("role_id")
+      .notNull()
+      .references(() => workspaceRole.id, { onDelete: "cascade" }),
+    permission: text("permission").notNull(), // e.g., "task.create", "project.delete", "workspace.invite"
+    createdAt: timestamp("created_at").defaultNow().notNull(),
+  },
+  (table) => [
+    index("workspace_role_permission_roleId_idx").on(table.roleId),
+    unique("workspace_role_permission_roleId_permission_unique").on(
+      table.roleId,
+      table.permission
+    ),
+  ]
+);
+
+export const workspaceRoleRelations = relations(
+  workspaceRole,
+  ({ one, many }) => ({
+    workspace: one(workspace, {
+      fields: [workspaceRole.workspaceId],
+      references: [workspace.id],
+    }),
+    permissions: many(workspaceRolePermission),
+  })
+);
+
+export const workspaceRolePermissionRelations = relations(
+  workspaceRolePermission,
+  ({ one }) => ({
+    role: one(workspaceRole, {
+      fields: [workspaceRolePermission.roleId],
+      references: [workspaceRole.id],
+    }),
+  })
+);

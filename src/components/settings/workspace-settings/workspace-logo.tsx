@@ -7,13 +7,16 @@ import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Label } from "@/components/ui/label";
+import { PermissionGate } from "@/components/ui/permission-gate";
 import { Spinner } from "@/components/ui/spinner";
 import {
   Tooltip,
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import { useWorkspacePermissions } from "@/hooks/use-workspace-permissions";
 import { safeClientError } from "@/lib/client-logger";
+import { PERMISSIONS } from "@/lib/permissions";
 
 const MAX_FILE_SIZE = 5 * 1024 * 1024;
 const MAX_BASE64_SIZE = 7 * 1024 * 1024;
@@ -130,6 +133,10 @@ export function WorkspaceLogo({
   const [logoPreview, setLogoPreview] = useState<string | null>(null);
   const [isUploadingLogo, setIsUploadingLogo] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const { hasPermission } = useWorkspacePermissions(workspaceId);
+  const canManageSettings = hasPermission(
+    PERMISSIONS.WORKSPACE.MANAGE_SETTINGS as string
+  );
 
   useEffect(() => {
     if (currentLogo && !logoPreview) {
@@ -140,6 +147,12 @@ export function WorkspaceLogo({
   const handleLogoChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) {
+      return;
+    }
+
+    if (!canManageSettings) {
+      toast.error("You don't have permission to change the workspace logo");
+      resetFileInput(fileInputRef);
       return;
     }
 
@@ -204,55 +217,61 @@ export function WorkspaceLogo({
             Maximum upload size is 5MB
           </p>
         </div>
-        <Tooltip>
-          <TooltipTrigger
-            render={(props) => (
-              <div {...props}>
-                <button
-                  aria-busy={isUploadingLogo}
-                  aria-label="Change workspace logo"
-                  className="group relative rounded-full transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-                  disabled={isUploadingLogo}
-                  onClick={() => fileInputRef.current?.click()}
-                  type="button"
-                >
-                  <Avatar className="size-10 ring-2 ring-border transition-all group-hover:ring-ring">
-                    <AvatarImage
-                      alt="Workspace logo"
-                      src={logoPreview || undefined}
-                    />
-                    <AvatarFallback className="text-lg">
-                      {workspaceName?.charAt(0).toUpperCase() || (
-                        <IconBuilding className="size-6 opacity-50" />
-                      )}
-                    </AvatarFallback>
-                  </Avatar>
-                  <div
-                    className={`absolute inset-0 flex items-center justify-center rounded-full bg-black/60 transition-opacity ${
-                      isUploadingLogo
-                        ? "opacity-100"
-                        : "opacity-0 group-hover:opacity-100"
-                    }`}
+        <PermissionGate
+          permission={PERMISSIONS.WORKSPACE.MANAGE_SETTINGS}
+          workspaceId={workspaceId}
+        >
+          <Tooltip>
+            <TooltipTrigger
+              render={(props) => (
+                <div {...props}>
+                  <button
+                    aria-busy={isUploadingLogo}
+                    aria-label="Change workspace logo"
+                    className="group relative rounded-full transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                    disabled={isUploadingLogo || !canManageSettings}
+                    onClick={() => fileInputRef.current?.click()}
+                    type="button"
                   >
-                    {isUploadingLogo ? (
-                      <Spinner className="size-4 text-white" />
-                    ) : (
-                      <IconCamera className="size-4 text-white" />
-                    )}
-                  </div>
-                </button>
-              </div>
-            )}
-          />
-          <TooltipContent align="center" side="top" sideOffset={6}>
-            Change workspace logo
-          </TooltipContent>
-        </Tooltip>
+                    <Avatar className="size-10 ring-2 ring-border transition-all group-hover:ring-ring">
+                      <AvatarImage
+                        alt="Workspace logo"
+                        src={logoPreview || undefined}
+                      />
+                      <AvatarFallback className="text-lg">
+                        {workspaceName?.charAt(0).toUpperCase() || (
+                          <IconBuilding className="size-6 opacity-50" />
+                        )}
+                      </AvatarFallback>
+                    </Avatar>
+                    <div
+                      className={`absolute inset-0 flex items-center justify-center rounded-full bg-black/60 transition-opacity ${
+                        isUploadingLogo
+                          ? "opacity-100"
+                          : "opacity-0 group-hover:opacity-100"
+                      }`}
+                    >
+                      {isUploadingLogo ? (
+                        <Spinner className="size-4 text-white" />
+                      ) : (
+                        <IconCamera className="size-4 text-white" />
+                      )}
+                    </div>
+                  </button>
+                </div>
+              )}
+            />
+            <TooltipContent align="center" side="top" sideOffset={6}>
+              Change workspace logo
+            </TooltipContent>
+          </Tooltip>
+        </PermissionGate>
       </div>
       <input
         accept="image/*"
         aria-label="Upload workspace logo"
         className="hidden"
+        disabled={!canManageSettings}
         id="logo-upload"
         onChange={handleLogoChange}
         ref={fileInputRef}

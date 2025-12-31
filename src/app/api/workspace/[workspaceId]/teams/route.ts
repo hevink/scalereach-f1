@@ -14,13 +14,13 @@ import {
   sanitizeTeamIdentifier,
   sanitizeTeamName,
 } from "@/lib/sanitize";
-import { requireWorkspaceAccess } from "@/lib/workspace-utils";
 import { getTeamsByWorkspaceId } from "@/lib/team-utils";
+import { requireWorkspaceAccess } from "@/lib/workspace-utils";
 
 export const dynamic = "force-dynamic";
 
 export async function GET(
-  request: Request,
+  _request: Request,
   { params }: { params: Promise<{ workspaceId: string }> }
 ) {
   try {

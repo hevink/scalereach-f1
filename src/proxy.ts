@@ -111,6 +111,10 @@ const onboardingCache = new Cache<boolean>(
   CONFIG.CACHE_TTL
 );
 
+export function clearOnboardingCache(userId: string): void {
+  onboardingCache.delete(userId);
+}
+
 function shouldBypass(pathname: string): boolean {
   return BYPASS_PATTERNS.some((pattern) => {
     if (typeof pattern === "string") {
@@ -183,6 +187,51 @@ async function checkOnboardingStatus(userId: string): Promise<boolean | null> {
   }
 }
 
+async function getSessionSafely(
+  request: NextRequest
+): Promise<Awaited<ReturnType<typeof auth.api.getSession>> | null> {
+  try {
+    return await auth.api.getSession({
+      headers: request.headers,
+    });
+  } catch (error) {
+    console.error("Session fetch error:", error);
+    return null;
+  }
+}
+
+function createNextResponseWithCleanRedirect(): NextResponse {
+  const response = NextResponse.next();
+  response.cookies.delete("redirect_count");
+  return response;
+}
+
+async function handleOnboardingCheck(
+  userId: string,
+  request: NextRequest
+): Promise<NextResponse> {
+  let isOnboarded = onboardingCache.get(userId);
+
+  if (isOnboarded === null) {
+    isOnboarded = await checkOnboardingStatus(userId);
+
+    if (isOnboarded !== null) {
+      onboardingCache.set(userId, isOnboarded);
+    }
+  }
+
+  if (isOnboarded === false) {
+    const freshCheck = await checkOnboardingStatus(userId);
+    if (freshCheck === true) {
+      onboardingCache.delete(userId);
+      return createNextResponseWithCleanRedirect();
+    }
+    return createRedirectResponse("/onboarding", request);
+  }
+
+  return createNextResponseWithCleanRedirect();
+}
+
 export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
@@ -191,9 +240,7 @@ export async function proxy(request: NextRequest) {
   }
 
   if (isAlwaysAccessible(pathname)) {
-    const response = NextResponse.next();
-    response.cookies.delete("redirect_count");
-    return response;
+    return createNextResponseWithCleanRedirect();
   }
 
   const redirectCount = getRedirectCount(request);
@@ -205,53 +252,21 @@ export async function proxy(request: NextRequest) {
   }
 
   try {
-    let session: Awaited<ReturnType<typeof auth.api.getSession>> | null = null;
-    try {
-      session = await auth.api.getSession({
-        headers: request.headers,
-      });
-    } catch (error) {
-      console.error("Session fetch error:", error);
-      session = null;
-    }
+    const session = await getSessionSafely(request);
 
     if (session?.user?.id && isAuthRoute(pathname)) {
       return createRedirectResponse("/", request);
     }
 
-    if (isPublicRoute(pathname)) {
-      const response = NextResponse.next();
-      response.cookies.delete("redirect_count");
-      return response;
-    }
-
-    if (isAuthRoute(pathname)) {
-      const response = NextResponse.next();
-      response.cookies.delete("redirect_count");
-      return response;
+    if (isPublicRoute(pathname) || isAuthRoute(pathname)) {
+      return createNextResponseWithCleanRedirect();
     }
 
     if (!session?.user?.id) {
       return createRedirectResponse("/home", request);
     }
 
-    let isOnboarded = onboardingCache.get(session.user.id);
-
-    if (isOnboarded === null) {
-      isOnboarded = await checkOnboardingStatus(session.user.id);
-
-      if (isOnboarded !== null) {
-        onboardingCache.set(session.user.id, isOnboarded);
-      }
-    }
-
-    if (isOnboarded === false) {
-      return createRedirectResponse("/onboarding", request);
-    }
-
-    const response = NextResponse.next();
-    response.cookies.delete("redirect_count");
-    return response;
+    return handleOnboardingCheck(session.user.id, request);
   } catch (error) {
     console.error("Middleware error:", error);
     return createRedirectResponse("/home", request, false);

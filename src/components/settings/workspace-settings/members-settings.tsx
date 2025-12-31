@@ -1,9 +1,11 @@
 "use client";
 
 import {
+  IconCheck,
   IconCrown,
   IconDotsVertical,
   IconLogout,
+  IconShield,
   IconTrash,
 } from "@tabler/icons-react";
 import Image from "next/image";
@@ -36,9 +38,12 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { PermissionGate } from "@/components/ui/permission-gate";
 import { Separator } from "@/components/ui/separator";
 import { Spinner } from "@/components/ui/spinner";
+import { useWorkspacePermissions } from "@/hooks/use-workspace-permissions";
 import { safeClientError } from "@/lib/client-logger";
+import { PERMISSIONS } from "@/lib/permissions";
 
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
@@ -79,15 +84,33 @@ interface MembersSettingsProps {
 interface MemberItemProps {
   member: Member;
   canManage: boolean;
+  availableRoles: Array<{ identifier: string; name: string }>;
+  changingRole: string | null;
   onRemove: (memberId: string, memberName: string) => void;
+  onRoleChange: (memberId: string, newRole: string) => void;
+  workspaceId: string;
 }
 
-function MemberItem({ member, canManage, onRemove }: MemberItemProps) {
+function MemberItem({
+  member,
+  canManage,
+  availableRoles,
+  changingRole,
+  onRemove,
+  onRoleChange,
+  workspaceId,
+}: MemberItemProps) {
   const username = getUsername(member.user.email, member.user.name);
   const dicebearUrl = getDicebearUrl(username);
   const avatarSrc = member.user.image || dicebearUrl;
   const isOwner = member.role === "owner";
   const canRemove = canManage && !isOwner;
+  const canChangeRole = canManage && !isOwner;
+
+  const currentRole = availableRoles.find((r) => r.identifier === member.role);
+  const roleDisplayName =
+    currentRole?.name ||
+    member.role.charAt(0).toUpperCase() + member.role.slice(1);
 
   return (
     <div className="flex items-center justify-between gap-4 py-3">
@@ -119,35 +142,88 @@ function MemberItem({ member, canManage, onRemove }: MemberItemProps) {
         </div>
       </div>
       <div className="flex items-center gap-2">
-        <Badge variant={isOwner ? "default" : "secondary"}>
-          {isOwner ? "Owner" : "Member"}
-        </Badge>
+        {canChangeRole ? (
+          <PermissionGate
+            permission={PERMISSIONS.WORKSPACE.MANAGE_MEMBERS}
+            workspaceId={workspaceId}
+          >
+            <DropdownMenu>
+              <DropdownMenuTrigger
+                render={(props) => (
+                  <Button
+                    {...props}
+                    className="h-7 gap-1.5 px-2"
+                    disabled={changingRole === member.id}
+                    size="sm"
+                    variant="outline"
+                  >
+                    {changingRole === member.id ? (
+                      <Spinner className="size-3" />
+                    ) : (
+                      <IconShield className="size-3" />
+                    )}
+                    <span className="text-xs">{roleDisplayName}</span>
+                  </Button>
+                )}
+              />
+              <DropdownMenuContent align="end">
+                {availableRoles
+                  .filter((role) => role.identifier !== "owner")
+                  .map((role) => {
+                    const isSelected = role.identifier === member.role;
+                    return (
+                      <DropdownMenuItem
+                        key={role.identifier}
+                        onClick={() => onRoleChange(member.id, role.identifier)}
+                      >
+                        <div className="flex items-center gap-2">
+                          {isSelected && <IconCheck className="size-4" />}
+                          <span className={isSelected ? "font-medium" : ""}>
+                            {role.name}
+                          </span>
+                        </div>
+                      </DropdownMenuItem>
+                    );
+                  })}
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </PermissionGate>
+        ) : (
+          <Badge variant={isOwner ? "default" : "secondary"}>
+            {roleDisplayName}
+          </Badge>
+        )}
         {canRemove && (
-          <DropdownMenu>
-            <DropdownMenuTrigger
-              render={(props) => (
-                <Button
-                  {...props}
-                  className="size-8"
-                  size="icon"
-                  variant="ghost"
+          <PermissionGate
+            permission={PERMISSIONS.WORKSPACE.MANAGE_MEMBERS}
+            workspaceId={workspaceId}
+          >
+            <DropdownMenu>
+              <DropdownMenuTrigger
+                render={(props) => (
+                  <Button
+                    {...props}
+                    className="size-8"
+                    size="icon"
+                    variant="ghost"
+                  >
+                    <IconDotsVertical className="size-4" />
+                  </Button>
+                )}
+              />
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem
+                  onClick={() =>
+                    onRemove(member.id, member.user.name || username)
+                  }
+                  variant="destructive"
                 >
-                  <IconDotsVertical className="size-4" />
-                </Button>
-              )}
-            />
-            <DropdownMenuContent align="end">
-              <DropdownMenuItem
-                onClick={() =>
-                  onRemove(member.id, member.user.name || username)
-                }
-                variant="destructive"
-              >
-                <IconTrash className="size-4" />
-                Remove
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
+                  <IconTrash className="size-4" />
+                  Remove
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </PermissionGate>
         )}
       </div>
     </div>
@@ -161,6 +237,9 @@ export function MembersSettings({ workspace, userRole }: MembersSettingsProps) {
   const [emailError, setEmailError] = useState<string | null>(null);
   const [members, setMembers] = useState<Member[]>([]);
   const [loadingMembers, setLoadingMembers] = useState(true);
+  const [availableRoles, setAvailableRoles] = useState<
+    Array<{ identifier: string; name: string }>
+  >([]);
   const [showLeaveDialog, setShowLeaveDialog] = useState(false);
   const [isLeaving, setIsLeaving] = useState(false);
   const [showRemoveDialog, setShowRemoveDialog] = useState(false);
@@ -169,6 +248,9 @@ export function MembersSettings({ workspace, userRole }: MembersSettingsProps) {
     name: string;
   } | null>(null);
   const [isRemoving, setIsRemoving] = useState(false);
+  const [changingRole, setChangingRole] = useState<string | null>(null);
+  const { hasPermission } = useWorkspacePermissions(workspace.id);
+  const canInviteMembers = hasPermission(PERMISSIONS.WORKSPACE.INVITE_MEMBERS);
 
   const handleInvite = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -240,8 +322,29 @@ export function MembersSettings({ workspace, userRole }: MembersSettingsProps) {
       }
     };
 
+    const fetchRoles = async () => {
+      try {
+        const response = await fetch(`/api/workspace/${workspace.id}/roles`);
+        const data = await response.json();
+
+        if (response.ok && data.roles) {
+          setAvailableRoles(
+            data.roles.map((role: { identifier: string; name: string }) => ({
+              identifier: role.identifier,
+              name: role.name,
+            }))
+          );
+        }
+      } catch (error) {
+        safeClientError("Error fetching roles:", error);
+      }
+    };
+
     fetchMembers();
-  }, [workspace.id]);
+    if (userRole === "owner") {
+      fetchRoles();
+    }
+  }, [workspace.id, userRole]);
 
   const handleInviteSuccess = () => {
     const fetchMembers = async () => {
@@ -263,6 +366,45 @@ export function MembersSettings({ workspace, userRole }: MembersSettingsProps) {
   const handleRemoveMember = (memberId: string, memberName: string) => {
     setMemberToRemove({ id: memberId, name: memberName });
     setShowRemoveDialog(true);
+  };
+
+  const handleRoleChange = async (memberId: string, newRole: string) => {
+    if (userRole !== "owner") {
+      return;
+    }
+
+    setChangingRole(memberId);
+    try {
+      const response = await fetch(
+        `/api/workspace/${workspace.id}/members/${memberId}`,
+        {
+          method: "PATCH",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ role: newRole }),
+        }
+      );
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || "Failed to update role");
+      }
+
+      toast.success("Member role updated successfully");
+      handleInviteSuccess();
+      router.refresh();
+    } catch (error) {
+      safeClientError("Error updating role:", error);
+      toast.error(
+        error instanceof Error
+          ? error.message
+          : "Failed to update role. Please try again."
+      );
+    } finally {
+      setChangingRole(null);
+    }
   };
 
   const confirmRemoveMember = async () => {
@@ -376,7 +518,7 @@ export function MembersSettings({ workspace, userRole }: MembersSettingsProps) {
                     }
                     aria-invalid={emailError ? "true" : "false"}
                     className="h-9"
-                    disabled={isInviting}
+                    disabled={isInviting || !canInviteMembers}
                     id="invite-email"
                     onChange={(e) => handleEmailChange(e.target.value)}
                     placeholder="colleague@example.com"
@@ -400,13 +542,18 @@ export function MembersSettings({ workspace, userRole }: MembersSettingsProps) {
                     </p>
                   )}
                 </div>
-                <Button
-                  className="h-9"
-                  disabled={isInviting || !email.trim()}
-                  type="submit"
+                <PermissionGate
+                  permission={PERMISSIONS.WORKSPACE.INVITE_MEMBERS}
+                  workspaceId={workspace.id}
                 >
-                  {isInviting ? <Spinner /> : <>Invite</>}
-                </Button>
+                  <Button
+                    className="h-9"
+                    disabled={isInviting || !email.trim()}
+                    type="submit"
+                  >
+                    {isInviting ? <Spinner /> : <>Invite</>}
+                  </Button>
+                </PermissionGate>
               </form>
             </div>
           </div>
@@ -440,9 +587,13 @@ export function MembersSettings({ workspace, userRole }: MembersSettingsProps) {
               {members.map((member, index) => (
                 <div key={member.id}>
                   <MemberItem
+                    availableRoles={availableRoles}
                     canManage={userRole === "owner"}
+                    changingRole={changingRole}
                     member={member}
                     onRemove={handleRemoveMember}
+                    onRoleChange={handleRoleChange}
+                    workspaceId={workspace.id}
                   />
                   {index < members.length - 1 && <Separator />}
                 </div>

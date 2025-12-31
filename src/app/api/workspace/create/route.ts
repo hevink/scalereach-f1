@@ -9,6 +9,7 @@ import {
   validateBodySize,
   validateParsedBodySize,
 } from "@/lib/request-validation";
+import { initializeWorkspaceRoles } from "@/lib/role-utils";
 import {
   sanitizeWorkspaceDescription,
   sanitizeWorkspaceName,
@@ -170,6 +171,10 @@ export async function POST(request: Request) {
           .set({ isOnboarded: true })
           .where(eq(user.id, session.user.id));
       }
+    });
+
+    initializeWorkspaceRoles(workspaceId).catch((error) => {
+      safeError("Error initializing workspace roles:", error);
     });
 
     return NextResponse.json({

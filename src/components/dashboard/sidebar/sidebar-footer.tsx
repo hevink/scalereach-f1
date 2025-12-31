@@ -1,6 +1,11 @@
 "use client";
 
-import { IconBug, IconHelpCircle, IconSettings, IconUserCircle } from "@tabler/icons-react";
+import {
+  IconBug,
+  IconHelpCircle,
+  IconSettings,
+  IconUserCircle,
+} from "@tabler/icons-react";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import {
   type NavItem,

@@ -16,13 +16,16 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { PermissionGate } from "@/components/ui/permission-gate";
 import { Textarea } from "@/components/ui/textarea";
 import {
   Tooltip,
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import { useWorkspacePermissions } from "@/hooks/use-workspace-permissions";
 import { safeClientError } from "@/lib/client-logger";
+import { PERMISSIONS } from "@/lib/permissions";
 import { WorkspaceLogo } from "./workspace-logo";
 
 const SLUG_REGEX = /^[a-z][a-z0-9-]*$/;
@@ -119,6 +122,8 @@ interface SlugSectionProps {
   onSave: () => void;
   onValueChange: (value: string) => void;
   error?: string;
+  workspaceId: string;
+  canEdit?: boolean;
 }
 
 function SlugSection({
@@ -132,6 +137,8 @@ function SlugSection({
   onSave,
   onValueChange,
   error,
+  workspaceId,
+  canEdit = true,
 }: SlugSectionProps) {
   const handleSlugChange = (value: string) => {
     const newValue = value.toLowerCase().replace(/[^a-z0-9-]/g, "");
@@ -155,6 +162,7 @@ function SlugSection({
                   aria-describedby="slug-status"
                   aria-invalid={error ? "true" : "false"}
                   className="h-9 rounded-l-none"
+                  disabled={!canEdit}
                   id="slug"
                   maxLength={30}
                   onChange={(e) => handleSlugChange(e.target.value)}
@@ -205,33 +213,38 @@ function SlugSection({
                   Cancel
                 </TooltipContent>
               </Tooltip>
-              <Tooltip>
-                <TooltipTrigger
-                  render={(props) => (
-                    <div {...props}>
-                      <Button
-                        aria-label="Save slug"
-                        className="h-9"
-                        disabled={
-                          isSavingSlug ||
-                          slugAvailability.available === false ||
-                          slugAvailability.checking ||
-                          slugEditValue.trim().toLowerCase() ===
-                            slug.toLowerCase()
-                        }
-                        loading={isSavingSlug}
-                        onClick={onSave}
-                        type="button"
-                      >
-                        Save
-                      </Button>
-                    </div>
-                  )}
-                />
-                <TooltipContent align="center" side="top" sideOffset={6}>
-                  Save slug
-                </TooltipContent>
-              </Tooltip>
+              <PermissionGate
+                permission={PERMISSIONS.WORKSPACE.MANAGE_SETTINGS}
+                workspaceId={workspaceId}
+              >
+                <Tooltip>
+                  <TooltipTrigger
+                    render={(props) => (
+                      <div {...props}>
+                        <Button
+                          aria-label="Save slug"
+                          className="h-9"
+                          disabled={
+                            isSavingSlug ||
+                            slugAvailability.available === false ||
+                            slugAvailability.checking ||
+                            slugEditValue.trim().toLowerCase() ===
+                              slug.toLowerCase()
+                          }
+                          loading={isSavingSlug}
+                          onClick={onSave}
+                          type="button"
+                        >
+                          Save
+                        </Button>
+                      </div>
+                    )}
+                  />
+                  <TooltipContent align="center" side="top" sideOffset={6}>
+                    Save slug
+                  </TooltipContent>
+                </Tooltip>
+              </PermissionGate>
             </div>
           </>
         ) : (
@@ -245,26 +258,31 @@ function SlugSection({
                 value={`staxk.app/${slug}`}
               />
             </div>
-            <Tooltip>
-              <TooltipTrigger
-                render={(props) => (
-                  <div {...props}>
-                    <Button
-                      className="flex size-9 items-center gap-2"
-                      onClick={onEdit}
-                      size="icon"
-                      type="button"
-                      variant="outline"
-                    >
-                      <IconPencil className="size-4" />
-                    </Button>
-                  </div>
-                )}
-              />
-              <TooltipContent align="center" side="top" sideOffset={6}>
-                Edit workspace URL
-              </TooltipContent>
-            </Tooltip>
+            <PermissionGate
+              permission={PERMISSIONS.WORKSPACE.MANAGE_SETTINGS}
+              workspaceId={workspaceId}
+            >
+              <Tooltip>
+                <TooltipTrigger
+                  render={(props) => (
+                    <div {...props}>
+                      <Button
+                        className="flex size-9 items-center gap-2"
+                        onClick={onEdit}
+                        size="icon"
+                        type="button"
+                        variant="outline"
+                      >
+                        <IconPencil className="size-4" />
+                      </Button>
+                    </div>
+                  )}
+                />
+                <TooltipContent align="center" side="top" sideOffset={6}>
+                  Edit workspace URL
+                </TooltipContent>
+              </Tooltip>
+            </PermissionGate>
           </div>
         )}
       </div>
@@ -286,10 +304,12 @@ function NameField({
   form,
   saveStatus,
   nameError,
+  disabled,
 }: {
   form: ReturnType<typeof useForm<WorkspaceFormData>>;
   saveStatus: "idle" | "saving" | "saved" | "error";
   nameError?: string;
+  disabled?: boolean;
 }) {
   return (
     <div className="flex w-full flex-col items-start">
@@ -317,6 +337,7 @@ function NameField({
           aria-describedby={nameError ? "name-error" : "name-helper"}
           aria-invalid={nameError ? "true" : "false"}
           className="h-9 w-full"
+          disabled={disabled}
           placeholder="e.g. My Workspace"
         />
         {nameError ? (
@@ -341,10 +362,12 @@ function DescriptionField({
   form,
   descriptionSaveStatus,
   descriptionError,
+  disabled,
 }: {
   form: ReturnType<typeof useForm<WorkspaceFormData>>;
   descriptionSaveStatus: "idle" | "saving" | "saved" | "error";
   descriptionError?: string;
+  disabled?: boolean;
 }) {
   return (
     <div className="flex w-full flex-col items-start">
@@ -374,6 +397,7 @@ function DescriptionField({
           }
           aria-invalid={descriptionError ? "true" : "false"}
           className="min-h-[80px]"
+          disabled={disabled}
           maxLength={500}
           placeholder="Describe your workspace (optional)"
           rows={3}
@@ -398,7 +422,6 @@ function DescriptionField({
     </div>
   );
 }
-
 
 function useWorkspaceNameSave(
   workspaceId: string,
@@ -532,7 +555,6 @@ function useWorkspaceDescriptionSave(
   };
 }
 
-
 function useSlugHandlers(
   workspace: { id: string; slug: string },
   slugEditValue: string,
@@ -663,6 +685,10 @@ export function GeneralSettings({ workspace }: GeneralSettingsProps) {
   const { watch, formState } = form;
   const watchedName = watch("name");
   const watchedDescription = watch("description");
+  const { hasPermission } = useWorkspacePermissions(workspace.id);
+  const canManageSettings = hasPermission(
+    PERMISSIONS.WORKSPACE.MANAGE_SETTINGS as string
+  );
 
   const slugAvailability = useSlugAvailability();
 
@@ -829,7 +855,6 @@ export function GeneralSettings({ workspace }: GeneralSettingsProps) {
     descriptionSaveTimeoutRef,
   ]);
 
-
   if (!isInitialized) {
     return null;
   }
@@ -851,6 +876,7 @@ export function GeneralSettings({ workspace }: GeneralSettingsProps) {
             workspaceName={workspace.name}
           />
           <NameField
+            disabled={!canManageSettings}
             form={form}
             nameError={nameError}
             saveStatus={saveStatus}
@@ -858,9 +884,11 @@ export function GeneralSettings({ workspace }: GeneralSettingsProps) {
           <DescriptionField
             descriptionError={descriptionError}
             descriptionSaveStatus={descriptionSaveStatus}
+            disabled={!canManageSettings}
             form={form}
           />
           <SlugSection
+            canEdit={canManageSettings}
             error={slugError ?? undefined}
             isEditingSlug={isEditingSlug}
             isSavingSlug={isSavingSlug}
@@ -871,6 +899,7 @@ export function GeneralSettings({ workspace }: GeneralSettingsProps) {
             slug={workspace.slug}
             slugAvailability={slugAvailability}
             slugEditValue={slugEditValue}
+            workspaceId={workspace.id}
           />
         </CardContent>
       </Card>

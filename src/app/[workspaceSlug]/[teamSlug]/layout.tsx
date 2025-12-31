@@ -1,5 +1,5 @@
 import { notFound } from "next/navigation";
-import { ReactNode } from "react";
+import type { ReactNode } from "react";
 import { requireTeamAccessBySlug } from "@/lib/team-utils";
 
 export const dynamic = "force-dynamic";
@@ -22,4 +22,3 @@ export default async function TeamLayout({
     notFound();
   }
 }
-

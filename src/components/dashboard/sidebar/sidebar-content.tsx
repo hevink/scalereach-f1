@@ -1,17 +1,23 @@
 "use client";
 
-import { IconBell, IconChevronRight, IconHome, IconInbox, IconPlus } from "@tabler/icons-react";
+import {
+  IconBell,
+  IconChevronRight,
+  IconHome,
+  IconInbox,
+  IconPlus,
+} from "@tabler/icons-react";
 import { useEffect, useState } from "react";
+import { Button } from "@/components/ui/button";
 import {
   type NavItem,
   SidebarContent as SidebarContentContainer,
   SidebarNavMenu,
 } from "@/components/ui/sidebar";
 import { useInvitationsCount } from "@/hooks/use-invitations-count";
+import { safeClientError } from "@/lib/client-logger";
 import { TeamsSection } from "./teams-section";
 import { WorkspaceSection } from "./workspace-section";
-import { safeClientError } from "@/lib/client-logger";
-import { Button } from "@/components/ui/button";
 
 interface SidebarContentProps {
   pathname: string;
@@ -82,23 +88,28 @@ export function SidebarContent({
       {workspaceSlug && (
         <>
           <WorkspaceSection
+            isLoading={isLoading}
             pathname={pathname}
             workspaceSlug={workspaceSlug}
-            isLoading={isLoading}
           />
           {isLoading ? (
             <div className="flex flex-col">
               <div className="flex w-full items-center justify-between rounded-md px-2 py-1.5">
                 <button
                   className="flex flex-1 items-center gap-2 font-medium text-muted-foreground text-sm transition-colors hover:text-foreground"
-                  type="button"
                   disabled
+                  type="button"
                 >
                   <span>Your teams</span>
                   <IconChevronRight className="size-3 shrink-0" />
                 </button>
                 <div>
-                  <Button className="size-6 p-0" size="icon" variant="ghost" disabled>
+                  <Button
+                    className="size-6 p-0"
+                    disabled
+                    size="icon"
+                    variant="ghost"
+                  >
                     <IconPlus className="size-4" />
                   </Button>
                 </div>

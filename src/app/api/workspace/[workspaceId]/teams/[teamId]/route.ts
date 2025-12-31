@@ -16,6 +16,74 @@ import {
 } from "@/lib/sanitize";
 import { requireTeamAccess } from "@/lib/team-utils";
 
+function validateName(
+  name: unknown
+): { error: NextResponse } | { data: string } {
+  const sanitizedName = sanitizeTeamName(name as string);
+  if (!sanitizedName) {
+    return {
+      error: NextResponse.json(
+        { error: "Name must be 1-50 characters" },
+        { status: 400 }
+      ),
+    };
+  }
+  return { data: sanitizedName };
+}
+
+async function validateIdentifier(
+  identifier: unknown,
+  teamId: string
+): Promise<{ error: NextResponse } | { data: string | null }> {
+  const sanitizedIdentifier = sanitizeTeamIdentifier(identifier);
+  if (identifier !== null && !sanitizedIdentifier) {
+    return {
+      error: NextResponse.json(
+        {
+          error:
+            "Identifier must be 1-10 characters and contain only uppercase letters and numbers",
+        },
+        { status: 400 }
+      ),
+    };
+  }
+
+  if (sanitizedIdentifier) {
+    const teamData = await db
+      .select({ workspaceId: team.workspaceId })
+      .from(team)
+      .where(eq(team.id, teamId))
+      .limit(1);
+
+    if (teamData.length > 0) {
+      const existingTeam = await db
+        .select({ id: team.id })
+        .from(team)
+        .where(
+          and(
+            eq(team.workspaceId, teamData[0].workspaceId),
+            eq(team.identifier, sanitizedIdentifier),
+            ne(team.id, teamId)
+          )
+        )
+        .limit(1);
+
+      if (existingTeam.length > 0) {
+        return {
+          error: NextResponse.json(
+            {
+              error: `A team with identifier "${sanitizedIdentifier}" already exists in this workspace`,
+            },
+            { status: 409 }
+          ),
+        };
+      }
+    }
+  }
+
+  return { data: sanitizedIdentifier };
+}
+
 export async function PATCH(
   request: Request,
   { params }: { params: Promise<{ workspaceId: string; teamId: string }> }
@@ -52,60 +120,19 @@ export async function PATCH(
     } = {};
 
     if (name !== undefined) {
-      const sanitizedName = sanitizeTeamName(name);
-      if (!sanitizedName) {
-        return NextResponse.json(
-          { error: "Name must be 1-50 characters" },
-          { status: 400 }
-        );
+      const nameResult = validateName(name);
+      if ("error" in nameResult) {
+        return nameResult.error;
       }
-      updateData.name = sanitizedName;
+      updateData.name = nameResult.data;
     }
 
     if (identifier !== undefined) {
-      const sanitizedIdentifier = sanitizeTeamIdentifier(identifier);
-      if (identifier !== null && !sanitizedIdentifier) {
-        return NextResponse.json(
-          {
-            error:
-              "Identifier must be 1-10 characters and contain only uppercase letters and numbers",
-          },
-          { status: 400 }
-        );
+      const identifierResult = await validateIdentifier(identifier, teamId);
+      if ("error" in identifierResult) {
+        return identifierResult.error;
       }
-
-      if (sanitizedIdentifier) {
-        const teamData = await db
-          .select({ workspaceId: team.workspaceId })
-          .from(team)
-          .where(eq(team.id, teamId))
-          .limit(1);
-
-        if (teamData.length > 0) {
-          const existingTeam = await db
-            .select({ id: team.id })
-            .from(team)
-            .where(
-              and(
-                eq(team.workspaceId, teamData[0].workspaceId),
-                eq(team.identifier, sanitizedIdentifier),
-                ne(team.id, teamId)
-              )
-            )
-            .limit(1);
-
-          if (existingTeam.length > 0) {
-            return NextResponse.json(
-              {
-                error: `A team with identifier "${sanitizedIdentifier}" already exists in this workspace`,
-              },
-              { status: 409 }
-            );
-          }
-        }
-      }
-
-      updateData.identifier = sanitizedIdentifier;
+      updateData.identifier = identifierResult.data;
     }
 
     if (icon !== undefined) {
@@ -138,7 +165,7 @@ export async function PATCH(
 }
 
 export async function DELETE(
-  request: Request,
+  _request: Request,
   { params }: { params: Promise<{ workspaceId: string; teamId: string }> }
 ) {
   try {
@@ -150,7 +177,7 @@ export async function DELETE(
 
     const { teamId } = await params;
 
-    const teamAccess = await requireTeamAccess(teamId);
+    await requireTeamAccess(teamId);
 
     await db.delete(team).where(eq(team.id, teamId));
 
@@ -163,4 +190,3 @@ export async function DELETE(
     );
   }
 }
-

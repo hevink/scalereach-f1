@@ -18,9 +18,7 @@ export interface TeamAccess {
   workspaceRole: "owner" | "member";
 }
 
-export async function getTeamById(
-  teamId: string
-): Promise<{
+export async function getTeamById(teamId: string): Promise<{
   id: string;
   workspaceId: string;
   name: string;
@@ -46,9 +44,7 @@ export async function getTeamById(
   return result[0] || null;
 }
 
-export async function requireTeamAccess(
-  teamId: string
-): Promise<TeamAccess> {
+export async function requireTeamAccess(teamId: string): Promise<TeamAccess> {
   const session = await auth.api.getSession({ headers: await headers() });
 
   if (!session) {
@@ -81,9 +77,7 @@ export async function requireTeamAccess(
   };
 }
 
-export async function getTeamsByWorkspaceId(
-  workspaceId: string
-): Promise<
+export async function getTeamsByWorkspaceId(workspaceId: string): Promise<
   Array<{
     id: string;
     name: string;
@@ -148,10 +142,7 @@ export async function getTeamByWorkspaceSlugAndIdentifier(
     .where(
       and(
         eq(team.workspaceId, workspaceData[0].id),
-        or(
-          eq(team.identifier, teamIdentifier),
-          eq(team.id, teamIdentifier)
-        )
+        or(eq(team.identifier, teamIdentifier), eq(team.id, teamIdentifier))
       )
     )
     .limit(1);
@@ -192,4 +183,3 @@ export async function requireTeamAccessBySlug(
     workspaceRole: workspaceAccess.role,
   };
 }
-

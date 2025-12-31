@@ -12,10 +12,12 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { EmojiSelector } from "@/components/ui/emoji-selector";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { EmojiSelector } from "@/components/ui/emoji-selector";
 import { safeClientError } from "@/lib/client-logger";
+
+const IDENTIFIER_REGEX = /^[A-Z0-9]+$/;
 
 interface CreateTeamDialogProps {
   open: boolean;
@@ -78,7 +80,7 @@ export function CreateTeamDialog({
       if (identifier.length > 10) {
         setIdentifierError("Identifier must be 10 characters or less");
         isValid = false;
-      } else if (!/^[A-Z0-9]+$/.test(identifier)) {
+      } else if (!IDENTIFIER_REGEX.test(identifier)) {
         setIdentifierError(
           "Identifier can only contain uppercase letters and numbers"
         );
@@ -108,7 +110,7 @@ export function CreateTeamDialog({
         body: JSON.stringify({
           name: teamName.trim(),
           identifier: identifier.trim() || null,
-          icon: icon,
+          icon,
         }),
       });
 
@@ -136,7 +138,7 @@ export function CreateTeamDialog({
   };
 
   return (
-    <Dialog open={open} onOpenChange={handleOpenChange}>
+    <Dialog onOpenChange={handleOpenChange} open={open}>
       <DialogContent className="sm:max-w-lg">
         <DialogHeader>
           <DialogTitle>Create a new team</DialogTitle>
@@ -154,27 +156,26 @@ export function CreateTeamDialog({
               </Label>
               <div>
                 <EmojiSelector
-                  value={icon}
-                  onEmojiSelect={setIcon}
                   disabled={isCreating}
+                  onEmojiSelect={setIcon}
+                  value={icon}
                 />
               </div>
             </div>
 
             <div className="flex w-full flex-col items-start">
-              <Label
-                className="font-medium text-sm"
-                htmlFor="team-name"
-              >
+              <Label className="font-medium text-sm" htmlFor="team-name">
                 Team name
               </Label>
               <div className="mt-2 w-full">
                 <Input
-                  id="team-name"
-                  aria-describedby={nameError ? "team-name-error" : "team-name-helper"}
+                  aria-describedby={
+                    nameError ? "team-name-error" : "team-name-helper"
+                  }
                   aria-invalid={nameError ? "true" : "false"}
                   className="h-9 w-full"
                   disabled={isCreating}
+                  id="team-name"
                   maxLength={50}
                   onChange={(e) => handleNameChange(e.target.value)}
                   placeholder="e.g. Engineering"
@@ -200,15 +201,11 @@ export function CreateTeamDialog({
             </div>
 
             <div className="flex w-full flex-col items-start">
-              <Label
-                className="font-medium text-sm"
-                htmlFor="team-identifier"
-              >
+              <Label className="font-medium text-sm" htmlFor="team-identifier">
                 Identifier
               </Label>
               <div className="mt-2 w-full">
                 <Input
-                  id="team-identifier"
                   aria-describedby={
                     identifierError
                       ? "team-identifier-error"
@@ -217,6 +214,7 @@ export function CreateTeamDialog({
                   aria-invalid={identifierError ? "true" : "false"}
                   className="h-9 w-full"
                   disabled={isCreating}
+                  id="team-identifier"
                   maxLength={10}
                   onChange={(e) => handleIdentifierChange(e.target.value)}
                   placeholder="e.g. ENG"
@@ -245,13 +243,13 @@ export function CreateTeamDialog({
 
         <DialogFooter>
           <Button
-            variant="outline"
-            onClick={() => handleOpenChange(false)}
             disabled={isCreating}
+            onClick={() => handleOpenChange(false)}
+            variant="outline"
           >
             Cancel
           </Button>
-          <Button onClick={handleCreate} loading={isCreating}>
+          <Button loading={isCreating} onClick={handleCreate}>
             Create team
           </Button>
         </DialogFooter>

@@ -1,11 +1,11 @@
 "use client";
 
-import { useState, useEffect } from "react";
 import { IconPlus } from "@tabler/icons-react";
+import { useCallback, useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { CreateTeamDialog } from "./create-team-dialog";
 import { safeClientError } from "@/lib/client-logger";
+import { CreateTeamDialog } from "./create-team-dialog";
 
 interface Team {
   id: string;
@@ -25,7 +25,7 @@ export function TeamList({ workspaceId }: TeamListProps) {
   const [isLoading, setIsLoading] = useState(true);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
 
-  const fetchTeams = async () => {
+  const fetchTeams = useCallback(async () => {
     setIsLoading(true);
     try {
       const response = await fetch(`/api/workspace/${workspaceId}/teams`);
@@ -39,11 +39,11 @@ export function TeamList({ workspaceId }: TeamListProps) {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [workspaceId]);
 
   useEffect(() => {
     fetchTeams();
-  }, [workspaceId]);
+  }, [fetchTeams]);
 
   const handleTeamCreated = () => {
     fetchTeams();
@@ -75,7 +75,7 @@ export function TeamList({ workspaceId }: TeamListProps) {
       {teams.length === 0 ? (
         <Card>
           <CardContent className="flex flex-col items-center justify-center gap-4 py-12">
-            <p className="text-muted-foreground text-center text-sm">
+            <p className="text-center text-muted-foreground text-sm">
               No teams yet. Create your first team to get started.
             </p>
             <Button onClick={() => setIsDialogOpen(true)} variant="outline">
@@ -87,13 +87,16 @@ export function TeamList({ workspaceId }: TeamListProps) {
       ) : (
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
           {teams.map((team) => (
-            <Card key={team.id} className="hover:border-primary/50 transition-colors">
+            <Card
+              className="transition-colors hover:border-primary/50"
+              key={team.id}
+            >
               <CardContent className="flex items-center gap-4 p-6">
                 <div className="flex size-12 shrink-0 items-center justify-center rounded-lg border bg-muted text-2xl">
                   {team.icon || "👥"}
                 </div>
                 <div className="min-w-0 flex-1">
-                  <h3 className="font-medium truncate">{team.name}</h3>
+                  <h3 className="truncate font-medium">{team.name}</h3>
                   {team.identifier && (
                     <p className="text-muted-foreground text-sm">
                       {team.identifier}
@@ -107,12 +110,11 @@ export function TeamList({ workspaceId }: TeamListProps) {
       )}
 
       <CreateTeamDialog
-        open={isDialogOpen}
         onOpenChange={setIsDialogOpen}
-        workspaceId={workspaceId}
         onSuccess={handleTeamCreated}
+        open={isDialogOpen}
+        workspaceId={workspaceId}
       />
     </div>
   );
 }
-

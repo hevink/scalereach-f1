@@ -17,8 +17,11 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { PermissionGate } from "@/components/ui/permission-gate";
 import { Spinner } from "@/components/ui/spinner";
+import { useWorkspacePermissions } from "@/hooks/use-workspace-permissions";
 import { safeClientError } from "@/lib/client-logger";
+import { PERMISSIONS } from "@/lib/permissions";
 
 interface DangerZoneProps {
   workspace: {
@@ -34,6 +37,10 @@ export function DangerZone({ workspace }: DangerZoneProps) {
   const [workspaceNameInput, setWorkspaceNameInput] = useState("");
   const [deleteConfirmInput, setDeleteConfirmInput] = useState("");
   const [isDeleting, setIsDeleting] = useState(false);
+  const { hasPermission } = useWorkspacePermissions(workspace.id);
+  const canDeleteWorkspace = hasPermission(
+    PERMISSIONS.WORKSPACE.DELETE_WORKSPACE
+  );
 
   const isNameMatch = workspaceNameInput.trim() === workspace.name;
   const isDeletePhraseMatch =
@@ -84,18 +91,27 @@ export function DangerZone({ workspace }: DangerZoneProps) {
                 Permanently delete this workspace and all its data.
               </p>
             </div>
-            <Button
-              className="w-full sm:w-auto"
-              disabled={isDeleting}
-              onClick={() => {
-                setDialogOpen(true);
-                setWorkspaceNameInput("");
-                setDeleteConfirmInput("");
-              }}
-              variant="destructive"
+            <PermissionGate
+              permission={PERMISSIONS.WORKSPACE.DELETE_WORKSPACE}
+              workspaceId={workspace.id}
             >
-              {isDeleting ? <Spinner className="size-4" /> : "Delete Workspace"}
-            </Button>
+              <Button
+                className="w-full"
+                disabled={isDeleting}
+                onClick={() => {
+                  setDialogOpen(true);
+                  setWorkspaceNameInput("");
+                  setDeleteConfirmInput("");
+                }}
+                variant="destructive"
+              >
+                {isDeleting ? (
+                  <Spinner className="size-4" />
+                ) : (
+                  "Delete Workspace"
+                )}
+              </Button>
+            </PermissionGate>
           </CardContent>
         </Card>
       </div>
@@ -121,7 +137,7 @@ export function DangerZone({ workspace }: DangerZoneProps) {
               <Input
                 autoFocus
                 className="h-10"
-                disabled={isDeleting}
+                disabled={isDeleting || !canDeleteWorkspace}
                 id="delete-workspace-name"
                 onChange={(e) => setWorkspaceNameInput(e.target.value)}
                 placeholder={workspace.name}
@@ -137,7 +153,7 @@ export function DangerZone({ workspace }: DangerZoneProps) {
               </Label>
               <Input
                 className="h-10"
-                disabled={isDeleting}
+                disabled={isDeleting || !canDeleteWorkspace}
                 id="delete-confirm-phrase"
                 onChange={(e) => setDeleteConfirmInput(e.target.value)}
                 placeholder="delete my workspace"

@@ -83,7 +83,7 @@ async function WorkspaceSettingsLayoutContent({
     notFound();
   }
 
-  return <>{children}</>;
+  return <div className="mx-auto max-w-xl">{children}</div>;
 }
 
 function WorkspaceSettingsContentLoading() {
@@ -94,7 +94,10 @@ function WorkspaceSettingsContentLoading() {
           alt="Logo"
           className="animate-pulse grayscale"
           height={32}
+          priority
+          quality={10}
           src="/logo.svg"
+          unoptimized
           width={32}
         />
         <p className="font-[450] text-muted-foreground text-sm">
