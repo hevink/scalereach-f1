@@ -1,7 +1,8 @@
-import { eq } from "drizzle-orm";
+import { eq, inArray } from "drizzle-orm";
+import { cache } from "react";
 import { db } from "@/db";
 import { workspaceRole, workspaceRolePermission } from "@/db/schema";
-import { DEFAULT_ROLE_PERMISSIONS, type PermissionKey } from "./permissions";
+import { DEFAULT_ROLE_PERMISSIONS } from "./permissions";
 
 export interface Role {
   id: string;
@@ -15,9 +16,6 @@ export interface Role {
   permissions?: string[];
 }
 
-/**
- * Initialize default roles for a workspace
- */
 export async function initializeWorkspaceRoles(
   workspaceId: string
 ): Promise<void> {
@@ -45,101 +43,112 @@ export async function initializeWorkspaceRoles(
     { name: "Guest", identifier: "guest", description: "View-only access" },
   ];
 
-  for (const roleData of defaultRoles) {
-    const roleId = crypto.randomUUID();
+  const roleValues = defaultRoles.map((roleData) => ({
+    id: crypto.randomUUID(),
+    workspaceId,
+    name: roleData.name,
+    identifier: roleData.identifier,
+    isSystem: true,
+    description: roleData.description,
+  }));
 
-    // Create role
-    await db.insert(workspaceRole).values({
-      id: roleId,
-      workspaceId,
-      name: roleData.name,
-      identifier: roleData.identifier,
-      isSystem: true,
-      description: roleData.description,
-    });
+  await db.insert(workspaceRole).values(roleValues);
 
-    // Add default permissions
+  const permissionValues: Array<{
+    id: string;
+    roleId: string;
+    permission: string;
+  }> = [];
+
+  for (let i = 0; i < defaultRoles.length; i++) {
+    const roleId = roleValues[i].id;
     const permissions =
       DEFAULT_ROLE_PERMISSIONS[
-        roleData.identifier as keyof typeof DEFAULT_ROLE_PERMISSIONS
+        defaultRoles[i].identifier as keyof typeof DEFAULT_ROLE_PERMISSIONS
       ] || [];
-    if (permissions.length > 0) {
-      await db.insert(workspaceRolePermission).values(
-        permissions.map((permission: PermissionKey) => ({
-          id: crypto.randomUUID(),
-          roleId,
-          permission,
-        }))
-      );
+
+    for (const permission of permissions) {
+      permissionValues.push({
+        id: crypto.randomUUID(),
+        roleId,
+        permission,
+      });
     }
   }
+
+  if (permissionValues.length > 0) {
+    await db.insert(workspaceRolePermission).values(permissionValues);
+  }
 }
 
-/**
- * Get all roles for a workspace
- */
-export async function getWorkspaceRoles(workspaceId: string): Promise<Role[]> {
-  const roles = await db
-    .select()
-    .from(workspaceRole)
-    .where(eq(workspaceRole.workspaceId, workspaceId))
-    .orderBy(workspaceRole.createdAt);
+export const getWorkspaceRoles = cache(
+  async (workspaceId: string): Promise<Role[]> => {
+    const roles = await db
+      .select()
+      .from(workspaceRole)
+      .where(eq(workspaceRole.workspaceId, workspaceId))
+      .orderBy(workspaceRole.createdAt);
 
-  const rolesWithPermissions = await Promise.all(
-    roles.map(async (role) => {
-      const permissions = await db
+    if (roles.length === 0) {
+      return [];
+    }
+
+    const roleIds = roles.map((r) => r.id);
+    const allPermissions = await db
+      .select({
+        roleId: workspaceRolePermission.roleId,
+        permission: workspaceRolePermission.permission,
+      })
+      .from(workspaceRolePermission)
+      .where(inArray(workspaceRolePermission.roleId, roleIds));
+
+    const permissionsByRoleId = new Map<string, string[]>();
+    for (const p of allPermissions) {
+      const existing = permissionsByRoleId.get(p.roleId) || [];
+      existing.push(p.permission);
+      permissionsByRoleId.set(p.roleId, existing);
+    }
+
+    return roles.map((role) => ({
+      ...role,
+      permissions: permissionsByRoleId.get(role.id) || [],
+    }));
+  }
+);
+
+export const getRoleById = cache(
+  async (roleId: string): Promise<Role | null> => {
+    const [roleResult, permissionsResult] = await Promise.all([
+      db
+        .select()
+        .from(workspaceRole)
+        .where(eq(workspaceRole.id, roleId))
+        .limit(1),
+      db
         .select({ permission: workspaceRolePermission.permission })
         .from(workspaceRolePermission)
-        .where(eq(workspaceRolePermission.roleId, role.id));
+        .where(eq(workspaceRolePermission.roleId, roleId)),
+    ]);
 
-      return {
-        ...role,
-        permissions: permissions.map((p) => p.permission),
-      };
-    })
-  );
+    if (roleResult.length === 0) {
+      return null;
+    }
 
-  return rolesWithPermissions;
-}
-
-/**
- * Get a single role by ID
- */
-export async function getRoleById(roleId: string): Promise<Role | null> {
-  const role = await db
-    .select()
-    .from(workspaceRole)
-    .where(eq(workspaceRole.id, roleId))
-    .limit(1);
-
-  if (role.length === 0) {
-    return null;
+    return {
+      ...roleResult[0],
+      permissions: permissionsResult.map((p) => p.permission),
+    };
   }
+);
 
-  const permissions = await db
-    .select({ permission: workspaceRolePermission.permission })
-    .from(workspaceRolePermission)
-    .where(eq(workspaceRolePermission.roleId, roleId));
-
-  return {
-    ...role[0],
-    permissions: permissions.map((p) => p.permission),
-  };
-}
-
-/**
- * Update role permissions
- */
 export async function updateRolePermissions(
   roleId: string,
   permissions: string[]
 ): Promise<void> {
-  // Delete existing permissions
   await db
     .delete(workspaceRolePermission)
     .where(eq(workspaceRolePermission.roleId, roleId));
 
-  // Insert new permissions
   if (permissions.length > 0) {
     await db.insert(workspaceRolePermission).values(
       permissions.map((permission) => ({
@@ -151,9 +160,6 @@ export async function updateRolePermissions(
   }
 }
 
-/**
- * Update role details
- */
 export async function updateRole(
   roleId: string,
   data: {

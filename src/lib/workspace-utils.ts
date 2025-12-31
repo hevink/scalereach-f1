@@ -1,8 +1,8 @@
 import { and, eq } from "drizzle-orm";
-import { headers } from "next/headers";
+import { cache } from "react";
 import { db } from "@/db";
 import { workspace, workspaceMember } from "@/db/schema";
-import { auth } from "./auth";
+import { getSessionSafe } from "./auth-utils";
 
 export interface WorkspaceAccess {
   workspace: {
@@ -16,87 +16,116 @@ export interface WorkspaceAccess {
   role: "owner" | "member";
 }
 
-export async function getWorkspaceBySlug(slug: string): Promise<{
-  id: string;
-  name: string;
-  slug: string;
-  description: string | null;
-  logo: string | null;
-  ownerId: string;
-} | null> {
-  const result = await db
-    .select({
-      id: workspace.id,
-      name: workspace.name,
-      slug: workspace.slug,
-      description: workspace.description,
-      logo: workspace.logo,
-      ownerId: workspace.ownerId,
-    })
-    .from(workspace)
-    .where(eq(workspace.slug, slug))
-    .limit(1);
+export const getWorkspaceBySlug = cache(
+  async (
+    slug: string
+  ): Promise<{
+    id: string;
+    name: string;
+    slug: string;
+    description: string | null;
+    logo: string | null;
+    ownerId: string;
+  } | null> => {
+    const result = await db
+      .select({
+        id: workspace.id,
+        name: workspace.name,
+        slug: workspace.slug,
+        description: workspace.description,
+        logo: workspace.logo,
+        ownerId: workspace.ownerId,
+      })
+      .from(workspace)
+      .where(eq(workspace.slug, slug))
+      .limit(1);
 
-  return result[0] || null;
-}
-
-export async function validateWorkspaceAccess(
-  workspaceSlug: string,
-  userId: string
-): Promise<
-  | { success: true; access: WorkspaceAccess }
-  | { success: false; error: string; status: number }
-> {
-  const workspaceData = await getWorkspaceBySlug(workspaceSlug);
-
-  if (!workspaceData) {
-    return { success: false, error: "Workspace not found", status: 404 };
+    return result[0] || null;
   }
+);
 
-  if (workspaceData.ownerId === userId) {
+export const validateWorkspaceAccess = cache(
+  async (
+    workspaceSlug: string,
+    userId: string
+  ): Promise<
+    | { success: true; access: WorkspaceAccess }
+    | { success: false; error: string; status: number }
+  > => {
+    const result = await db
+      .select({
+        id: workspace.id,
+        name: workspace.name,
+        slug: workspace.slug,
+        description: workspace.description,
+        logo: workspace.logo,
+        ownerId: workspace.ownerId,
+        memberRole: workspaceMember.role,
+      })
+      .from(workspace)
+      .leftJoin(
+        workspaceMember,
+        and(
+          eq(workspaceMember.workspaceId, workspace.id),
+          eq(workspaceMember.userId, userId)
+        )
+      )
+      .where(eq(workspace.slug, workspaceSlug))
+      .limit(1);
+
+    if (result.length === 0) {
+      return { success: false, error: "Workspace not found", status: 404 };
+    }
+
+    const data = result[0];
+
+    if (data.ownerId === userId) {
+      return {
+        success: true,
+        access: {
+          workspace: {
+            id: data.id,
+            name: data.name,
+            slug: data.slug,
+            description: data.description,
+            logo: data.logo,
+            ownerId: data.ownerId,
+          },
+          role: "owner",
+        },
+      };
+    }
+
+    // Check if user is a member
+    if (!data.memberRole) {
+      return {
+        success: false,
+        error: "You don't have access to this workspace",
+        status: 403,
+      };
+    }
+
     return {
       success: true,
       access: {
-        workspace: workspaceData,
-        role: "owner",
+        workspace: {
+          id: data.id,
+          name: data.name,
+          slug: data.slug,
+          description: data.description,
+          logo: data.logo,
+          ownerId: data.ownerId,
+        },
+        role: data.memberRole as "owner" | "member",
       },
     };
   }
-
-  const member = await db
-    .select({
-      role: workspaceMember.role,
-    })
-    .from(workspaceMember)
-    .where(
-      and(
-        eq(workspaceMember.workspaceId, workspaceData.id),
-        eq(workspaceMember.userId, userId)
-      )
-    )
-    .limit(1);
-
-  if (member.length === 0) {
-    return {
-      success: false,
-      error: "You don't have access to this workspace",
-      status: 403,
-    };
-  }
-
-  return {
-    success: true,
-    access: {
-      workspace: workspaceData,
-      role: member[0].role as "owner" | "member",
-    },
-  };
-}
+);
 
 export async function requireWorkspaceAccess(
   workspaceSlug: string
 ): Promise<WorkspaceAccess> {
-  const session = await auth.api.getSession({ headers: await headers() });
+  const session = await getSessionSafe();
 
   if (!session) {
     throw new Error("Unauthorized");
@@ -114,6 +143,9 @@ export async function requireWorkspaceAccess(
   return validation.access;
 }
 
+/**
+ * Optimized: Uses cached getSessionSafe instead of direct auth.api call
+ */
 export async function getWorkspaceAccess(
   workspaceSlug: string | null
 ): Promise<WorkspaceAccess | null> {
@@ -122,7 +154,7 @@ export async function getWorkspaceAccess(
   }
 
   try {
-    const session = await auth.api.getSession({ headers: await headers() });
+    const session = await getSessionSafe();
 
     if (!session) {
       return null;

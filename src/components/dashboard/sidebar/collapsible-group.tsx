@@ -53,14 +53,13 @@ export function CollapsibleGroup({
         </button>
 
         {headerAction && (
-          <button
+          <div
             className="contents"
             onMouseDown={(e) => e.stopPropagation()}
             onPointerDown={(e) => e.stopPropagation()}
-            type="button"
           >
             {headerAction}
-          </button>
+          </div>
         )}
       </div>
 

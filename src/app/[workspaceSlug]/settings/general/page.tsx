@@ -1,65 +1,8 @@
-import { and, eq } from "drizzle-orm";
-import { headers } from "next/headers";
 import { notFound } from "next/navigation";
 import { GeneralSettings } from "@/components/settings/workspace-settings/general-settings";
-import { db } from "@/db";
-import { workspace, workspaceMember } from "@/db/schema";
-import { auth } from "@/lib/auth";
+import { requireWorkspaceAccess } from "@/lib/workspace-utils";
 
 export const dynamic = "force-dynamic";
-
-async function getWorkspaceData(slug: string) {
-  const workspaceData = await db
-    .select({
-      id: workspace.id,
-      name: workspace.name,
-      slug: workspace.slug,
-      description: workspace.description,
-      logo: workspace.logo,
-      ownerId: workspace.ownerId,
-      createdAt: workspace.createdAt,
-    })
-    .from(workspace)
-    .where(eq(workspace.slug, slug))
-    .limit(1);
-
-  return workspaceData[0] || null;
-}
-
-async function checkMembership(workspaceId: string, userId: string) {
-  const membership = await db
-    .select({ id: workspaceMember.id })
-    .from(workspaceMember)
-    .where(
-      and(
-        eq(workspaceMember.workspaceId, workspaceId),
-        eq(workspaceMember.userId, userId)
-      )
-    )
-    .limit(1);
-
-  return membership.length > 0;
-}
-
-async function getWorkspace(slug: string, userId: string) {
-  const ws = await getWorkspaceData(slug);
-
-  if (!ws) {
-    return null;
-  }
-
-  if (ws.ownerId === userId) {
-    return ws;
-  }
-
-  const hasMembership = await checkMembership(ws.id, userId);
-
-  if (!hasMembership) {
-    return null;
-  }
-
-  return ws;
-}
 
 export default async function GeneralSettingsPage({
   params,
@@ -67,21 +10,24 @@ export default async function GeneralSettingsPage({
   params: Promise<{ workspaceSlug: string }>;
 }) {
   const { workspaceSlug } = await params;
-  const session = await auth.api.getSession({ headers: await headers() });
 
-  if (!session) {
+  try {
+    const access = await requireWorkspaceAccess(workspaceSlug);
+
+    return (
+      <div className="mx-auto max-w-xl p-6">
+        <GeneralSettings
+          workspace={{
+            id: access.workspace.id,
+            name: access.workspace.name,
+            slug: access.workspace.slug,
+            description: access.workspace.description,
+            logo: access.workspace.logo,
+          }}
+        />
+      </div>
+    );
+  } catch {
     notFound();
   }
-
-  const workspaceData = await getWorkspace(workspaceSlug, session.user.id);
-
-  if (!workspaceData) {
-    notFound();
-  }
-
-  return (
-    <div className="mx-auto max-w-xl p-6">
-      <GeneralSettings workspace={workspaceData} />
-    </div>
-  );
 }

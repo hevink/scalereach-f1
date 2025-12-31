@@ -43,6 +43,13 @@
       "when": 1767162746495,
       "tag": "0005_uneven_strong_guy",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1767192367670,
+      "tag": "0006_chemical_siren",
+      "breakpoints": true
     }
   ]
 }

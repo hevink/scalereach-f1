@@ -31,6 +31,7 @@ export const user = pgTable(
   (table) => [
     index("user_username_idx").on(table.username),
     index("user_display_username_idx").on(table.displayUsername),
+    index("user_email_idx").on(table.email),
   ]
 );
 
@@ -54,6 +55,8 @@ export const session = pgTable(
   (table) => [
     index("session_userId_idx").on(table.userId),
     index("session_token_idx").on(table.token),
+    index("session_expiresAt_idx").on(table.expiresAt),
+    index("session_userId_expiresAt_idx").on(table.userId, table.expiresAt),
   ]
 );
 
@@ -347,8 +350,8 @@ export const workspaceRole = pgTable(
       .notNull()
       .references(() => workspace.id, { onDelete: "cascade" }),
     name: text("name").notNull(),
-    identifier: text("identifier").notNull(), // e.g., "owner", "admin", "manager", "member", "guest"
-    isSystem: boolean("is_system").default(false).notNull(), // System roles cannot be deleted
+    identifier: text("identifier").notNull(),
+    isSystem: boolean("is_system").default(false).notNull(),
     description: text("description"),
     createdAt: timestamp("created_at").defaultNow().notNull(),
     updatedAt: timestamp("updated_at")
@@ -372,7 +375,7 @@ export const workspaceRolePermission = pgTable(
     roleId: text("role_id")
       .notNull()
       .references(() => workspaceRole.id, { onDelete: "cascade" }),
-    permission: text("permission").notNull(), // e.g., "task.create", "project.delete", "workspace.invite"
+    permission: text("permission").notNull(),
     createdAt: timestamp("created_at").defaultNow().notNull(),
   },
   (table) => [

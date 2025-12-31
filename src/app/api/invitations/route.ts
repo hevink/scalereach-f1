@@ -1,30 +1,28 @@
-import { and, eq } from "drizzle-orm";
-import { headers } from "next/headers";
+import { and, eq, gt, isNull, or } from "drizzle-orm";
 import { NextResponse } from "next/server";
 import { db } from "@/db";
 import { user, workspace, workspaceInvitation } from "@/db/schema";
-import { auth } from "@/lib/auth";
+import { getSessionSafe } from "@/lib/auth-utils";
 import { safeError } from "@/lib/logger";
 
 export async function GET() {
   try {
-    const session = await auth.api.getSession({ headers: await headers() });
+    const session = await getSessionSafe();
 
     if (!session) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const userData = await db
-      .select({ email: user.email })
-      .from(user)
-      .where(eq(user.id, session.user.id))
-      .limit(1);
+    const userEmail = session.user.email;
 
-    if (userData.length === 0) {
-      return NextResponse.json({ error: "User not found" }, { status: 404 });
+    if (!userEmail) {
+      return NextResponse.json(
+        { error: "User email not found" },
+        { status: 400 }
+      );
     }
 
-    const userEmail = userData[0].email;
+    const now = new Date();
 
     const invitations = await db
       .select({
@@ -51,20 +49,24 @@ export async function GET() {
       .where(
         and(
           eq(workspaceInvitation.email, userEmail),
-          eq(workspaceInvitation.status, "pending")
+          eq(workspaceInvitation.status, "pending"),
+          or(
+            isNull(workspaceInvitation.expiresAt),
+            gt(workspaceInvitation.expiresAt, now)
+          )
         )
       )
-      .orderBy(workspaceInvitation.createdAt);
+      .orderBy(workspaceInvitation.createdAt)
+      .limit(100);
 
-    const now = new Date();
-    const validInvitations = invitations.filter((inv) => {
-      if (!inv.expiresAt) {
-        return true;
+    return NextResponse.json(
+      { invitations },
+      {
+        headers: {
+          "Cache-Control": "private, max-age=30",
+        },
       }
-      return new Date(inv.expiresAt) > now;
-    });
-
-    return NextResponse.json({ invitations: validInvitations });
+    );
   } catch (error) {
     safeError("Error fetching invitations:", error);
     return NextResponse.json(

@@ -85,50 +85,10 @@ export const auth = betterAuth({
     "http://localhost:3000",
   ],
   rateLimit: {
-    enabled: true,
-    window: 60,
-    max: 100,
-    storage: "database",
-    customRules: {
-      "/sign-in/email": {
-        window: 10,
-        max: 5,
-      },
-      "/sign-in/username": {
-        window: 10,
-        max: 5,
-      },
-      "/sign-in/social": {
-        window: 60,
-        max: 10,
-      },
-      "/sign-up/email": {
-        window: 60,
-        max: 5,
-      },
-      "/change-password": {
-        window: 60,
-        max: 3,
-      },
-      "/forgot-password": {
-        window: 60,
-        max: 3,
-      },
-      "/reset-password": {
-        window: 60,
-        max: 3,
-      },
-      "/is-username-available": {
-        window: 10,
-        max: 10,
-      },
-      "/get-session": {
-        window: 10,
-        max: 50,
-      },
-    },
+    enabled: false,
   },
   advanced: {
     cookiePrefix: "staxk",
+    useSecureCookies: process.env.NODE_ENV === "production",
   },
 });
