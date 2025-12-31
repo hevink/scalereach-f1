@@ -14,7 +14,7 @@ export interface Role {
   createdAt: Date;
   updatedAt: Date;
   permissions?: string[];
-}
+} 
 
 export async function initializeWorkspaceRoles(
   workspaceId: string
