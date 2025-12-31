@@ -1,6 +1,6 @@
 "use client";
 
-import { IconChevronDown, IconChevronRight } from "@tabler/icons-react";
+import { IconChevronDown } from "@tabler/icons-react";
 import { useState } from "react";
 
 interface CollapsibleContentProps {
@@ -9,41 +9,59 @@ interface CollapsibleContentProps {
 }
 
 function CollapsibleContent({ children, isOpen }: CollapsibleContentProps) {
-  if (!isOpen) {
-    return null;
-  }
-
-  return <div className="mt-1 ml-3 flex flex-col gap-0.5 pl-3">{children}</div>;
+  return (
+    <div
+      className={`
+        grid transition-[grid-template-rows,opacity] duration-200 ease-out
+        ${isOpen ? "grid-rows-[1fr] opacity-100" : "grid-rows-[0fr] opacity-0"}
+      `}
+    >
+      <div className="overflow-hidden">
+        <div className="ml-2 flex flex-col gap-0.5 pl-2 font-[490] text-sm">
+          {children}
+        </div>
+      </div>
+    </div>
+  );
 }
 
 interface CollapsibleGroupProps {
   children: React.ReactNode;
   defaultOpen?: boolean;
   label: string;
+  headerAction?: React.ReactNode;
 }
 
 export function CollapsibleGroup({
   children,
   defaultOpen = false,
   label,
+  headerAction,
 }: CollapsibleGroupProps) {
   const [isOpen, setIsOpen] = useState(defaultOpen);
 
   return (
     <div className="flex flex-col">
-      <button
-        className="flex w-full items-center justify-between rounded-md px-2 py-1.5 font-medium text-muted-foreground text-sm transition-colors hover:bg-accent hover:text-foreground"
-        onClick={() => setIsOpen(!isOpen)}
-        type="button"
-      >
-        <span>{label}</span>
-        {isOpen ? (
-          <IconChevronDown className="size-3 shrink-0" />
-        ) : (
-          <IconChevronRight className="size-3 shrink-0" />
+      <div className="flex w-full items-center justify-between rounded-md px-2 py-1.5">
+        <button
+          type="button"
+          onClick={() => setIsOpen(!isOpen)}
+          className="flex flex-1 items-center gap-2 font-medium text-muted-foreground text-xs transition-colors hover:text-foreground"
+        >
+          <span>{label}</span>
+          <IconChevronDown
+            className={`size-3 shrink-0 transition-transform duration-200 ${isOpen ? "rotate-0" : "-rotate-90"}`}
+          />
+        </button>
+
+        {headerAction && (
+          <div onClick={(e) => e.stopPropagation()}>{headerAction}</div>
         )}
-      </button>
-      <CollapsibleContent isOpen={isOpen}>{children}</CollapsibleContent>
+      </div>
+
+      <CollapsibleContent isOpen={isOpen}>
+        {children}
+      </CollapsibleContent>
     </div>
   );
 }

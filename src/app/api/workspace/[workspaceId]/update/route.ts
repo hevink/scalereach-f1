@@ -15,7 +15,6 @@ import {
   sanitizeWorkspaceDescription,
   sanitizeWorkspaceName,
 } from "@/lib/sanitize";
-import { isValidTimezone } from "@/lib/timezone";
 
 const SLUG_REGEX = /^[a-z][a-z0-9-]*$/;
 const MIN_SLUG_LENGTH = 3;
@@ -133,25 +132,6 @@ function validateLogo(logo: unknown): {
   return validation;
 }
 
-function validateTimezone(timezone: unknown): {
-  valid: boolean;
-  error?: string;
-  value?: string;
-} {
-  if (typeof timezone !== "string") {
-    return { valid: false, error: "Timezone must be a string" };
-  }
-
-  if (!timezone.trim()) {
-    return { valid: false, error: "Timezone cannot be empty" };
-  }
-
-  if (!isValidTimezone(timezone)) {
-    return { valid: false, error: "Invalid timezone identifier" };
-  }
-
-  return { valid: true, value: timezone.trim() };
-}
 
 async function validateSlugAvailability(
   slug: string,
@@ -273,20 +253,6 @@ function processLogoField(
   return { success: true };
 }
 
-function processTimezoneField(
-  timezone: unknown,
-  updateData: { timezone?: string }
-): { success: false; error: string } | { success: true } {
-  const validation = validateTimezone(timezone);
-  if (!validation.valid) {
-    return {
-      success: false,
-      error: validation.error || "Invalid timezone",
-    };
-  }
-  updateData.timezone = validation.value;
-  return { success: true };
-}
 
 type FieldProcessor = (
   value: unknown,
@@ -295,7 +261,6 @@ type FieldProcessor = (
     slug?: string;
     description?: string | null;
     logo?: string | null;
-    timezone?: string;
   }
 ) =>
   | Promise<{ success: false; error: string } | { success: true }>
@@ -308,7 +273,6 @@ async function processFieldUpdates(
     slug?: unknown;
     description?: unknown;
     logo?: unknown;
-    timezone?: unknown;
   },
   currentWorkspace: { slug: string }
 ): Promise<
@@ -319,7 +283,6 @@ async function processFieldUpdates(
         slug?: string;
         description?: string | null;
         logo?: string | null;
-        timezone?: string;
       };
     }
   | { success: false; error: string }
@@ -329,7 +292,6 @@ async function processFieldUpdates(
     slug?: string;
     description?: string | null;
     logo?: string | null;
-    timezone?: string;
   } = {};
 
   const fieldProcessors: Array<{
@@ -352,10 +314,6 @@ async function processFieldUpdates(
     {
       value: body.logo,
       processor: (val, data) => processLogoField(val, data),
-    },
-    {
-      value: body.timezone,
-      processor: (val, data) => processTimezoneField(val, data),
     },
   ];
 
@@ -456,7 +414,6 @@ export async function PATCH(
         name: workspace.name,
         slug: workspace.slug,
         description: workspace.description,
-        timezone: workspace.timezone,
       });
 
     return NextResponse.json(updated[0]);

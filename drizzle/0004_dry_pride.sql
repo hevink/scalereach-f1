@@ -1,0 +1,1 @@
+ALTER TABLE "team" ADD CONSTRAINT "team_workspaceId_identifier_unique" UNIQUE("workspace_id","identifier");

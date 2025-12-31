@@ -17,7 +17,6 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { TimezoneSelector } from "@/components/ui/timezone-selector";
 import {
   Tooltip,
   TooltipContent,
@@ -280,7 +279,6 @@ interface GeneralSettingsProps {
     slug: string;
     description: string | null;
     logo: string | null;
-    timezone: string;
   };
 }
 
@@ -401,47 +399,6 @@ function DescriptionField({
   );
 }
 
-function TimezoneField({
-  timezone,
-  timezoneSaveStatus,
-  onTimezoneChange,
-}: {
-  timezone: string;
-  timezoneSaveStatus: "idle" | "saving" | "saved" | "error";
-  onTimezoneChange: (value: string) => void;
-}) {
-  return (
-    <div className="flex w-full flex-col items-start">
-      <div className="flex items-center gap-2">
-        <Label className="pb-2 font-medium text-sm" htmlFor="timezone">
-          Workspace Timezone
-        </Label>
-        {timezoneSaveStatus === "saving" && (
-          <IconLoader2
-            aria-hidden="true"
-            className="mb-2 size-3.5 animate-spin text-muted-foreground"
-          />
-        )}
-        {timezoneSaveStatus === "saved" && (
-          <IconCircleCheck
-            aria-hidden="true"
-            className="mb-2 size-3.5 text-green-600 dark:text-green-500"
-          />
-        )}
-      </div>
-      <div className="w-full">
-        <TimezoneSelector
-          onValueChange={onTimezoneChange}
-          placeholder="Select timezone"
-          value={timezone}
-        />
-        <p className="mt-2 text-muted-foreground text-xs" id="timezone-helper">
-          Changes save automatically
-        </p>
-      </div>
-    </div>
-  );
-}
 
 function useWorkspaceNameSave(
   workspaceId: string,
@@ -575,85 +532,6 @@ function useWorkspaceDescriptionSave(
   };
 }
 
-function useWorkspaceTimezoneSave(
-  workspaceId: string,
-  initialTimezone: string,
-  router: ReturnType<typeof useRouter>
-) {
-  const [timezone, setTimezone] = useState(initialTimezone || "UTC");
-  const [timezoneSaveStatus, setTimezoneSaveStatus] = useState<
-    "idle" | "saving" | "saved" | "error"
-  >("idle");
-  const timezoneSaveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
-
-  const updateTimezone = useCallback(
-    async (timezoneValue: string) => {
-      const response = await fetch(`/api/workspace/${workspaceId}/update`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ timezone: timezoneValue }),
-      });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.error || "Failed to update workspace timezone");
-      }
-    },
-    [workspaceId]
-  );
-
-  const saveTimezone = useCallback(
-    async (timezoneValue: string) => {
-      setTimezoneSaveStatus("saving");
-
-      try {
-        await updateTimezone(timezoneValue);
-
-        setTimezoneSaveStatus("saved");
-        router.refresh();
-
-        setTimeout(() => {
-          setTimezoneSaveStatus("idle");
-        }, 2000);
-      } catch (error) {
-        safeClientError("Error updating timezone:", error);
-        toast.error(
-          error instanceof Error ? error.message : "Failed to update timezone"
-        );
-        setTimezoneSaveStatus("error");
-      }
-    },
-    [router, updateTimezone]
-  );
-
-  const handleTimezoneChange = useCallback(
-    (newTimezone: string, currentTimezone: string) => {
-      setTimezone(newTimezone);
-
-      if (newTimezone === currentTimezone) {
-        setTimezoneSaveStatus("idle");
-        return;
-      }
-
-      if (timezoneSaveTimeoutRef.current) {
-        clearTimeout(timezoneSaveTimeoutRef.current);
-      }
-
-      timezoneSaveTimeoutRef.current = setTimeout(async () => {
-        await saveTimezone(newTimezone);
-      }, 500);
-    },
-    [saveTimezone]
-  );
-
-  return {
-    timezone,
-    timezoneSaveStatus,
-    handleTimezoneChange,
-    timezoneSaveTimeoutRef,
-  };
-}
 
 function useSlugHandlers(
   workspace: { id: string; slug: string },
@@ -772,13 +650,6 @@ export function GeneralSettings({ workspace }: GeneralSettingsProps) {
     descriptionSaveTimeoutRef,
     hasUnsavedDescriptionChangesRef,
   } = useWorkspaceDescriptionSave(workspace.id, router);
-
-  const {
-    timezone,
-    timezoneSaveStatus,
-    handleTimezoneChange,
-    timezoneSaveTimeoutRef,
-  } = useWorkspaceTimezoneSave(workspace.id, workspace.timezone, router);
 
   const form = useForm<WorkspaceFormData>({
     resolver: zodResolver(workspaceSchema),
@@ -958,13 +829,6 @@ export function GeneralSettings({ workspace }: GeneralSettingsProps) {
     descriptionSaveTimeoutRef,
   ]);
 
-  useEffect(() => {
-    return () => {
-      if (timezoneSaveTimeoutRef.current) {
-        clearTimeout(timezoneSaveTimeoutRef.current);
-      }
-    };
-  }, [timezoneSaveTimeoutRef]);
 
   if (!isInitialized) {
     return null;
@@ -1007,13 +871,6 @@ export function GeneralSettings({ workspace }: GeneralSettingsProps) {
             slug={workspace.slug}
             slugAvailability={slugAvailability}
             slugEditValue={slugEditValue}
-          />
-          <TimezoneField
-            onTimezoneChange={(newTz) =>
-              handleTimezoneChange(newTz, workspace.timezone)
-            }
-            timezone={timezone}
-            timezoneSaveStatus={timezoneSaveStatus}
           />
         </CardContent>
       </Card>

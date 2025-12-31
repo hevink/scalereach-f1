@@ -1,6 +1,6 @@
 "use client";
 
-import { IconBug, IconHelpCircle, IconSettings } from "@tabler/icons-react";
+import { IconBug, IconHelpCircle, IconSettings, IconUserCircle } from "@tabler/icons-react";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import {
   type NavItem,
@@ -67,9 +67,11 @@ export function SidebarFooter({
         return <LoadingUserProfile fallbackUrl={pendingUrl} />;
       }
       return (
-        <div className="flex w-full items-center gap-2.5 p-2">
+        <div className="flex w-full items-center gap-2 p-2">
           <Avatar>
-            <AvatarFallback className="animate-pulse">...</AvatarFallback>
+            <AvatarFallback className="animate-pulse">
+              <IconUserCircle className="size-4" />
+            </AvatarFallback>
           </Avatar>
           <div className="h-4 w-24 animate-pulse rounded bg-muted" />
         </div>
@@ -89,7 +91,7 @@ export function SidebarFooter({
     }
 
     return (
-      <div className="flex w-full items-center gap-2.5 p-2">
+      <div className="flex w-full items-center gap-2 p-2">
         <Avatar>
           <AvatarFallback className="animate-pulse">...</AvatarFallback>
         </Avatar>

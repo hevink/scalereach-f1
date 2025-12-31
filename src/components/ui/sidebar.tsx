@@ -100,7 +100,7 @@ export function SidebarNavLink({
       <Link
         aria-label={`${children} ${notificationCount > 0 ? `(${notificationCount})` : ""}`}
         className={cn(
-          "flex items-center gap-2.5 rounded-md px-2 py-1.5 font-[480] text-[13.5px] transition-colors",
+          "flex items-center gap-2 rounded-md px-2 py-1.5 font-[480] text-[13.5px] transition-colors",
           isActive
             ? "bg-sidebar-accent text-sidebar-accent-foreground"
             : "hover:bg-sidebar-accent",

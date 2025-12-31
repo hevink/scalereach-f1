@@ -156,7 +156,6 @@ export const workspace = pgTable(
     slug: text("slug").notNull().unique(),
     description: text("description"),
     logo: text("logo"),
-    timezone: text("timezone").default("UTC").notNull(),
     ownerId: text("owner_id")
       .notNull()
       .references(() => user.id, { onDelete: "cascade" }),
@@ -235,6 +234,35 @@ export const workspaceInvitation = pgTable(
   ]
 );
 
+export const team = pgTable(
+  "team",
+  {
+    id: text("id").primaryKey(),
+    workspaceId: text("workspace_id")
+      .notNull()
+      .references(() => workspace.id, { onDelete: "cascade" }),
+    name: text("name").notNull(),
+    identifier: text("identifier"),
+    icon: text("icon"),
+    createdAt: timestamp("created_at").defaultNow().notNull(),
+    updatedAt: timestamp("updated_at")
+      .defaultNow()
+      .$onUpdate(() => new Date())
+      .notNull(),
+  },
+  (table) => [
+    index("team_workspaceId_idx").on(table.workspaceId),
+    index("team_workspaceId_createdAt_idx").on(
+      table.workspaceId,
+      table.createdAt
+    ),
+    unique("team_workspaceId_identifier_unique").on(
+      table.workspaceId,
+      table.identifier
+    ),
+  ]
+);
+
 export const userRelations = relations(user, ({ many }) => ({
   sessions: many(session),
   accounts: many(account),
@@ -251,6 +279,7 @@ export const workspaceRelations = relations(workspace, ({ one, many }) => ({
   }),
   members: many(workspaceMember),
   invitations: many(workspaceInvitation),
+  teams: many(team),
 }));
 
 export const workspaceMemberRelations = relations(
@@ -301,3 +330,10 @@ export const workspaceInvitationRelations = relations(
     }),
   })
 );
+
+export const teamRelations = relations(team, ({ one }) => ({
+  workspace: one(workspace, {
+    fields: [team.workspaceId],
+    references: [workspace.id],
+  }),
+}));

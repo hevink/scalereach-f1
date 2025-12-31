@@ -27,7 +27,7 @@ export function ProjectItem({
         onClick={() => hasChildren && setIsOpen(!isOpen)}
         type="button"
       >
-        <div className="flex items-center gap-2.5">
+        <div className="flex items-center gap-2">
           <div
             className="size-5 shrink-0 rounded"
             style={{ backgroundColor: iconColor }}

@@ -18,7 +18,6 @@ async function getWorkspaceData(slug: string) {
       slug: workspace.slug,
       description: workspace.description,
       logo: workspace.logo,
-      timezone: workspace.timezone,
       ownerId: workspace.ownerId,
       createdAt: workspace.createdAt,
     })

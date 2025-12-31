@@ -21,26 +21,6 @@ export function WorkspaceDashboard({ workspace }: WorkspaceProps) {
             </p>
           )}
         </div>
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-          <div className="rounded-lg border p-6">
-            <h3 className="font-medium">Projects</h3>
-            <p className="mt-1 text-muted-foreground text-sm">
-              Manage your projects
-            </p>
-          </div>
-          <div className="rounded-lg border p-6">
-            <h3 className="font-medium">Team</h3>
-            <p className="mt-1 text-muted-foreground text-sm">
-              Invite and manage team members
-            </p>
-          </div>
-          <div className="rounded-lg border p-6">
-            <h3 className="font-medium">Settings</h3>
-            <p className="mt-1 text-muted-foreground text-sm">
-              Configure workspace settings
-            </p>
-          </div>
-        </div>
       </div>
     </div>
   );
