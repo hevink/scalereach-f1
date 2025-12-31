@@ -4,6 +4,9 @@ import { Toaster } from "sonner";
 import { SessionWrapper } from "@/components/session-wrapper";
 import { ThemeProvider } from "@/components/theme-provider";
 import { TooltipProvider } from "@/components/ui/tooltip";
+import { NuqsAdapter } from 'nuqs/adapters/next/app'
+import { type ReactNode } from 'react'
+
 import "./globals.css";
 
 const geistSans = Geist({
@@ -28,7 +31,7 @@ export const metadata: Metadata = {
 export default function RootLayout({
   children,
 }: Readonly<{
-  children: React.ReactNode;
+  children: ReactNode;
 }>) {
   return (
     <html lang="en" suppressHydrationWarning>
@@ -51,7 +54,9 @@ export default function RootLayout({
             enableSystem
           >
             <TooltipProvider delay={400}>
-              <div className="root">{children}</div>
+              <NuqsAdapter>
+                <div className="root">{children}</div>
+              </NuqsAdapter>
               <Toaster position="bottom-center" />
             </TooltipProvider>
           </ThemeProvider>
