@@ -3,30 +3,30 @@
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
 import { Spinner } from "@/components/ui/spinner";
-import { signOut } from "@/lib/auth-client";
-import { safeError } from "@/lib/logger";
+import { authClient } from "@/lib/auth-client";
 
 export default function LogoutPage() {
   const router = useRouter();
 
   useEffect(() => {
-    const performLogout = async () => {
+    const logout = async () => {
       try {
-        await signOut();
+        await authClient.signOut();
+        router.push("/login");
+        router.refresh();
       } catch (error) {
-        safeError("Logout error:", error);
-      } finally {
+        console.error("Error during logout:", error);
         router.push("/login");
         router.refresh();
       }
     };
 
-    performLogout();
+    logout();
   }, [router]);
 
   return (
     <div className="flex min-h-screen items-center justify-center">
-      <div className="text-center">
+      <div className="flex flex-col items-center gap-4">
         <Spinner />
       </div>
     </div>

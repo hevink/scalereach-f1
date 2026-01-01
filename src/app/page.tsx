@@ -1,42 +1,125 @@
-import { eq } from "drizzle-orm";
-import { redirect } from "next/navigation";
-import { db } from "@/db";
-import { user as userTable, workspace, workspaceMember } from "@/db/schema";
-import { getSessionSafe } from "@/lib/auth-utils";
+"use client";
 
-export const dynamic = "force-dynamic";
+import { IconLogout } from "@tabler/icons-react";
+import { useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Spinner } from "@/components/ui/spinner";
+import { authClient } from "@/lib/auth-client";
 
-export default async function RootPage() {
-  const session = await getSessionSafe();
+export default function Home() {
+  const router = useRouter();
+  const { data: session, isPending } = authClient.useSession();
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
 
-  if (!session) {
-    redirect("/home");
+  useEffect(() => {
+    if (!(isPending || session?.user)) {
+      router.replace("/login");
+    }
+  }, [session, isPending, router]);
+
+  const handleLogout = async () => {
+    setIsLoggingOut(true);
+    try {
+      await authClient.signOut();
+      router.push("/login");
+      router.refresh();
+    } catch (error) {
+      console.error("Error during logout:", error);
+      setIsLoggingOut(false);
+    }
+  };
+
+  if (isPending) {
+    return (
+      <div className="flex min-h-screen items-center justify-center">
+        <Spinner />
+      </div>
+    );
   }
 
-  const [userData, userWorkspaces] = await Promise.all([
-    db
-      .select({ isOnboarded: userTable.isOnboarded })
-      .from(userTable)
-      .where(eq(userTable.id, session.user.id))
-      .limit(1),
-    db
-      .select({
-        id: workspace.id,
-        slug: workspace.slug,
-      })
-      .from(workspace)
-      .innerJoin(workspaceMember, eq(workspace.id, workspaceMember.workspaceId))
-      .where(eq(workspaceMember.userId, session.user.id))
-      .limit(1),
-  ]);
-
-  if (!userData[0]?.isOnboarded) {
-    redirect("/onboarding");
+  if (!session?.user) {
+    return null;
   }
 
-  if (userWorkspaces.length > 0) {
-    redirect(`/${userWorkspaces[0].slug}`);
-  }
+  const user = session.user;
+  const initials =
+    user.name
+      ?.split(" ")
+      .map((n) => n[0])
+      .join("")
+      .toUpperCase()
+      .slice(0, 2) ||
+    user.email?.[0]?.toUpperCase() ||
+    "U";
 
-  redirect("/onboarding");
+  return (
+    <div className="flex min-h-screen items-center justify-center bg-zinc-50 p-4 font-sans dark:bg-black">
+      <Card className="w-full max-w-md">
+        <CardHeader>
+          <CardTitle>User Profile</CardTitle>
+          <CardDescription>Your account information</CardDescription>
+        </CardHeader>
+        <CardContent className="flex flex-col gap-6">
+          <div className="flex items-center gap-4">
+            <Avatar size="lg">
+              {user.image && (
+                <AvatarImage alt={user.name || "User"} src={user.image} />
+              )}
+              <AvatarFallback>{initials}</AvatarFallback>
+            </Avatar>
+            <div className="flex flex-col gap-1">
+              <p className="font-semibold text-base">{user.name || "User"}</p>
+              <p className="text-muted-foreground text-sm">{user.email}</p>
+              {user.username && (
+                <p className="text-muted-foreground text-sm">
+                  @{user.username}
+                </p>
+              )}
+            </div>
+          </div>
+          <div className="flex flex-col gap-2">
+            <div className="flex items-center justify-between">
+              <span className="text-muted-foreground text-sm">
+                Email Verified
+              </span>
+              <span className="font-medium text-sm">
+                {user.emailVerified ? "Yes" : "No"}
+              </span>
+            </div>
+            {session.session?.createdAt && (
+              <div className="flex items-center justify-between">
+                <span className="text-muted-foreground text-sm">
+                  Session Started
+                </span>
+                <span className="font-medium text-sm">
+                  {new Date(session.session.createdAt).toLocaleDateString()}
+                </span>
+              </div>
+            )}
+          </div>
+          <Button
+            className="w-full"
+            disabled={isLoggingOut}
+            loading={isLoggingOut}
+            onClick={handleLogout}
+            variant="outline"
+          >
+            <>
+              <IconLogout className="size-4" />
+              Logout
+            </>
+          </Button>
+        </CardContent>
+      </Card>
+    </div>
+  );
 }
