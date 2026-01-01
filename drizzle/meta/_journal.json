@@ -15,6 +15,13 @@
       "when": 1767250018229,
       "tag": "0001_last_mongoose",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1767292720965,
+      "tag": "0002_greedy_iron_monger",
+      "breakpoints": true
     }
   ]
 }

@@ -8,9 +8,10 @@ if (!databaseUrl) {
 
 export default defineConfig({
   out: "./drizzle",
-  schema: "./src/db/schema.ts",
+  schema: "./src/db/schema/*.ts",
   dialect: "postgresql",
   dbCredentials: {
     url: databaseUrl,
   },
+  tablesFilter: ['!pg_stat_statements', '!pg_stat_statements_info'],
 });
