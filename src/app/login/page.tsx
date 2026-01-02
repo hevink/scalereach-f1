@@ -1,22 +1,36 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { AuthHeader } from "@/components/authentication/auth-header";
 import { AuthNavigation } from "@/components/authentication/auth-navigation";
 import { LoginForm } from "@/components/authentication/login/login-form";
 import { Spinner } from "@/components/ui/spinner";
-import { authClient } from "@/lib/auth-client";
 
 export default function LoginPage() {
   const router = useRouter();
-  const { data: session, isPending } = authClient.useSession();
+  const [isPending, setIsPending] = useState(true);
+  const [user, setUser] = useState<{ id: string } | null>(null);
 
   useEffect(() => {
-    if (!isPending && session?.user) {
-      router.replace("/home");
-    }
-  }, [session, isPending, router]);
+    const checkSession = async () => {
+      try {
+        const response = await fetch("/api/auth/session");
+        const data = await response.json();
+        setUser(data.user);
+        if (data.user) {
+          router.replace("/home");
+        }
+      } catch (error) {
+        console.error("Failed to check session:", error);
+        setUser(null);
+      } finally {
+        setIsPending(false);
+      }
+    };
+
+    checkSession();
+  }, [router]);
 
   if (isPending) {
     return (
@@ -26,7 +40,7 @@ export default function LoginPage() {
     );
   }
 
-  if (session?.user) {
+  if (user) {
     return null;
   }
 
