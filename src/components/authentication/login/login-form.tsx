@@ -130,8 +130,8 @@ export function LoginForm() {
                 {...field}
                 aria-invalid={fieldState.invalid}
                 autoComplete="username webauthn"
-                disabled={isLoading}
                 autoFocus
+                disabled={isLoading}
                 id={field.name}
                 placeholder="you@example.com or username"
                 type="text"

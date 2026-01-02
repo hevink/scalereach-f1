@@ -153,7 +153,7 @@ export function SignUpForm() {
       const response = await fetch(
         `/api/email/check?email=${encodeURIComponent(email)}`
       );
-      
+
       let data;
       try {
         const text = await response.text();
@@ -165,19 +165,21 @@ export function SignUpForm() {
       } catch (parseError) {
         console.error("Failed to parse response:", parseError);
         toast.error(
-          !response.ok
-            ? `Failed to check email availability (${response.status})`
-            : "Invalid response from server"
+          response.ok
+            ? "Invalid response from server"
+            : `Failed to check email availability (${response.status})`
         );
         return false;
       }
-      
+
       if (!response.ok) {
-        const errorMessage = data?.error || `Failed to check email availability (${response.status})`;
+        const errorMessage =
+          data?.error ||
+          `Failed to check email availability (${response.status})`;
         toast.error(errorMessage);
         return false;
       }
-      
+
       if (data.available === false) {
         toast.error("Email is already in use");
         return false;
