@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { authClient } from "@/lib/auth-client";
+import { IconBrandGoogle } from "@tabler/icons-react";
 
 export function LoginWithGoogle() {
   const [isLoading, setIsLoading] = useState(false);

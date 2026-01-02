@@ -3,7 +3,7 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { IconEye, IconEyeOff } from "@tabler/icons-react";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Controller, useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
@@ -14,6 +14,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { authClient } from "@/lib/auth-client";
 import { LoginWithGoogle } from "../login-with-google";
+import { LoginWithPasskey } from "../login-with-passkey";
 
 const loginSchema = z.object({
   identifier: z.string().min(1, "Email or username is required"),
@@ -42,6 +43,28 @@ export function LoginForm() {
       rememberMe: false,
     },
   });
+
+  // Conditional UI support for passkey autofill
+  useEffect(() => {
+    if (
+      typeof window !== "undefined" &&
+      PublicKeyCredential.isConditionalMediationAvailable
+    ) {
+      const checkConditionalUI = async () => {
+        try {
+          const available =
+            await PublicKeyCredential.isConditionalMediationAvailable();
+          if (available) {
+            // Preload passkeys for autofill
+            void authClient.signIn.passkey({ autoFill: true });
+          }
+        } catch {
+          // Conditional UI not available, ignore
+        }
+      };
+      void checkConditionalUI();
+    }
+  }, []);
 
   const onSubmit = async (data: LoginFormData) => {
     setIsLoading(true);
@@ -95,7 +118,7 @@ export function LoginForm() {
                   <Input
                     {...field}
                     aria-invalid={fieldState.invalid}
-                    autoComplete="username"
+                    autoComplete="username webauthn"
                     disabled={isLoading}
                     id={field.name}
                     placeholder="you@example.com or username"
@@ -122,7 +145,7 @@ export function LoginForm() {
                     <Input
                       {...field}
                       aria-invalid={fieldState.invalid}
-                      autoComplete="current-password"
+                      autoComplete="current-password webauthn"
                       className="flex-1"
                       disabled={isLoading}
                       id={field.name}
@@ -187,6 +210,7 @@ export function LoginForm() {
             OR
           </div>
           <LoginWithGoogle />
+          <LoginWithPasskey />
         </div>
       </form>
     </div>

@@ -1,9 +1,12 @@
 "use client";
 
 import { Menu as MenuPrimitive } from "@base-ui/react/menu";
+import { mergeProps } from "@base-ui/react/merge-props";
 import { IconCheck, IconChevronRight } from "@tabler/icons-react";
-import type * as React from "react";
+import * as React from "react";
 import { cn } from "@/lib/utils";
+import { buttonVariants } from "./button";
+import type { VariantProps } from "class-variance-authority";
 
 function DropdownMenu({ ...props }: MenuPrimitive.Root.Props) {
   return <MenuPrimitive.Root data-slot="dropdown-menu" {...props} />;
@@ -13,8 +16,72 @@ function DropdownMenuPortal({ ...props }: MenuPrimitive.Portal.Props) {
   return <MenuPrimitive.Portal data-slot="dropdown-menu-portal" {...props} />;
 }
 
-function DropdownMenuTrigger({ ...props }: MenuPrimitive.Trigger.Props) {
-  return <MenuPrimitive.Trigger data-slot="dropdown-menu-trigger" {...props} />;
+function DropdownMenuTrigger({
+  children,
+  render,
+  ...props
+}: MenuPrimitive.Trigger.Props) {
+  // If render is provided, use it directly
+  if (render !== undefined) {
+    return (
+      <MenuPrimitive.Trigger
+        data-slot="dropdown-menu-trigger"
+        render={render}
+        {...props}
+      />
+    );
+  }
+
+  // If a single Button-like child is passed, extract its props and use render prop
+  if (
+    React.isValidElement(children) &&
+    children.type &&
+    typeof children.type === "function" &&
+    (children.type.name === "Button" ||
+      (children.props as { variant?: unknown; size?: unknown })?.variant !==
+        undefined ||
+      (children.props as { variant?: unknown; size?: unknown })?.size !==
+        undefined)
+  ) {
+    const buttonProps = children.props as {
+      variant?: VariantProps<typeof buttonVariants>["variant"];
+      size?: VariantProps<typeof buttonVariants>["size"];
+      className?: string;
+      disabled?: boolean;
+      loading?: boolean;
+      children?: React.ReactNode;
+      [key: string]: unknown;
+    };
+    const { variant = "default", size = "default", className, ...restProps } =
+      buttonProps;
+
+    return (
+      <MenuPrimitive.Trigger
+        data-slot="dropdown-menu-trigger"
+        render={(triggerProps) => (
+          <button
+            {...mergeProps<"button">(triggerProps, restProps, {
+              className: cn(
+                "relative",
+                buttonVariants({ variant, size, className })
+              ),
+              disabled: buttonProps.disabled || buttonProps.loading,
+            })}
+          >
+            {buttonProps.children}
+          </button>
+        )}
+        {...props}
+      />
+    );
+  }
+
+  // Default behavior: pass through to MenuPrimitive.Trigger
+  return (
+    <MenuPrimitive.Trigger data-slot="dropdown-menu-trigger" {...props}>
+      {children}
+    </MenuPrimitive.Trigger>
+  );
 }
 
 function DropdownMenuContent({

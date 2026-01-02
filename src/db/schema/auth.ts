@@ -2,6 +2,7 @@ import { relations } from "drizzle-orm";
 import {
   boolean,
   index,
+  integer,
   pgTable,
   text,
   timestamp,
@@ -23,12 +24,7 @@ export const user = pgTable(
       .notNull(),
     username: text("username").unique(),
     displayUsername: text("display_username"),
-  },
-  (table) => ({
-    usernameIdx: index("idx_user_username").on(table.username),
-    emailIdx: index("idx_user_email").on(table.email),
-    idIdx: index("idx_user_id").on(table.id),
-  })
+  }
 );
 
 export const session = pgTable(
@@ -117,9 +113,43 @@ export const verification = pgTable(
   })
 );
 
+export const passkey = pgTable(
+  "passkey",
+  {
+    id: text("id").primaryKey(),
+    name: text("name"),
+    publicKey: text("public_key").notNull(),
+    userId: text("user_id")
+      .notNull()
+      .references(() => user.id, { onDelete: "cascade" }),
+    credentialID: text("credential_id").notNull().unique(),
+    counter: integer("counter").default(0).notNull(),
+    deviceType: text("device_type").notNull(),
+    backedUp: boolean("backed_up").default(false).notNull(),
+    transports: text("transports"),
+    createdAt: timestamp("created_at").defaultNow().notNull(),
+    aaguid: text("aaguid"),
+  },
+  (table) => ({
+    userIdIdx: index("idx_passkey_userId").on(table.userId),
+    credentialIDIdx: uniqueIndex("idx_passkey_credentialID").on(
+      table.credentialID
+    ),
+    userIdCreatedAtIdx: index("idx_passkey_userId_createdAt").on(
+      table.userId,
+      table.createdAt
+    ),
+    userIdCredentialIDIdx: index("idx_passkey_userId_credentialID").on(
+      table.userId,
+      table.credentialID
+    ),
+  })
+);
+
 export const userRelations = relations(user, ({ many }) => ({
   sessions: many(session),
   accounts: many(account),
+  passkeys: many(passkey),
 }));
 
 export const sessionRelations = relations(session, ({ one }) => ({
@@ -132,6 +162,13 @@ export const sessionRelations = relations(session, ({ one }) => ({
 export const accountRelations = relations(account, ({ one }) => ({
   user: one(user, {
     fields: [account.userId],
+    references: [user.id],
+  }),
+}));
+
+export const passkeyRelations = relations(passkey, ({ one }) => ({
+  user: one(user, {
+    fields: [passkey.userId],
     references: [user.id],
   }),
 }));

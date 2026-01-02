@@ -4,6 +4,8 @@ import { Pool } from "pg";
 import {
   account,
   accountRelations,
+  passkey,
+  passkeyRelations,
   session,
   sessionRelations,
   user,
@@ -28,6 +30,8 @@ export const db = drizzle({
   schema: {
     account,
     accountRelations,
+    passkey,
+    passkeyRelations,
     session,
     sessionRelations,
     user,
