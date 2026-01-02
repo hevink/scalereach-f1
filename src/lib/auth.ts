@@ -2,8 +2,9 @@ import "dotenv/config";
 import { passkey } from "@better-auth/passkey";
 import { betterAuth } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
-import { lastLoginMethod, username } from "better-auth/plugins";
+import { lastLoginMethod, twoFactor, username } from "better-auth/plugins";
 import { db } from "@/db";
+import * as schema from "@/db/schema/auth";
 
 const USERNAME_REGEX = /^[a-zA-Z0-9_.]+$/;
 const HTTP_PROTOCOL_REGEX = /^https?:\/\//;
@@ -31,7 +32,9 @@ export const auth = betterAuth({
   secret: process.env.BETTER_AUTH_SECRET,
   database: drizzleAdapter(db, {
     provider: "pg",
+    schema,
   }),
+  appName: "Staxk",
   emailAndPassword: {
     enabled: true,
     minPasswordLength: 8,
@@ -60,6 +63,9 @@ export const auth = betterAuth({
         residentKey: "preferred",
         userVerification: "preferred",
       },
+    }),
+    twoFactor({
+      skipVerificationOnEnable: false,
     }),
     lastLoginMethod(),
   ],

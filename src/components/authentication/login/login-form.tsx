@@ -109,6 +109,12 @@ export function LoginForm() {
         return;
       }
 
+      // Check if 2FA verification is required
+      if (result.data && "twoFactorRedirect" in result.data && result.data.twoFactorRedirect) {
+        router.push("/two-factor-verify");
+        return;
+      }
+
       router.push("/home");
       router.refresh();
     } catch (error) {

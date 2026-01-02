@@ -2,6 +2,7 @@
 
 import { ChangePasswordCard } from "@/components/settings/change-password-card";
 import { PasskeyCard } from "@/components/settings/passkey-card";
+import { TwoFactorCard } from "@/components/settings/two-factor-card";
 
 export default function SecuritySettingsPage() {
   return (
@@ -11,6 +12,7 @@ export default function SecuritySettingsPage() {
       </div>
       <div className="flex flex-col gap-6">
         <ChangePasswordCard />
+        <TwoFactorCard />
         <PasskeyCard />
       </div>
     </div>
