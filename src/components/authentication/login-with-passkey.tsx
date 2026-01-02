@@ -6,6 +6,7 @@ import { useState } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { authClient } from "@/lib/auth-client";
+import { getAuthErrorMessage } from "@/lib/auth-errors";
 
 interface LoginWithPasskeyProps {
   variant?: ComponentProps<typeof Button>["variant"];
@@ -36,7 +37,10 @@ const isInvalidError = (message: string | null | undefined): boolean => {
   );
 };
 
-const handleErrorResult = (error: { message?: string | null } | null) => {
+const handleErrorResult = (error: {
+  code?: string;
+  message?: string | null;
+} | null) => {
   if (!error) {
     return;
   }
@@ -51,7 +55,8 @@ const handleErrorResult = (error: { message?: string | null } | null) => {
     return;
   }
 
-  toast.error(error.message || "Passkey authentication failed");
+  const errorMessage = getAuthErrorMessage(error);
+  toast.error(errorMessage);
 };
 
 const handleCaughtError = (error: unknown) => {
@@ -70,7 +75,12 @@ const handleCaughtError = (error: unknown) => {
       toast.error("Invalid passkey. Please try again.");
       return;
     }
-    toast.error(error.message || "Something went wrong. Please try again.");
+
+    const errorMessage = getAuthErrorMessage(
+      { message: error.message },
+      null,
+    );
+    toast.error(errorMessage);
     return;
   }
 

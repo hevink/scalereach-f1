@@ -13,6 +13,7 @@ import { FieldDescription, FieldError } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { authClient } from "@/lib/auth-client";
+import { getAuthErrorMessage } from "@/lib/auth-errors";
 
 const signupSchema = z
   .object({
@@ -74,6 +75,7 @@ export function SignUpForm() {
   const router = useRouter();
   const [currentStep, setCurrentStep] = useState(1);
   const [isLoading, setIsLoading] = useState(false);
+  const [checkingEmail, setCheckingEmail] = useState(false);
   const [usernameAvailable, setUsernameAvailable] = useState<boolean | null>(
     null
   );
@@ -208,8 +210,15 @@ export function SignUpForm() {
 
     if (currentStep === 1) {
       const email = form.getValues("email")?.trim();
-      if (email && !(await checkEmailAvailability(email))) {
-        return;
+      if (email) {
+        setCheckingEmail(true);
+        try {
+          if (!(await checkEmailAvailability(email))) {
+            return;
+          }
+        } finally {
+          setCheckingEmail(false);
+        }
       }
     }
 
@@ -245,14 +254,21 @@ export function SignUpForm() {
       });
 
       if (result.error) {
-        toast.error(result.error.message || "Failed to create account");
+        const errorMessage = getAuthErrorMessage(result.error, {
+          type: "signup",
+        });
+        toast.error(errorMessage);
         return;
       }
 
       router.push("/home");
       router.refresh();
-    } catch {
-      toast.error("An error occurred. Please try again.");
+    } catch (error) {
+      const errorMessage = getAuthErrorMessage(
+        error as { code?: string; message?: string } | null,
+        { type: "signup" },
+      );
+      toast.error(errorMessage);
     } finally {
       setIsLoading(false);
     }
@@ -316,7 +332,7 @@ export function SignUpForm() {
                       aria-invalid={fieldState.invalid}
                       autoComplete="email"
                       autoFocus
-                      disabled={isLoading}
+                      disabled={isLoading || checkingEmail}
                       id={field.name}
                       placeholder="you@example.com"
                       type="email"
@@ -540,9 +556,10 @@ export function SignUpForm() {
                 className="flex-1"
                 disabled={
                   isLoading ||
+                  checkingEmail ||
                   (currentStep === 2 && usernameAvailable === false)
                 }
-                loading={isLoading}
+                loading={isLoading || checkingEmail}
                 onClick={handleNext}
                 type="button"
               >

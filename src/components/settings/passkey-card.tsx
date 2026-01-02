@@ -176,7 +176,6 @@ export function PasskeyCard() {
 
       setIsRenaming(true);
 
-      // Optimistic update
       const previousPasskeys = [...passkeys];
       setPasskeys(
         passkeys.map((p) =>
@@ -191,7 +190,6 @@ export function PasskeyCard() {
         });
 
         if (result.error) {
-          // Rollback on error
           setPasskeys(previousPasskeys);
           toast.error(result.error.message || "Failed to rename passkey");
           return;
@@ -201,8 +199,7 @@ export function PasskeyCard() {
         setShowRenameDialog(false);
         setRenamingId(null);
         setRenameValue("");
-      } catch (_error) {
-        // Rollback on error
+      } catch (_error) {  
         setPasskeys(previousPasskeys);
         toast.error("An error occurred while renaming passkey");
       } finally {
@@ -226,7 +223,6 @@ export function PasskeyCard() {
     setDeletingId(passkeyId);
     setShowDeleteDialog(false);
 
-    // Optimistic update
     const previousPasskeys = [...passkeys];
     setPasskeys(passkeys.filter((p) => p.id !== passkeyId));
 
@@ -236,7 +232,6 @@ export function PasskeyCard() {
       });
 
       if (result.error) {
-        // Rollback on error
         setPasskeys(previousPasskeys);
         toast.error(result.error.message || "Failed to delete passkey");
         return;
@@ -244,7 +239,6 @@ export function PasskeyCard() {
 
       toast.success("Passkey deleted successfully");
     } catch (_error) {
-      // Rollback on error
       setPasskeys(previousPasskeys);
       toast.error("An error occurred while deleting passkey");
     } finally {

@@ -2,8 +2,10 @@
 
 import type { ComponentProps } from "react";
 import { useState } from "react";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { authClient } from "@/lib/auth-client";
+import { getAuthErrorMessage } from "@/lib/auth-errors";
 
 interface LoginWithGoogleProps {
   variant?: ComponentProps<typeof Button>["variant"];
@@ -19,12 +21,27 @@ export function LoginWithGoogle({
   const handleGoogleSignIn = async () => {
     setIsLoading(true);
     try {
-      await authClient.signIn.social({
+      const result = await authClient.signIn.social({
         provider: "google",
         callbackURL: "/",
       });
-    } catch {
+
+      if (result.error) {
+        setIsLoading(false);
+        const errorMessage = getAuthErrorMessage(result.error, {
+          type: "social",
+          provider: "Google",
+        });
+        toast.error(errorMessage);
+        return;
+      }
+    } catch (error) {
       setIsLoading(false);
+      const errorMessage = getAuthErrorMessage(
+        error as { code?: string; message?: string } | null,
+        { type: "social", provider: "Google" },
+      );
+      toast.error(errorMessage);
     }
   };
 

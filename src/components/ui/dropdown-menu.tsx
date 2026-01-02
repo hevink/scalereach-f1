@@ -21,7 +21,6 @@ function DropdownMenuTrigger({
   render,
   ...props
 }: MenuPrimitive.Trigger.Props) {
-  // If render is provided, use it directly
   if (render !== undefined) {
     return (
       <MenuPrimitive.Trigger
@@ -32,7 +31,6 @@ function DropdownMenuTrigger({
     );
   }
 
-  // If a single Button-like child is passed, extract its props and use render prop
   if (
     isValidElement(children) &&
     children.type &&
@@ -80,7 +78,6 @@ function DropdownMenuTrigger({
     );
   }
 
-  // Default behavior: pass through to MenuPrimitive.Trigger
   return (
     <MenuPrimitive.Trigger data-slot="dropdown-menu-trigger" {...props}>
       {children}

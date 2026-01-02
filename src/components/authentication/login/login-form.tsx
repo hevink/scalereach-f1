@@ -13,6 +13,7 @@ import { FieldError } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { authClient } from "@/lib/auth-client";
+import { getAuthErrorMessage } from "@/lib/auth-errors";
 import { LoginWithGoogle } from "../login-with-google";
 import { LoginWithPasskey } from "../login-with-passkey";
 
@@ -57,7 +58,6 @@ export function LoginForm() {
     },
   });
 
-  // Conditional UI support for passkey autofill
   useEffect(() => {
     if (
       typeof window !== "undefined" &&
@@ -101,14 +101,21 @@ export function LoginForm() {
           });
 
       if (result.error) {
-        toast.error(result.error.message || "Invalid credentials");
+        const context = isEmailFormat
+          ? { type: "email" as const, email: identifier }
+          : { type: "username" as const, username: identifier };
+        const errorMessage = getAuthErrorMessage(result.error, context);
+        toast.error(errorMessage);
         return;
       }
 
       router.push("/home");
       router.refresh();
-    } catch {
-      toast.error("An error occurred. Please try again.");
+    } catch (error) {
+      const errorMessage = getAuthErrorMessage(
+        error as { code?: string; message?: string } | null,
+      );
+      toast.error(errorMessage);
     } finally {
       setIsLoading(false);
     }

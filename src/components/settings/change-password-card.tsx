@@ -34,7 +34,6 @@ const ERROR_KEYWORDS = {
   REQUIRED: ["required"],
 };
 
-// Helper functions to reduce complexity
 function hasKeyword(errorLower: string, keywords: string[]): boolean {
   return keywords.some((keyword) => errorLower.includes(keyword));
 }
