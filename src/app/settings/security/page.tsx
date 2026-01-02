@@ -1,19 +1,8 @@
 "use client";
 
-import { useState, useCallback } from "react";
 import { IconEye, IconEyeOff } from "@tabler/icons-react";
+import { useCallback, useMemo, useState } from "react";
 import { toast } from "sonner";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import { Label } from "@/components/ui/label";
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
-import { FieldError } from "@/components/ui/field";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -23,9 +12,45 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { FieldError } from "@/components/ui/field";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 
 const MIN_PASSWORD_LENGTH = 8;
 const MAX_PASSWORD_LENGTH = 128;
+
+const ERROR_KEYWORDS = {
+  INCORRECT: ["incorrect", "wrong", "invalid password"],
+  DIFFERENT: ["different", "same password"],
+  LENGTH: ["length"],
+  REQUIRED: ["required"],
+};
+
+// Helper functions to reduce complexity
+function hasKeyword(errorLower: string, keywords: string[]): boolean {
+  return keywords.some((keyword) => errorLower.includes(keyword));
+}
+
+function categorizeRequiredError(errorLower: string): string | null {
+  if (!hasKeyword(errorLower, ERROR_KEYWORDS.REQUIRED)) {
+    return null;
+  }
+  if (errorLower.includes("current")) {
+    return "currentPassword";
+  }
+  if (errorLower.includes("new")) {
+    return "newPassword";
+  }
+  return null;
+}
 
 export default function SecuritySettingsPage() {
   const [currentPassword, setCurrentPassword] = useState("");
@@ -44,26 +69,27 @@ export default function SecuritySettingsPage() {
 
   const validateForm = useCallback(() => {
     const newErrors: typeof errors = {};
+    const trimmedCurrent = currentPassword.trim();
+    const trimmedNew = newPassword.trim();
+    const trimmedConfirm = confirmPassword.trim();
 
-    if (!currentPassword.trim()) {
+    if (!trimmedCurrent) {
       newErrors.currentPassword = "Current password is required";
     }
 
-    if (!newPassword.trim()) {
+    if (!trimmedNew) {
       newErrors.newPassword = "New password is required";
     } else if (
-      newPassword.length < MIN_PASSWORD_LENGTH ||
-      newPassword.length > MAX_PASSWORD_LENGTH
+      trimmedNew.length < MIN_PASSWORD_LENGTH ||
+      trimmedNew.length > MAX_PASSWORD_LENGTH
     ) {
       newErrors.newPassword = `Password must be between ${MIN_PASSWORD_LENGTH} and ${MAX_PASSWORD_LENGTH} characters`;
-    } else if (
-      currentPassword.trim() &&
-      newPassword.trim() === currentPassword.trim()
-    ) {
-      newErrors.newPassword = "New password must be different from your current password";
+    } else if (trimmedCurrent && trimmedNew === trimmedCurrent) {
+      newErrors.newPassword =
+        "New password must be different from your current password";
     }
 
-    if (!confirmPassword.trim()) {
+    if (!trimmedConfirm) {
       newErrors.confirmPassword = "Please confirm your new password";
     } else if (newPassword !== confirmPassword) {
       newErrors.confirmPassword = "Passwords do not match";
@@ -72,6 +98,33 @@ export default function SecuritySettingsPage() {
     setErrors(newErrors);
     return { isValid: Object.keys(newErrors).length === 0, errors: newErrors };
   }, [currentPassword, newPassword, confirmPassword]);
+
+  const focusField = useCallback((fieldId: string) => {
+    setTimeout(() => {
+      document.getElementById(fieldId)?.focus();
+    }, 0);
+  }, []);
+
+  const categorizeError = useCallback((errorMessage: string) => {
+    const errorLower = errorMessage.toLowerCase();
+
+    if (hasKeyword(errorLower, ERROR_KEYWORDS.INCORRECT)) {
+      return "currentPassword";
+    }
+    if (
+      hasKeyword(errorLower, ERROR_KEYWORDS.DIFFERENT) ||
+      (errorLower.includes("new password") && errorLower.includes("must be"))
+    ) {
+      return "newPassword";
+    }
+    if (
+      hasKeyword(errorLower, ERROR_KEYWORDS.LENGTH) &&
+      errorLower.includes("password")
+    ) {
+      return "newPassword";
+    }
+    return categorizeRequiredError(errorLower);
+  }, []);
 
   const changePassword = useCallback(
     async (revokeOtherSessions: boolean) => {
@@ -91,53 +144,18 @@ export default function SecuritySettingsPage() {
           }),
         });
 
-        let data;
-        try {
-          const text = await response.text();
-          data = text ? JSON.parse(text) : {};
-        } catch (parseError) {
-          data = { error: "An error occurred. Please try again." };
-        }
+        const text = await response.text();
+        const data = text ? JSON.parse(text) : {};
 
         if (!response.ok) {
           const errorMessage =
             data.error || "Failed to change password. Please try again.";
-          
           toast.error(errorMessage);
 
-          const errorLower = errorMessage.toLowerCase();
-          if (
-            errorLower.includes("incorrect") ||
-            errorLower.includes("wrong") ||
-            errorLower.includes("invalid password")
-          ) {
-            setErrors({ currentPassword: errorMessage });
-            setTimeout(() => {
-              const fieldElement = document.getElementById("currentPassword");
-              fieldElement?.focus();
-            }, 0);
-          } else if (
-            errorLower.includes("different") ||
-            errorLower.includes("same password") ||
-            (errorLower.includes("new password") && errorLower.includes("must be"))
-          ) {
-            setErrors({ newPassword: errorMessage });
-            setTimeout(() => {
-              const fieldElement = document.getElementById("newPassword");
-              fieldElement?.focus();
-            }, 0);
-          } else if (errorLower.includes("password") && errorLower.includes("length")) {
-            setErrors({ newPassword: errorMessage });
-            setTimeout(() => {
-              const fieldElement = document.getElementById("newPassword");
-              fieldElement?.focus();
-            }, 0);
-          } else if (errorLower.includes("required")) {
-            if (errorLower.includes("current")) {
-              setErrors({ currentPassword: errorMessage });
-            } else if (errorLower.includes("new")) {
-              setErrors({ newPassword: errorMessage });
-            }
+          const errorField = categorizeError(errorMessage);
+          if (errorField) {
+            setErrors({ [errorField]: errorMessage });
+            focusField(errorField);
           }
           return;
         }
@@ -158,7 +176,7 @@ export default function SecuritySettingsPage() {
         setIsLoading(false);
       }
     },
-    [currentPassword, newPassword]
+    [currentPassword, newPassword, categorizeError, focusField]
   );
 
   const handleSubmit = useCallback(
@@ -169,17 +187,14 @@ export default function SecuritySettingsPage() {
       if (!validation.isValid) {
         const firstErrorField = Object.keys(validation.errors)[0];
         if (firstErrorField) {
-          setTimeout(() => {
-            const fieldElement = document.getElementById(firstErrorField);
-            fieldElement?.focus();
-          }, 0);
+          focusField(firstErrorField);
         }
         return;
       }
 
       setShowRevokeDialog(true);
     },
-    [validateForm]
+    [validateForm, focusField]
   );
 
   const handleCurrentPasswordChange = useCallback(
@@ -196,52 +211,70 @@ export default function SecuritySettingsPage() {
     (e: React.ChangeEvent<HTMLInputElement>) => {
       const newValue = e.target.value;
       setNewPassword(newValue);
-      
-      if (errors.newPassword) {
-        const trimmedCurrent = currentPassword.trim();
-        const trimmedNew = newValue.trim();
-        if (trimmedNew !== trimmedCurrent || !trimmedCurrent) {
-          setErrors((prev) => ({ ...prev, newPassword: undefined }));
-        }
+
+      const trimmedCurrent = currentPassword.trim();
+      const trimmedNew = newValue.trim();
+
+      if (
+        errors.newPassword &&
+        (trimmedNew !== trimmedCurrent || !trimmedCurrent)
+      ) {
+        setErrors((prev) => ({ ...prev, newPassword: undefined }));
       }
-      
-      if (currentPassword.trim() && newValue.trim() === currentPassword.trim()) {
+
+      if (trimmedCurrent && trimmedNew === trimmedCurrent) {
         setErrors((prev) => ({
           ...prev,
-          newPassword: "New password must be different from your current password",
+          newPassword:
+            "New password must be different from your current password",
         }));
       }
-      
+
       if (errors.confirmPassword && confirmPassword) {
-        if (newValue === confirmPassword) {
-          setErrors((prev) => ({ ...prev, confirmPassword: undefined }));
-        } else {
-          setErrors((prev) => ({
-            ...prev,
-            confirmPassword: "Passwords do not match",
-          }));
-        }
+        setErrors((prev) => ({
+          ...prev,
+          confirmPassword:
+            newValue === confirmPassword ? undefined : "Passwords do not match",
+        }));
       }
     },
-    [currentPassword, confirmPassword, errors.newPassword, errors.confirmPassword]
+    [
+      currentPassword,
+      confirmPassword,
+      errors.newPassword,
+      errors.confirmPassword,
+    ]
   );
 
   const handleConfirmPasswordChange = useCallback(
     (e: React.ChangeEvent<HTMLInputElement>) => {
-      setConfirmPassword(e.target.value);
+      const newValue = e.target.value;
+      setConfirmPassword(newValue);
       if (errors.confirmPassword) {
-        if (e.target.value === newPassword) {
-          setErrors((prev) => ({ ...prev, confirmPassword: undefined }));
-        } else {
-          setErrors((prev) => ({
-            ...prev,
-            confirmPassword: "Passwords do not match",
-          }));
-        }
+        setErrors((prev) => ({
+          ...prev,
+          confirmPassword:
+            newValue === newPassword ? undefined : "Passwords do not match",
+        }));
       }
     },
     [newPassword, errors.confirmPassword]
   );
+
+  const toggleCurrentPassword = useCallback(
+    () => setShowCurrentPassword((prev) => !prev),
+    []
+  );
+  const toggleNewPassword = useCallback(
+    () => setShowNewPassword((prev) => !prev),
+    []
+  );
+  const toggleConfirmPassword = useCallback(
+    () => setShowConfirmPassword((prev) => !prev),
+    []
+  );
+
+  const isSubmitDisabled = useMemo(() => isLoading, [isLoading]);
 
   return (
     <div className="flex flex-col gap-6">
@@ -257,37 +290,37 @@ export default function SecuritySettingsPage() {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <form onSubmit={handleSubmit} className="flex flex-col gap-6">
+            <form className="flex flex-col gap-6" onSubmit={handleSubmit}>
               <div className="flex flex-col gap-2">
                 <Label htmlFor="currentPassword">Current Password</Label>
                 <div className="flex gap-0.5">
                   <Input
-                    id="currentPassword"
-                    type={showCurrentPassword ? "text" : "password"}
-                    className="flex-1"
-                    value={currentPassword}
-                    onChange={handleCurrentPasswordChange}
-                    placeholder="Enter your current password…"
-                    autoComplete="current-password"
-                    disabled={isLoading}
-                    aria-invalid={!!errors.currentPassword}
                     aria-describedby={
                       errors.currentPassword
                         ? "currentPassword-error"
                         : undefined
                     }
+                    aria-invalid={!!errors.currentPassword}
+                    autoComplete="current-password"
+                    className="flex-1"
+                    disabled={isLoading}
+                    id="currentPassword"
+                    onChange={handleCurrentPasswordChange}
+                    placeholder="Enter your current password…"
+                    type={showCurrentPassword ? "text" : "password"}
+                    value={currentPassword}
                   />
                   <Button
-                    type="button"
-                    variant="outline"
-                    size="icon"
-                    className="size-10 shrink-0"
-                    onClick={() => setShowCurrentPassword(!showCurrentPassword)}
                     aria-label={
                       showCurrentPassword ? "Hide password" : "Show password"
                     }
+                    className="size-10 shrink-0"
                     disabled={isLoading}
+                    onClick={toggleCurrentPassword}
+                    size="icon"
                     tabIndex={-1}
+                    type="button"
+                    variant="outline"
                   >
                     {showCurrentPassword ? (
                       <IconEyeOff className="size-4" />
@@ -298,8 +331,8 @@ export default function SecuritySettingsPage() {
                 </div>
                 {errors.currentPassword && (
                   <FieldError
-                    id="currentPassword-error"
                     errors={[{ message: errors.currentPassword }]}
+                    id="currentPassword-error"
                   />
                 )}
               </div>
@@ -308,30 +341,30 @@ export default function SecuritySettingsPage() {
                 <Label htmlFor="newPassword">New Password</Label>
                 <div className="flex gap-0.5">
                   <Input
-                    id="newPassword"
-                    type={showNewPassword ? "text" : "password"}
-                    className="flex-1"
-                    value={newPassword}
-                    onChange={handleNewPasswordChange}
-                    placeholder="Enter your new password…"
-                    autoComplete="new-password"
-                    disabled={isLoading}
-                    aria-invalid={!!errors.newPassword}
                     aria-describedby={
                       errors.newPassword ? "newPassword-error" : undefined
                     }
+                    aria-invalid={!!errors.newPassword}
+                    autoComplete="new-password"
+                    className="flex-1"
+                    disabled={isLoading}
+                    id="newPassword"
+                    onChange={handleNewPasswordChange}
+                    placeholder="Enter your new password…"
+                    type={showNewPassword ? "text" : "password"}
+                    value={newPassword}
                   />
                   <Button
-                    type="button"
-                    variant="outline"
-                    size="icon"
-                    className="size-10 shrink-0"
-                    onClick={() => setShowNewPassword(!showNewPassword)}
                     aria-label={
                       showNewPassword ? "Hide password" : "Show password"
                     }
+                    className="size-10 shrink-0"
                     disabled={isLoading}
+                    onClick={toggleNewPassword}
+                    size="icon"
                     tabIndex={-1}
+                    type="button"
+                    variant="outline"
                   >
                     {showNewPassword ? (
                       <IconEyeOff className="size-4" />
@@ -342,8 +375,8 @@ export default function SecuritySettingsPage() {
                 </div>
                 {errors.newPassword && (
                   <FieldError
-                    id="newPassword-error"
                     errors={[{ message: errors.newPassword }]}
+                    id="newPassword-error"
                   />
                 )}
               </div>
@@ -352,34 +385,32 @@ export default function SecuritySettingsPage() {
                 <Label htmlFor="confirmPassword">Confirm New Password</Label>
                 <div className="flex gap-0.5">
                   <Input
-                    id="confirmPassword"
-                    type={showConfirmPassword ? "text" : "password"}
-                    className="flex-1"
-                    value={confirmPassword}
-                    onChange={handleConfirmPasswordChange}
-                    placeholder="Confirm your new password…"
-                    autoComplete="new-password"
-                    disabled={isLoading}
-                    aria-invalid={!!errors.confirmPassword}
                     aria-describedby={
                       errors.confirmPassword
                         ? "confirmPassword-error"
                         : undefined
                     }
+                    aria-invalid={!!errors.confirmPassword}
+                    autoComplete="new-password"
+                    className="flex-1"
+                    disabled={isLoading}
+                    id="confirmPassword"
+                    onChange={handleConfirmPasswordChange}
+                    placeholder="Confirm your new password…"
+                    type={showConfirmPassword ? "text" : "password"}
+                    value={confirmPassword}
                   />
                   <Button
-                    type="button"
-                    variant="outline"
-                    size="icon"
-                    className="size-10 shrink-0"
-                    onClick={() =>
-                      setShowConfirmPassword(!showConfirmPassword)
-                    }
                     aria-label={
                       showConfirmPassword ? "Hide password" : "Show password"
                     }
+                    className="size-10 shrink-0"
                     disabled={isLoading}
+                    onClick={toggleConfirmPassword}
+                    size="icon"
                     tabIndex={-1}
+                    type="button"
+                    variant="outline"
                   >
                     {showConfirmPassword ? (
                       <IconEyeOff className="size-4" />
@@ -390,14 +421,18 @@ export default function SecuritySettingsPage() {
                 </div>
                 {errors.confirmPassword && (
                   <FieldError
-                    id="confirmPassword-error"
                     errors={[{ message: errors.confirmPassword }]}
+                    id="confirmPassword-error"
                   />
                 )}
               </div>
 
               <div className="flex justify-end">
-                <Button type="submit" loading={isLoading} disabled={isLoading}>
+                <Button
+                  disabled={isSubmitDisabled}
+                  loading={isLoading}
+                  type="submit"
+                >
                   Change Password
                 </Button>
               </div>
@@ -406,25 +441,26 @@ export default function SecuritySettingsPage() {
         </Card>
       </div>
 
-      <AlertDialog open={showRevokeDialog} onOpenChange={setShowRevokeDialog}>
+      <AlertDialog onOpenChange={setShowRevokeDialog} open={showRevokeDialog}>
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Sign Out of Other Sessions?</AlertDialogTitle>
             <AlertDialogDescription>
-              Do you want to log out from all other devices and sessions? This will invalidate all active sessions except for this one.
+              Do you want to log out from all other devices and sessions? This
+              will invalidate all active sessions except for this one.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <Button
-              variant="outline"
-              onClick={() => changePassword(false)}
               disabled={isLoading}
+              onClick={() => changePassword(false)}
+              variant="outline"
             >
               Keep Me Logged In
             </Button>
             <AlertDialogAction
-              onClick={() => changePassword(true)}
               disabled={isLoading}
+              onClick={() => changePassword(true)}
             >
               Log Out of Other Sessions
             </AlertDialogAction>

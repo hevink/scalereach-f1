@@ -17,18 +17,14 @@ interface SettingsLayoutProps {
   children: React.ReactNode;
 }
 
-export default function SettingsLayout({
-  children,
-}: SettingsLayoutProps) {
+export default function SettingsLayout({ children }: SettingsLayoutProps) {
   const router = useRouter();
   const { data: session, isPending } = authClient.useSession();
 
   useEffect(() => {
-    if (!isPending) {
-      if (!session?.user) {
-        router.replace("/login");
-        return;
-      }
+    if (!(isPending || session?.user)) {
+      router.replace("/login");
+      return;
     }
   }, [session, isPending, router]);
 
@@ -63,4 +59,3 @@ export default function SettingsLayout({
     </SidebarProvider>
   );
 }
-

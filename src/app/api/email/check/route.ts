@@ -40,9 +40,11 @@ export async function GET(request: Request) {
       sql`SELECT EXISTS(SELECT 1 FROM ${user} WHERE ${user.email} = ${normalizedEmail}) AS exists`
     );
 
-    return result.rows[0]?.exists ? RESPONSES.NOT_AVAILABLE : RESPONSES.AVAILABLE;
-  } catch (error) {
-    // console.error("Error checking email availability:", error);
+    return result.rows[0]?.exists
+      ? RESPONSES.NOT_AVAILABLE
+      : RESPONSES.AVAILABLE;
+  } catch (_error) {
+    // console.error("Error checking email availability:", _error);
     return ERRORS.SERVER_ERROR;
   }
 }

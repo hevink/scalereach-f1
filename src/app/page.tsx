@@ -3,6 +3,7 @@
 import { IconLogout, IconSettings } from "@tabler/icons-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
+import { toast } from "sonner";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import {
@@ -14,7 +15,6 @@ import {
 } from "@/components/ui/card";
 import { Spinner } from "@/components/ui/spinner";
 import { authClient } from "@/lib/auth-client";
-import { toast } from "sonner";
 
 export default function Home() {
   const router = useRouter();
@@ -33,7 +33,7 @@ export default function Home() {
       await authClient.signOut();
       router.push("/login");
       router.refresh();
-    } catch (error) {
+    } catch (_error) {
       toast.error("Error during logout");
       setIsLoggingOut(false);
     }
@@ -113,10 +113,10 @@ export default function Home() {
           </div>
           <div className="flex flex-col gap-2">
             <Button
-              className="w-full"
-              variant="secondary"
-              onClick={handleSettings}
               aria-label="Settings"
+              className="w-full"
+              onClick={handleSettings}
+              variant="secondary"
             >
               <IconSettings className="size-4" />
               Settings

@@ -1,10 +1,9 @@
 import { eq } from "drizzle-orm";
 import { NextResponse } from "next/server";
-import { auth } from "@/lib/auth";
+import sharp from "sharp";
 import { db } from "@/db";
 import { user } from "@/db/schema/auth";
-import sharp from "sharp";
-import { toast } from "sonner";
+import { auth } from "@/lib/auth";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
@@ -22,7 +21,9 @@ const ERRORS = {
   UNAUTHORIZED: NextResponse.json({ error: "Unauthorized" }, { status: 401 }),
   NO_FILE: NextResponse.json({ error: "No file provided" }, { status: 400 }),
   INVALID_TYPE: NextResponse.json(
-    { error: "Invalid file type. Please upload a JPG, PNG, WebP, or GIF image." },
+    {
+      error: "Invalid file type. Please upload a JPG, PNG, WebP, or GIF image.",
+    },
     { status: 400 }
   ),
   FILE_TOO_LARGE: NextResponse.json(
@@ -30,8 +31,13 @@ const ERRORS = {
     { status: 400 }
   ),
   NOT_FOUND: NextResponse.json({ error: "User not found" }, { status: 404 }),
-  SERVER_ERROR: NextResponse.json({ error: "Failed to upload avatar" }, { status: 500 }),
+  SERVER_ERROR: NextResponse.json(
+    { error: "Failed to upload avatar" },
+    { status: 500 }
+  ),
 };
+
+const SUCCESS_RESPONSE_OPTIONS = { status: 200 };
 
 export async function POST(request: Request) {
   try {
@@ -50,17 +56,22 @@ export async function POST(request: Request) {
       return ERRORS.NO_FILE;
     }
 
+    const fileSize = file.size;
+
+    if (fileSize > MAX_FILE_SIZE) {
+      return ERRORS.FILE_TOO_LARGE;
+    }
+
     if (!ALLOWED_MIME_TYPES.has(file.type)) {
       return ERRORS.INVALID_TYPE;
     }
 
-    if (file.size > MAX_FILE_SIZE) {
-      return ERRORS.FILE_TOO_LARGE;
-    }
+    const [arrayBuffer, userId] = await Promise.all([
+      file.arrayBuffer(),
+      Promise.resolve(session.user.id),
+    ]);
 
-    const buffer = Buffer.from(await file.arrayBuffer());
-
-    const processedImage = await sharp(buffer)
+    const processedImage = await sharp(arrayBuffer)
       .resize(512, 512, {
         fit: "inside",
         withoutEnlargement: true,
@@ -73,16 +84,19 @@ export async function POST(request: Request) {
     const [updatedUser] = await db
       .update(user)
       .set({ image: dataUrl })
-      .where(eq(user.id, session.user.id))
+      .where(eq(user.id, userId))
       .returning({ image: user.image });
 
     if (!updatedUser) {
       return ERRORS.NOT_FOUND;
     }
 
-    return NextResponse.json({ imageUrl: updatedUser.image }, { status: 200 });
+    return NextResponse.json(
+      { imageUrl: updatedUser.image },
+      SUCCESS_RESPONSE_OPTIONS
+    );
   } catch (error) {
-    toast.error("Error uploading avatar");
+    console.error("Error uploading avatar:", error);
     return ERRORS.SERVER_ERROR;
   }
 }
