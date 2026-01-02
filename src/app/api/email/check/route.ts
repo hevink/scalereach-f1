@@ -1,4 +1,4 @@
-import { sql } from "drizzle-orm";
+import { eq, sql } from "drizzle-orm";
 import { NextResponse } from "next/server";
 import { db } from "@/db";
 import { user } from "@/db/schema/auth";
@@ -36,15 +36,17 @@ export async function GET(request: Request) {
   }
 
   try {
-    const result = await db.execute<{ exists: boolean }>(
-      sql`SELECT EXISTS(SELECT 1 FROM ${user} WHERE ${user.email} = ${normalizedEmail}) AS exists`
-    );
+    const existingUser = await db
+      .select({ email: user.email })
+      .from(user)
+      .where(eq(user.email, normalizedEmail))
+      .limit(1);
 
-    return result.rows[0]?.exists
+    return existingUser.length > 0
       ? RESPONSES.NOT_AVAILABLE
       : RESPONSES.AVAILABLE;
-  } catch (_error) {
-    // console.error("Error checking email availability:", _error);
+  } catch (error) {
+    console.error("Error checking email availability:", error);
     return ERRORS.SERVER_ERROR;
   }
 }

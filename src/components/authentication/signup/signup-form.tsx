@@ -153,13 +153,38 @@ export function SignUpForm() {
       const response = await fetch(
         `/api/email/check?email=${encodeURIComponent(email)}`
       );
-      const data = await response.json();
+      
+      let data;
+      try {
+        const text = await response.text();
+        if (!text) {
+          toast.error("Empty response from server");
+          return false;
+        }
+        data = JSON.parse(text);
+      } catch (parseError) {
+        console.error("Failed to parse response:", parseError);
+        toast.error(
+          !response.ok
+            ? `Failed to check email availability (${response.status})`
+            : "Invalid response from server"
+        );
+        return false;
+      }
+      
+      if (!response.ok) {
+        const errorMessage = data?.error || `Failed to check email availability (${response.status})`;
+        toast.error(errorMessage);
+        return false;
+      }
+      
       if (data.available === false) {
         toast.error("Email is already in use");
         return false;
       }
       return true;
-    } catch {
+    } catch (error) {
+      console.error("Error checking email availability:", error);
       toast.error("Failed to check email availability");
       return false;
     }
