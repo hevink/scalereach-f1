@@ -723,7 +723,7 @@ export function ProfileCard() {
   );
 
   return (
-    <Card>
+    <Card className="bg-transparent">
       <CardHeader>
         <CardTitle>General Information</CardTitle>
         <CardDescription>

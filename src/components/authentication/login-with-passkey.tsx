@@ -1,6 +1,7 @@
 "use client";
 
 import { IconFingerprint } from "@tabler/icons-react";
+import { useRouter } from "next/navigation";
 import type { ComponentProps } from "react";
 import { useState } from "react";
 import { toast } from "sonner";
@@ -91,6 +92,7 @@ export function LoginWithPasskey({
   variant = "outline",
   showHelperText = false,
 }: LoginWithPasskeyProps) {
+  const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
 
   const handlePasskeySignIn = async () => {
@@ -105,6 +107,16 @@ export function LoginWithPasskey({
         handleErrorResult(result.error);
         return;
       }
+
+      // Check if 2FA verification is required
+      if (result.data && "twoFactorRedirect" in result.data && result.data.twoFactorRedirect) {
+        router.push("/two-factor-verify");
+        return;
+      }
+
+      toast.success("Signed in successfully");
+      router.push("/home");
+      router.refresh();
     } catch (error) {
       setIsLoading(false);
       handleCaughtError(error);

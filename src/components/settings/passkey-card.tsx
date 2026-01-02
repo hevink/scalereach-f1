@@ -268,7 +268,7 @@ export function PasskeyCard() {
 
   return (
     <>
-      <Card>
+      <Card className="bg-transparent">
         <CardHeader>
           <CardTitle>Passkey</CardTitle>
           <CardDescription>

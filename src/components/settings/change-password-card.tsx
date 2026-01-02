@@ -277,7 +277,7 @@ export function ChangePasswordCard() {
 
   return (
     <>
-      <Card>
+      <Card className="bg-transparent">
         <CardHeader>
           <CardTitle>Change Password</CardTitle>
           <CardDescription>

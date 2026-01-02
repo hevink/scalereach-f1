@@ -12,7 +12,7 @@ import { Label } from "@/components/ui/label";
 
 export function AppearanceCard() {
   return (
-    <Card>
+    <Card className="bg-transparent">
       <CardHeader>
         <CardTitle>Appearance & Display</CardTitle>
         <CardDescription>
