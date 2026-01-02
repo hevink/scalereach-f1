@@ -30,10 +30,21 @@ const isEmail = (value: string) => {
   return EMAIL_REGEX.test(value);
 };
 
+const getMethodDisplayName = (method: string | null | undefined): string => {
+  if (!method) return "";
+  const methodMap: Record<string, string> = {
+    email: "Email",
+    google: "Google",
+    passkey: "Passkey",
+  };
+  return methodMap[method] || method;
+};
+
 export function LoginForm() {
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  const lastUsedMethod = authClient.getLastUsedLoginMethod();
 
   const form = useForm<LoginFormData>({
     resolver: zodResolver(loginSchema),
@@ -55,7 +66,6 @@ export function LoginForm() {
           const available =
             await PublicKeyCredential.isConditionalMediationAvailable();
           if (available) {
-            // Preload passkeys for autofill
             void authClient.signIn.passkey({ autoFill: true });
           }
         } catch {
@@ -98,120 +108,147 @@ export function LoginForm() {
     }
   };
 
+  const renderEmailForm = (showHelperText: boolean) => (
+    <div className="flex flex-col gap-4">
+      <Controller
+        control={form.control}
+        name="identifier"
+        render={({ field, fieldState }) => (
+          <div className="flex flex-col gap-2">
+            <Label
+              className="flex flex-col items-start gap-2"
+              htmlFor={field.name}
+            >
+              Email or Username
+              <Input
+                {...field}
+                aria-invalid={fieldState.invalid}
+                autoComplete="username webauthn"
+                disabled={isLoading}
+                id={field.name}
+                placeholder="you@example.com or username"
+                type="text"
+              />
+            </Label>
+            {fieldState.invalid && (
+              <FieldError errors={[fieldState.error]} />
+            )}
+          </div>
+        )}
+      />
+      <Controller
+        control={form.control}
+        name="password"
+        render={({ field, fieldState }) => (
+          <div className="flex flex-col gap-2">
+            <Label
+              className="flex flex-col items-start gap-2"
+              htmlFor={field.name}
+            >
+              Password
+              <div className="flex w-full gap-0.5">
+                <Input
+                  {...field}
+                  aria-invalid={fieldState.invalid}
+                  autoComplete="current-password webauthn"
+                  className="flex-1"
+                  disabled={isLoading}
+                  id={field.name}
+                  placeholder="Enter your password"
+                  type={showPassword ? "text" : "password"}
+                />
+                <Button
+                  aria-label={
+                    showPassword ? "Hide password" : "Show password"
+                  }
+                  className="size-10 shrink-0"
+                  disabled={isLoading}
+                  onClick={() => setShowPassword(!showPassword)}
+                  size="icon"
+                  tabIndex={-1}
+                  type="button"
+                  variant="outline"
+                >
+                  {showPassword ? (
+                    <IconEyeOff className="size-4" />
+                  ) : (
+                    <IconEye className="size-4" />
+                  )}
+                </Button>
+              </div>
+            </Label>
+            {fieldState.invalid && (
+              <FieldError errors={[fieldState.error]} />
+            )}
+          </div>
+        )}
+      />
+      <Controller
+        control={form.control}
+        name="rememberMe"
+        render={({ field, fieldState }) => (
+          <div className="flex flex-col gap-2">
+            <Label
+              className="flex items-center gap-2 font-normal"
+              htmlFor={field.name}
+            >
+              <Checkbox
+                aria-invalid={fieldState.invalid}
+                checked={field.value}
+                disabled={isLoading}
+                id={field.name}
+                name={field.name}
+                onCheckedChange={field.onChange}
+              />
+              Remember me
+            </Label>
+          </div>
+        )}
+      />
+      <div className="flex flex-col gap-1">
+        <Button disabled={isLoading} loading={isLoading} type="submit" variant={lastUsedMethod === "email" || !lastUsedMethod ? "default" : "outline"}>
+          Sign in
+        </Button>
+        {showHelperText && lastUsedMethod === "email" && (
+          <p className="text-center font-medium py-4 text-muted-foreground text-sm">
+            You last used {getMethodDisplayName(lastUsedMethod)} to sign in
+          </p>
+        )}
+      </div>
+    </div>
+  );
+
   return (
     <div className="flex flex-col">
       <form
-        className="flex flex-col gap-6"
+        className="flex flex-col gap-2"
         onSubmit={form.handleSubmit(onSubmit)}
       >
-        <div className="flex flex-col gap-4">
-          <Controller
-            control={form.control}
-            name="identifier"
-            render={({ field, fieldState }) => (
-              <div className="flex flex-col gap-2">
-                <Label
-                  className="flex flex-col items-start gap-2"
-                  htmlFor={field.name}
-                >
-                  Email or Username
-                  <Input
-                    {...field}
-                    aria-invalid={fieldState.invalid}
-                    autoComplete="username webauthn"
-                    disabled={isLoading}
-                    id={field.name}
-                    placeholder="you@example.com or username"
-                    type="text"
-                  />
-                </Label>
-                {fieldState.invalid && (
-                  <FieldError errors={[fieldState.error]} />
-                )}
-              </div>
-            )}
-          />
-          <Controller
-            control={form.control}
-            name="password"
-            render={({ field, fieldState }) => (
-              <div className="flex flex-col gap-2">
-                <Label
-                  className="flex flex-col items-start gap-2"
-                  htmlFor={field.name}
-                >
-                  Password
-                  <div className="flex w-full gap-0.5">
-                    <Input
-                      {...field}
-                      aria-invalid={fieldState.invalid}
-                      autoComplete="current-password webauthn"
-                      className="flex-1"
-                      disabled={isLoading}
-                      id={field.name}
-                      placeholder="Enter your password"
-                      type={showPassword ? "text" : "password"}
-                    />
-                    <Button
-                      aria-label={
-                        showPassword ? "Hide password" : "Show password"
-                      }
-                      className="size-10 shrink-0"
-                      disabled={isLoading}
-                      onClick={() => setShowPassword(!showPassword)}
-                      size="icon"
-                      tabIndex={-1}
-                      type="button"
-                      variant="outline"
-                    >
-                      {showPassword ? (
-                        <IconEyeOff className="size-4" />
-                      ) : (
-                        <IconEye className="size-4" />
-                      )}
-                    </Button>
-                  </div>
-                </Label>
-                {fieldState.invalid && (
-                  <FieldError errors={[fieldState.error]} />
-                )}
-              </div>
-            )}
-          />
-          <Controller
-            control={form.control}
-            name="rememberMe"
-            render={({ field, fieldState }) => (
-              <div className="flex flex-col gap-2">
-                <Label
-                  className="flex items-center gap-2 font-normal"
-                  htmlFor={field.name}
-                >
-                  <Checkbox
-                    aria-invalid={fieldState.invalid}
-                    checked={field.value}
-                    disabled={isLoading}
-                    id={field.name}
-                    name={field.name}
-                    onCheckedChange={field.onChange}
-                  />
-                  Remember me
-                </Label>
-              </div>
-            )}
-          />
-        </div>
-
-        <div className="flex flex-col gap-2">
-          <Button disabled={isLoading} loading={isLoading} type="submit">
-            Sign in
-          </Button>
-          <div className="text-center font-semibold text-muted-foreground text-sm">
-            OR
-          </div>
-          <LoginWithGoogle />
-          <LoginWithPasskey />
-        </div>
+        {lastUsedMethod === "email" ? (
+          <>
+            {renderEmailForm(true)}
+            <LoginWithGoogle variant="outline" />
+            <LoginWithPasskey variant="outline" />
+          </>
+        ) : lastUsedMethod === "google" ? (
+          <>
+            <LoginWithGoogle variant="default" showHelperText />
+            {renderEmailForm(false)}
+            <LoginWithPasskey variant="outline" />
+          </>
+        ) : lastUsedMethod === "passkey" ? (
+          <>
+            <LoginWithPasskey variant="default" showHelperText />
+            {renderEmailForm(false)}
+            <LoginWithGoogle variant="outline" />
+          </>
+        ) : (
+          <>
+            {renderEmailForm(false)}
+            <LoginWithGoogle variant="outline" />
+            <LoginWithPasskey variant="outline" />
+          </>
+        )}
       </form>
     </div>
   );

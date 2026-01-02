@@ -4,8 +4,14 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { authClient } from "@/lib/auth-client";
 import { IconBrandGoogle } from "@tabler/icons-react";
+import type { ComponentProps } from "react";
 
-export function LoginWithGoogle() {
+interface LoginWithGoogleProps {
+  variant?: ComponentProps<typeof Button>["variant"];
+  showHelperText?: boolean;
+}
+
+export function LoginWithGoogle({ variant = "outline", showHelperText = false }: LoginWithGoogleProps) {
   const [isLoading, setIsLoading] = useState(false);
 
   const handleGoogleSignIn = async () => {
@@ -21,14 +27,15 @@ export function LoginWithGoogle() {
   };
 
   return (
-    <Button
-      className="w-full gap-2"
-      disabled={isLoading}
-      loading={isLoading}
-      onClick={handleGoogleSignIn}
-      type="button"
-      variant="outline"
-    >
+    <div className="flex flex-col gap-1">
+      <Button
+        className="w-full gap-2"
+        disabled={isLoading}
+        loading={isLoading}
+        onClick={handleGoogleSignIn}
+        type="button"
+        variant={variant}
+      >
       <svg
         aria-label="Google logo"
         className="size-4"
@@ -55,7 +62,13 @@ export function LoginWithGoogle() {
           fill="#EA4335"
         />
       </svg>
-      Continue with Google
-    </Button>
+      Sign in with Google
+      </Button>
+      {showHelperText && (
+        <p className="text-center font-medium py-4 text-muted-foreground text-sm">
+          You last used Google to sign in
+        </p>
+      )}
+    </div>
   );
 }

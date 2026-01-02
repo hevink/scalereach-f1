@@ -1,7 +1,7 @@
 import "dotenv/config";
 import { betterAuth } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
-import { username } from "better-auth/plugins";
+import { username, lastLoginMethod } from "better-auth/plugins";
 import { passkey } from "@better-auth/passkey";
 import { db } from "@/db";
 
@@ -56,5 +56,6 @@ export const auth = betterAuth({
         userVerification: "preferred",
       },
     }),
+    lastLoginMethod(),
   ],
 });
