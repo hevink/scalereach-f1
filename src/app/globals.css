@@ -123,10 +123,22 @@
   body {
     @apply bg-background text-foreground;
   }
-  button {
+  body[data-pointer-cursors="true"] button {
     @apply cursor-pointer;
   }
-  .switch {
+  body[data-pointer-cursors="true"] .switch {
+    @apply cursor-pointer;
+  }
+  body[data-pointer-cursors="true"] a {
+    @apply cursor-pointer;
+  }
+  body[data-pointer-cursors="true"] input {
+    @apply cursor-pointer;
+  }
+  body[data-pointer-cursors="true"] select {
+    @apply cursor-pointer;
+  }
+  body[data-pointer-cursors="true"] textarea {
     @apply cursor-pointer;
   }
 }

@@ -140,7 +140,7 @@ export default function WorkspacesPage() {
       return (
         <Card
           className={[
-            "flex cursor-pointer flex-row justify-between rounded-none border-b border-b-foreground/10 py-2 transition-colors hover:bg-accent",
+            "flex flex-row justify-between rounded-none border-b border-b-foreground/10 py-2 transition-colors hover:bg-accent",
             isFirst && "rounded-t-lg",
             isLast && "rounded-b-lg border-b-0",
             !isLast && "border-b-0",
@@ -156,7 +156,7 @@ export default function WorkspacesPage() {
                 <IconBuilding className="size-4 text-primary" />
               </div>
               <div className="flex flex-1 flex-col gap-1">
-                <CardTitle className="font-[490] text-base">
+                <CardTitle className="font-[490] text-sm">
                   {workspace.name}
                 </CardTitle>
               </div>

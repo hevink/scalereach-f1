@@ -8,6 +8,7 @@ import {
 } from "@/components/ui/sidebar";
 import { Spinner } from "@/components/ui/spinner";
 import { WorkspaceSidebar } from "@/components/workspace/workspace-sidebar";
+import { WorkspaceTracker } from "@/components/workspace/workspace-tracker";
 import { auth } from "@/lib/auth";
 import { getWorkspaceBySlug } from "@/lib/workspace";
 
@@ -41,6 +42,7 @@ async function WorkspaceLayoutContent({
 
   return (
     <SidebarProvider>
+      <WorkspaceTracker slug={slug} />
       <WorkspaceSidebar currentSlug={slug} />
       <SidebarInset>
         <header className="flex h-16 shrink-0 items-center gap-2 border-b px-4">

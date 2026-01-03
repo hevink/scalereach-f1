@@ -450,7 +450,7 @@ function AvatarUploadSection({
         {!isUploadingAvatar && (
           <button
             aria-label="Upload avatar"
-            className="absolute inset-0 flex cursor-pointer items-center justify-center rounded-full bg-black/60 opacity-0 transition-opacity group-hover/avatar:opacity-100"
+            className="absolute inset-0 flex items-center justify-center rounded-full bg-black/60 opacity-0 transition-opacity group-hover/avatar:opacity-100"
             onClick={handleAvatarClick}
             type="button"
           >

@@ -1,4 +1,5 @@
 import { AppearanceCard } from "@/components/settings/appearance-card";
+import { PointerCursorCard } from "@/components/settings/pointer-cursor-card";
 
 export default function GeneralSettingsPage() {
   return (
@@ -8,6 +9,7 @@ export default function GeneralSettingsPage() {
       </div>
       <div className="flex flex-col gap-4">
         <AppearanceCard />
+        <PointerCursorCard />
       </div>
     </div>
   );

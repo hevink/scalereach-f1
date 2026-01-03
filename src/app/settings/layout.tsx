@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { SettingsSidebar } from "@/components/settings/settings-sidebar";
 import { Button } from "@/components/ui/button";
 import {
@@ -20,11 +20,37 @@ interface SettingsLayoutProps {
 export default function SettingsLayout({ children }: SettingsLayoutProps) {
   const router = useRouter();
   const { data: session, isPending } = authClient.useSession();
+  const [homeUrl, setHomeUrl] = useState<string>("/");
 
   useEffect(() => {
     if (!(isPending || session?.user)) {
       router.replace("/login");
       return;
+    }
+
+    if (session?.user) {
+      const lastWorkspace = localStorage.getItem("lastWorkspace");
+      if (lastWorkspace) {
+        setHomeUrl(`/${lastWorkspace}`);
+        return;
+      }
+
+      const fetchWorkspace = async () => {
+        try {
+          const response = await fetch("/api/workspace/list");
+          if (response.ok) {
+            const data = await response.json();
+            const workspaces = data.workspaces || [];
+            if (workspaces.length > 0) {
+              setHomeUrl(`/${workspaces[0].slug}`);
+            }
+          }
+        } catch (error) {
+          console.error("Failed to fetch workspaces:", error);
+        }
+      };
+
+      fetchWorkspace();
     }
   }, [session, isPending, router]);
 
@@ -53,8 +79,8 @@ export default function SettingsLayout({ children }: SettingsLayoutProps) {
             variant="outline"
           >
             <Link
-              className="flex h-8 items-center justify-center px-3.5"
-              href="/"
+              className="flex h-7.5 items-center justify-center px-3.5"
+              href={homeUrl}
             >
               <span className="font-[490] text-[13px]">Go Home</span>
             </Link>

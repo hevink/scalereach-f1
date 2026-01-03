@@ -3,6 +3,7 @@ import {
   boolean,
   index,
   integer,
+  jsonb,
   pgTable,
   text,
   timestamp,
@@ -26,6 +27,12 @@ export const user = pgTable(
     displayUsername: text("display_username"),
     twoFactorEnabled: boolean("two_factor_enabled").default(false).notNull(),
     isOnboarded: boolean("is_onboarded").default(false).notNull(),
+    preferences: jsonb("preferences")
+      .$type<{
+        usePointerCursors?: boolean;
+      }>()
+      .default({})
+      .notNull(),
   },
   (table) => ({
     idIdx: index("idx_user_id").on(table.id),
