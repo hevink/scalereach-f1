@@ -28,6 +28,7 @@ export const user = pgTable(
     isOnboarded: boolean("is_onboarded").default(false).notNull(),
   },
   (table) => ({
+    idIdx: index("idx_user_id").on(table.id),
     isOnboardedIdx: index("idx_user_isOnboarded").on(table.isOnboarded),
   })
 );

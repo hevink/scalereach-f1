@@ -1,159 +1,47 @@
-"use client";
+import { eq } from "drizzle-orm";
+import { headers } from "next/headers";
+import { redirect } from "next/navigation";
+import { db } from "@/db";
+import { user } from "@/db/schema/auth";
+import { auth } from "@/lib/auth";
+import { getUserWorkspaces } from "@/lib/workspace";
 
-import { IconLogout, IconSettings } from "@tabler/icons-react";
-import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
-import { toast } from "sonner";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import { Spinner } from "@/components/ui/spinner";
-import { authClient } from "@/lib/auth-client";
+export default async function HomePage() {
+  const headersList = await headers();
+  const sessionData = await auth.api.getSession({
+    headers: headersList,
+  });
 
-export default function Home() {
-  const router = useRouter();
-  const { data: session, isPending } = authClient.useSession();
-  const [isLoggingOut, setIsLoggingOut] = useState(false);
-
-  useEffect(() => {
-    if (isPending) {
-      return;
-    }
-
-    if (!session?.user) {
-      router.replace("/login");
-      return;
-    }
-
-    // Check onboarding status via API
-    const checkOnboarding = async () => {
-      try {
-        const response = await fetch("/api/auth/session");
-        const data = await response.json();
-        if (data.user && !data.user.isOnboarded) {
-          router.replace("/onboarding");
-        }
-      } catch (error) {
-        console.error("Failed to check onboarding status:", error);
-      }
-    };
-
-    checkOnboarding();
-  }, [session, isPending, router]);
-
-  const handleLogout = async () => {
-    setIsLoggingOut(true);
-    try {
-      await authClient.signOut();
-      router.push("/login");
-      router.refresh();
-    } catch (_error) {
-      toast.error("Error during logout");
-      setIsLoggingOut(false);
-    }
-  };
-
-  const handleSettings = () => {
-    router.push("/settings");
-  };
-
-  if (isPending) {
-    return (
-      <div className="flex min-h-screen items-center justify-center">
-        <Spinner />
-      </div>
-    );
+  if (!sessionData?.user) {
+    redirect("/home");
   }
 
-  if (!session?.user) {
-    return null;
+  const userId = sessionData.user.id;
+
+  // Fetch isOnboarded status from database
+  const [userData] = await db
+    .select({ isOnboarded: user.isOnboarded })
+    .from(user)
+    .where(eq(user.id, userId))
+    .limit(1);
+
+  // Check if user is onboarded
+  if (!userData?.isOnboarded) {
+    redirect("/onboarding");
   }
 
-  const user = session.user;
-  const initials =
-    user.name
-      ?.split(" ")
-      .map((n) => n[0])
-      .join("")
-      .toUpperCase()
-      .slice(0, 2) ||
-    user.email?.[0]?.toUpperCase() ||
-    "U";
+  // Get user's workspaces
+  const workspaces = await getUserWorkspaces(userId);
 
-  return (
-    <div className="flex min-h-screen items-center justify-center bg-zinc-50 p-4 font-sans dark:bg-black">
-      <Card className="w-full max-w-md">
-        <CardHeader>
-          <CardTitle>User Profile</CardTitle>
-          <CardDescription>Your account information</CardDescription>
-        </CardHeader>
-        <CardContent className="flex flex-col gap-6">
-          <div className="flex items-center gap-4">
-            <Avatar size="lg">
-              {user.image && (
-                <AvatarImage alt={user.name || "User"} src={user.image} />
-              )}
-              <AvatarFallback>{initials}</AvatarFallback>
-            </Avatar>
-            <div className="flex flex-col gap-1">
-              <p className="font-semibold text-base">{user.name || "User"}</p>
-              <p className="text-muted-foreground text-sm">{user.email}</p>
-              {user.username && (
-                <p className="text-muted-foreground text-sm">
-                  @{user.username}
-                </p>
-              )}
-            </div>
-          </div>
-          <div className="flex flex-col gap-2">
-            <div className="flex items-center justify-between">
-              <span className="text-muted-foreground text-sm">
-                Email Verified
-              </span>
-              <span className="font-medium text-sm">
-                {user.emailVerified ? "Yes" : "No"}
-              </span>
-            </div>
-            {session.session?.createdAt && (
-              <div className="flex items-center justify-between">
-                <span className="text-muted-foreground text-sm">
-                  Session Started
-                </span>
-                <span className="font-medium text-sm">
-                  {new Date(session.session.createdAt).toLocaleDateString()}
-                </span>
-              </div>
-            )}
-          </div>
-          <div className="flex flex-col gap-2">
-            <Button
-              aria-label="Settings"
-              className="w-full"
-              onClick={handleSettings}
-              variant="secondary"
-            >
-              <IconSettings className="size-4" />
-              Settings
-            </Button>
-            <Button
-              className="w-full"
-              disabled={isLoggingOut}
-              loading={isLoggingOut}
-              onClick={handleLogout}
-              variant="outline"
-            >
-              <IconLogout className="size-4" />
-              Logout
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
-    </div>
-  );
+  if (workspaces.length === 0) {
+    redirect("/onboarding");
+  }
+
+  if (workspaces.length === 1) {
+    // Redirect to the single workspace
+    redirect(`/${workspaces[0].slug}`);
+  }
+
+  // Multiple workspaces - show selector page
+  redirect("/workspaces");
 }
