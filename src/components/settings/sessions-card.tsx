@@ -68,7 +68,7 @@ export function SessionsCard() {
 
       const data = await response.json();
       setSessions(data.sessions || []);
-    } catch (error) {
+    } catch (_error) {
       toast.error("An error occurred while loading sessions");
     } finally {
       setIsLoading(false);
@@ -90,83 +90,85 @@ export function SessionsCard() {
     }
   }, []);
 
-  const formatDeviceName = useCallback((userAgent: string | null | undefined): string => {
-    if (!userAgent || typeof userAgent !== "string") {
-      return "Unknown Device";
-    }
-
-    const ua = userAgent.toLowerCase();
-
-    // Detect OS
-    let os = "Unknown";
-    let deviceType: "Desktop" | "Mobile" | "Tablet" = "Desktop";
-
-    if (ua.includes("windows")) {
-      if (ua.includes("phone")) {
-        os = "Windows Phone";
-        deviceType = "Mobile";
-      } else {
-        os = "Windows";
-        deviceType = "Desktop";
+  const detectOS = useCallback(
+    (
+      ua: string
+    ): { os: string; deviceType: "Desktop" | "Mobile" | "Tablet" } => {
+      if (ua.includes("iphone")) {
+        return { os: "iOS", deviceType: "Mobile" };
       }
-    } else if (ua.includes("mac os x") || ua.includes("macintosh")) {
-      if (ua.includes("iphone") || ua.includes("ipad")) {
-        // Handled separately below
-      } else {
-        os = "macOS";
-        deviceType = "Desktop";
+      if (ua.includes("ipad")) {
+        return { os: "iPadOS", deviceType: "Tablet" };
       }
-    } else if (ua.includes("iphone")) {
-      os = "iOS";
-      deviceType = "Mobile";
-    } else if (ua.includes("ipad")) {
-      os = "iPadOS";
-      deviceType = "Tablet";
-    } else if (ua.includes("android")) {
-      if (ua.includes("mobile")) {
-        os = "Android";
-        deviceType = "Mobile";
-      } else {
-        os = "Android";
-        deviceType = "Tablet";
+      if (ua.includes("windows phone")) {
+        return { os: "Windows Phone", deviceType: "Mobile" };
       }
-    } else if (ua.includes("linux")) {
-      os = "Linux";
-      deviceType = "Desktop";
-    } else if (ua.includes("x11")) {
-      os = "Unix";
-      deviceType = "Desktop";
-    }
+      if (ua.includes("windows")) {
+        return { os: "Windows", deviceType: "Desktop" };
+      }
+      if (ua.includes("mac os x") || ua.includes("macintosh")) {
+        return { os: "macOS", deviceType: "Desktop" };
+      }
+      if (ua.includes("android")) {
+        return {
+          os: "Android",
+          deviceType: ua.includes("mobile") ? "Mobile" : "Tablet",
+        };
+      }
+      if (ua.includes("linux")) {
+        return { os: "Linux", deviceType: "Desktop" };
+      }
+      if (ua.includes("x11")) {
+        return { os: "Unix", deviceType: "Desktop" };
+      }
+      return { os: "Unknown", deviceType: "Desktop" };
+    },
+    []
+  );
 
-    // Detect Browser
-    let browser = "Unknown";
-
+  const detectBrowser = useCallback((ua: string): string => {
     if (ua.includes("edg/")) {
-      browser = "Edge";
-    } else if (ua.includes("chrome/") && !ua.includes("edg/")) {
-      browser = "Chrome";
-    } else if (ua.includes("firefox/")) {
-      browser = "Firefox";
-    } else if (ua.includes("safari/") && !ua.includes("chrome/")) {
-      browser = "Safari";
-    } else if (ua.includes("opera/") || ua.includes("opr/")) {
-      browser = "Opera";
-    } else if (ua.includes("msie") || ua.includes("trident/")) {
-      browser = "Internet Explorer";
-    } else if (ua.includes("brave/")) {
-      browser = "Brave";
+      return "Edge";
     }
-
-    // Format device name
-    let deviceName = `${browser} on ${os}`;
-
-    // Special handling for mobile devices
-    if (deviceType === "Mobile" || deviceType === "Tablet") {
-      deviceName = `${browser} on ${deviceType === "Mobile" ? "Mobile" : "Tablet"} (${os})`;
+    if (ua.includes("chrome/") && !ua.includes("edg/")) {
+      return "Chrome";
     }
-
-    return deviceName;
+    if (ua.includes("firefox/")) {
+      return "Firefox";
+    }
+    if (ua.includes("safari/") && !ua.includes("chrome/")) {
+      return "Safari";
+    }
+    if (ua.includes("opera/") || ua.includes("opr/")) {
+      return "Opera";
+    }
+    if (ua.includes("msie") || ua.includes("trident/")) {
+      return "Internet Explorer";
+    }
+    if (ua.includes("brave/")) {
+      return "Brave";
+    }
+    return "Unknown";
   }, []);
+
+  const formatDeviceName = useCallback(
+    (userAgent: string | null | undefined): string => {
+      if (!userAgent || typeof userAgent !== "string") {
+        return "Unknown Device";
+      }
+
+      const ua = userAgent.toLowerCase();
+      const { os, deviceType } = detectOS(ua);
+      const browser = detectBrowser(ua);
+
+      if (deviceType === "Mobile" || deviceType === "Tablet") {
+        return `${browser} on ${deviceType === "Mobile" ? "Mobile" : "Tablet"} (${os})`;
+      }
+
+      return `${browser} on ${os}`;
+    },
+    [detectOS, detectBrowser]
+  );
 
   const handleRevokeClick = useCallback((session: Session) => {
     setSessionToRevoke(session);
@@ -200,7 +202,7 @@ export function SessionsCard() {
 
       toast.success("Session revoked successfully");
       await fetchSessions();
-    } catch (error) {
+    } catch (_error) {
       toast.error("An error occurred while revoking session");
     } finally {
       setRevokingToken(null);
@@ -232,7 +234,7 @@ export function SessionsCard() {
 
       toast.success("All sessions revoked successfully");
       await fetchSessions();
-    } catch (error) {
+    } catch (_error) {
       toast.error("An error occurred while revoking sessions");
     } finally {
       setIsRevokingAll(false);
@@ -252,10 +254,14 @@ export function SessionsCard() {
         </CardHeader>
         <CardContent>
           <div className="flex flex-col gap-4">
-            {isLoadingState ? (
+            {isLoadingState && (
               <ItemGroup>
                 {[1, 2, 3].map((i) => (
-                  <Item key={i} variant="outline" className="flex items-center justify-between gap-2">
+                  <Item
+                    className="flex items-center justify-between gap-2"
+                    key={i}
+                    variant="outline"
+                  >
                     <ItemHeader className="w-fit basis-0">
                       <div className="flex flex-col gap-1">
                         <Skeleton className="h-5 w-48" />
@@ -268,71 +274,70 @@ export function SessionsCard() {
                   </Item>
                 ))}
               </ItemGroup>
-            ) : (
+            )}
+            {!isLoadingState && sessions.length > 0 && (
               <>
-                {sessions.length > 0 ? (
-                  <>
-                    <ItemGroup>
-                      {sessions.map((sessionItem) => (
-                        <Item
-                          className="flex-nowrap"
-                          key={sessionItem.id}
-                          variant="outline"
-                        >
-                          <ItemHeader>
-                            <div className="flex flex-col gap-1">
-                              <div className="flex items-center gap-2">
-                                <span className="font-medium">
-                                  {formatDeviceName(sessionItem.userAgent)}
-                                </span>
-                                {sessionItem.isCurrent && (
-                                  <span className="rounded-full bg-primary/10 px-2 py-0.5 text-primary text-xs font-medium">
-                                    Current
-                                  </span>
-                                )}
-                              </div>
-                              <ItemDescription>
-                                Last active {formatLastActive(sessionItem.updatedAt)}
-                                {sessionItem.ipAddress &&
-                                  ` • ${sessionItem.ipAddress}`}
-                              </ItemDescription>
-                            </div>
-                          </ItemHeader>
-                          <ItemActions>
-                            {!sessionItem.isCurrent && (
-                              <Button
-                                aria-label="Revoke session"
-                                disabled={revokingToken === sessionItem.token}
-                                loading={revokingToken === sessionItem.token}
-                                onClick={() => handleRevokeClick(sessionItem)}
-                                size="icon"
-                                variant="ghost"
-                              >
-                                <IconTrash className="size-4" />
-                              </Button>
+                <ItemGroup>
+                  {sessions.map((sessionItem) => (
+                    <Item
+                      className="flex-nowrap"
+                      key={sessionItem.id}
+                      variant="outline"
+                    >
+                      <ItemHeader>
+                        <div className="flex flex-col gap-1">
+                          <div className="flex items-center gap-2">
+                            <span className="font-medium">
+                              {formatDeviceName(sessionItem.userAgent)}
+                            </span>
+                            {sessionItem.isCurrent && (
+                              <span className="rounded-full bg-primary/10 px-2 py-0.5 font-medium text-primary text-xs">
+                                Current
+                              </span>
                             )}
-                          </ItemActions>
-                        </Item>
-                      ))}
-                    </ItemGroup>
-                    <div className="flex justify-end">
-                      <Button
-                        disabled={isRevokingAll}
-                        loading={isRevokingAll}
-                        onClick={handleRevokeAllClick}
-                        type="button"
-                        variant="destructive"
-                      >
-                        Revoke All Sessions
-                      </Button>
-                    </div>
-                  </>
-                ) : (
-                  <div className="py-8 text-center text-muted-foreground text-sm">
-                    No active sessions found.
-                  </div>
-                )}
+                          </div>
+                          <ItemDescription>
+                            Last active{" "}
+                            {formatLastActive(sessionItem.updatedAt)}
+                            {sessionItem.ipAddress &&
+                              ` • ${sessionItem.ipAddress}`}
+                          </ItemDescription>
+                        </div>
+                      </ItemHeader>
+                      <ItemActions>
+                        {!sessionItem.isCurrent && (
+                          <Button
+                            aria-label="Revoke session"
+                            disabled={revokingToken === sessionItem.token}
+                            loading={revokingToken === sessionItem.token}
+                            onClick={() => handleRevokeClick(sessionItem)}
+                            size="icon"
+                            variant="ghost"
+                          >
+                            <IconTrash className="size-4" />
+                          </Button>
+                        )}
+                      </ItemActions>
+                    </Item>
+                  ))}
+                </ItemGroup>
+                <div className="flex justify-end">
+                  <Button
+                    disabled={isRevokingAll}
+                    loading={isRevokingAll}
+                    onClick={handleRevokeAllClick}
+                    type="button"
+                    variant="destructive"
+                  >
+                    Revoke All Sessions
+                  </Button>
+                </div>
               </>
+            )}
+            {!isLoadingState && sessions.length === 0 && (
+              <div className="py-8 text-center text-muted-foreground text-sm">
+                No active sessions found.
+              </div>
             )}
           </div>
         </CardContent>
@@ -402,4 +407,3 @@ export function SessionsCard() {
     </>
   );
 }
-

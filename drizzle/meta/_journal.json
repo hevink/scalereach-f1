@@ -50,6 +50,13 @@
       "when": 1767356606074,
       "tag": "0006_petite_nightcrawler",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1767419803072,
+      "tag": "0007_zippy_lily_hollister",
+      "breakpoints": true
     }
   ]
 }

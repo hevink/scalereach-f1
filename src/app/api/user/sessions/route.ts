@@ -55,7 +55,10 @@ export async function GET(request: Request) {
       isCurrent: s.token === currentToken,
     }));
 
-    return NextResponse.json({ sessions: sessionsWithCurrent }, { status: 200 });
+    return NextResponse.json(
+      { sessions: sessionsWithCurrent },
+      { status: 200 }
+    );
   } catch (error) {
     console.error("Error fetching sessions:", error);
     return ERRORS.SERVER_ERROR;
@@ -137,4 +140,3 @@ export async function DELETE(request: Request) {
     return ERRORS.SERVER_ERROR;
   }
 }
-

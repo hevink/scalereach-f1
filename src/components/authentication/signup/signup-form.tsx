@@ -261,7 +261,7 @@ export function SignUpForm() {
         return;
       }
 
-      router.push("/home");
+      router.push("/onboarding");
       router.refresh();
     } catch (error) {
       const errorMessage = getAuthErrorMessage(

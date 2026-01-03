@@ -9,21 +9,28 @@ import {
   uniqueIndex,
 } from "drizzle-orm/pg-core";
 
-export const user = pgTable("user", {
-  id: text("id").primaryKey(),
-  name: text("name").notNull(),
-  email: text("email").notNull().unique(),
-  emailVerified: boolean("email_verified").default(false).notNull(),
-  image: text("image"),
-  createdAt: timestamp("created_at").defaultNow().notNull(),
-  updatedAt: timestamp("updated_at")
-    .defaultNow()
-    .$onUpdate(() => new Date())
-    .notNull(),
-  username: text("username").unique(),
-  displayUsername: text("display_username"),
-  twoFactorEnabled: boolean("two_factor_enabled").default(false).notNull(),
-});
+export const user = pgTable(
+  "user",
+  {
+    id: text("id").primaryKey(),
+    name: text("name").notNull(),
+    email: text("email").notNull().unique(),
+    emailVerified: boolean("email_verified").default(false).notNull(),
+    image: text("image"),
+    createdAt: timestamp("created_at").defaultNow().notNull(),
+    updatedAt: timestamp("updated_at")
+      .defaultNow()
+      .$onUpdate(() => new Date())
+      .notNull(),
+    username: text("username").unique(),
+    displayUsername: text("display_username"),
+    twoFactorEnabled: boolean("two_factor_enabled").default(false).notNull(),
+    isOnboarded: boolean("is_onboarded").default(false).notNull(),
+  },
+  (table) => ({
+    isOnboardedIdx: index("idx_user_isOnboarded").on(table.isOnboarded),
+  })
+);
 
 export const session = pgTable(
   "session",

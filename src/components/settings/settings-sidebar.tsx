@@ -18,7 +18,6 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import {
   Sidebar,
   SidebarContent,
-  SidebarFooter,
   SidebarGroup,
   SidebarGroupContent,
   SidebarMenu,
@@ -139,7 +138,7 @@ export function SettingsSidebar() {
   const pathname = usePathname();
   const router = useRouter();
   const { data: session } = authClient.useSession();
-  const user = session?.user;
+  const _user = session?.user;
   const [searchQuery, setSearchQuery] = useState("");
   const [isResultsVisible, setIsResultsVisible] = useState(false);
   const [shouldRenderResults, setShouldRenderResults] = useState(false);

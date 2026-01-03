@@ -22,9 +22,29 @@ export default function Home() {
   const [isLoggingOut, setIsLoggingOut] = useState(false);
 
   useEffect(() => {
-    if (!(isPending || session?.user)) {
-      router.replace("/login");
+    if (isPending) {
+      return;
     }
+
+    if (!session?.user) {
+      router.replace("/login");
+      return;
+    }
+
+    // Check onboarding status via API
+    const checkOnboarding = async () => {
+      try {
+        const response = await fetch("/api/auth/session");
+        const data = await response.json();
+        if (data.user && !data.user.isOnboarded) {
+          router.replace("/onboarding");
+        }
+      } catch (error) {
+        console.error("Failed to check onboarding status:", error);
+      }
+    };
+
+    checkOnboarding();
   }, [session, isPending, router]);
 
   const handleLogout = async () => {

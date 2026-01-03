@@ -2,14 +2,47 @@
 
 import { IconDashboard } from "@tabler/icons-react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Spinner } from "@/components/ui/spinner";
 import { authClient } from "@/lib/auth-client";
 
 export default function HomePage() {
+  const router = useRouter();
   const { data: session, isPending } = authClient.useSession();
+  const [isCheckingOnboarding, setIsCheckingOnboarding] = useState(true);
 
-  if (isPending) {
+  useEffect(() => {
+    if (isPending) {
+      return;
+    }
+
+    if (!session?.user) {
+      router.replace("/login");
+      return;
+    }
+
+    // Check onboarding status
+    const checkOnboarding = async () => {
+      try {
+        const response = await fetch("/api/auth/session");
+        const data = await response.json();
+        if (data.user && !data.user.isOnboarded) {
+          router.replace("/onboarding");
+          return;
+        }
+      } catch (error) {
+        console.error("Failed to check onboarding status:", error);
+      } finally {
+        setIsCheckingOnboarding(false);
+      }
+    };
+
+    checkOnboarding();
+  }, [session, isPending, router]);
+
+  if (isPending || isCheckingOnboarding) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-zinc-50 font-sans dark:bg-black">
         <Spinner />

@@ -14,6 +14,12 @@ import {
   userRelations,
   verification,
 } from "./schema/auth";
+import {
+  workspace,
+  workspaceMember,
+  workspaceMemberRelations,
+  workspaceRelations,
+} from "./schema/workspace";
 
 const databaseUrl = process.env.DATABASE_URL;
 if (!databaseUrl) {
@@ -41,5 +47,9 @@ export const db = drizzle({
     user,
     userRelations,
     verification,
+    workspace,
+    workspaceMember,
+    workspaceRelations,
+    workspaceMemberRelations,
   },
 });
