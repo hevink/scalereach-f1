@@ -383,24 +383,6 @@ export function SettingsSidebar() {
           </SidebarGroupContent>
         </SidebarGroup>
       </SidebarContent>
-      {user && (
-        <SidebarFooter>
-          <SidebarGroup>
-            <SidebarGroupContent>
-              <div className="flex flex-col gap-1 px-2 py-1.5">
-                <span className="font-medium text-sm">
-                  {user.name || "User"}
-                </span>
-                {user.username && (
-                  <span className="text-muted-foreground text-xs">
-                    @{user.username}
-                  </span>
-                )}
-              </div>
-            </SidebarGroupContent>
-          </SidebarGroup>
-        </SidebarFooter>
-      )}
     </Sidebar>
   );
 }
