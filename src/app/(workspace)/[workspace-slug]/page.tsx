@@ -4,14 +4,8 @@ import { use, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useSession } from "@/lib/auth-client";
 import { useWorkspaceBySlug } from "@/hooks/useWorkspace";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
 import { Spinner } from "@/components/ui/spinner";
+import { YouTubeUploadForm, VideoList } from "@/components/video";
 
 interface WorkspacePageProps {
   params: Promise<{ "workspace-slug": string }>;
@@ -59,19 +53,11 @@ export default function WorkspacePage({ params }: WorkspacePageProps) {
           </p>
         )}
       </div>
-      <Card>
-        <CardHeader>
-          <CardTitle>Welcome to your workspace</CardTitle>
-          <CardDescription>
-            This is your workspace dashboard. More features coming soon.
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <p className="text-muted-foreground text-sm">
-            Your workspace is ready to use. Start building your projects here.
-          </p>
-        </CardContent>
-      </Card>
+
+      <div className="grid gap-6 lg:grid-cols-2">
+        <YouTubeUploadForm />
+        <VideoList />
+      </div>
     </div>
   );
 }
