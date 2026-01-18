@@ -1,6 +1,6 @@
 "use client";
 
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useCallback, useState } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -17,6 +17,8 @@ import { authClient } from "@/lib/auth-client";
 
 export function TwoFactorVerify() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const redirect = searchParams.get("redirect");
   const [totpCode, setTotpCode] = useState("");
   const [backupCode, setBackupCode] = useState("");
   const [useBackupCode, setUseBackupCode] = useState(false);
@@ -46,14 +48,14 @@ export function TwoFactorVerify() {
       }
 
       toast.success("Verification successful");
-      router.push("/home");
+      router.push(redirect || "/home");
       router.refresh();
     } catch (_error) {
       setError("An error occurred while verifying code");
     } finally {
       setIsLoading(false);
     }
-  }, [totpCode, trustDevice, router]);
+  }, [totpCode, trustDevice, router, redirect]);
 
   const handleVerifyBackupCode = useCallback(async () => {
     setError(null);
@@ -77,14 +79,14 @@ export function TwoFactorVerify() {
       }
 
       toast.success("Verification successful");
-      router.push("/home");
+      router.push(redirect || "/home");
       router.refresh();
     } catch (_error) {
       setError("An error occurred while verifying backup code");
     } finally {
       setIsLoading(false);
     }
-  }, [backupCode, trustDevice, router]);
+  }, [backupCode, trustDevice, router, redirect]);
 
   const handleSubmit = useCallback(
     (e: React.FormEvent<HTMLFormElement>) => {

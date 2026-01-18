@@ -2,7 +2,7 @@
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { IconChevronLeft, IconEye, IconEyeOff } from "@tabler/icons-react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import { Controller, useForm } from "react-hook-form";
 import { toast } from "sonner";
@@ -74,6 +74,8 @@ const passwordSchema = z
 
 export function SignUpForm() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const redirect = searchParams.get("redirect");
   const [currentStep, setCurrentStep] = useState(1);
   const [isLoading, setIsLoading] = useState(false);
   const [checkingEmail, setCheckingEmail] = useState(false);
@@ -233,7 +235,12 @@ export function SignUpForm() {
         return;
       }
 
-      router.push("/onboarding");
+      // If there's a redirect (e.g., from invite), go there; otherwise go to onboarding
+      if (redirect) {
+        router.push(redirect);
+      } else {
+        router.push("/onboarding");
+      }
       router.refresh();
     } catch (error) {
       const errorMessage = getAuthErrorMessage(

@@ -2,7 +2,7 @@
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { IconEye, IconEyeOff } from "@tabler/icons-react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import { Controller, useForm } from "react-hook-form";
 import { toast } from "sonner";
@@ -45,6 +45,8 @@ const getMethodDisplayName = (method: string | null | undefined): string => {
 
 export function LoginForm() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const redirect = searchParams.get("redirect");
   const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const lastUsedMethod = authClient.getLastUsedLoginMethod();
@@ -91,14 +93,14 @@ export function LoginForm() {
 
       const result = isEmailFormat
         ? await authClient.signIn.email({
-            email: identifier,
-            password: data.password,
-            rememberMe: data.rememberMe,
-          })
+          email: identifier,
+          password: data.password,
+          rememberMe: data.rememberMe,
+        })
         : await authClient.signIn.username({
-            username: identifier,
-            password: data.password,
-          });
+          username: identifier,
+          password: data.password,
+        });
 
       if (result.error) {
         const context = isEmailFormat
@@ -115,11 +117,16 @@ export function LoginForm() {
         "twoFactorRedirect" in result.data &&
         result.data.twoFactorRedirect
       ) {
-        router.push("/two-factor-verify");
+        // Preserve redirect param for after 2FA
+        const twoFactorUrl = redirect
+          ? `/two-factor-verify?redirect=${encodeURIComponent(redirect)}`
+          : "/two-factor-verify";
+        router.push(twoFactorUrl);
         return;
       }
 
-      router.push("/home");
+      // If there's a redirect (e.g., from invite), go there; otherwise go to home
+      router.push(redirect || "/home");
       router.refresh();
     } catch (error) {
       const errorMessage = getAuthErrorMessage(

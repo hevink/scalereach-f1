@@ -1,7 +1,8 @@
 "use client";
 
 import { use, useState } from "react";
-import { IconMail, IconTrash, IconRefresh, IconUserPlus, IconCrown, IconShield, IconUser, IconAlertTriangle } from "@tabler/icons-react";
+import { IconMail, IconTrash, IconRefresh, IconUserPlus, IconCrown, IconShield, IconUser, IconAlertTriangle, IconCopy, IconCheck } from "@tabler/icons-react";
+import { toast } from "sonner";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -43,6 +44,7 @@ import {
   useRemoveMember,
 } from "@/hooks/useWorkspace";
 import { authClient } from "@/lib/auth-client";
+import { workspaceApi } from "@/lib/api/workspace";
 import type { WorkspaceInvitation, WorkspaceMember } from "@/lib/api/workspace";
 
 function getRoleIcon(role: string) {
@@ -333,6 +335,46 @@ function ResendInvitationDialog({
   );
 }
 
+// Copy Invite Link Button
+function CopyInviteLinkButton({ workspaceId, invitationId }: { workspaceId: string; invitationId: string }) {
+  const [copied, setCopied] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+
+  const handleCopy = async () => {
+    setIsLoading(true);
+    try {
+      const { token } = await workspaceApi.getInvitationLink(workspaceId, invitationId);
+      const inviteUrl = `${window.location.origin}/invite/${token}`;
+      await navigator.clipboard.writeText(inviteUrl);
+      setCopied(true);
+      toast.success("Invite link copied to clipboard");
+      setTimeout(() => setCopied(false), 2000);
+    } catch {
+      toast.error("Failed to copy link");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  return (
+    <Button
+      variant="ghost"
+      size="icon-sm"
+      onClick={handleCopy}
+      disabled={isLoading}
+      title="Copy invite link"
+    >
+      {isLoading ? (
+        <IconRefresh className="size-4 animate-spin" />
+      ) : copied ? (
+        <IconCheck className="size-4 text-green-500" />
+      ) : (
+        <IconCopy className="size-4" />
+      )}
+    </Button>
+  );
+}
+
 function MembersList({ workspaceId, currentUserId, currentUserRole }: { workspaceId: string; currentUserId: string; currentUserRole: string }) {
   const { data: members, isLoading } = useWorkspaceMembers(workspaceId);
   const updateRole = useUpdateMemberRole();
@@ -489,6 +531,7 @@ function InvitationsList({ workspaceId, canManage }: { workspaceId: string; canM
               </Badge>
               {canManage && (
                 <>
+                  <CopyInviteLinkButton workspaceId={workspaceId} invitationId={invitation.id} />
                   <ResendInvitationDialog invitation={invitation} workspaceId={workspaceId} />
                   <CancelInvitationDialog invitation={invitation} workspaceId={workspaceId} />
                 </>

@@ -174,6 +174,12 @@ export const workspaceApi = {
     return response.data;
   },
 
+  // Get invitation link token
+  getInvitationLink: async (workspaceId: string, invitationId: string) => {
+    const response = await api.get<{ token: string }>(`/api/workspaces/${workspaceId}/invitations/${invitationId}/link`);
+    return response.data;
+  },
+
   // Get invitation by token (public)
   getInvitationByToken: async (token: string) => {
     const response = await api.get<InvitationDetails>(`/api/invitations/${token}`);
