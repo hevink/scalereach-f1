@@ -71,6 +71,12 @@ export const creditsApi = {
     return response.data;
   },
 
+  // Get customer portal URL
+  getCustomerPortal: async (workspaceId: string) => {
+    const response = await api.get<{ portalUrl: string }>(`/api/credits/workspaces/${workspaceId}/portal`);
+    return response.data;
+  },
+
   // Add bonus credits (admin only)
   addBonusCredits: async (workspaceId: string, amount: number, description?: string) => {
     const response = await api.post<{ balance: number; transaction: CreditTransaction }>(

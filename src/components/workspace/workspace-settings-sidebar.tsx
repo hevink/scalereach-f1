@@ -3,6 +3,8 @@
 import {
   IconAlertTriangle,
   IconAlertTriangleFilled,
+  IconCreditCard,
+  IconCreditCardFilled,
   IconPalette,
   IconPaletteFilled,
   IconSearch,
@@ -89,8 +91,8 @@ export function WorkspaceSettingsSidebar({
   useEffect(() => {
     setIsMac(
       MAC_PLATFORM_REGEX.test(navigator.platform) ||
-        (navigator as { userAgentData?: { platform?: string } }).userAgentData
-          ?.platform === "macOS"
+      (navigator as { userAgentData?: { platform?: string } }).userAgentData
+        ?.platform === "macOS"
     );
   }, []);
 
@@ -131,6 +133,19 @@ export function WorkspaceSettingsSidebar({
         type: "card",
       },
       {
+        title: "Billing",
+        url: `${baseUrl}/billing`,
+        category: "Billing",
+        type: "category",
+      },
+      {
+        title: "Manage Billing",
+        description: "View your plan, credits, and manage subscriptions.",
+        url: `${baseUrl}/billing`,
+        category: "Billing",
+        type: "card",
+      },
+      {
         title: "Danger Zone",
         url: `${baseUrl}/danger-zone`,
         category: "Danger Zone",
@@ -166,6 +181,12 @@ export function WorkspaceSettingsSidebar({
         url: `${baseUrl}/members`,
         icon: IconUsers,
         iconFilled: IconUsers,
+      },
+      {
+        title: "Billing",
+        url: `${baseUrl}/billing`,
+        icon: IconCreditCard,
+        iconFilled: IconCreditCardFilled,
       },
       {
         title: "Danger Zone",
@@ -299,9 +320,8 @@ export function WorkspaceSettingsSidebar({
                     />
                   )}
                   <div
-                    className={`absolute top-1/2 right-2.5 flex -translate-y-1/2 items-center gap-1 transition-opacity duration-200 ${
-                      isInputFocused ? "opacity-0" : "opacity-100"
-                    }`}
+                    className={`absolute top-1/2 right-2.5 flex -translate-y-1/2 items-center gap-1 transition-opacity duration-200 ${isInputFocused ? "opacity-0" : "opacity-100"
+                      }`}
                   >
                     <Kbd>{isMac ? "⌘" : "Ctrl"}</Kbd>
                     <Kbd>K</Kbd>
@@ -310,11 +330,10 @@ export function WorkspaceSettingsSidebar({
               </div>
               {shouldRenderResults && (
                 <div
-                  className={`absolute top-full right-2 left-2 z-50 mt-1 flex flex-col rounded-md bg-popover text-popover-foreground text-sm shadow-md ring-1 ring-foreground/10 transition-all duration-200 ease-in-out ${
-                    isResultsVisible
-                      ? "scale-100 opacity-100"
-                      : "scale-[0.95] opacity-0"
-                  }`}
+                  className={`absolute top-full right-2 left-2 z-50 mt-1 flex flex-col rounded-md bg-popover text-popover-foreground text-sm shadow-md ring-1 ring-foreground/10 transition-all duration-200 ease-in-out ${isResultsVisible
+                    ? "scale-100 opacity-100"
+                    : "scale-[0.95] opacity-0"
+                    }`}
                 >
                   <ScrollArea className="h-[200px]">
                     <div className="p-1">
@@ -360,11 +379,10 @@ export function WorkspaceSettingsSidebar({
                       tooltip={item.title}
                     >
                       <IconComponent
-                        className={`${
-                          isActive
-                            ? "fill-current text-muted-foreground contrast-200"
-                            : ""
-                        }`}
+                        className={`${isActive
+                          ? "fill-current text-muted-foreground contrast-200"
+                          : ""
+                          }`}
                       />
                       <span className="font-[490] text-[13px]">
                         {item.title}
