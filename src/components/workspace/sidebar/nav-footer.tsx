@@ -5,6 +5,7 @@ import {
   IconHelp,
   IconSettings,
   IconSettingsFilled,
+  IconSparkles,
 } from "@tabler/icons-react";
 import { usePathname, useRouter } from "next/navigation";
 import {
@@ -12,6 +13,8 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
 } from "@/components/ui/sidebar";
+import { PricingDialog } from "@/components/pricing/pricing-dialog";
+import { useWorkspaceBySlug } from "@/hooks/useWorkspace";
 
 interface NavFooterProps {
   currentSlug: string;
@@ -20,6 +23,7 @@ interface NavFooterProps {
 export function NavFooter({ currentSlug }: NavFooterProps) {
   const pathname = usePathname();
   const router = useRouter();
+  const { data: workspace } = useWorkspaceBySlug(currentSlug);
 
   const settingsUrl = `/${currentSlug}/settings`;
   const isSettingsActive =
@@ -51,6 +55,23 @@ export function NavFooter({ currentSlug }: NavFooterProps) {
 
   return (
     <SidebarMenu>
+      {/* Upgrade Button */}
+      <SidebarMenuItem>
+        <PricingDialog
+          workspaceId={workspace?.id}
+          currentPlan="free"
+          trigger={
+            <SidebarMenuButton
+              tooltip="Upgrade Plan"
+              className="bg-linear-to-r from-primary/10 to-primary/5 hover:from-primary/20 hover:to-primary/10 border border-primary/20"
+            >
+              <IconSparkles className="text-primary" />
+              <span className="font-[490] text-[13px] text-primary">Upgrade</span>
+            </SidebarMenuButton>
+          }
+        />
+      </SidebarMenuItem>
+
       {footerItems.map((item) => {
         const IconComponent = item.icon;
         return (
