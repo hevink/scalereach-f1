@@ -1,6 +1,5 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
 import {
   Sidebar,
   SidebarContent,
@@ -12,45 +11,23 @@ import { NavFooter } from "./sidebar/nav-footer";
 import { NavMain } from "./sidebar/nav-main";
 import { NavUser } from "./sidebar/nav-user";
 import { WorkspaceSwitcher } from "./sidebar/workspace-switcher";
-import { workspaceApi } from "@/lib/api";
-
-interface Workspace {
-  id: string;
-  name: string;
-  slug: string;
-  description: string | null;
-  role: "owner" | "admin" | "member";
-}
+import { useWorkspaces } from "@/hooks/useWorkspace";
+import { useQueryClient } from "@tanstack/react-query";
+import { useCallback } from "react";
 
 interface WorkspaceSidebarProps {
   currentSlug: string;
 }
 
 export function WorkspaceSidebar({ currentSlug }: WorkspaceSidebarProps) {
-  const [workspaces, setWorkspaces] = useState<Workspace[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-
-  const fetchWorkspaces = useCallback(async () => {
-    try {
-      const data = await workspaceApi.getAll();
-      setWorkspaces(data as Workspace[]);
-    } catch (error) {
-      console.error("Failed to fetch workspaces:", error);
-    } finally {
-      setIsLoading(false);
-    }
-  }, []);
-
-  useEffect(() => {
-    fetchWorkspaces();
-  }, [fetchWorkspaces]);
+  const { data: workspaces = [], isLoading } = useWorkspaces();
+  const queryClient = useQueryClient();
 
   const handleWorkspaceCreated = useCallback(
     (_workspace: { id: string; name: string; slug: string }) => {
-      // Refresh workspace list
-      fetchWorkspaces();
+      queryClient.invalidateQueries({ queryKey: ["workspaces"] });
     },
-    [fetchWorkspaces]
+    [queryClient]
   );
 
   return (

@@ -14,6 +14,7 @@ import { Input } from "@/components/ui/input";
 import { Spinner } from "@/components/ui/spinner";
 import { Textarea } from "@/components/ui/textarea";
 import { authClient } from "@/lib/auth-client";
+import { useCreateWorkspace } from "@/hooks/useWorkspace";
 import { workspaceApi } from "@/lib/api";
 
 const SLUG_REGEX = /^[a-zA-Z0-9_-]+$/;
@@ -80,11 +81,13 @@ export function OnboardingForm() {
   const router = useRouter();
   const { data: session } = authClient.useSession();
   const [currentStep, setCurrentStep] = useState(1);
-  const [isLoading, setIsLoading] = useState(false);
   const [slugAvailable, setSlugAvailable] = useState<boolean | null>(null);
   const [checkingSlug, setCheckingSlug] = useState(false);
   const slugDebounceRef = useRef<NodeJS.Timeout | null>(null);
   const slugManuallyEditedRef = useRef<boolean>(false);
+
+  const createWorkspaceMutation = useCreateWorkspace();
+  const isLoading = createWorkspaceMutation.isPending;
 
   const user = session?.user;
 
@@ -224,24 +227,24 @@ export function OnboardingForm() {
       return;
     }
 
-    setIsLoading(true);
-
-    try {
-      const formData = form.getValues();
-      await workspaceApi.create({
+    const formData = form.getValues();
+    createWorkspaceMutation.mutate(
+      {
         name: formData.name.trim(),
         slug: formData.slug.trim().toLowerCase(),
         description: formData.description?.trim() || undefined,
-      });
-
-      setCurrentStep(5);
-      setIsLoading(false);
-    } catch (error: any) {
-      console.error("Error creating workspace:", error);
-      toast.error(error.message || "Failed to create workspace");
-      setIsLoading(false);
-    }
-  }, [currentStep, form, validateSlugAvailability]);
+      },
+      {
+        onSuccess: () => {
+          setCurrentStep(5);
+        },
+        onError: (error: any) => {
+          console.error("Error creating workspace:", error);
+          toast.error(error.message || "Failed to create workspace");
+        },
+      }
+    );
+  }, [currentStep, form, validateSlugAvailability, createWorkspaceMutation]);
 
   useEffect(() => {
     if (currentStep === 5) {

@@ -28,7 +28,7 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { authClient } from "@/lib/auth-client";
-import { userApi } from "@/lib/api";
+import { useUploadAvatar } from "@/hooks/useUser";
 
 const USERNAME_REGEX = /^[a-zA-Z0-9_.]+$/;
 const MIN_USERNAME_LENGTH = 3;
@@ -322,33 +322,13 @@ function useAvatarUpload(initialAvatar: string | null) {
   const [isUploadingAvatar, setIsUploadingAvatar] = useState(false);
   const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const uploadAvatarMutation = useUploadAvatar();
 
   useEffect(() => {
     if (initialAvatar && avatarPreview) {
       setAvatarPreview(null);
     }
   }, [initialAvatar, avatarPreview]);
-
-  const uploadAvatarFile = useCallback(async (file: File) => {
-    // Convert file to base64
-    const reader = new FileReader();
-    const base64Promise = new Promise<string>((resolve, reject) => {
-      reader.onload = () => resolve(reader.result as string);
-      reader.onerror = reject;
-      reader.readAsDataURL(file);
-    });
-
-    const base64 = await base64Promise;
-    const result = await userApi.uploadAvatar(base64);
-
-    const { error: updateError } = await authClient.updateUser({
-      image: result.image,
-    });
-
-    if (updateError) {
-      throw new Error(getErrorMessage(updateError, "Failed to update avatar"));
-    }
-  }, []);
 
   const handleAvatarClick = useCallback(() => {
     fileInputRef.current?.click();
@@ -376,7 +356,25 @@ function useAvatarUpload(initialAvatar: string | null) {
       setIsUploadingAvatar(true);
 
       try {
-        await uploadAvatarFile(file);
+        // Convert file to base64
+        const base64Reader = new FileReader();
+        const base64Promise = new Promise<string>((resolve, reject) => {
+          base64Reader.onload = () => resolve(base64Reader.result as string);
+          base64Reader.onerror = reject;
+          base64Reader.readAsDataURL(file);
+        });
+
+        const base64 = await base64Promise;
+        const result = await uploadAvatarMutation.mutateAsync(base64);
+
+        const { error: updateError } = await authClient.updateUser({
+          image: result.image,
+        });
+
+        if (updateError) {
+          throw new Error(getErrorMessage(updateError, "Failed to update avatar"));
+        }
+
         setAvatarPreview(null);
         toast.success("Avatar updated successfully");
       } catch (error) {
@@ -389,7 +387,7 @@ function useAvatarUpload(initialAvatar: string | null) {
         }
       }
     },
-    [uploadAvatarFile]
+    [uploadAvatarMutation]
   );
 
   const displayAvatar = avatarPreview || initialAvatar;

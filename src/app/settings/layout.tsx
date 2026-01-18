@@ -12,7 +12,7 @@ import {
 } from "@/components/ui/sidebar";
 import { Spinner } from "@/components/ui/spinner";
 import { authClient } from "@/lib/auth-client";
-import { workspaceApi } from "@/lib/api";
+import { useWorkspaces } from "@/hooks/useWorkspace";
 
 interface SettingsLayoutProps {
   children: React.ReactNode;
@@ -21,6 +21,7 @@ interface SettingsLayoutProps {
 export default function SettingsLayout({ children }: SettingsLayoutProps) {
   const router = useRouter();
   const { data: session, isPending } = authClient.useSession();
+  const { data: workspaces = [] } = useWorkspaces();
   const [homeUrl, setHomeUrl] = useState<string>("/");
 
   useEffect(() => {
@@ -36,20 +37,11 @@ export default function SettingsLayout({ children }: SettingsLayoutProps) {
         return;
       }
 
-      const fetchWorkspace = async () => {
-        try {
-          const workspaces = await workspaceApi.getAll();
-          if (workspaces.length > 0) {
-            setHomeUrl(`/${workspaces[0].slug}`);
-          }
-        } catch (error) {
-          console.error("Failed to fetch workspaces:", error);
-        }
-      };
-
-      fetchWorkspace();
+      if (workspaces.length > 0) {
+        setHomeUrl(`/${workspaces[0].slug}`);
+      }
     }
-  }, [session, isPending, router]);
+  }, [session, isPending, router, workspaces]);
 
   if (isPending) {
     return (

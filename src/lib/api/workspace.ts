@@ -4,10 +4,10 @@ export interface Workspace {
   id: string;
   name: string;
   slug: string;
-  description?: string | null;
+  description: string | null;
   logo?: string | null;
   ownerId?: string;
-  role?: "owner" | "admin" | "member";
+  role: "owner" | "admin" | "member";
   createdAt: string;
   updatedAt: string;
 }

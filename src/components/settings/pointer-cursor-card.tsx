@@ -12,26 +12,19 @@ import {
 import { Label } from "@/components/ui/label";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Switch } from "@/components/ui/switch";
-import { userApi } from "@/lib/api";
+import { useUserPreferences, useUpdatePreferences } from "@/hooks/useUser";
 
 export function PointerCursorCard() {
+  const { data: preferences, isLoading } = useUserPreferences();
+  const updatePreferences = useUpdatePreferences();
   const [usePointerCursors, setUsePointerCursors] = useState(false);
-  const [isLoading, setIsLoading] = useState(true);
 
+  // Sync local state with fetched preferences
   useEffect(() => {
-    const fetchPreference = async () => {
-      try {
-        const data = await userApi.getPreferences();
-        setUsePointerCursors(data.usePointerCursors ?? false);
-      } catch (error) {
-        console.error("Error fetching preferences:", error);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    fetchPreference();
-  }, []);
+    if (preferences) {
+      setUsePointerCursors(preferences.usePointerCursors ?? false);
+    }
+  }, [preferences]);
 
   const handleToggle = (checked: boolean) => {
     const previousValue = usePointerCursors;
@@ -43,22 +36,26 @@ export function PointerCursorCard() {
       document.body.removeAttribute("data-pointer-cursors");
     }
 
-    userApi.updatePreferences({ usePointerCursors: checked })
-      .catch((error) => {
-        setUsePointerCursors(previousValue);
+    updatePreferences.mutate(
+      { usePointerCursors: checked },
+      {
+        onError: (error) => {
+          setUsePointerCursors(previousValue);
 
-        if (previousValue) {
-          document.body.setAttribute("data-pointer-cursors", "true");
-        } else {
-          document.body.removeAttribute("data-pointer-cursors");
-        }
+          if (previousValue) {
+            document.body.setAttribute("data-pointer-cursors", "true");
+          } else {
+            document.body.removeAttribute("data-pointer-cursors");
+          }
 
-        toast.error(
-          error instanceof Error
-            ? error.message
-            : "Failed to update preference. Please try again."
-        );
-      });
+          toast.error(
+            error instanceof Error
+              ? error.message
+              : "Failed to update preference. Please try again."
+          );
+        },
+      }
+    );
   };
 
   useEffect(() => {

@@ -25,6 +25,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Spinner } from "@/components/ui/spinner";
 import { Textarea } from "@/components/ui/textarea";
+import { useCreateWorkspace, useCheckSlug } from "@/hooks/useWorkspace";
 import { workspaceApi } from "@/lib/api";
 
 const SLUG_REGEX = /^[a-zA-Z0-9_-]+$/;
@@ -81,7 +82,6 @@ export function CreateWorkspaceDialog({
   onOpenChange,
   onSuccess,
 }: CreateWorkspaceDialogProps) {
-  const [isLoading, setIsLoading] = useState(false);
   const [slugAvailable, setSlugAvailable] = useState<boolean | null>(null);
   const [checkingSlug, setCheckingSlug] = useState(false);
   const slugDebounceRef = useRef<NodeJS.Timeout | null>(null);
@@ -93,6 +93,9 @@ export function CreateWorkspaceDialog({
   const resetRef = useRef<
     ReturnType<typeof useForm<WorkspaceFormData>>["reset"] | null
   >(null);
+
+  const createWorkspaceMutation = useCreateWorkspace();
+  const isLoading = createWorkspaceMutation.isPending;
 
   const form = useForm<WorkspaceFormData>({
     resolver: zodResolver(workspaceSchema),
@@ -252,26 +255,26 @@ export function CreateWorkspaceDialog({
         return;
       }
 
-      setIsLoading(true);
-
-      try {
-        const result = await workspaceApi.create({
+      createWorkspaceMutation.mutate(
+        {
           name: data.name.trim(),
           slug: data.slug.trim().toLowerCase(),
           description: data.description?.trim() || undefined,
-        });
-
-        toast.success("Workspace created successfully");
-        onOpenChange(false);
-        onSuccess?.(result);
-      } catch (error: any) {
-        console.error("Error creating workspace:", error);
-        toast.error(error.message || "Failed to create workspace");
-      } finally {
-        setIsLoading(false);
-      }
+        },
+        {
+          onSuccess: (result) => {
+            toast.success("Workspace created successfully");
+            onOpenChange(false);
+            onSuccess?.(result);
+          },
+          onError: (error: any) => {
+            console.error("Error creating workspace:", error);
+            toast.error(error.message || "Failed to create workspace");
+          },
+        }
+      );
     },
-    [validateSlugAvailability, onOpenChange, onSuccess]
+    [validateSlugAvailability, onOpenChange, onSuccess, createWorkspaceMutation]
   );
 
   const slugFieldState = form.getFieldState("slug");

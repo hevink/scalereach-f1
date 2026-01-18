@@ -2,7 +2,7 @@
 
 import { IconTrash } from "@tabler/icons-react";
 import { formatDistanceToNow } from "date-fns";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import { toast } from "sonner";
 import {
   AlertDialog,
@@ -29,7 +29,7 @@ import {
   ItemHeader,
 } from "@/components/ui/item";
 import { Skeleton } from "@/components/ui/skeleton";
-import { userApi } from "@/lib/api";
+import { useUserSessions, useRevokeSession } from "@/hooks/useUser";
 
 interface Session {
   id: string;
@@ -43,31 +43,13 @@ interface Session {
 }
 
 export function SessionsCard() {
-  const [sessions, setSessions] = useState<Session[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [revokingToken, setRevokingToken] = useState<string | null>(null);
-  const [isRevokingAll, setIsRevokingAll] = useState(false);
+  const { data: sessionsData, isLoading, refetch } = useUserSessions();
+  const revokeSessionMutation = useRevokeSession();
   const [showRevokeDialog, setShowRevokeDialog] = useState(false);
   const [showRevokeAllDialog, setShowRevokeAllDialog] = useState(false);
   const [sessionToRevoke, setSessionToRevoke] = useState<Session | null>(null);
 
-  const fetchSessions = useCallback(async () => {
-    try {
-      setIsLoading(true);
-      const data = await userApi.getSessions();
-      setSessions(data.sessions || data || []);
-    } catch (error: any) {
-      toast.error(error.message || "An error occurred while loading sessions");
-    } finally {
-      setIsLoading(false);
-    }
-  }, []);
-
-  useEffect(() => {
-    fetchSessions().catch(() => {
-      // Error handling is done in fetchSessions
-    });
-  }, [fetchSessions]);
+  const sessions = (sessionsData?.sessions || sessionsData || []) as Session[];
 
   const formatLastActive = useCallback((dateString: string) => {
     try {
@@ -168,41 +150,34 @@ export function SessionsCard() {
       return;
     }
 
-    setRevokingToken(sessionToRevoke.token);
     setShowRevokeDialog(false);
 
-    try {
-      await userApi.revokeSession(sessionToRevoke.token);
-      toast.success("Session revoked successfully");
-      await fetchSessions();
-    } catch (error: any) {
-      toast.error(error.message || "An error occurred while revoking session");
-    } finally {
-      setRevokingToken(null);
-      setSessionToRevoke(null);
-    }
-  }, [sessionToRevoke, fetchSessions]);
+    revokeSessionMutation.mutate(sessionToRevoke.token, {
+      onSuccess: () => {
+        toast.success("Session revoked successfully");
+        refetch();
+        setSessionToRevoke(null);
+      },
+    });
+  }, [sessionToRevoke, revokeSessionMutation, refetch]);
 
   const handleRevokeAllClick = useCallback(() => {
     setShowRevokeAllDialog(true);
   }, []);
 
   const handleRevokeAllConfirm = useCallback(async () => {
-    setIsRevokingAll(true);
     setShowRevokeAllDialog(false);
 
-    try {
-      await userApi.revokeSession(); // No token = revoke all other sessions
-      toast.success("All sessions revoked successfully");
-      await fetchSessions();
-    } catch (error: any) {
-      toast.error(error.message || "An error occurred while revoking sessions");
-    } finally {
-      setIsRevokingAll(false);
-    }
-  }, [fetchSessions]);
+    revokeSessionMutation.mutate(undefined, {
+      onSuccess: () => {
+        toast.success("All sessions revoked successfully");
+        refetch();
+      },
+    });
+  }, [revokeSessionMutation, refetch]);
 
   const isLoadingState = useMemo(() => isLoading, [isLoading]);
+  const isRevoking = revokeSessionMutation.isPending;
 
   return (
     <>
@@ -269,8 +244,8 @@ export function SessionsCard() {
                         {!sessionItem.isCurrent && (
                           <Button
                             aria-label="Revoke session"
-                            disabled={revokingToken === sessionItem.token}
-                            loading={revokingToken === sessionItem.token}
+                            disabled={isRevoking}
+                            loading={isRevoking && sessionToRevoke?.token === sessionItem.token}
                             onClick={() => handleRevokeClick(sessionItem)}
                             size="icon"
                             variant="ghost"
@@ -284,8 +259,8 @@ export function SessionsCard() {
                 </ItemGroup>
                 <div className="flex justify-end">
                   <Button
-                    disabled={isRevokingAll}
-                    loading={isRevokingAll}
+                    disabled={isRevoking}
+                    loading={isRevoking && !sessionToRevoke}
                     onClick={handleRevokeAllClick}
                     type="button"
                     variant="destructive"
@@ -315,7 +290,7 @@ export function SessionsCard() {
           </AlertDialogHeader>
           <AlertDialogFooter>
             <Button
-              disabled={!!revokingToken}
+              disabled={isRevoking}
               onClick={() => {
                 setShowRevokeDialog(false);
                 setSessionToRevoke(null);
@@ -325,7 +300,7 @@ export function SessionsCard() {
               Cancel
             </Button>
             <AlertDialogAction
-              disabled={!!revokingToken}
+              disabled={isRevoking}
               onClick={handleRevokeConfirm}
             >
               Revoke
@@ -348,7 +323,7 @@ export function SessionsCard() {
           </AlertDialogHeader>
           <AlertDialogFooter>
             <Button
-              disabled={isRevokingAll}
+              disabled={isRevoking}
               onClick={() => {
                 setShowRevokeAllDialog(false);
               }}
@@ -357,7 +332,7 @@ export function SessionsCard() {
               Cancel
             </Button>
             <AlertDialogAction
-              disabled={isRevokingAll}
+              disabled={isRevoking}
               onClick={handleRevokeAllConfirm}
             >
               Revoke All

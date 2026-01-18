@@ -2,7 +2,7 @@
 
 import { IconArrowRight, IconBuilding } from "@tabler/icons-react";
 import { useRouter } from "next/navigation";
-import { type ReactNode, useEffect, useState } from "react";
+import { type ReactNode, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -14,15 +14,7 @@ import {
 import { Skeleton } from "@/components/ui/skeleton";
 import { Spinner } from "@/components/ui/spinner";
 import { authClient } from "@/lib/auth-client";
-import { workspaceApi } from "@/lib/api";
-
-interface Workspace {
-  id: string;
-  name: string;
-  slug: string;
-  description: string | null;
-  role: "owner" | "admin" | "member";
-}
+import { useWorkspaces } from "@/hooks/useWorkspace";
 
 function WorkspaceCardSkeleton({
   isFirst,
@@ -61,8 +53,7 @@ export default function WorkspacesPage() {
   const router = useRouter();
   const { data: session, isPending: isSessionPending } =
     authClient.useSession();
-  const [workspaces, setWorkspaces] = useState<Workspace[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const { data: workspaces = [], isLoading } = useWorkspaces();
 
   useEffect(() => {
     if (isSessionPending) {
@@ -71,21 +62,7 @@ export default function WorkspacesPage() {
 
     if (!session?.user) {
       router.replace("/login");
-      return;
     }
-
-    const fetchWorkspaces = async () => {
-      try {
-        const data = await workspaceApi.getAll();
-        setWorkspaces(data as Workspace[]);
-      } catch (error) {
-        console.error("Failed to fetch workspaces:", error);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    fetchWorkspaces();
   }, [session, isSessionPending, router]);
 
   const handleWorkspaceSelect = (slug: string) => {

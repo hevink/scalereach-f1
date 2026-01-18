@@ -28,6 +28,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import { useWorkspaceBySlug, useUpdateWorkspaceBySlug, useUploadWorkspaceLogo, useCheckSlug } from "@/hooks/useWorkspace";
 import { workspaceApi } from "@/lib/api";
 
 const SLUG_REGEX = /^[a-zA-Z0-9_-]+$/;
@@ -100,11 +101,13 @@ function useWorkspaceNameEditing(
   workspaceSlug: string
 ) {
   const [name, setName] = useState("");
-  const [isSaving, setIsSaving] = useState(false);
   const [showCheckmark, setShowCheckmark] = useState(false);
   const debounceTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const checkmarkTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const initialNameRef = useRef<string>("");
+
+  const updateWorkspaceMutation = useUpdateWorkspaceBySlug();
+  const isSaving = updateWorkspaceMutation.isPending;
 
   useEffect(() => {
     if (initialName) {
@@ -115,30 +118,31 @@ function useWorkspaceNameEditing(
 
   const saveName = useCallback(
     async (nameToSave: string) => {
-      setIsSaving(true);
       setShowCheckmark(false);
 
-      try {
-        await workspaceApi.updateBySlug(workspaceSlug, { name: nameToSave });
+      updateWorkspaceMutation.mutate(
+        { slug: workspaceSlug, data: { name: nameToSave } },
+        {
+          onSuccess: () => {
+            initialNameRef.current = nameToSave;
+            setName(nameToSave);
+            setShowCheckmark(true);
 
-        initialNameRef.current = nameToSave;
-        setName(nameToSave);
-        setShowCheckmark(true);
-
-        if (checkmarkTimeoutRef.current) {
-          clearTimeout(checkmarkTimeoutRef.current);
+            if (checkmarkTimeoutRef.current) {
+              clearTimeout(checkmarkTimeoutRef.current);
+            }
+            checkmarkTimeoutRef.current = setTimeout(() => {
+              setShowCheckmark(false);
+            }, CHECKMARK_DURATION_MS);
+          },
+          onError: (error) => {
+            toast.error(getErrorMessage(error, "Failed to update name"));
+            setName(initialNameRef.current);
+          },
         }
-        checkmarkTimeoutRef.current = setTimeout(() => {
-          setShowCheckmark(false);
-        }, CHECKMARK_DURATION_MS);
-      } catch (error) {
-        toast.error(getErrorMessage(error, "Failed to update name"));
-        setName(initialNameRef.current);
-      } finally {
-        setIsSaving(false);
-      }
+      );
     },
-    [workspaceSlug]
+    [workspaceSlug, updateWorkspaceMutation]
   );
 
   useEffect(() => {
@@ -180,11 +184,13 @@ function useWorkspaceDescriptionEditing(
   workspaceSlug: string
 ) {
   const [description, setDescription] = useState("");
-  const [isSaving, setIsSaving] = useState(false);
   const [showCheckmark, setShowCheckmark] = useState(false);
   const debounceTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const checkmarkTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const initialDescriptionRef = useRef<string | null>(null);
+
+  const updateWorkspaceMutation = useUpdateWorkspaceBySlug();
+  const isSaving = updateWorkspaceMutation.isPending;
 
   useEffect(() => {
     if (initialDescription !== undefined) {
@@ -195,30 +201,31 @@ function useWorkspaceDescriptionEditing(
 
   const saveDescription = useCallback(
     async (descriptionToSave: string | null) => {
-      setIsSaving(true);
       setShowCheckmark(false);
 
-      try {
-        await workspaceApi.updateBySlug(workspaceSlug, { description: descriptionToSave || "" });
+      updateWorkspaceMutation.mutate(
+        { slug: workspaceSlug, data: { description: descriptionToSave || "" } },
+        {
+          onSuccess: () => {
+            initialDescriptionRef.current = descriptionToSave;
+            setDescription(descriptionToSave || "");
+            setShowCheckmark(true);
 
-        initialDescriptionRef.current = descriptionToSave;
-        setDescription(descriptionToSave || "");
-        setShowCheckmark(true);
-
-        if (checkmarkTimeoutRef.current) {
-          clearTimeout(checkmarkTimeoutRef.current);
+            if (checkmarkTimeoutRef.current) {
+              clearTimeout(checkmarkTimeoutRef.current);
+            }
+            checkmarkTimeoutRef.current = setTimeout(() => {
+              setShowCheckmark(false);
+            }, CHECKMARK_DURATION_MS);
+          },
+          onError: (error) => {
+            toast.error(getErrorMessage(error, "Failed to update description"));
+            setDescription(initialDescriptionRef.current || "");
+          },
         }
-        checkmarkTimeoutRef.current = setTimeout(() => {
-          setShowCheckmark(false);
-        }, CHECKMARK_DURATION_MS);
-      } catch (error) {
-        toast.error(getErrorMessage(error, "Failed to update description"));
-        setDescription(initialDescriptionRef.current || "");
-      } finally {
-        setIsSaving(false);
-      }
+      );
     },
-    [workspaceSlug]
+    [workspaceSlug, updateWorkspaceMutation]
   );
 
   useEffect(() => {
@@ -266,10 +273,12 @@ function useWorkspaceSlugEditing(
     null
   );
   const [isCheckingSlug, setIsCheckingSlug] = useState(false);
-  const [isSavingSlug, setIsSavingSlug] = useState(false);
   const slugDebounceRef = useRef<NodeJS.Timeout | null>(null);
   const abortControllerRef = useRef<AbortController | null>(null);
   const initialSlugRef = useRef<string>("");
+
+  const updateWorkspaceMutation = useUpdateWorkspaceBySlug();
+  const isSavingSlug = updateWorkspaceMutation.isPending;
 
   useEffect(() => {
     if (initialSlug) {
@@ -382,25 +391,25 @@ function useWorkspaceSlugEditing(
       return;
     }
 
-    setIsSavingSlug(true);
+    updateWorkspaceMutation.mutate(
+      { slug: initialSlugRef.current, data: { slug: trimmedSlug } },
+      {
+        onSuccess: () => {
+          initialSlugRef.current = trimmedSlug;
+          setSlug(trimmedSlug);
+          setIsEditingSlug(false);
+          setSlugAvailability(null);
+          toast.success("Slug updated successfully");
 
-    try {
-      await workspaceApi.updateBySlug(initialSlugRef.current, { slug: trimmedSlug });
-
-      initialSlugRef.current = trimmedSlug;
-      setSlug(trimmedSlug);
-      setIsEditingSlug(false);
-      setSlugAvailability(null);
-      toast.success("Slug updated successfully");
-
-      // Reload page to update URL
-      window.location.href = `/${trimmedSlug}/settings`;
-    } catch (error) {
-      toast.error(getErrorMessage(error, "Failed to update slug"));
-    } finally {
-      setIsSavingSlug(false);
-    }
-  }, [slug, slugAvailability]);
+          // Reload page to update URL
+          window.location.href = `/${trimmedSlug}/settings`;
+        },
+        onError: (error) => {
+          toast.error(getErrorMessage(error, "Failed to update slug"));
+        },
+      }
+    );
+  }, [slug, slugAvailability, updateWorkspaceMutation]);
 
   const isSlugSaveDisabled = useMemo(
     () =>
@@ -432,29 +441,13 @@ function useWorkspaceLogoUpload(
   const [isUploadingLogo, setIsUploadingLogo] = useState(false);
   const [logoPreview, setLogoPreview] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const uploadLogoMutation = useUploadWorkspaceLogo();
 
   useEffect(() => {
     if (initialLogo && logoPreview) {
       setLogoPreview(null);
     }
   }, [initialLogo, logoPreview]);
-
-  const uploadLogoFile = useCallback(
-    async (file: File) => {
-      // Convert file to base64
-      const reader = new FileReader();
-      const base64Promise = new Promise<string>((resolve, reject) => {
-        reader.onload = () => resolve(reader.result as string);
-        reader.onerror = reject;
-        reader.readAsDataURL(file);
-      });
-
-      const base64 = await base64Promise;
-      const result = await workspaceApi.uploadLogo(workspaceSlug, base64);
-      return result.logo;
-    },
-    [workspaceSlug]
-  );
 
   const handleLogoClick = useCallback(() => {
     fileInputRef.current?.click();
@@ -482,7 +475,16 @@ function useWorkspaceLogoUpload(
       setIsUploadingLogo(true);
 
       try {
-        await uploadLogoFile(file);
+        // Convert file to base64
+        const base64Reader = new FileReader();
+        const base64Promise = new Promise<string>((resolve, reject) => {
+          base64Reader.onload = () => resolve(base64Reader.result as string);
+          base64Reader.onerror = reject;
+          base64Reader.readAsDataURL(file);
+        });
+
+        const base64 = await base64Promise;
+        await uploadLogoMutation.mutateAsync({ slug: workspaceSlug, logo: base64 });
         setLogoPreview(null);
         toast.success("Logo updated successfully");
         // Reload to get updated logo
@@ -497,7 +499,7 @@ function useWorkspaceLogoUpload(
         }
       }
     },
-    [uploadLogoFile]
+    [workspaceSlug, uploadLogoMutation]
   );
 
   const displayLogo = logoPreview || initialLogo;
@@ -808,26 +810,7 @@ interface WorkspaceGeneralCardProps {
 export function WorkspaceGeneralCard({
   workspaceSlug,
 }: WorkspaceGeneralCardProps) {
-  const [workspaceData, setWorkspaceData] = useState<WorkspaceData | null>(
-    null
-  );
-  const [isPending, setIsPending] = useState(true);
-
-  useEffect(() => {
-    const fetchWorkspace = async () => {
-      try {
-        const data = await workspaceApi.getBySlug(workspaceSlug);
-        setWorkspaceData(data as WorkspaceData);
-      } catch (error) {
-        console.error("Failed to fetch workspace:", error);
-        toast.error("Failed to load workspace data");
-      } finally {
-        setIsPending(false);
-      }
-    };
-
-    fetchWorkspace();
-  }, [workspaceSlug]);
+  const { data: workspaceData, isPending } = useWorkspaceBySlug(workspaceSlug);
 
   const { name, setName, isSaving, showCheckmark } = useWorkspaceNameEditing(
     workspaceData?.name || null,

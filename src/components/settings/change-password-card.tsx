@@ -23,7 +23,7 @@ import {
 import { FieldError } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { userApi } from "@/lib/api";
+import { useChangePassword, useRevokeSession } from "@/hooks/useUser";
 
 const MIN_PASSWORD_LENGTH = 8;
 const MAX_PASSWORD_LENGTH = 128;
@@ -59,13 +59,16 @@ export function ChangePasswordCard() {
   const [showCurrentPassword, setShowCurrentPassword] = useState(false);
   const [showNewPassword, setShowNewPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
   const [showRevokeDialog, setShowRevokeDialog] = useState(false);
   const [errors, setErrors] = useState<{
     currentPassword?: string;
     newPassword?: string;
     confirmPassword?: string;
   }>({});
+
+  const changePasswordMutation = useChangePassword();
+  const revokeSessionMutation = useRevokeSession();
+  const isLoading = changePasswordMutation.isPending || revokeSessionMutation.isPending;
 
   const validateForm = useCallback(() => {
     const newErrors: typeof errors = {};
@@ -128,36 +131,55 @@ export function ChangePasswordCard() {
 
   const changePassword = useCallback(
     async (revokeOtherSessions: boolean) => {
-      setIsLoading(true);
       setErrors({});
 
-      try {
-        await userApi.changePassword(currentPassword.trim(), newPassword.trim());
+      changePasswordMutation.mutate(
+        { currentPassword: currentPassword.trim(), newPassword: newPassword.trim() },
+        {
+          onSuccess: async () => {
+            if (revokeOtherSessions) {
+              revokeSessionMutation.mutate(undefined, {
+                onSuccess: () => {
+                  toast.success("Password changed successfully");
+                  setCurrentPassword("");
+                  setNewPassword("");
+                  setConfirmPassword("");
+                  setErrors({});
+                  setShowRevokeDialog(false);
+                },
+                onError: () => {
+                  // Password was changed but session revoke failed
+                  toast.success("Password changed, but failed to revoke other sessions");
+                  setCurrentPassword("");
+                  setNewPassword("");
+                  setConfirmPassword("");
+                  setErrors({});
+                  setShowRevokeDialog(false);
+                },
+              });
+            } else {
+              toast.success("Password changed successfully");
+              setCurrentPassword("");
+              setNewPassword("");
+              setConfirmPassword("");
+              setErrors({});
+              setShowRevokeDialog(false);
+            }
+          },
+          onError: (error: any) => {
+            const errorMessage = error.message || "Failed to change password. Please try again.";
+            toast.error(errorMessage);
 
-        if (revokeOtherSessions) {
-          await userApi.revokeSession();
+            const errorField = categorizeError(errorMessage);
+            if (errorField) {
+              setErrors({ [errorField]: errorMessage });
+              focusField(errorField);
+            }
+          },
         }
-
-        toast.success("Password changed successfully");
-        setCurrentPassword("");
-        setNewPassword("");
-        setConfirmPassword("");
-        setErrors({});
-        setShowRevokeDialog(false);
-      } catch (error: any) {
-        const errorMessage = error.message || "Failed to change password. Please try again.";
-        toast.error(errorMessage);
-
-        const errorField = categorizeError(errorMessage);
-        if (errorField) {
-          setErrors({ [errorField]: errorMessage });
-          focusField(errorField);
-        }
-      } finally {
-        setIsLoading(false);
-      }
+      );
     },
-    [currentPassword, newPassword, categorizeError, focusField]
+    [currentPassword, newPassword, categorizeError, focusField, changePasswordMutation, revokeSessionMutation]
   );
 
   const handleSubmit = useCallback(

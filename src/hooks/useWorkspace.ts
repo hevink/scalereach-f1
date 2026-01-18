@@ -1,7 +1,8 @@
 "use client";
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { workspaceApi, type Workspace } from "@/lib/api";
+import { workspaceApi } from "@/lib/api";
+import type { Workspace } from "@/lib/api/workspace";
 import { toast } from "sonner";
 
 export function useWorkspaces() {
@@ -27,6 +28,14 @@ export function useWorkspaceBySlug(slug: string) {
   });
 }
 
+export function useCheckSlug(slug: string) {
+  return useQuery({
+    queryKey: ["workspace", "slug", "check", slug],
+    queryFn: () => workspaceApi.checkSlug(slug),
+    enabled: !!slug && slug.length >= 3,
+  });
+}
+
 export function useCreateWorkspace() {
   const queryClient = useQueryClient();
 
@@ -34,7 +43,6 @@ export function useCreateWorkspace() {
     mutationFn: workspaceApi.create,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["workspaces"] });
-      toast.success("Workspace created successfully");
     },
     onError: (error: Error) => {
       toast.error(error.message || "Failed to create workspace");
@@ -51,7 +59,22 @@ export function useUpdateWorkspace() {
     onSuccess: (_, { id }) => {
       queryClient.invalidateQueries({ queryKey: ["workspaces"] });
       queryClient.invalidateQueries({ queryKey: ["workspace", id] });
-      toast.success("Workspace updated successfully");
+    },
+    onError: (error: Error) => {
+      toast.error(error.message || "Failed to update workspace");
+    },
+  });
+}
+
+export function useUpdateWorkspaceBySlug() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({ slug, data }: { slug: string; data: Partial<Workspace> }) =>
+      workspaceApi.updateBySlug(slug, data),
+    onSuccess: (_, { slug }) => {
+      queryClient.invalidateQueries({ queryKey: ["workspaces"] });
+      queryClient.invalidateQueries({ queryKey: ["workspace", "slug", slug] });
     },
     onError: (error: Error) => {
       toast.error(error.message || "Failed to update workspace");
@@ -66,10 +89,25 @@ export function useDeleteWorkspace() {
     mutationFn: workspaceApi.delete,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["workspaces"] });
-      toast.success("Workspace deleted successfully");
     },
     onError: (error: Error) => {
       toast.error(error.message || "Failed to delete workspace");
+    },
+  });
+}
+
+export function useUploadWorkspaceLogo() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({ slug, logo }: { slug: string; logo: string }) =>
+      workspaceApi.uploadLogo(slug, logo),
+    onSuccess: (_, { slug }) => {
+      queryClient.invalidateQueries({ queryKey: ["workspaces"] });
+      queryClient.invalidateQueries({ queryKey: ["workspace", "slug", slug] });
+    },
+    onError: (error: Error) => {
+      toast.error(error.message || "Failed to upload logo");
     },
   });
 }
