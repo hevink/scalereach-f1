@@ -120,24 +120,31 @@
   * {
     @apply border-border outline-ring/50;
   }
+
   body {
     @apply bg-background text-foreground;
   }
+
   body[data-pointer-cursors="true"] button {
     @apply cursor-pointer;
   }
+
   body[data-pointer-cursors="true"] .switch {
     @apply cursor-pointer;
   }
+
   body[data-pointer-cursors="true"] a {
     @apply cursor-pointer;
   }
+
   body[data-pointer-cursors="true"] input {
     @apply cursor-pointer;
   }
+
   body[data-pointer-cursors="true"] select {
     @apply cursor-pointer;
   }
+
   body[data-pointer-cursors="true"] textarea {
     @apply cursor-pointer;
   }

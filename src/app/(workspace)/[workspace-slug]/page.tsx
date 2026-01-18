@@ -1,11 +1,13 @@
 "use client";
 
-import { use, useEffect } from "react";
+import { use, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useSession } from "@/lib/auth-client";
 import { useWorkspaceBySlug } from "@/hooks/useWorkspace";
 import { Spinner } from "@/components/ui/spinner";
-import { YouTubeUploadForm, VideoList } from "@/components/video";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { YouTubeUploadForm, UppyUpload, VideoList } from "@/components/video";
+import { IconBrandYoutube, IconUpload } from "@tabler/icons-react";
 
 interface WorkspacePageProps {
   params: Promise<{ "workspace-slug": string }>;
@@ -16,6 +18,7 @@ export default function WorkspacePage({ params }: WorkspacePageProps) {
   const router = useRouter();
   const { data: session, isPending: sessionPending } = useSession();
   const { data: workspace, isLoading: workspaceLoading, error } = useWorkspaceBySlug(slug);
+  const [activeTab, setActiveTab] = useState("youtube");
 
   useEffect(() => {
     if (sessionPending || workspaceLoading) return;
@@ -55,7 +58,25 @@ export default function WorkspacePage({ params }: WorkspacePageProps) {
       </div>
 
       <div className="grid gap-6 lg:grid-cols-2">
-        <YouTubeUploadForm />
+        <Tabs value={activeTab} onValueChange={setActiveTab}>
+          <TabsList className="grid w-full grid-cols-2">
+            <TabsTrigger value="youtube" className="flex items-center gap-2">
+              <IconBrandYoutube className="size-4" />
+              YouTube URL
+            </TabsTrigger>
+            <TabsTrigger value="upload" className="flex items-center gap-2">
+              <IconUpload className="size-4" />
+              Upload File
+            </TabsTrigger>
+          </TabsList>
+          <TabsContent value="youtube" className="mt-4">
+            <YouTubeUploadForm />
+          </TabsContent>
+          <TabsContent value="upload" className="mt-4">
+            <UppyUpload />
+          </TabsContent>
+        </Tabs>
+
         <VideoList />
       </div>
     </div>
