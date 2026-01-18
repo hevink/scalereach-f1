@@ -29,6 +29,7 @@ import {
   ItemHeader,
 } from "@/components/ui/item";
 import { Skeleton } from "@/components/ui/skeleton";
+import { userApi } from "@/lib/api";
 
 interface Session {
   id: string;
@@ -53,23 +54,10 @@ export function SessionsCard() {
   const fetchSessions = useCallback(async () => {
     try {
       setIsLoading(true);
-      const response = await fetch("/api/user/sessions", {
-        method: "GET",
-        headers: {
-          "Content-Type": "application/json",
-        },
-      });
-
-      if (!response.ok) {
-        const data = await response.json().catch(() => ({}));
-        toast.error(data.error || "Failed to load sessions");
-        return;
-      }
-
-      const data = await response.json();
-      setSessions(data.sessions || []);
-    } catch (_error) {
-      toast.error("An error occurred while loading sessions");
+      const data = await userApi.getSessions();
+      setSessions(data.sessions || data || []);
+    } catch (error: any) {
+      toast.error(error.message || "An error occurred while loading sessions");
     } finally {
       setIsLoading(false);
     }
@@ -184,26 +172,11 @@ export function SessionsCard() {
     setShowRevokeDialog(false);
 
     try {
-      const response = await fetch(
-        `/api/user/sessions?token=${encodeURIComponent(sessionToRevoke.token)}`,
-        {
-          method: "DELETE",
-          headers: {
-            "Content-Type": "application/json",
-          },
-        }
-      );
-
-      if (!response.ok) {
-        const data = await response.json().catch(() => ({}));
-        toast.error(data.error || "Failed to revoke session");
-        return;
-      }
-
+      await userApi.revokeSession(sessionToRevoke.token);
       toast.success("Session revoked successfully");
       await fetchSessions();
-    } catch (_error) {
-      toast.error("An error occurred while revoking session");
+    } catch (error: any) {
+      toast.error(error.message || "An error occurred while revoking session");
     } finally {
       setRevokingToken(null);
       setSessionToRevoke(null);
@@ -219,23 +192,11 @@ export function SessionsCard() {
     setShowRevokeAllDialog(false);
 
     try {
-      const response = await fetch("/api/user/sessions?all=true", {
-        method: "DELETE",
-        headers: {
-          "Content-Type": "application/json",
-        },
-      });
-
-      if (!response.ok) {
-        const data = await response.json().catch(() => ({}));
-        toast.error(data.error || "Failed to revoke all sessions");
-        return;
-      }
-
+      await userApi.revokeSession(); // No token = revoke all other sessions
       toast.success("All sessions revoked successfully");
       await fetchSessions();
-    } catch (_error) {
-      toast.error("An error occurred while revoking sessions");
+    } catch (error: any) {
+      toast.error(error.message || "An error occurred while revoking sessions");
     } finally {
       setIsRevokingAll(false);
     }

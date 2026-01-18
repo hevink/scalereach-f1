@@ -14,6 +14,7 @@ import {
 import { Skeleton } from "@/components/ui/skeleton";
 import { Spinner } from "@/components/ui/spinner";
 import { authClient } from "@/lib/auth-client";
+import { workspaceApi } from "@/lib/api";
 
 interface Workspace {
   id: string;
@@ -75,11 +76,8 @@ export default function WorkspacesPage() {
 
     const fetchWorkspaces = async () => {
       try {
-        const response = await fetch("/api/workspace/list");
-        if (response.ok) {
-          const data = await response.json();
-          setWorkspaces(data.workspaces || []);
-        }
+        const data = await workspaceApi.getAll();
+        setWorkspaces(data as Workspace[]);
       } catch (error) {
         console.error("Failed to fetch workspaces:", error);
       } finally {

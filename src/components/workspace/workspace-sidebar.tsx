@@ -12,6 +12,7 @@ import { NavFooter } from "./sidebar/nav-footer";
 import { NavMain } from "./sidebar/nav-main";
 import { NavUser } from "./sidebar/nav-user";
 import { WorkspaceSwitcher } from "./sidebar/workspace-switcher";
+import { workspaceApi } from "@/lib/api";
 
 interface Workspace {
   id: string;
@@ -31,11 +32,8 @@ export function WorkspaceSidebar({ currentSlug }: WorkspaceSidebarProps) {
 
   const fetchWorkspaces = useCallback(async () => {
     try {
-      const response = await fetch("/api/workspace/list");
-      if (response.ok) {
-        const data = await response.json();
-        setWorkspaces(data.workspaces || []);
-      }
+      const data = await workspaceApi.getAll();
+      setWorkspaces(data as Workspace[]);
     } catch (error) {
       console.error("Failed to fetch workspaces:", error);
     } finally {

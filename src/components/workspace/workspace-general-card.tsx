@@ -28,6 +28,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import { workspaceApi } from "@/lib/api";
 
 const SLUG_REGEX = /^[a-zA-Z0-9_-]+$/;
 const MIN_SLUG_LENGTH = 3;
@@ -118,23 +119,7 @@ function useWorkspaceNameEditing(
       setShowCheckmark(false);
 
       try {
-        const response = await fetch(`/api/workspace/${workspaceSlug}`, {
-          method: "PATCH",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({ name: nameToSave }),
-        });
-
-        if (!response.ok) {
-          const error = await response.json();
-          throw new Error(error.error || "Failed to update name");
-        }
-
-        const data = await response.json();
-        if (!data.workspace) {
-          throw new Error("Failed to update name");
-        }
+        await workspaceApi.updateBySlug(workspaceSlug, { name: nameToSave });
 
         initialNameRef.current = nameToSave;
         setName(nameToSave);
@@ -214,23 +199,7 @@ function useWorkspaceDescriptionEditing(
       setShowCheckmark(false);
 
       try {
-        const response = await fetch(`/api/workspace/${workspaceSlug}`, {
-          method: "PATCH",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({ description: descriptionToSave || "" }),
-        });
-
-        if (!response.ok) {
-          const error = await response.json();
-          throw new Error(error.error || "Failed to update description");
-        }
-
-        const data = await response.json();
-        if (!data.workspace) {
-          throw new Error("Failed to update description");
-        }
+        await workspaceApi.updateBySlug(workspaceSlug, { description: descriptionToSave || "" });
 
         initialDescriptionRef.current = descriptionToSave;
         setDescription(descriptionToSave || "");
@@ -346,26 +315,14 @@ function useWorkspaceSlugEditing(
 
     slugDebounceRef.current = setTimeout(async () => {
       try {
-        const url = new URL("/api/workspace/slug/check", window.location.origin);
-        url.searchParams.set("slug", trimmedSlug);
-        if (workspaceId) {
-          url.searchParams.set("excludeWorkspaceId", workspaceId);
-        }
-
-        const response = await fetch(url.toString(), {
-          signal: abortControllerRef.current?.signal,
-        });
+        const trimmedSlug = slug.trim().toLowerCase();
+        const data = await workspaceApi.checkSlug(trimmedSlug);
 
         if (abortControllerRef.current?.signal.aborted) {
           return;
         }
 
-        if (response.ok) {
-          const data = await response.json();
-          setSlugAvailability(data.available ?? false);
-        } else {
-          setSlugAvailability(false);
-        }
+        setSlugAvailability(data.available ?? false);
       } catch (error) {
         if (error instanceof Error && error.name === "AbortError") {
           return;
@@ -428,30 +385,14 @@ function useWorkspaceSlugEditing(
     setIsSavingSlug(true);
 
     try {
-      const response = await fetch(`/api/workspace/${initialSlugRef.current}`, {
-        method: "PATCH",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ slug: trimmedSlug }),
-      });
-
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.error || "Failed to update slug");
-      }
-
-      const data = await response.json();
-      if (!data.workspace) {
-        throw new Error("Failed to update slug");
-      }
+      await workspaceApi.updateBySlug(initialSlugRef.current, { slug: trimmedSlug });
 
       initialSlugRef.current = trimmedSlug;
       setSlug(trimmedSlug);
       setIsEditingSlug(false);
       setSlugAvailability(null);
       toast.success("Slug updated successfully");
-      
+
       // Reload page to update URL
       window.location.href = `/${trimmedSlug}/settings`;
     } catch (error) {
@@ -500,21 +441,17 @@ function useWorkspaceLogoUpload(
 
   const uploadLogoFile = useCallback(
     async (file: File) => {
-      const formData = new FormData();
-      formData.append("logo", file);
-
-      const response = await fetch(`/api/workspace/${workspaceSlug}/logo`, {
-        method: "POST",
-        body: formData,
+      // Convert file to base64
+      const reader = new FileReader();
+      const base64Promise = new Promise<string>((resolve, reject) => {
+        reader.onload = () => resolve(reader.result as string);
+        reader.onerror = reject;
+        reader.readAsDataURL(file);
       });
 
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.error || "Failed to upload logo");
-      }
-
-      const data = await response.json();
-      return data.imageUrl;
+      const base64 = await base64Promise;
+      const result = await workspaceApi.uploadLogo(workspaceSlug, base64);
+      return result.logo;
     },
     [workspaceSlug]
   );
@@ -713,11 +650,10 @@ function SlugInputSection({
           htmlFor="slug"
         >
           <div
-            className={`flex flex-col items-start justify-start ${
-              isCheckingSlug || slugAvailability !== null
-                ? "gap-1.5"
-                : "gap-0"
-            }`}
+            className={`flex flex-col items-start justify-start ${isCheckingSlug || slugAvailability !== null
+              ? "gap-1.5"
+              : "gap-0"
+              }`}
           >
             Slug
             {isEditingSlug && (
@@ -880,11 +816,8 @@ export function WorkspaceGeneralCard({
   useEffect(() => {
     const fetchWorkspace = async () => {
       try {
-        const response = await fetch(`/api/workspace/${workspaceSlug}`);
-        if (response.ok) {
-          const data = await response.json();
-          setWorkspaceData(data.workspace);
-        }
+        const data = await workspaceApi.getBySlug(workspaceSlug);
+        setWorkspaceData(data as WorkspaceData);
       } catch (error) {
         console.error("Failed to fetch workspace:", error);
         toast.error("Failed to load workspace data");

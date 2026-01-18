@@ -25,6 +25,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Spinner } from "@/components/ui/spinner";
 import { Textarea } from "@/components/ui/textarea";
+import { workspaceApi } from "@/lib/api";
 
 const SLUG_REGEX = /^[a-zA-Z0-9_-]+$/;
 const MIN_SLUG_LENGTH = 3;
@@ -171,23 +172,13 @@ export function CreateWorkspaceDialog({
     slugDebounceRef.current = setTimeout(async () => {
       try {
         const normalizedSlug = slug.trim().toLowerCase();
-        const response = await fetch(
-          `/api/workspace/slug/check?slug=${encodeURIComponent(normalizedSlug)}`,
-          {
-            signal: abortControllerRef.current?.signal,
-          }
-        );
+        const data = await workspaceApi.checkSlug(normalizedSlug);
 
         if (abortControllerRef.current?.signal.aborted) {
           return;
         }
 
-        if (response.ok) {
-          const data = await response.json();
-          setSlugAvailable(data.available);
-        } else {
-          setSlugAvailable(false);
-        }
+        setSlugAvailable(data.available);
       } catch (error) {
         if (error instanceof Error && error.name === "AbortError") {
           return;
@@ -264,32 +255,18 @@ export function CreateWorkspaceDialog({
       setIsLoading(true);
 
       try {
-        const response = await fetch("/api/workspace/create", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            name: data.name.trim(),
-            slug: data.slug.trim().toLowerCase(),
-            description: data.description?.trim() || null,
-          }),
+        const result = await workspaceApi.create({
+          name: data.name.trim(),
+          slug: data.slug.trim().toLowerCase(),
+          description: data.description?.trim() || undefined,
         });
 
-        if (!response.ok) {
-          const errorData = await response.json().catch(() => ({}));
-          toast.error(errorData.error || "Failed to create workspace");
-          setIsLoading(false);
-          return;
-        }
-
-        const result = await response.json();
         toast.success("Workspace created successfully");
         onOpenChange(false);
-        onSuccess?.(result.workspace);
-      } catch (error) {
+        onSuccess?.(result);
+      } catch (error: any) {
         console.error("Error creating workspace:", error);
-        toast.error("Failed to create workspace");
+        toast.error(error.message || "Failed to create workspace");
       } finally {
         setIsLoading(false);
       }

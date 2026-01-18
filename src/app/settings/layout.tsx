@@ -12,6 +12,7 @@ import {
 } from "@/components/ui/sidebar";
 import { Spinner } from "@/components/ui/spinner";
 import { authClient } from "@/lib/auth-client";
+import { workspaceApi } from "@/lib/api";
 
 interface SettingsLayoutProps {
   children: React.ReactNode;
@@ -37,13 +38,9 @@ export default function SettingsLayout({ children }: SettingsLayoutProps) {
 
       const fetchWorkspace = async () => {
         try {
-          const response = await fetch("/api/workspace/list");
-          if (response.ok) {
-            const data = await response.json();
-            const workspaces = data.workspaces || [];
-            if (workspaces.length > 0) {
-              setHomeUrl(`/${workspaces[0].slug}`);
-            }
+          const workspaces = await workspaceApi.getAll();
+          if (workspaces.length > 0) {
+            setHomeUrl(`/${workspaces[0].slug}`);
           }
         } catch (error) {
           console.error("Failed to fetch workspaces:", error);

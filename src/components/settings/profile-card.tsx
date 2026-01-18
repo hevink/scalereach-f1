@@ -28,6 +28,7 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { authClient } from "@/lib/auth-client";
+import { userApi } from "@/lib/api";
 
 const USERNAME_REGEX = /^[a-zA-Z0-9_.]+$/;
 const MIN_USERNAME_LENGTH = 3;
@@ -329,22 +330,19 @@ function useAvatarUpload(initialAvatar: string | null) {
   }, [initialAvatar, avatarPreview]);
 
   const uploadAvatarFile = useCallback(async (file: File) => {
-    const formData = new FormData();
-    formData.append("avatar", file);
-
-    const response = await fetch("/api/user/avatar", {
-      method: "POST",
-      body: formData,
+    // Convert file to base64
+    const reader = new FileReader();
+    const base64Promise = new Promise<string>((resolve, reject) => {
+      reader.onload = () => resolve(reader.result as string);
+      reader.onerror = reject;
+      reader.readAsDataURL(file);
     });
 
-    if (!response.ok) {
-      const error = await response.json();
-      throw new Error(error.error || "Failed to upload avatar");
-    }
+    const base64 = await base64Promise;
+    const result = await userApi.uploadAvatar(base64);
 
-    const data = await response.json();
     const { error: updateError } = await authClient.updateUser({
-      image: data.imageUrl,
+      image: result.image,
     });
 
     if (updateError) {
@@ -544,11 +542,10 @@ function UsernameInputSection({
           htmlFor="username"
         >
           <div
-            className={`flex flex-col items-start justify-start ${
-              isCheckingUsername || usernameAvailability !== null
-                ? "gap-1.5"
-                : "gap-0"
-            }`}
+            className={`flex flex-col items-start justify-start ${isCheckingUsername || usernameAvailability !== null
+              ? "gap-1.5"
+              : "gap-0"
+              }`}
           >
             Username
             {isEditingUsername && (

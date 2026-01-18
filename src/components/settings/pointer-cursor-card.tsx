@@ -12,6 +12,7 @@ import {
 import { Label } from "@/components/ui/label";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Switch } from "@/components/ui/switch";
+import { userApi } from "@/lib/api";
 
 export function PointerCursorCard() {
   const [usePointerCursors, setUsePointerCursors] = useState(false);
@@ -20,11 +21,7 @@ export function PointerCursorCard() {
   useEffect(() => {
     const fetchPreference = async () => {
       try {
-        const response = await fetch("/api/user/preferences");
-        if (!response.ok) {
-          throw new Error("Failed to fetch preferences");
-        }
-        const data = await response.json();
+        const data = await userApi.getPreferences();
         setUsePointerCursors(data.usePointerCursors ?? false);
       } catch (error) {
         console.error("Error fetching preferences:", error);
@@ -46,18 +43,7 @@ export function PointerCursorCard() {
       document.body.removeAttribute("data-pointer-cursors");
     }
 
-    fetch("/api/user/preferences", {
-      method: "PATCH",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({ usePointerCursors: checked }),
-    })
-      .then((response) => {
-        if (!response.ok) {
-          throw new Error("Failed to update preference");
-        }
-      })
+    userApi.updatePreferences({ usePointerCursors: checked })
       .catch((error) => {
         setUsePointerCursors(previousValue);
 

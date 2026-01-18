@@ -14,6 +14,7 @@ import { Input } from "@/components/ui/input";
 import { Spinner } from "@/components/ui/spinner";
 import { Textarea } from "@/components/ui/textarea";
 import { authClient } from "@/lib/auth-client";
+import { workspaceApi } from "@/lib/api";
 
 const SLUG_REGEX = /^[a-zA-Z0-9_-]+$/;
 const MIN_SLUG_LENGTH = 3;
@@ -133,16 +134,7 @@ export function OnboardingForm() {
     setCheckingSlug(true);
     slugDebounceRef.current = setTimeout(async () => {
       try {
-        const response = await fetch(
-          `/api/workspace/slug/check?slug=${encodeURIComponent(trimmedSlug)}`
-        );
-
-        if (!response.ok) {
-          setSlugAvailable(null);
-          return;
-        }
-
-        const data = await response.json();
+        const data = await workspaceApi.checkSlug(trimmedSlug);
         setSlugAvailable(data?.available ?? false);
       } catch {
         setSlugAvailable(null);
@@ -236,30 +228,17 @@ export function OnboardingForm() {
 
     try {
       const formData = form.getValues();
-      const response = await fetch("/api/workspace/create", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          name: formData.name.trim(),
-          slug: formData.slug.trim().toLowerCase(),
-          description: formData.description?.trim() || null,
-        }),
+      await workspaceApi.create({
+        name: formData.name.trim(),
+        slug: formData.slug.trim().toLowerCase(),
+        description: formData.description?.trim() || undefined,
       });
-
-      if (!response.ok) {
-        const data = await response.json().catch(() => ({}));
-        toast.error(data.error || "Failed to create workspace");
-        setIsLoading(false);
-        return;
-      }
 
       setCurrentStep(5);
       setIsLoading(false);
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error creating workspace:", error);
-      toast.error("Failed to create workspace");
+      toast.error(error.message || "Failed to create workspace");
       setIsLoading(false);
     }
   }, [currentStep, form, validateSlugAvailability]);
@@ -377,11 +356,10 @@ export function OnboardingForm() {
         <div className="relative flex min-h-[200px] w-full flex-col gap-6">
           {/* Step 1: Welcome */}
           <div
-            className={`absolute inset-0 flex flex-col gap-2 transition-opacity duration-300 ${
-              currentStep === 1
-                ? "pointer-events-auto opacity-100"
-                : "pointer-events-none opacity-0"
-            }`}
+            className={`absolute inset-0 flex flex-col gap-2 transition-opacity duration-300 ${currentStep === 1
+              ? "pointer-events-auto opacity-100"
+              : "pointer-events-none opacity-0"
+              }`}
           >
             <h1 className="font-medium text-xl">
               Welcome to Staxk
@@ -394,11 +372,10 @@ export function OnboardingForm() {
 
           {/* Step 2: Workspace Name */}
           <div
-            className={`absolute inset-0 flex flex-col gap-6 transition-opacity duration-300 ${
-              currentStep === 2
-                ? "pointer-events-auto opacity-100"
-                : "pointer-events-none opacity-0"
-            }`}
+            className={`absolute inset-0 flex flex-col gap-6 transition-opacity duration-300 ${currentStep === 2
+              ? "pointer-events-auto opacity-100"
+              : "pointer-events-none opacity-0"
+              }`}
           >
             <div className="flex flex-col gap-2">
               <h1 className="font-medium text-xl">
@@ -430,11 +407,10 @@ export function OnboardingForm() {
 
           {/* Step 3: Workspace Slug */}
           <div
-            className={`absolute inset-0 flex flex-col gap-6 transition-opacity duration-300 ${
-              currentStep === 3
-                ? "pointer-events-auto opacity-100"
-                : "pointer-events-none opacity-0"
-            }`}
+            className={`absolute inset-0 flex flex-col gap-6 transition-opacity duration-300 ${currentStep === 3
+              ? "pointer-events-auto opacity-100"
+              : "pointer-events-none opacity-0"
+              }`}
           >
             <div className="flex flex-col gap-2">
               <h1 className="font-medium text-xl">
@@ -458,9 +434,8 @@ export function OnboardingForm() {
                 )}
                 {!checkingSlug && slugAvailable !== null && slug?.trim() && (
                   <div
-                    className={`absolute top-1/2 right-3 -translate-y-1/2 text-xs ${
-                      slugAvailable ? "text-green-600" : "text-red-600"
-                    }`}
+                    className={`absolute top-1/2 right-3 -translate-y-1/2 text-xs ${slugAvailable ? "text-green-600" : "text-red-600"
+                      }`}
                   >
                     {slugAvailable ? "Available" : "Slug is not available"}
                   </div>
@@ -493,11 +468,10 @@ export function OnboardingForm() {
 
           {/* Step 4: Workspace Description */}
           <div
-            className={`absolute inset-0 flex flex-col gap-6 transition-opacity duration-300 ${
-              currentStep === 4
-                ? "pointer-events-auto opacity-100"
-                : "pointer-events-none opacity-0"
-            }`}
+            className={`absolute inset-0 flex flex-col gap-6 transition-opacity duration-300 ${currentStep === 4
+              ? "pointer-events-auto opacity-100"
+              : "pointer-events-none opacity-0"
+              }`}
           >
             <div className="flex flex-col gap-2">
               <h1 className="font-medium text-xl">
@@ -542,11 +516,10 @@ export function OnboardingForm() {
 
           {/* Step 5: Success */}
           <div
-            className={`absolute inset-0 flex flex-col gap-2 transition-opacity duration-300 ${
-              currentStep === 5
-                ? "pointer-events-auto opacity-100"
-                : "pointer-events-none opacity-0"
-            }`}
+            className={`absolute inset-0 flex flex-col gap-2 transition-opacity duration-300 ${currentStep === 5
+              ? "pointer-events-auto opacity-100"
+              : "pointer-events-none opacity-0"
+              }`}
           >
             <h1 className="font-medium text-xl">You're all set up!</h1>
           </div>

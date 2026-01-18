@@ -23,6 +23,7 @@ import {
 import { FieldError } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { userApi } from "@/lib/api";
 
 const MIN_PASSWORD_LENGTH = 8;
 const MAX_PASSWORD_LENGTH = 128;
@@ -131,32 +132,10 @@ export function ChangePasswordCard() {
       setErrors({});
 
       try {
-        const response = await fetch("/api/user/password", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            currentPassword: currentPassword.trim(),
-            newPassword: newPassword.trim(),
-            revokeOtherSessions,
-          }),
-        });
+        await userApi.changePassword(currentPassword.trim(), newPassword.trim());
 
-        const text = await response.text();
-        const data = text ? JSON.parse(text) : {};
-
-        if (!response.ok) {
-          const errorMessage =
-            data.error || "Failed to change password. Please try again.";
-          toast.error(errorMessage);
-
-          const errorField = categorizeError(errorMessage);
-          if (errorField) {
-            setErrors({ [errorField]: errorMessage });
-            focusField(errorField);
-          }
-          return;
+        if (revokeOtherSessions) {
+          await userApi.revokeSession();
         }
 
         toast.success("Password changed successfully");
@@ -165,12 +144,15 @@ export function ChangePasswordCard() {
         setConfirmPassword("");
         setErrors({});
         setShowRevokeDialog(false);
-      } catch (error) {
-        toast.error(
-          error instanceof Error
-            ? error.message
-            : "An error occurred. Please try again."
-        );
+      } catch (error: any) {
+        const errorMessage = error.message || "Failed to change password. Please try again.";
+        toast.error(errorMessage);
+
+        const errorField = categorizeError(errorMessage);
+        if (errorField) {
+          setErrors({ [errorField]: errorMessage });
+          focusField(errorField);
+        }
       } finally {
         setIsLoading(false);
       }

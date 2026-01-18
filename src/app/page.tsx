@@ -1,47 +1,53 @@
-import { eq } from "drizzle-orm";
-import { headers } from "next/headers";
-import { redirect } from "next/navigation";
-import { db } from "@/db";
-import { user } from "@/db/schema/auth";
-import { auth } from "@/lib/auth";
-import { getUserWorkspaces } from "@/lib/workspace";
+"use client";
 
-export default async function HomePage() {
-  const headersList = await headers();
-  const sessionData = await auth.api.getSession({
-    headers: headersList,
-  });
+import { useEffect } from "react";
+import { useRouter } from "next/navigation";
+import { useSession } from "@/lib/auth-client";
+import { useCurrentUser } from "@/hooks/useUser";
+import { useWorkspaces } from "@/hooks/useWorkspace";
+import { Spinner } from "@/components/ui/spinner";
 
-  if (!sessionData?.user) {
-    redirect("/home");
-  }
+export default function HomePage() {
+  const router = useRouter();
+  const { data: session, isPending: sessionPending } = useSession();
+  const { data: user, isLoading: userLoading } = useCurrentUser();
+  const { data: workspaces, isLoading: workspacesLoading } = useWorkspaces();
 
-  const userId = sessionData.user.id;
+  useEffect(() => {
+    // Wait for all data to load
+    if (sessionPending || userLoading || workspacesLoading) return;
 
-  // Fetch isOnboarded status from database
-  const [userData] = await db
-    .select({ isOnboarded: user.isOnboarded })
-    .from(user)
-    .where(eq(user.id, userId))
-    .limit(1);
+    // Not logged in
+    if (!session?.user) {
+      router.replace("/login");
+      return;
+    }
 
-  // Check if user is onboarded
-  if (!userData?.isOnboarded) {
-    redirect("/onboarding");
-  }
+    // Not onboarded
+    if (!user?.isOnboarded) {
+      router.replace("/onboarding");
+      return;
+    }
 
-  // Get user's workspaces
-  const workspaces = await getUserWorkspaces(userId);
+    // No workspaces
+    if (!workspaces || workspaces.length === 0) {
+      router.replace("/onboarding");
+      return;
+    }
 
-  if (workspaces.length === 0) {
-    redirect("/onboarding");
-  }
+    // Single workspace - redirect to it
+    if (workspaces.length === 1) {
+      router.replace(`/${workspaces[0].slug}`);
+      return;
+    }
 
-  if (workspaces.length === 1) {
-    // Redirect to the single workspace
-    redirect(`/${workspaces[0].slug}`);
-  }
+    // Multiple workspaces - show selector
+    router.replace("/workspaces");
+  }, [session, user, workspaces, sessionPending, userLoading, workspacesLoading, router]);
 
-  // Multiple workspaces - show selector page
-  redirect("/workspaces");
+  return (
+    <div className="flex min-h-screen items-center justify-center">
+      <Spinner />
+    </div>
+  );
 }

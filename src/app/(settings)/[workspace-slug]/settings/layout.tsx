@@ -1,7 +1,10 @@
-import { headers } from "next/headers";
+"use client";
+
+import { use, useEffect } from "react";
 import Link from "next/link";
-import { redirect } from "next/navigation";
-import { Suspense } from "react";
+import { useRouter } from "next/navigation";
+import { useSession } from "@/lib/auth-client";
+import { useWorkspaceBySlug } from "@/hooks/useWorkspace";
 import { Button } from "@/components/ui/button";
 import {
   SidebarInset,
@@ -10,35 +13,45 @@ import {
 } from "@/components/ui/sidebar";
 import { Spinner } from "@/components/ui/spinner";
 import { WorkspaceSettingsSidebar } from "@/components/workspace/workspace-settings-sidebar";
-import { auth } from "@/lib/auth";
-import { getWorkspaceBySlug } from "@/lib/workspace";
 
 interface WorkspaceSettingsLayoutProps {
   children: React.ReactNode;
   params: Promise<{ "workspace-slug": string }>;
 }
 
-async function WorkspaceSettingsLayoutContent({
+export default function WorkspaceSettingsLayout({
   children,
-  slug,
-}: {
-  children: React.ReactNode;
-  slug: string;
-}) {
-  const headersList = await headers();
-  const sessionData = await auth.api.getSession({
-    headers: headersList,
-  });
+  params,
+}: WorkspaceSettingsLayoutProps) {
+  const { "workspace-slug": slug } = use(params);
+  const router = useRouter();
+  const { data: session, isPending: sessionPending } = useSession();
+  const { data: workspace, isLoading: workspaceLoading, error } = useWorkspaceBySlug(slug);
 
-  if (!sessionData?.user) {
-    redirect("/login");
+  useEffect(() => {
+    if (sessionPending || workspaceLoading) return;
+
+    if (!session?.user) {
+      router.replace("/login");
+      return;
+    }
+
+    if (error || !workspace) {
+      router.replace("/");
+      return;
+    }
+  }, [session, workspace, error, sessionPending, workspaceLoading, router]);
+
+  if (sessionPending || workspaceLoading) {
+    return (
+      <div className="flex min-h-screen items-center justify-center">
+        <Spinner />
+      </div>
+    );
   }
 
-  const userId = sessionData.user.id;
-  const workspace = await getWorkspaceBySlug(slug, userId);
-
   if (!workspace) {
-    redirect("/");
+    return null;
   }
 
   return (
@@ -66,28 +79,5 @@ async function WorkspaceSettingsLayoutContent({
         </main>
       </SidebarInset>
     </SidebarProvider>
-  );
-}
-
-function WorkspaceSettingsLayoutSkeleton() {
-  return (
-    <div className="flex min-h-screen items-center justify-center">
-      <Spinner />
-    </div>
-  );
-}
-
-export default async function WorkspaceSettingsLayout({
-  children,
-  params,
-}: WorkspaceSettingsLayoutProps) {
-  const { "workspace-slug": slug } = await params;
-
-  return (
-    <Suspense fallback={<WorkspaceSettingsLayoutSkeleton />}>
-      <WorkspaceSettingsLayoutContent slug={slug}>
-        {children}
-      </WorkspaceSettingsLayoutContent>
-    </Suspense>
   );
 }

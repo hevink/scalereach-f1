@@ -1,6 +1,9 @@
-import { headers } from "next/headers";
-import { redirect } from "next/navigation";
-import { Suspense } from "react";
+"use client";
+
+import { use, useEffect } from "react";
+import { useRouter } from "next/navigation";
+import { useSession } from "@/lib/auth-client";
+import { useWorkspaceBySlug } from "@/hooks/useWorkspace";
 import {
   SidebarInset,
   SidebarProvider,
@@ -9,35 +12,45 @@ import {
 import { Spinner } from "@/components/ui/spinner";
 import { WorkspaceSidebar } from "@/components/workspace/workspace-sidebar";
 import { WorkspaceTracker } from "@/components/workspace/workspace-tracker";
-import { auth } from "@/lib/auth";
-import { getWorkspaceBySlug } from "@/lib/workspace";
 
 interface WorkspaceLayoutProps {
   children: React.ReactNode;
   params: Promise<{ "workspace-slug": string }>;
 }
 
-async function WorkspaceLayoutContent({
+export default function WorkspaceLayout({
   children,
-  slug,
-}: {
-  children: React.ReactNode;
-  slug: string;
-}) {
-  const headersList = await headers();
-  const sessionData = await auth.api.getSession({
-    headers: headersList,
-  });
+  params,
+}: WorkspaceLayoutProps) {
+  const { "workspace-slug": slug } = use(params);
+  const router = useRouter();
+  const { data: session, isPending: sessionPending } = useSession();
+  const { data: workspace, isLoading: workspaceLoading, error } = useWorkspaceBySlug(slug);
 
-  if (!sessionData?.user) {
-    redirect("/login");
+  useEffect(() => {
+    if (sessionPending || workspaceLoading) return;
+
+    if (!session?.user) {
+      router.replace("/login");
+      return;
+    }
+
+    if (error || !workspace) {
+      router.replace("/");
+      return;
+    }
+  }, [session, workspace, error, sessionPending, workspaceLoading, router]);
+
+  if (sessionPending || workspaceLoading) {
+    return (
+      <div className="flex min-h-screen items-center justify-center">
+        <Spinner />
+      </div>
+    );
   }
 
-  const userId = sessionData.user.id;
-  const workspace = await getWorkspaceBySlug(slug, userId);
-
   if (!workspace) {
-    redirect("/");
+    return null;
   }
 
   return (
@@ -53,26 +66,5 @@ async function WorkspaceLayoutContent({
         </main>
       </SidebarInset>
     </SidebarProvider>
-  );
-}
-
-function WorkspaceLayoutSkeleton() {
-  return (
-    <div className="flex min-h-screen items-center justify-center">
-      <Spinner />
-    </div>
-  );
-}
-
-export default async function WorkspaceLayout({
-  children,
-  params,
-}: WorkspaceLayoutProps) {
-  const { "workspace-slug": slug } = await params;
-
-  return (
-    <Suspense fallback={<WorkspaceLayoutSkeleton />}>
-      <WorkspaceLayoutContent slug={slug}>{children}</WorkspaceLayoutContent>
-    </Suspense>
   );
 }

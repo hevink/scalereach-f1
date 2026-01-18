@@ -1,5 +1,9 @@
-import { headers } from "next/headers";
-import { redirect } from "next/navigation";
+"use client";
+
+import { use, useEffect } from "react";
+import { useRouter } from "next/navigation";
+import { useSession } from "@/lib/auth-client";
+import { useWorkspaceBySlug } from "@/hooks/useWorkspace";
 import {
   Card,
   CardContent,
@@ -7,30 +11,42 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { auth } from "@/lib/auth";
-import { getWorkspaceBySlug } from "@/lib/workspace";
+import { Spinner } from "@/components/ui/spinner";
 
 interface WorkspacePageProps {
   params: Promise<{ "workspace-slug": string }>;
 }
 
-export default async function WorkspacePage({ params }: WorkspacePageProps) {
-  const { "workspace-slug": slug } = await params;
+export default function WorkspacePage({ params }: WorkspacePageProps) {
+  const { "workspace-slug": slug } = use(params);
+  const router = useRouter();
+  const { data: session, isPending: sessionPending } = useSession();
+  const { data: workspace, isLoading: workspaceLoading, error } = useWorkspaceBySlug(slug);
 
-  const headersList = await headers();
-  const sessionData = await auth.api.getSession({
-    headers: headersList,
-  });
+  useEffect(() => {
+    if (sessionPending || workspaceLoading) return;
 
-  if (!sessionData?.user) {
-    redirect("/login");
+    if (!session?.user) {
+      router.replace("/login");
+      return;
+    }
+
+    if (error || !workspace) {
+      router.replace("/");
+      return;
+    }
+  }, [session, workspace, error, sessionPending, workspaceLoading, router]);
+
+  if (sessionPending || workspaceLoading) {
+    return (
+      <div className="flex min-h-[50vh] items-center justify-center">
+        <Spinner />
+      </div>
+    );
   }
 
-  const userId = sessionData.user.id;
-  const workspace = await getWorkspaceBySlug(slug, userId);
-
   if (!workspace) {
-    redirect("/");
+    return null;
   }
 
   return (
