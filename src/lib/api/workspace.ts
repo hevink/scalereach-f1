@@ -17,11 +17,43 @@ export interface WorkspaceMember {
   userId: string;
   workspaceId: string;
   role: "owner" | "admin" | "member";
+  createdAt?: string;
   user?: {
     id: string;
     name: string;
     email: string;
     image?: string;
+  };
+}
+
+export interface WorkspaceInvitation {
+  id: string;
+  email: string;
+  role: "admin" | "member";
+  status: "pending" | "accepted" | "declined" | "expired";
+  expiresAt: string;
+  createdAt: string;
+  inviter: {
+    id: string;
+    name: string;
+    email: string;
+  };
+}
+
+export interface InvitationDetails {
+  id: string;
+  email: string;
+  role: string;
+  status: string;
+  expiresAt: string;
+  workspace: {
+    id: string;
+    name: string;
+    slug: string;
+    logo?: string;
+  };
+  inviter: {
+    name: string;
   };
 }
 
@@ -80,6 +112,18 @@ export const workspaceApi = {
     return response.data;
   },
 
+  // Update member role
+  updateMemberRole: async (workspaceId: string, memberId: string, role: string) => {
+    const response = await api.put<WorkspaceMember>(`/api/workspaces/${workspaceId}/members/${memberId}`, { role });
+    return response.data;
+  },
+
+  // Remove member
+  removeMember: async (workspaceId: string, memberId: string) => {
+    const response = await api.delete(`/api/workspaces/${workspaceId}/members/${memberId}`);
+    return response.data;
+  },
+
   // Check slug availability
   checkSlug: async (slug: string) => {
     const response = await api.get<{ available: boolean; slug: string }>(`/api/workspaces/slug/${slug}/check`);
@@ -101,6 +145,50 @@ export const workspaceApi = {
   // Delete workspace by slug
   deleteBySlug: async (slug: string) => {
     const response = await api.delete(`/api/workspaces/slug/${slug}`);
+    return response.data;
+  },
+
+  // === Invitation APIs ===
+
+  // Get workspace invitations
+  getInvitations: async (workspaceId: string) => {
+    const response = await api.get<WorkspaceInvitation[]>(`/api/workspaces/${workspaceId}/invitations`);
+    return response.data;
+  },
+
+  // Create invitation
+  createInvitation: async (workspaceId: string, data: { email: string; role: string }) => {
+    const response = await api.post<WorkspaceInvitation>(`/api/workspaces/${workspaceId}/invitations`, data);
+    return response.data;
+  },
+
+  // Cancel invitation
+  cancelInvitation: async (workspaceId: string, invitationId: string) => {
+    const response = await api.delete(`/api/workspaces/${workspaceId}/invitations/${invitationId}`);
+    return response.data;
+  },
+
+  // Resend invitation
+  resendInvitation: async (workspaceId: string, invitationId: string) => {
+    const response = await api.post(`/api/workspaces/${workspaceId}/invitations/${invitationId}/resend`);
+    return response.data;
+  },
+
+  // Get invitation by token (public)
+  getInvitationByToken: async (token: string) => {
+    const response = await api.get<InvitationDetails>(`/api/invitations/${token}`);
+    return response.data;
+  },
+
+  // Accept invitation
+  acceptInvitation: async (token: string) => {
+    const response = await api.post<{ message: string; workspace: { id: string; name: string; slug: string } }>(`/api/invitations/${token}/accept`);
+    return response.data;
+  },
+
+  // Decline invitation
+  declineInvitation: async (token: string) => {
+    const response = await api.post<{ message: string }>(`/api/invitations/${token}/decline`);
     return response.data;
   },
 };

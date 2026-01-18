@@ -14,6 +14,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { authClient } from "@/lib/auth-client";
 import { getAuthErrorMessage } from "@/lib/auth-errors";
+import { userApi } from "@/lib/api/user";
 
 const signupSchema = z
   .object({
@@ -152,37 +153,8 @@ export function SignUpForm() {
 
   const checkEmailAvailability = async (email: string): Promise<boolean> => {
     try {
-      const response = await fetch(
-        `/api/email/check?email=${encodeURIComponent(email)}`
-      );
-
-      let data: { available?: boolean; error?: string } | null = null;
-      try {
-        const text = await response.text();
-        if (!text) {
-          toast.error("Empty response from server");
-          return false;
-        }
-        data = JSON.parse(text);
-      } catch (parseError) {
-        console.error("Failed to parse response:", parseError);
-        toast.error(
-          response.ok
-            ? "Invalid response from server"
-            : `Failed to check email availability (${response.status})`
-        );
-        return false;
-      }
-
-      if (!response.ok) {
-        const errorMessage =
-          data?.error ||
-          `Failed to check email availability (${response.status})`;
-        toast.error(errorMessage);
-        return false;
-      }
-
-      if (data && data.available === false) {
+      const { available } = await userApi.checkEmail(email);
+      if (!available) {
         toast.error("Email is already in use");
         return false;
       }

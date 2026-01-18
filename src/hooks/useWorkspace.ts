@@ -119,3 +119,129 @@ export function useWorkspaceMembers(workspaceId: string) {
     enabled: !!workspaceId,
   });
 }
+
+export function useUpdateMemberRole() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({ workspaceId, memberId, role }: { workspaceId: string; memberId: string; role: string }) =>
+      workspaceApi.updateMemberRole(workspaceId, memberId, role),
+    onSuccess: (_, { workspaceId }) => {
+      queryClient.invalidateQueries({ queryKey: ["workspace", workspaceId, "members"] });
+      toast.success("Member role updated");
+    },
+    onError: (error: Error) => {
+      toast.error(error.message || "Failed to update member role");
+    },
+  });
+}
+
+export function useRemoveMember() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({ workspaceId, memberId }: { workspaceId: string; memberId: string }) =>
+      workspaceApi.removeMember(workspaceId, memberId),
+    onSuccess: (_, { workspaceId }) => {
+      queryClient.invalidateQueries({ queryKey: ["workspace", workspaceId, "members"] });
+      toast.success("Member removed");
+    },
+    onError: (error: Error) => {
+      toast.error(error.message || "Failed to remove member");
+    },
+  });
+}
+
+// === Invitation Hooks ===
+
+export function useWorkspaceInvitations(workspaceId: string) {
+  return useQuery({
+    queryKey: ["workspace", workspaceId, "invitations"],
+    queryFn: () => workspaceApi.getInvitations(workspaceId),
+    enabled: !!workspaceId,
+  });
+}
+
+export function useCreateInvitation() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({ workspaceId, email, role }: { workspaceId: string; email: string; role: string }) =>
+      workspaceApi.createInvitation(workspaceId, { email, role }),
+    onSuccess: (_, { workspaceId }) => {
+      queryClient.invalidateQueries({ queryKey: ["workspace", workspaceId, "invitations"] });
+      toast.success("Invitation sent successfully");
+    },
+    onError: (error: any) => {
+      toast.error(error.response?.data?.error || error.message || "Failed to send invitation");
+    },
+  });
+}
+
+export function useCancelInvitation() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({ workspaceId, invitationId }: { workspaceId: string; invitationId: string }) =>
+      workspaceApi.cancelInvitation(workspaceId, invitationId),
+    onSuccess: (_, { workspaceId }) => {
+      queryClient.invalidateQueries({ queryKey: ["workspace", workspaceId, "invitations"] });
+      toast.success("Invitation cancelled");
+    },
+    onError: (error: Error) => {
+      toast.error(error.message || "Failed to cancel invitation");
+    },
+  });
+}
+
+export function useResendInvitation() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({ workspaceId, invitationId }: { workspaceId: string; invitationId: string }) =>
+      workspaceApi.resendInvitation(workspaceId, invitationId),
+    onSuccess: (_, { workspaceId }) => {
+      queryClient.invalidateQueries({ queryKey: ["workspace", workspaceId, "invitations"] });
+      toast.success("Invitation resent");
+    },
+    onError: (error: Error) => {
+      toast.error(error.message || "Failed to resend invitation");
+    },
+  });
+}
+
+export function useInvitationByToken(token: string) {
+  return useQuery({
+    queryKey: ["invitation", token],
+    queryFn: () => workspaceApi.getInvitationByToken(token),
+    enabled: !!token,
+    retry: false,
+  });
+}
+
+export function useAcceptInvitation() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (token: string) => workspaceApi.acceptInvitation(token),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["workspaces"] });
+      toast.success("Invitation accepted! Welcome to the workspace.");
+    },
+    onError: (error: any) => {
+      toast.error(error.response?.data?.error || error.message || "Failed to accept invitation");
+    },
+  });
+}
+
+export function useDeclineInvitation() {
+  return useMutation({
+    mutationFn: (token: string) => workspaceApi.declineInvitation(token),
+    onSuccess: () => {
+      toast.success("Invitation declined");
+    },
+    onError: (error: Error) => {
+      toast.error(error.message || "Failed to decline invitation");
+    },
+  });
+}
