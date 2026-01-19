@@ -12,6 +12,7 @@ import {
 import { Spinner } from "@/components/ui/spinner";
 import { WorkspaceSidebar } from "@/components/workspace/workspace-sidebar";
 import { WorkspaceTracker } from "@/components/workspace/workspace-tracker";
+import { FloatingUploadFooter } from "@/components/video";
 
 interface WorkspaceLayoutProps {
   children: React.ReactNode;
@@ -61,10 +62,11 @@ export default function WorkspaceLayout({
         <header className="flex h-16 shrink-0 items-center gap-2 border-b px-4">
           <SidebarTrigger />
         </header>
-        <main className="mx-auto flex w-full max-w-7xl flex-1 flex-col gap-4 p-4 md:p-6">
+        <main className="mx-auto flex w-full max-w-7xl flex-1 flex-col gap-4 p-4 pb-24 md:p-6 md:pb-28">
           {children}
         </main>
       </SidebarInset>
+      <FloatingUploadFooter />
     </SidebarProvider>
   );
 }
