@@ -19,7 +19,13 @@ export function useMyVideos() {
   return useQuery({
     queryKey: videoKeys.myVideos(),
     queryFn: () => videoApi.getMyVideos(),
-    retry: 3,
+    retry: (failureCount, error) => {
+      // Don't retry on auth errors
+      if ((error as any)?.status === 401 || (error as any)?.status === 403) {
+        return false;
+      }
+      return failureCount < 3;
+    },
     retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000),
   });
 }

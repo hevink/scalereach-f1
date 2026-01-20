@@ -266,7 +266,8 @@ export default function ClipEditorPage({ params }: ClipEditorPageProps) {
                 },
                 {
                     onSuccess: (data) => {
-                        setActiveExportId(data.export.id);
+                        // Use clipId for status polling since that's where the actual status is stored
+                        setActiveExportId(data.export.clipId || clipId);
                     },
                 }
             );

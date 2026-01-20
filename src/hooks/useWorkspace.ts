@@ -25,6 +25,13 @@ export function useWorkspaceBySlug(slug: string) {
     queryKey: ["workspace", "slug", slug],
     queryFn: () => workspaceApi.getBySlug(slug),
     enabled: !!slug,
+    retry: (failureCount, error) => {
+      // Don't retry on auth errors or not found
+      if ((error as any)?.status === 401 || (error as any)?.status === 403 || (error as any)?.status === 404) {
+        return false;
+      }
+      return failureCount < 3;
+    },
   });
 }
 

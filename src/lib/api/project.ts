@@ -71,10 +71,10 @@ export const projectApi = {
    * Requirements: 25.1
    */
   getProjects: async (workspaceId: string): Promise<ProjectResponse[]> => {
-    const response = await api.get<ProjectsListResponse>(
-      `/api/workspaces/${workspaceId}/projects`
+    const response = await api.get<ProjectResponse[]>(
+      `/api/projects/workspace/${workspaceId}`
     );
-    return response.data.projects;
+    return response.data;
   },
 
   /**
@@ -83,7 +83,7 @@ export const projectApi = {
    */
   getProjectById: async (projectId: string): Promise<ProjectWithVideosResponse> => {
     const response = await api.get<ProjectWithVideosResponse>(
-      `/api/projects/${projectId}`
+      `/api/projects/${projectId}/full`
     );
     return response.data;
   },
@@ -97,8 +97,8 @@ export const projectApi = {
     request: CreateProjectRequest
   ): Promise<CreateProjectResponse> => {
     const response = await api.post<CreateProjectResponse>(
-      `/api/workspaces/${workspaceId}/projects`,
-      request
+      `/api/projects`,
+      { ...request, workspaceId }
     );
     return response.data;
   },
@@ -137,12 +137,12 @@ export const projectApi = {
     workspaceId: string,
     query: string
   ): Promise<ProjectResponse[]> => {
-    const response = await api.get<ProjectsListResponse>(
-      `/api/workspaces/${workspaceId}/projects`,
+    const response = await api.get<ProjectResponse[]>(
+      `/api/projects/workspace/${workspaceId}`,
       {
         params: { search: query },
       }
     );
-    return response.data.projects;
+    return response.data;
   },
 };

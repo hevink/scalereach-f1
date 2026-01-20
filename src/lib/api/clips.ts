@@ -54,6 +54,13 @@ export interface DeleteClipResponse {
   message: string;
 }
 
+export interface ClipsListResponse {
+  videoId: string;
+  clips: ClipResponse[];
+  count: number;
+  filters: ClipFilters;
+}
+
 export const clipsApi = {
   /**
    * Get all clips for a video with optional filtering and sorting
@@ -81,8 +88,8 @@ export const clipsApi = {
     const queryString = searchParams.toString();
     const url = `/api/videos/${videoId}/clips${queryString ? `?${queryString}` : ""}`;
     
-    const response = await api.get<ClipResponse[]>(url);
-    return response.data;
+    const response = await api.get<ClipsListResponse>(url);
+    return response.data.clips;
   },
 
   /**
