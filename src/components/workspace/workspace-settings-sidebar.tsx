@@ -3,6 +3,7 @@
 import {
   IconAlertTriangle,
   IconAlertTriangleFilled,
+  IconBrush,
   IconCreditCard,
   IconCreditCardFilled,
   IconPalette,
@@ -120,6 +121,19 @@ export function WorkspaceSettingsSidebar({
         type: "card",
       },
       {
+        title: "Brand Kit",
+        url: `${baseUrl}/brand-kit`,
+        category: "Brand Kit",
+        type: "category",
+      },
+      {
+        title: "Brand Assets",
+        description: "Manage logos, colors, and fonts for video exports.",
+        url: `${baseUrl}/brand-kit`,
+        category: "Brand Kit",
+        type: "card",
+      },
+      {
         title: "Members",
         url: `${baseUrl}/members`,
         category: "Members",
@@ -175,6 +189,12 @@ export function WorkspaceSettingsSidebar({
         url: `${baseUrl}/customization`,
         icon: IconPalette,
         iconFilled: IconPaletteFilled,
+      },
+      {
+        title: "Brand Kit",
+        url: `${baseUrl}/brand-kit`,
+        icon: IconBrush,
+        iconFilled: IconBrush,
       },
       {
         title: "Members",

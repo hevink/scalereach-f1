@@ -1,10 +1,11 @@
 "use client";
 
-import { IconVideo, IconLoader2, IconCheck, IconX, IconTrash, IconClock } from "@tabler/icons-react";
+import { IconVideo, IconLoader2, IconCheck, IconX, IconTrash, IconClock, IconUpload } from "@tabler/icons-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Spinner } from "@/components/ui/spinner";
+import { Skeleton } from "@/components/ui/skeleton";
+import { EmptyState } from "@/components/ui/empty-state";
 import { useMyVideos, useDeleteVideo } from "@/hooks/useVideo";
 import { toast } from "sonner";
 import type { Video } from "@/lib/api/video";
@@ -39,6 +40,35 @@ const STATUS_CONFIG: Record<Video["status"], { label: string; variant: "default"
     completed: { label: "Completed", variant: "outline", icon: <IconCheck className="size-3" /> },
     failed: { label: "Failed", variant: "destructive", icon: <IconX className="size-3" /> },
 };
+
+/**
+ * VideoItemSkeleton - Loading skeleton for video items
+ * 
+ * Matches the layout of VideoItem to prevent layout shift during loading.
+ * Uses animate-pulse for subtle loading animation.
+ * 
+ * @validates Requirements 29.1, 29.2, 29.4
+ */
+function VideoItemSkeleton() {
+    return (
+        <div className="flex items-center gap-4 rounded-lg border p-4" role="status" aria-label="Loading video">
+            {/* Thumbnail skeleton */}
+            <Skeleton className="h-16 w-28 shrink-0 rounded" />
+
+            {/* Info skeleton */}
+            <div className="flex flex-1 flex-col gap-2 overflow-hidden">
+                <Skeleton className="h-4 w-3/4 rounded" />
+                <Skeleton className="h-3 w-1/3 rounded" />
+            </div>
+
+            {/* Status badge skeleton */}
+            <Skeleton className="h-5 w-20 shrink-0 rounded-full" />
+
+            {/* Action button skeleton */}
+            <Skeleton className="size-8 shrink-0 rounded" />
+        </div>
+    );
+}
 
 interface VideoItemProps {
     video: Video;
@@ -111,9 +141,11 @@ function VideoItem({ video, onDelete, isDeleting }: VideoItemProps) {
 
 interface VideoListProps {
     onVideoClick?: (videoId: string) => void;
+    /** Callback when upload button is clicked in empty state */
+    onUploadClick?: () => void;
 }
 
-export function VideoList({ onVideoClick }: VideoListProps) {
+export function VideoList({ onVideoClick, onUploadClick }: VideoListProps) {
     const { data: videos, isLoading, error } = useMyVideos();
     const deleteMutation = useDeleteVideo();
 
@@ -131,9 +163,16 @@ export function VideoList({ onVideoClick }: VideoListProps) {
             <Card>
                 <CardHeader>
                     <CardTitle>Your Videos</CardTitle>
+                    <CardDescription>Loading videos...</CardDescription>
                 </CardHeader>
-                <CardContent className="flex justify-center py-8">
-                    <Spinner />
+                <CardContent>
+                    {/* Skeleton loading state - matches VideoItem layout to prevent layout shift */}
+                    {/* @validates Requirements 29.1, 29.2, 29.3, 29.4 */}
+                    <div className="space-y-3">
+                        {Array.from({ length: 3 }).map((_, index) => (
+                            <VideoItemSkeleton key={`skeleton-${index}`} />
+                        ))}
+                    </div>
                 </CardContent>
             </Card>
         );
@@ -177,12 +216,16 @@ export function VideoList({ onVideoClick }: VideoListProps) {
                         ))}
                     </div>
                 ) : (
-                    <div className="flex flex-col items-center justify-center py-8 text-center">
-                        <IconVideo className="mb-2 size-12 text-muted-foreground/50" />
-                        <p className="text-muted-foreground">
-                            No videos yet. Upload a YouTube video to get started.
-                        </p>
-                    </div>
+                    /* Empty state for no videos - Requirement 28.2 */
+                    <EmptyState
+                        icon={<IconVideo className="size-6" />}
+                        title="No videos yet"
+                        description="Upload a video or paste a YouTube URL to get started with AI-powered clip detection."
+                        action={onUploadClick ? {
+                            label: "Upload Video",
+                            onClick: onUploadClick,
+                        } : undefined}
+                    />
                 )}
             </CardContent>
         </Card>

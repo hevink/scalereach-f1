@@ -6,9 +6,10 @@ import { useSession } from "@/lib/auth-client";
 import { useWorkspaceBySlug } from "@/hooks/useWorkspace";
 import { useMyVideos, useValidateYouTubeUrl, useSubmitYouTubeUrl, videoKeys } from "@/hooks/useVideo";
 import { Spinner } from "@/components/ui/spinner";
+import { SkeletonVideoGrid } from "@/components/ui/skeletons";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
@@ -22,12 +23,18 @@ import {
   IconAlertCircle,
   IconDots,
   IconClock,
+  IconVideo,
+  IconFolder,
 } from "@tabler/icons-react";
 import { Progress } from "@/components/ui/progress";
 import Uppy from "@uppy/core";
 import AwsS3 from "@uppy/aws-s3";
 import { useQueryClient } from "@tanstack/react-query";
 import type { VideoInfo } from "@/lib/api/video";
+
+// Import integrated components
+import { ProjectList } from "@/components/project/project-list";
+import { CreditBalance } from "@/components/project/credit-balance";
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3001";
 
@@ -82,6 +89,7 @@ export default function WorkspacePage({ params }: WorkspacePageProps) {
   const [videoInfo, setVideoInfo] = useState<VideoInfo | null>(null);
   const [files, setFiles] = useState<FileState[]>([]);
   const [uppyReady, setUppyReady] = useState(false);
+  const [activeTab, setActiveTab] = useState<"videos" | "projects">("videos");
   const uppyRef = useRef<Uppy | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const videoIdsRef = useRef<Map<string, string>>(new Map());
@@ -95,6 +103,7 @@ export default function WorkspacePage({ params }: WorkspacePageProps) {
     if (error || !workspace) { router.replace("/"); return; }
   }, [session, workspace, error, sessionPending, workspaceLoading, router]);
 
+  // YouTube URL validation effect
   useEffect(() => {
     const trimmedUrl = url.trim();
     if (!trimmedUrl) { setValidationState("idle"); setVideoInfo(null); return; }
@@ -242,21 +251,37 @@ export default function WorkspacePage({ params }: WorkspacePageProps) {
     } catch { toast.error("Failed to submit video"); }
   }, [validationState, url, videoInfo, submitMutation]);
 
+  // Project navigation handlers
+  const handleProjectSelect = useCallback((projectId: string) => {
+    router.push(`/${slug}/projects/${projectId}`);
+  }, [router, slug]);
+
+  const handleCreateProject = useCallback(() => {
+    // TODO: Open create project dialog
+    toast.info("Create project feature coming soon");
+  }, []);
+
   if (sessionPending || workspaceLoading) return <div className="flex min-h-[50vh] items-center justify-center"><Spinner /></div>;
   if (!workspace) return null;
 
   return (
     <div className="flex flex-col items-center">
-      {/* Hero Section */}
-      <div className="w-full max-w-2xl pt-8 pb-12 px-4">
-        <h1 className="text-4xl font-bold text-center mb-8">{workspace.name}</h1>
+      {/* Hero Section with Upload UI - Responsive padding */}
+      {/* @validates Requirement 31.3 - Mobile-friendly experience */}
+      <div className="w-full max-w-2xl pt-4 sm:pt-8 pb-8 sm:pb-12 px-4">
+        {/* Header with workspace name and credit balance - Responsive layout */}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4 mb-6 sm:mb-8">
+          <h1 className="text-2xl sm:text-4xl font-bold">{workspace.name}</h1>
+          {/* Credit Balance Display - Requirement 27.1 */}
+          <CreditBalance workspaceId={workspace.id} variant="compact" showWarning />
+        </div>
 
-        {/* Upload Card */}
-        <div className="bg-card border rounded-2xl p-6 space-y-4">
-          {/* YouTube URL Input */}
+        {/* Upload Card - Enhanced Upload UI (Requirements 1.1, 2.1) */}
+        <div className="bg-card border rounded-2xl p-4 sm:p-6 space-y-3 sm:space-y-4">
+          {/* YouTube URL Input - Requirement 1.1 */}
           <div className="relative">
-            <div className="pointer-events-none absolute inset-y-0 left-4 flex items-center">
-              <IconBrandYoutube className="size-5 text-muted-foreground" />
+            <div className="pointer-events-none absolute inset-y-0 left-3 sm:left-4 flex items-center">
+              <IconBrandYoutube className="size-4 sm:size-5 text-muted-foreground" />
             </div>
             <Input
               type="url"
@@ -265,35 +290,35 @@ export default function WorkspacePage({ params }: WorkspacePageProps) {
               onChange={(e) => setUrl(e.target.value)}
               onKeyDown={(e) => e.key === "Enter" && validationState === "valid" && handleSubmitYouTube()}
               className={cn(
-                "h-12 pl-12 pr-12 bg-muted/50 border-0 text-base",
+                "h-10 sm:h-12 pl-10 sm:pl-12 pr-10 sm:pr-12 bg-muted/50 border-0 text-sm sm:text-base",
                 validationState === "valid" && "ring-1 ring-green-500",
                 validationState === "invalid" && url && "ring-1 ring-red-500"
               )}
               disabled={submitMutation.isPending}
             />
-            <div className="absolute inset-y-0 right-4 flex items-center">
+            <div className="absolute inset-y-0 right-3 sm:right-4 flex items-center">
               {validationState === "validating" && <IconLoader2 className="size-4 animate-spin text-muted-foreground" />}
               {validationState === "valid" && <IconCheck className="size-4 text-green-500" />}
               {validationState === "invalid" && url && <IconX className="size-4 text-red-500" />}
             </div>
           </div>
 
-          {/* Video Preview */}
+          {/* Video Preview - Responsive layout */}
           {videoInfo && validationState === "valid" && (
-            <div className="flex items-center gap-3 p-3 bg-muted/50 rounded-lg">
-              <img src={videoInfo.thumbnail} alt="" className="h-14 w-24 rounded object-cover" />
+            <div className="flex items-center gap-2 sm:gap-3 p-2 sm:p-3 bg-muted/50 rounded-lg">
+              <img src={videoInfo.thumbnail} alt="" className="h-12 sm:h-14 w-20 sm:w-24 rounded object-cover shrink-0" />
               <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium truncate">{videoInfo.title}</p>
+                <p className="text-xs sm:text-sm font-medium truncate">{videoInfo.title}</p>
                 <p className="text-xs text-muted-foreground">{videoInfo.channelName} • {formatDuration(videoInfo.duration)}</p>
               </div>
-              <Button variant="ghost" size="icon" className="shrink-0" onClick={() => { setUrl(""); setVideoInfo(null); setValidationState("idle"); }}>
+              <Button variant="ghost" size="icon" className="shrink-0 size-8 sm:size-9" onClick={() => { setUrl(""); setVideoInfo(null); setValidationState("idle"); }}>
                 <IconX className="size-4" />
               </Button>
             </div>
           )}
 
-          {/* Upload Button - Opens file picker directly */}
-          <div className="flex items-center gap-4">
+          {/* File Upload Button - Requirement 2.1 */}
+          <div className="flex flex-wrap items-center gap-3 sm:gap-4">
             <input
               ref={inputRef}
               type="file"
@@ -301,7 +326,7 @@ export default function WorkspacePage({ params }: WorkspacePageProps) {
               multiple
               onChange={(e) => {
                 handleFileSelect(e.target.files);
-                e.target.value = ""; // Reset so same file can be selected again
+                e.target.value = "";
               }}
               className="hidden"
             />
@@ -312,7 +337,7 @@ export default function WorkspacePage({ params }: WorkspacePageProps) {
               }}
               disabled={!uppyReady}
               className={cn(
-                "flex items-center gap-2 text-sm transition-colors",
+                "flex items-center gap-2 text-xs sm:text-sm transition-colors",
                 uppyReady ? "text-muted-foreground hover:text-foreground" : "text-muted-foreground/50 cursor-not-allowed"
               )}
             >
@@ -329,24 +354,24 @@ export default function WorkspacePage({ params }: WorkspacePageProps) {
                 <div
                   key={file.id}
                   className={cn(
-                    "flex items-center gap-3 p-3 rounded-lg border",
+                    "flex items-center gap-2 sm:gap-3 p-2 sm:p-3 rounded-lg border",
                     file.status === "complete" && "border-green-500/30 bg-green-500/5",
                     file.status === "error" && "border-red-500/30 bg-red-500/5",
                     (file.status === "pending" || file.status === "uploading") && "border-border bg-muted/30"
                   )}
                 >
                   <div className={cn(
-                    "flex size-10 shrink-0 items-center justify-center rounded-lg",
+                    "flex size-8 sm:size-10 shrink-0 items-center justify-center rounded-lg",
                     file.status === "complete" ? "bg-green-500/10 text-green-500" :
                       file.status === "error" ? "bg-red-500/10 text-red-500" :
                         "bg-muted text-muted-foreground"
                   )}>
-                    {file.status === "complete" ? <IconCheck className="size-5" /> :
-                      file.status === "error" ? <IconAlertCircle className="size-5" /> :
-                        <IconFile className="size-5" />}
+                    {file.status === "complete" ? <IconCheck className="size-4 sm:size-5" /> :
+                      file.status === "error" ? <IconAlertCircle className="size-4 sm:size-5" /> :
+                        <IconFile className="size-4 sm:size-5" />}
                   </div>
                   <div className="min-w-0 flex-1">
-                    <p className="truncate text-sm font-medium">{file.name}</p>
+                    <p className="truncate text-xs sm:text-sm font-medium">{file.name}</p>
                     <div className="flex items-center gap-2">
                       <span className="text-xs text-muted-foreground">{formatFileSize(file.size)}</span>
                       {file.status === "uploading" && <span className="text-xs text-primary font-medium">{file.progress}%</span>}
@@ -358,7 +383,7 @@ export default function WorkspacePage({ params }: WorkspacePageProps) {
                     )}
                   </div>
                   {file.status !== "complete" && (
-                    <Button variant="ghost" size="icon" className="size-8 shrink-0" onClick={() => removeFile(file.id)}>
+                    <Button variant="ghost" size="icon" className="size-7 sm:size-8 shrink-0" onClick={() => removeFile(file.id)}>
                       <IconX className="size-4" />
                     </Button>
                   )}
@@ -369,7 +394,7 @@ export default function WorkspacePage({ params }: WorkspacePageProps) {
 
           {/* Submit Button */}
           <Button
-            className="w-full h-12 text-base font-medium"
+            className="w-full h-10 sm:h-12 text-sm sm:text-base font-medium"
             onClick={handleSubmitYouTube}
             disabled={validationState !== "valid" || submitMutation.isPending}
           >
@@ -378,72 +403,104 @@ export default function WorkspacePage({ params }: WorkspacePageProps) {
         </div>
       </div>
 
-      {/* Projects Section */}
+      {/* Content Section with Tabs for Videos and Projects */}
       <div className="w-full border-t">
         <div className="max-w-6xl mx-auto px-4 py-4">
-          <div className="flex items-center justify-between mb-6">
-            <Tabs defaultValue="all">
-              <TabsList className="bg-transparent p-0 h-auto gap-4">
-                <TabsTrigger value="all" className="data-[state=active]:bg-transparent data-[state=active]:shadow-none px-0 text-muted-foreground data-[state=active]:text-foreground">
-                  All projects ({videos?.length || 0})
+          {/* Tabs for Videos and Projects - Requirements 25.1, 27.1 */}
+          {/* @validates Requirement 31.3 - Mobile-friendly tabs */}
+          <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as "videos" | "projects")} className="w-full">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4 mb-4 sm:mb-6">
+              <TabsList className="bg-transparent p-0 h-auto gap-3 sm:gap-4 w-full sm:w-auto justify-start">
+                <TabsTrigger
+                  value="videos"
+                  className="data-[state=active]:bg-transparent data-[state=active]:shadow-none px-0 text-muted-foreground data-[state=active]:text-foreground flex items-center gap-1.5 sm:gap-2 text-sm"
+                >
+                  <IconVideo className="size-4" />
+                  Videos ({videos?.length || 0})
                 </TabsTrigger>
-                <TabsTrigger value="saved" className="data-[state=active]:bg-transparent data-[state=active]:shadow-none px-0 text-muted-foreground data-[state=active]:text-foreground">
-                  Saved projects (0)
+                <TabsTrigger
+                  value="projects"
+                  className="data-[state=active]:bg-transparent data-[state=active]:shadow-none px-0 text-muted-foreground data-[state=active]:text-foreground flex items-center gap-1.5 sm:gap-2 text-sm"
+                >
+                  <IconFolder className="size-4" />
+                  Projects
                 </TabsTrigger>
               </TabsList>
-            </Tabs>
-            <div className="flex items-center gap-4 text-sm text-muted-foreground">
-              <span>0 GB / 0 GB</span>
-              <Badge variant="secondary" className="gap-1"><span className="size-1.5 rounded-full bg-green-500" />Auto-save</Badge>
+              <div className="hidden sm:flex items-center gap-4 text-sm text-muted-foreground">
+                <Badge variant="secondary" className="gap-1"><span className="size-1.5 rounded-full bg-green-500" />Auto-save</Badge>
+              </div>
             </div>
-          </div>
 
-          {/* Video Grid */}
-          {videosLoading ? (
-            <div className="flex justify-center py-12"><Spinner /></div>
-          ) : videos && videos.length > 0 ? (
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
-              {videos.map((video) => (
-                <div key={video.id} className="group relative">
-                  <div className="aspect-video bg-muted rounded-lg overflow-hidden relative">
-                    {video.sourceType === "youtube" && video.sourceUrl ? (
-                      <img src={`https://img.youtube.com/vi/${video.sourceUrl.match(/[a-zA-Z0-9_-]{11}/)?.[0]}/mqdefault.jpg`} alt={video.title || ""} className="w-full h-full object-cover" />
-                    ) : (
-                      <div className="w-full h-full flex items-center justify-center">
-                        <IconFile className="size-8 text-muted-foreground" />
+            {/* Videos Tab Content */}
+            <TabsContent value="videos" className="mt-0">
+              {videosLoading ? (
+                /* Skeleton loading state - matches video grid layout to prevent layout shift */
+                /* @validates Requirements 29.1, 29.2, 29.3, 29.4 */
+                <SkeletonVideoGrid count={10} />
+              ) : videos && videos.length > 0 ? (
+                /* Responsive video grid - 1 col mobile, 2 col sm, 3 col md, 4 col lg, 5 col xl */
+                /* @validates Requirements 31.1, 31.2, 31.3 - Desktop, tablet, mobile layouts */
+                <div className="grid grid-cols-1 xs:grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3 sm:gap-4">
+                  {videos.map((video) => (
+                    <div
+                      key={video.id}
+                      className="group relative cursor-pointer"
+                      onClick={() => router.push(`/${slug}/videos/${video.id}`)}
+                    >
+                      {/* Video thumbnail - Maintains aspect ratio */}
+                      {/* @validates Requirement 31.4 - Video aspect ratio maintenance */}
+                      <div className="aspect-video bg-muted rounded-lg overflow-hidden relative">
+                        {video.sourceType === "youtube" && video.sourceUrl ? (
+                          <img src={`https://img.youtube.com/vi/${video.sourceUrl.match(/[a-zA-Z0-9_-]{11}/)?.[0]}/mqdefault.jpg`} alt={video.title || ""} className="w-full h-full object-cover" />
+                        ) : (
+                          <div className="w-full h-full flex items-center justify-center">
+                            <IconFile className="size-6 sm:size-8 text-muted-foreground" />
+                          </div>
+                        )}
+                        <div className="absolute top-1.5 sm:top-2 right-1.5 sm:right-2">
+                          {(video.status === "downloading" || video.status === "uploading" || video.status === "transcribing" || video.status === "analyzing") ? (
+                            <Badge variant="secondary" className="text-xs gap-1"><IconLoader2 className="size-3 animate-spin" />Processing</Badge>
+                          ) : video.status === "failed" ? (
+                            <Badge variant="destructive" className="text-xs">Failed</Badge>
+                          ) : null}
+                        </div>
+                        {video.duration && (
+                          <div className="absolute bottom-1.5 sm:bottom-2 left-1.5 sm:left-2 bg-black/70 text-white text-xs px-1 sm:px-1.5 py-0.5 rounded">{formatDuration(video.duration)}</div>
+                        )}
+                        <div className="absolute bottom-1.5 sm:bottom-2 right-1.5 sm:right-2 bg-black/70 text-white text-xs px-1 sm:px-1.5 py-0.5 rounded flex items-center gap-1">
+                          <IconClock className="size-3" />7 days
+                        </div>
                       </div>
-                    )}
-                    <div className="absolute top-2 right-2">
-                      {(video.status === "downloading" || video.status === "uploading" || video.status === "transcribing" || video.status === "analyzing") ? (
-                        <Badge variant="secondary" className="text-xs gap-1"><IconLoader2 className="size-3 animate-spin" />Processing</Badge>
-                      ) : video.status === "failed" ? (
-                        <Badge variant="destructive" className="text-xs">Failed</Badge>
-                      ) : null}
+                      <div className="mt-1.5 sm:mt-2 flex items-start justify-between gap-2">
+                        <div className="min-w-0">
+                          <p className="text-xs sm:text-sm font-medium truncate">{video.title}</p>
+                          <p className="text-xs text-muted-foreground capitalize">{video.sourceType}</p>
+                        </div>
+                        <Button variant="ghost" size="icon" className="size-6 shrink-0 opacity-0 group-hover:opacity-100 transition-opacity" onClick={(e) => e.stopPropagation()}>
+                          <IconDots className="size-4" />
+                        </Button>
+                      </div>
                     </div>
-                    {video.duration && (
-                      <div className="absolute bottom-2 left-2 bg-black/70 text-white text-xs px-1.5 py-0.5 rounded">{formatDuration(video.duration)}</div>
-                    )}
-                    <div className="absolute bottom-2 right-2 bg-black/70 text-white text-xs px-1.5 py-0.5 rounded flex items-center gap-1">
-                      <IconClock className="size-3" />7 days
-                    </div>
-                  </div>
-                  <div className="mt-2 flex items-start justify-between gap-2">
-                    <div className="min-w-0">
-                      <p className="text-sm font-medium truncate">{video.title}</p>
-                      <p className="text-xs text-muted-foreground capitalize">{video.sourceType}</p>
-                    </div>
-                    <Button variant="ghost" size="icon" className="size-6 shrink-0 opacity-0 group-hover:opacity-100 transition-opacity">
-                      <IconDots className="size-4" />
-                    </Button>
-                  </div>
+                  ))}
                 </div>
-              ))}
-            </div>
-          ) : (
-            <div className="text-center py-12 text-muted-foreground">
-              <p>No projects yet. Upload a video to get started!</p>
-            </div>
-          )}
+              ) : (
+                <div className="text-center py-8 sm:py-12 text-muted-foreground">
+                  <IconVideo className="size-10 sm:size-12 mx-auto mb-3 sm:mb-4 opacity-50" />
+                  <p className="font-medium text-sm sm:text-base">No videos yet</p>
+                  <p className="text-xs sm:text-sm">Upload a video to get started!</p>
+                </div>
+              )}
+            </TabsContent>
+
+            {/* Projects Tab Content - Requirement 25.1 */}
+            <TabsContent value="projects" className="mt-0">
+              <ProjectList
+                workspaceId={workspace.id}
+                onProjectSelect={handleProjectSelect}
+                onCreateProject={handleCreateProject}
+              />
+            </TabsContent>
+          </Tabs>
         </div>
       </div>
     </div>
