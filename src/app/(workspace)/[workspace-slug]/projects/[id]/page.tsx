@@ -1,6 +1,6 @@
 "use client";
 
-import { use, useCallback } from "react";
+import { use, useCallback, useState } from "react";
 import { useRouter } from "next/navigation";
 import {
     IconArrowLeft,
@@ -9,20 +9,18 @@ import {
 } from "@tabler/icons-react";
 
 import { Button } from "@/components/ui/button";
-import { Spinner } from "@/components/ui/spinner";
-import { EmptyState } from "@/components/ui/empty-state";
+import { Skeleton } from "@/components/ui/skeleton";
+import { SkeletonVideoGrid } from "@/components/ui/skeletons";
 import { ProjectDetail } from "@/components/project/project-detail";
 import { useProject } from "@/hooks/useProject";
+import { cn } from "@/lib/utils";
 
 // ============================================================================
 // Types
 // ============================================================================
 
 interface ProjectDetailPageProps {
-    params: Promise<{
-        "workspace-slug": string;
-        id: string;
-    }>;
+    params: Promise<{ "workspace-slug": string; id: string }>;
 }
 
 // ============================================================================
@@ -31,10 +29,39 @@ interface ProjectDetailPageProps {
 
 function ProjectDetailLoading() {
     return (
-        <div className="flex min-h-[50vh] items-center justify-center">
-            <div className="flex flex-col items-center gap-4">
-                <Spinner />
-                <p className="text-sm text-muted-foreground">Loading project...</p>
+        <div className="flex h-full flex-col">
+            {/* Header skeleton */}
+            <div className="flex items-center gap-4 border-b px-4 py-3">
+                <Skeleton className="h-9 w-9 rounded-md" />
+                <Skeleton className="h-6 w-48" />
+            </div>
+
+            {/* Content skeleton */}
+            <div className="flex-1 p-4 sm:p-6">
+                {/* Project info skeleton */}
+                <div className="mb-6 space-y-3">
+                    <div className="flex items-center gap-3">
+                        <Skeleton className="h-8 w-64" />
+                        <Skeleton className="h-5 w-16" />
+                    </div>
+                    <Skeleton className="h-4 w-96" />
+                    <div className="flex items-center gap-4">
+                        <Skeleton className="h-4 w-24" />
+                        <Skeleton className="h-4 w-20" />
+                    </div>
+                </div>
+
+                {/* Controls skeleton */}
+                <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                    <div className="flex items-center gap-3">
+                        <Skeleton className="h-9 w-[140px]" />
+                        <Skeleton className="h-9 w-[130px]" />
+                    </div>
+                    <Skeleton className="h-9 w-full sm:w-[120px]" />
+                </div>
+
+                {/* Video grid skeleton */}
+                <SkeletonVideoGrid count={8} />
             </div>
         </div>
     );
@@ -46,49 +73,53 @@ function ProjectDetailLoading() {
 
 interface ProjectDetailErrorProps {
     error: Error | null;
-    onRetry?: () => void;
+    onBack: () => void;
 }
 
-function ProjectDetailError({ error, onRetry }: ProjectDetailErrorProps) {
+function ProjectDetailError({ error, onBack }: ProjectDetailErrorProps) {
     return (
-        <div className="flex min-h-[50vh] items-center justify-center p-4">
-            <EmptyState
-                icon={<IconAlertCircle className="size-6" />}
-                title="Failed to load project"
-                description={error?.message || "An error occurred while loading the project. Please try again."}
-                action={
-                    onRetry
-                        ? {
-                            label: "Try again",
-                            onClick: onRetry,
-                        }
-                        : undefined
-                }
-            />
+        <div className="flex h-full flex-col items-center justify-center gap-4 p-8">
+            <div className="flex size-16 items-center justify-center rounded-full bg-destructive/10">
+                <IconAlertCircle className="size-8 text-destructive" />
+            </div>
+            <div className="text-center">
+                <h2 className="text-lg font-semibold">Failed to load project</h2>
+                <p className="mt-1 text-sm text-muted-foreground">
+                    {error?.message || "An error occurred while loading the project."}
+                </p>
+            </div>
+            <Button onClick={onBack} variant="outline">
+                <IconArrowLeft className="mr-2 size-4" />
+                Go Back
+            </Button>
         </div>
     );
 }
 
 // ============================================================================
-// Not Found State Component
+// Project Not Found Component
 // ============================================================================
 
 interface ProjectNotFoundProps {
-    workspaceSlug: string;
+    onBack: () => void;
 }
 
-function ProjectNotFound({ workspaceSlug }: ProjectNotFoundProps) {
+function ProjectNotFound({ onBack }: ProjectNotFoundProps) {
     return (
-        <div className="flex min-h-[50vh] items-center justify-center p-4">
-            <EmptyState
-                icon={<IconFolder className="size-6" />}
-                title="Project not found"
-                description="The project you're looking for doesn't exist or has been deleted."
-                action={{
-                    label: "Go back to workspace",
-                    onClick: () => window.location.href = `/${workspaceSlug}`,
-                }}
-            />
+        <div className="flex h-full flex-col items-center justify-center gap-4 p-8">
+            <div className="flex size-16 items-center justify-center rounded-full bg-muted">
+                <IconFolder className="size-8 text-muted-foreground" />
+            </div>
+            <div className="text-center">
+                <h2 className="text-lg font-semibold">Project not found</h2>
+                <p className="mt-1 text-sm text-muted-foreground">
+                    The project you&apos;re looking for doesn&apos;t exist or has been deleted.
+                </p>
+            </div>
+            <Button onClick={onBack} variant="outline">
+                <IconArrowLeft className="mr-2 size-4" />
+                Go Back
+            </Button>
         </div>
     );
 }
@@ -98,69 +129,71 @@ function ProjectNotFound({ workspaceSlug }: ProjectNotFoundProps) {
 // ============================================================================
 
 /**
- * Project Detail Page
+ * ProjectDetailPage - Displays project information and video grid
  * 
- * Displays project information and video grid for a specific project.
- * Handles loading and error states.
+ * Features:
+ * - Project info display (name, description, status)
+ * - Video grid with thumbnails and status
+ * - Video filtering and sorting
+ * - Navigation to video detail page on video selection
+ * - Add video functionality
+ * - Responsive layout for desktop, tablet, and mobile
  * 
  * Route: /{workspace-slug}/projects/{id}
  * 
- * @validates Requirements 26.1
+ * @validates Requirements 26.1, 26.2, 26.3, 26.4, 26.5, 26.6
  */
 export default function ProjectDetailPage({ params }: ProjectDetailPageProps) {
-    const { "workspace-slug": workspaceSlug, id: projectId } = use(params);
+    const { "workspace-slug": slug, id: projectId } = use(params);
     const router = useRouter();
 
-    // Fetch project data
+    // State for upload dialog (future implementation)
+    const [showUploadDialog, setShowUploadDialog] = useState(false);
+
+    // Fetch project data for initial loading/error states
     const {
         data: project,
-        isLoading,
-        error,
-        refetch,
+        isLoading: projectLoading,
+        error: projectError,
     } = useProject(projectId);
 
-    // Handle video selection - navigate to video detail page
-    const handleVideoSelect = useCallback((videoId: string) => {
-        router.push(`/${workspaceSlug}/videos/${videoId}`);
-    }, [router, workspaceSlug]);
-
-    // Handle add video - navigate to workspace page with upload dialog
-    // For now, navigate to workspace page where upload functionality exists
-    const handleAddVideo = useCallback(() => {
-        // Navigate to workspace page - upload functionality is there
-        // In the future, this could open a modal or navigate to a dedicated upload page
-        router.push(`/${workspaceSlug}?upload=true&projectId=${projectId}`);
-    }, [router, workspaceSlug, projectId]);
-
-    // Handle back navigation
+    // Navigation handlers
     const handleBack = useCallback(() => {
-        router.push(`/${workspaceSlug}`);
-    }, [router, workspaceSlug]);
+        router.push(`/${slug}`);
+    }, [router, slug]);
+
+    const handleVideoSelect = useCallback(
+        (videoId: string) => {
+            router.push(`/${slug}/videos/${videoId}`);
+        },
+        [router, slug]
+    );
+
+    const handleAddVideo = useCallback(() => {
+        // Navigate to workspace page where upload UI is available
+        // In the future, this could open an upload dialog directly
+        router.push(`/${slug}`);
+    }, [router, slug]);
 
     // Loading state
-    if (isLoading) {
+    if (projectLoading) {
         return <ProjectDetailLoading />;
     }
 
     // Error state
-    if (error) {
-        return (
-            <ProjectDetailError
-                error={error as Error}
-                onRetry={() => refetch()}
-            />
-        );
+    if (projectError) {
+        return <ProjectDetailError error={projectError as Error} onBack={handleBack} />;
     }
 
     // Not found state
     if (!project) {
-        return <ProjectNotFound workspaceSlug={workspaceSlug} />;
+        return <ProjectNotFound onBack={handleBack} />;
     }
 
     return (
-        <div className="container max-w-7xl py-6 space-y-6">
-            {/* Back Button */}
-            <div className="flex items-center gap-4">
+        <div className="flex h-full flex-col">
+            {/* Header with back button and project title */}
+            <div className="flex items-center gap-4 border-b px-4 py-3">
                 <Button
                     variant="ghost"
                     size="icon"
@@ -169,17 +202,23 @@ export default function ProjectDetailPage({ params }: ProjectDetailPageProps) {
                 >
                     <IconArrowLeft className="size-5" />
                 </Button>
-                <span className="text-sm text-muted-foreground">
-                    Back to workspace
-                </span>
+                <h1 className="truncate text-lg font-semibold">{project.name}</h1>
             </div>
 
-            {/* Project Detail Component */}
-            <ProjectDetail
-                projectId={projectId}
-                onVideoSelect={handleVideoSelect}
-                onAddVideo={handleAddVideo}
-            />
+            {/* Main content area with ProjectDetail component */}
+            {/* @validates Requirement 31.3 - Mobile-friendly experience */}
+            <div className="flex-1 overflow-auto p-4 sm:p-6">
+                <ProjectDetail
+                    projectId={projectId}
+                    onVideoSelect={handleVideoSelect}
+                    onAddVideo={handleAddVideo}
+                    className={cn(
+                        "mx-auto max-w-7xl",
+                        // Responsive padding adjustments
+                        "px-0 sm:px-2"
+                    )}
+                />
+            </div>
         </div>
     );
 }

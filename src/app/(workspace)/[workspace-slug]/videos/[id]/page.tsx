@@ -2,27 +2,27 @@
 
 import { use, useCallback, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import Link from "next/link";
 import {
     IconArrowLeft,
     IconAlertCircle,
     IconLoader2,
     IconVideo,
-    IconRefresh,
 } from "@tabler/icons-react";
 
-import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Badge } from "@/components/ui/badge";
-import { Spinner } from "@/components/ui/spinner";
-import { EmptyState } from "@/components/ui/empty-state";
-import { LazyVideoPlayer, LazyTranscriptEditor } from "@/components/lazy";
-import type { VideoPlayerRef } from "@/components/video/video-player";
-import type { TranscriptEditorRef } from "@/components/transcript/transcript-editor";
+import { Skeleton } from "@/components/ui/skeleton";
+import { SkeletonVideo, SkeletonTranscript, SkeletonList } from "@/components/ui/skeletons";
+import {
+    ResizablePanel,
+    ResizableHandle,
+} from "@/components/ui/resizable";
+import { Group as PanelGroup } from "react-resizable-panels";
+import { VideoPlayer, type VideoPlayerRef } from "@/components/video/video-player";
+import { TranscriptEditor, type TranscriptEditorRef } from "@/components/transcript/transcript-editor";
 import { ClipsList } from "@/components/clips/clips-list";
 import { ClipFilters } from "@/components/clips/clip-filters";
-import { useVideo, useVideoStatus } from "@/hooks/useVideo";
+import { useVideo } from "@/hooks/useVideo";
+import { useClipsByVideo } from "@/hooks/useClips";
 import type { ClipFilters as ClipFiltersType } from "@/lib/api/clips";
 
 // ============================================================================
@@ -30,40 +30,20 @@ import type { ClipFilters as ClipFiltersType } from "@/lib/api/clips";
 // ============================================================================
 
 interface VideoDetailPageProps {
-    params: Promise<{
-        "workspace-slug": string;
-        id: string;
-    }>;
+    params: Promise<{ "workspace-slug": string; id: string }>;
 }
 
 // ============================================================================
-// Status Badge Component
+// Default Filter Values
 // ============================================================================
 
-interface StatusBadgeProps {
-    status: string;
-}
-
-function StatusBadge({ status }: StatusBadgeProps) {
-    const statusConfig: Record<string, { label: string; variant: "default" | "secondary" | "destructive" | "outline"; icon?: React.ReactNode }> = {
-        pending: { label: "Pending", variant: "secondary", icon: <IconLoader2 className="size-3 animate-spin" /> },
-        downloading: { label: "Downloading", variant: "secondary", icon: <IconLoader2 className="size-3 animate-spin" /> },
-        uploading: { label: "Uploading", variant: "secondary", icon: <IconLoader2 className="size-3 animate-spin" /> },
-        transcribing: { label: "Transcribing", variant: "secondary", icon: <IconLoader2 className="size-3 animate-spin" /> },
-        analyzing: { label: "Analyzing", variant: "secondary", icon: <IconLoader2 className="size-3 animate-spin" /> },
-        completed: { label: "Completed", variant: "default" },
-        failed: { label: "Failed", variant: "destructive", icon: <IconAlertCircle className="size-3" /> },
-    };
-
-    const config = statusConfig[status] || { label: status, variant: "outline" as const };
-
-    return (
-        <Badge variant={config.variant} className="gap-1">
-            {config.icon}
-            {config.label}
-        </Badge>
-    );
-}
+const DEFAULT_FILTERS: ClipFiltersType = {
+    minScore: 0,
+    maxScore: 100,
+    favorited: undefined,
+    sortBy: "score",
+    sortOrder: "desc",
+};
 
 // ============================================================================
 // Loading State Component
@@ -71,10 +51,31 @@ function StatusBadge({ status }: StatusBadgeProps) {
 
 function VideoDetailLoading() {
     return (
-        <div className="flex min-h-[50vh] items-center justify-center">
-            <div className="flex flex-col items-center gap-4">
-                <Spinner />
-                <p className="text-sm text-muted-foreground">Loading video...</p>
+        <div className="flex h-full flex-col">
+            {/* Header skeleton */}
+            <div className="flex items-center gap-4 border-b px-4 py-3">
+                <Skeleton className="h-9 w-9 rounded-md" />
+                <Skeleton className="h-6 w-48" />
+            </div>
+
+            {/* Content skeleton - Desktop layout */}
+            <div className="hidden flex-1 md:flex">
+                <div className="flex flex-1 flex-col border-r p-4">
+                    <SkeletonVideo aspectRatio="16:9" showControls className="mb-4" />
+                    <SkeletonTranscript segments={4} />
+                </div>
+                <div className="w-80 p-4">
+                    <Skeleton className="mb-4 h-48 w-full rounded-lg" />
+                    <SkeletonList count={3} itemType="card" gap={12} />
+                </div>
+            </div>
+
+            {/* Content skeleton - Mobile layout */}
+            <div className="flex flex-1 flex-col gap-4 p-4 md:hidden">
+                <SkeletonVideo aspectRatio="16:9" showControls />
+                <SkeletonTranscript segments={3} />
+                <Skeleton className="h-48 w-full rounded-lg" />
+                <SkeletonList count={2} itemType="card" gap={12} />
             </div>
         </div>
     );
@@ -86,158 +87,151 @@ function VideoDetailLoading() {
 
 interface VideoDetailErrorProps {
     error: Error | null;
-    onRetry?: () => void;
+    onBack: () => void;
 }
 
-function VideoDetailError({ error, onRetry }: VideoDetailErrorProps) {
+function VideoDetailError({ error, onBack }: VideoDetailErrorProps) {
     return (
-        <div className="flex min-h-[50vh] items-center justify-center p-4">
-            <EmptyState
-                icon={<IconAlertCircle className="size-6" />}
-                title="Failed to load video"
-                description={error?.message || "An error occurred while loading the video. Please try again."}
-                action={
-                    onRetry
-                        ? {
-                            label: "Try again",
-                            onClick: onRetry,
-                        }
-                        : undefined
-                }
-            />
+        <div className="flex h-full flex-col items-center justify-center gap-4 p-8">
+            <div className="flex size-16 items-center justify-center rounded-full bg-destructive/10">
+                <IconAlertCircle className="size-8 text-destructive" />
+            </div>
+            <div className="text-center">
+                <h2 className="text-lg font-semibold">Failed to load video</h2>
+                <p className="mt-1 text-sm text-muted-foreground">
+                    {error?.message || "An error occurred while loading the video."}
+                </p>
+            </div>
+            <Button onClick={onBack} variant="outline">
+                <IconArrowLeft className="mr-2 size-4" />
+                Go Back
+            </Button>
         </div>
     );
 }
 
 // ============================================================================
-// Not Found State Component
+// Video Not Found Component
 // ============================================================================
 
 interface VideoNotFoundProps {
-    workspaceSlug: string;
+    onBack: () => void;
 }
 
-function VideoNotFound({ workspaceSlug }: VideoNotFoundProps) {
+function VideoNotFound({ onBack }: VideoNotFoundProps) {
     return (
-        <div className="flex min-h-[50vh] items-center justify-center p-4">
-            <EmptyState
-                icon={<IconVideo className="size-6" />}
-                title="Video not found"
-                description="The video you're looking for doesn't exist or has been deleted."
-                action={{
-                    label: "Go back to workspace",
-                    onClick: () => window.location.href = `/${workspaceSlug}`,
-                }}
-            />
+        <div className="flex h-full flex-col items-center justify-center gap-4 p-8">
+            <div className="flex size-16 items-center justify-center rounded-full bg-muted">
+                <IconVideo className="size-8 text-muted-foreground" />
+            </div>
+            <div className="text-center">
+                <h2 className="text-lg font-semibold">Video not found</h2>
+                <p className="mt-1 text-sm text-muted-foreground">
+                    The video you&apos;re looking for doesn&apos;t exist or has been deleted.
+                </p>
+            </div>
+            <Button onClick={onBack} variant="outline">
+                <IconArrowLeft className="mr-2 size-4" />
+                Go Back
+            </Button>
         </div>
     );
 }
 
 // ============================================================================
-// Processing State Component
+// Video Processing State Component
 // ============================================================================
 
 interface VideoProcessingProps {
     status: string;
-    progress?: number;
+    title?: string;
 }
 
-function VideoProcessing({ status, progress }: VideoProcessingProps) {
+function VideoProcessing({ status, title }: VideoProcessingProps) {
     const statusMessages: Record<string, string> = {
-        pending: "Your video is queued for processing...",
-        downloading: "Downloading video from source...",
-        uploading: "Uploading video to storage...",
-        transcribing: "Generating transcript with AI...",
-        analyzing: "Detecting viral clips...",
+        downloading: "Downloading video...",
+        uploading: "Uploading video...",
+        transcribing: "Transcribing audio...",
+        analyzing: "Analyzing for viral clips...",
+        processing: "Processing video...",
     };
 
     return (
-        <div className="flex flex-col items-center justify-center gap-4 py-12">
-            <div className="relative">
-                <div className="size-16 rounded-full border-4 border-muted" />
-                <div className="absolute inset-0 size-16 rounded-full border-4 border-primary border-t-transparent animate-spin" />
-            </div>
-            <div className="text-center space-y-2">
-                <h3 className="font-medium">Processing Video</h3>
-                <p className="text-sm text-muted-foreground">
+        <div className="flex h-64 flex-col items-center justify-center gap-4 rounded-lg border bg-muted/30">
+            <IconLoader2 className="size-8 animate-spin text-primary" />
+            <div className="text-center">
+                <h3 className="font-medium">{title || "Video"}</h3>
+                <p className="mt-1 text-sm text-muted-foreground">
                     {statusMessages[status] || "Processing..."}
                 </p>
-                {progress !== undefined && progress > 0 && (
-                    <p className="text-xs text-muted-foreground">{progress}% complete</p>
-                )}
             </div>
         </div>
     );
 }
-
 
 // ============================================================================
 // Main Video Detail Page Component
 // ============================================================================
 
 /**
- * Video Detail Page
+ * VideoDetailPage - Displays video player, transcript editor, and clips list
  * 
- * Displays video player, transcript editor, and clips list for a specific video.
- * Handles loading, error, and processing states.
+ * Features:
+ * - Video playback with custom controls
+ * - Transcript editing with word-level timing
+ * - Clips list with filtering and sorting
+ * - Responsive layout with resizable panels on desktop
+ * - Navigation to clip editor on clip selection
  * 
- * Route: /{workspace-slug}/videos/{id}
- * 
- * @validates Requirements 4.1, 6.1, 8.1
+ * @validates Requirements 4.1, 5.1, 6.1, 7.1
  */
 export default function VideoDetailPage({ params }: VideoDetailPageProps) {
-    const { "workspace-slug": workspaceSlug, id: videoId } = use(params);
+    const { "workspace-slug": slug, id: videoId } = use(params);
     const router = useRouter();
 
-    // Refs for component communication
+    // Refs for video player and transcript editor
     const videoPlayerRef = useRef<VideoPlayerRef>(null);
     const transcriptEditorRef = useRef<TranscriptEditorRef>(null);
 
-    // State
+    // State for current playback time and clip filters
     const [currentTime, setCurrentTime] = useState(0);
     const [selectedClipId, setSelectedClipId] = useState<string | undefined>();
-    const [clipFilters, setClipFilters] = useState<ClipFiltersType>({
-        sortBy: "score",
-        sortOrder: "desc",
-    });
-    const [activeTab, setActiveTab] = useState<string>("clips");
+    const [clipFilters, setClipFilters] = useState<ClipFiltersType>(DEFAULT_FILTERS);
+    const [clipsViewMode, setClipsViewMode] = useState<"grid" | "list">("list");
 
     // Fetch video data
     const {
         data: video,
         isLoading: videoLoading,
         error: videoError,
-        refetch: refetchVideo,
     } = useVideo(videoId);
 
-    // Poll for status updates if video is processing
-    const isProcessing = video?.status && !["completed", "failed"].includes(video.status);
-    const { data: statusData } = useVideoStatus(videoId, isProcessing);
+    // Fetch clips data for filter counts
+    const { data: clips } = useClipsByVideo(videoId, clipFilters);
+    const { data: allClips } = useClipsByVideo(videoId);
 
-    // Use status data if available, otherwise use video data
-    const currentVideo = statusData?.video || video;
-    const currentStatus = currentVideo?.status || "pending";
+    // Navigation handlers
+    const handleBack = useCallback(() => {
+        router.push(`/${slug}`);
+    }, [router, slug]);
 
-    // Handle time update from video player
+    const handleClipSelect = useCallback(
+        (clipId: string) => {
+            setSelectedClipId(clipId);
+            // Navigate to clip editor
+            router.push(`/${slug}/clips/${clipId}`);
+        },
+        [router, slug]
+    );
+
+    // Video player time update handler
     const handleTimeUpdate = useCallback((time: number) => {
         setCurrentTime(time);
     }, []);
 
-    // Handle segment click from transcript editor - seek video
+    // Transcript segment click handler - seek video to timestamp
     const handleSegmentClick = useCallback((timestamp: number) => {
         videoPlayerRef.current?.seek(timestamp);
-    }, []);
-
-    // Handle clip selection - navigate to clip editor
-    const handleClipSelect = useCallback((clipId: string) => {
-        setSelectedClipId(clipId);
-        // Navigate to clip editor page
-        router.push(`/${workspaceSlug}/clips/${clipId}`);
-    }, [router, workspaceSlug]);
-
-    // Handle filter changes
-    const handleFiltersChange = useCallback((filters: ClipFiltersType) => {
-        setClipFilters(filters);
     }, []);
 
     // Loading state
@@ -247,270 +241,166 @@ export default function VideoDetailPage({ params }: VideoDetailPageProps) {
 
     // Error state
     if (videoError) {
-        return (
-            <VideoDetailError
-                error={videoError as Error}
-                onRetry={() => refetchVideo()}
-            />
-        );
+        return <VideoDetailError error={videoError as Error} onBack={handleBack} />;
     }
 
     // Not found state
-    if (!currentVideo) {
-        return <VideoNotFound workspaceSlug={workspaceSlug} />;
+    if (!video) {
+        return <VideoNotFound onBack={handleBack} />;
     }
 
-    // Failed state
-    if (currentStatus === "failed") {
-        return (
-            <div className="container max-w-7xl py-6 space-y-6">
-                {/* Header */}
-                <div className="flex items-center gap-4">
-                    <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => router.push(`/${workspaceSlug}`)}
-                        aria-label="Go back"
-                    >
-                        <IconArrowLeft className="size-5" />
-                    </Button>
-                    <div className="flex-1 min-w-0">
-                        <h1 className="text-xl font-semibold truncate">
-                            {currentVideo.title || "Untitled Video"}
-                        </h1>
-                    </div>
-                    <StatusBadge status={currentStatus} />
-                </div>
+    // Check if video is still processing
+    const isProcessing = ["downloading", "uploading", "transcribing", "analyzing", "processing"].includes(
+        video.status
+    );
 
-                {/* Error message */}
-                <EmptyState
-                    icon={<IconAlertCircle className="size-6" />}
-                    title="Video processing failed"
-                    description={currentVideo.errorMessage || "An error occurred while processing this video."}
-                    action={{
-                        label: "Go back to workspace",
-                        onClick: () => router.push(`/${workspaceSlug}`),
-                    }}
-                />
-            </div>
-        );
-    }
-
-
-    // Processing state - show progress
-    if (isProcessing) {
-        return (
-            <div className="container max-w-7xl py-6 space-y-6">
-                {/* Header */}
-                <div className="flex items-center gap-4">
-                    <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => router.push(`/${workspaceSlug}`)}
-                        aria-label="Go back"
-                    >
-                        <IconArrowLeft className="size-5" />
-                    </Button>
-                    <div className="flex-1 min-w-0">
-                        <h1 className="text-xl font-semibold truncate">
-                            {currentVideo.title || "Untitled Video"}
-                        </h1>
-                    </div>
-                    <StatusBadge status={currentStatus} />
-                </div>
-
-                {/* Processing indicator */}
-                <div className="rounded-lg border bg-card">
-                    <VideoProcessing status={currentStatus} />
-                </div>
-            </div>
-        );
-    }
-
-    // Completed state - show full interface
-    const videoUrl = currentVideo.storageUrl || "";
-    const thumbnailUrl = (currentVideo.metadata?.thumbnail as string) || undefined;
+    // Get video source URL and thumbnail
+    const videoSrc = video.storageUrl || video.sourceUrl || "";
+    const thumbnailUrl = (video.metadata?.thumbnail as string) || undefined;
 
     return (
-        <div className="container max-w-7xl py-4 md:py-6 px-4 md:px-6 space-y-4 md:space-y-6">
-            {/* Header - Responsive layout for mobile */}
-            {/* @validates Requirement 31.3 - Mobile-friendly experience */}
-            <div className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4">
-                <div className="flex items-center gap-3 sm:gap-4">
-                    <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => router.push(`/${workspaceSlug}`)}
-                        aria-label="Go back"
-                        className="shrink-0"
-                    >
-                        <IconArrowLeft className="size-5" />
-                    </Button>
-                    <div className="flex-1 min-w-0">
-                        <h1 className="text-lg sm:text-xl font-semibold truncate">
-                            {currentVideo.title || "Untitled Video"}
-                        </h1>
-                        {currentVideo.duration && (
-                            <p className="text-xs sm:text-sm text-muted-foreground">
-                                Duration: {formatDuration(currentVideo.duration)}
-                            </p>
-                        )}
-                    </div>
-                </div>
-                <div className="flex justify-end sm:justify-start">
-                    <StatusBadge status={currentStatus} />
-                </div>
+        <div className="flex h-full flex-col">
+            {/* Header with back button and video title */}
+            <div className="flex items-center gap-4 border-b px-4 py-3">
+                <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={handleBack}
+                    aria-label="Go back"
+                >
+                    <IconArrowLeft className="size-5" />
+                </Button>
+                <h1 className="truncate text-lg font-semibold">{video.title}</h1>
             </div>
 
-            {/* Main Content Grid - Responsive for desktop/tablet/mobile */}
-            {/* @validates Requirements 31.1, 31.2, 31.3 - Desktop, tablet, mobile layouts */}
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 md:gap-6">
-                {/* Left Column - Video Player */}
-                <div className="lg:col-span-2 space-y-4">
-                    {/* Video Player (Requirement 8.1) - Maintains aspect ratio */}
-                    {/* @validates Requirement 31.4 - Video aspect ratio maintenance */}
-                    {/* @validates Requirements 35.1, 35.2 - Lazy loaded for code splitting */}
-                    {videoUrl ? (
-                        <LazyVideoPlayer
-                            src={videoUrl}
-                            poster={thumbnailUrl}
-                            onTimeUpdate={handleTimeUpdate}
-                            className="aspect-video w-full rounded-lg overflow-hidden"
-                        />
-                    ) : (
-                        <div className="aspect-video w-full rounded-lg border bg-muted flex items-center justify-center">
-                            <div className="text-center space-y-2">
-                                <IconVideo className="size-8 sm:size-12 mx-auto text-muted-foreground" />
-                                <p className="text-xs sm:text-sm text-muted-foreground">Video not available</p>
+            {/* Desktop Layout - Resizable panels */}
+            <div className="hidden flex-1 overflow-hidden md:block">
+                <PanelGroup orientation="horizontal" className="h-full">
+                    {/* Left Panel - Video Player and Transcript */}
+                    <ResizablePanel defaultSize={65} minSize={40}>
+                        <div className="flex h-full flex-col overflow-hidden">
+                            {/* Video Player */}
+                            <div className="shrink-0 p-4 pb-2">
+                                {isProcessing ? (
+                                    <VideoProcessing status={video.status} title={video.title ?? undefined} />
+                                ) : videoSrc ? (
+                                    <VideoPlayer
+                                        ref={videoPlayerRef}
+                                        src={videoSrc}
+                                        poster={thumbnailUrl}
+                                        onTimeUpdate={handleTimeUpdate}
+                                        className="aspect-video w-full"
+                                    />
+                                ) : (
+                                    <div className="flex aspect-video w-full items-center justify-center rounded-lg border bg-muted">
+                                        <p className="text-sm text-muted-foreground">
+                                            Video source not available
+                                        </p>
+                                    </div>
+                                )}
+                            </div>
+
+                            {/* Transcript Editor */}
+                            <div className="min-h-0 flex-1 overflow-hidden px-4 pb-4">
+                                <TranscriptEditor
+                                    ref={transcriptEditorRef}
+                                    videoId={videoId}
+                                    currentTime={currentTime}
+                                    onSegmentClick={handleSegmentClick}
+                                />
                             </div>
                         </div>
-                    )}
+                    </ResizablePanel>
 
-                    {/* Tabs for Transcript and Details */}
-                    <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-                        <TabsList className="w-full justify-start overflow-x-auto">
-                            <TabsTrigger value="clips" className="text-sm">Clips</TabsTrigger>
-                            <TabsTrigger value="transcript" className="text-sm">Transcript</TabsTrigger>
-                        </TabsList>
+                    <ResizableHandle withHandle />
 
-                        {/* Clips Tab (Requirement 6.1) */}
-                        <TabsContent value="clips" className="mt-4">
-                            <div className="space-y-4">
-                                {/* Filters - Collapsible on mobile */}
+                    {/* Right Panel - Clips Filters and List */}
+                    <ResizablePanel defaultSize={35} minSize={25}>
+                        <div className="flex h-full flex-col overflow-hidden">
+                            {/* Clip Filters */}
+                            <div className="shrink-0 p-4 pb-2">
                                 <ClipFilters
                                     filters={clipFilters}
-                                    onChange={handleFiltersChange}
-                                    totalCount={0}
-                                    filteredCount={0}
+                                    onChange={setClipFilters}
+                                    totalCount={allClips?.length || 0}
+                                    filteredCount={clips?.length || 0}
+                                    syncToUrl={false}
                                 />
+                            </div>
 
-                                {/* Clips List */}
+                            {/* Clips List */}
+                            <div className="min-h-0 flex-1 overflow-auto px-4 pb-4">
                                 <ClipsList
                                     videoId={videoId}
                                     onClipSelect={handleClipSelect}
                                     selectedClipId={selectedClipId}
                                     filters={clipFilters}
-                                    viewMode="grid"
+                                    viewMode={clipsViewMode}
+                                    onViewModeChange={setClipsViewMode}
                                 />
                             </div>
-                        </TabsContent>
+                        </div>
+                    </ResizablePanel>
+                </PanelGroup>
+            </div>
 
-                        {/* Transcript Tab (Requirement 4.1) */}
-                        {/* @validates Requirements 35.1, 35.2 - Lazy loaded for code splitting */}
-                        <TabsContent value="transcript" className="mt-4">
-                            <LazyTranscriptEditor
-                                videoId={videoId}
-                                currentTime={currentTime}
-                                onSegmentClick={handleSegmentClick}
-                            />
-                        </TabsContent>
-                    </Tabs>
+            {/* Mobile Layout - Stacked panels */}
+            {/* @validates Requirement 31.3 - Mobile-friendly experience */}
+            <div className="flex flex-1 flex-col gap-4 overflow-auto p-4 md:hidden">
+                {/* Video Player */}
+                <div className="shrink-0">
+                    {isProcessing ? (
+                        <VideoProcessing status={video.status} title={video.title ?? undefined} />
+                    ) : videoSrc ? (
+                        <VideoPlayer
+                            ref={videoPlayerRef}
+                            src={videoSrc}
+                            poster={thumbnailUrl}
+                            onTimeUpdate={handleTimeUpdate}
+                            className="aspect-video w-full"
+                        />
+                    ) : (
+                        <div className="flex aspect-video w-full items-center justify-center rounded-lg border bg-muted">
+                            <p className="text-sm text-muted-foreground">
+                                Video source not available
+                            </p>
+                        </div>
+                    )}
                 </div>
 
-                {/* Right Column - Quick Info Panel */}
-                {/* On mobile, this appears below the main content */}
-                <div className="space-y-4 order-last lg:order-0">
-                    {/* Video Info Card */}
-                    <div className="rounded-lg border bg-card p-3 sm:p-4 space-y-3 sm:space-y-4">
-                        <h3 className="font-medium text-sm sm:text-base">Video Details</h3>
-                        <dl className="space-y-2 text-xs sm:text-sm">
-                            <div className="flex justify-between">
-                                <dt className="text-muted-foreground">Source</dt>
-                                <dd className="capitalize">{currentVideo.sourceType}</dd>
-                            </div>
-                            {currentVideo.duration && (
-                                <div className="flex justify-between">
-                                    <dt className="text-muted-foreground">Duration</dt>
-                                    <dd>{formatDuration(currentVideo.duration)}</dd>
-                                </div>
-                            )}
-                            {typeof currentVideo.metadata?.fileSize === 'number' && (
-                                <div className="flex justify-between">
-                                    <dt className="text-muted-foreground">File Size</dt>
-                                    <dd>{formatFileSize(currentVideo.metadata.fileSize)}</dd>
-                                </div>
-                            )}
-                            <div className="flex justify-between items-center">
-                                <dt className="text-muted-foreground">Status</dt>
-                                <dd><StatusBadge status={currentStatus} /></dd>
-                            </div>
-                            {currentVideo.createdAt && (
-                                <div className="flex justify-between">
-                                    <dt className="text-muted-foreground">Created</dt>
-                                    <dd>{new Date(currentVideo.createdAt).toLocaleDateString()}</dd>
-                                </div>
-                            )}
-                        </dl>
-                    </div>
+                {/* Transcript Editor */}
+                <div className="shrink-0">
+                    <TranscriptEditor
+                        ref={transcriptEditorRef}
+                        videoId={videoId}
+                        currentTime={currentTime}
+                        onSegmentClick={handleSegmentClick}
+                    />
+                </div>
 
-                    {/* Quick Actions */}
-                    <div className="rounded-lg border bg-card p-3 sm:p-4 space-y-3">
-                        <h3 className="font-medium text-sm sm:text-base">Quick Actions</h3>
-                        <div className="space-y-2">
-                            <Button
-                                variant="outline"
-                                className="w-full justify-start text-sm"
-                                onClick={() => refetchVideo()}
-                            >
-                                <IconRefresh className="size-4 mr-2" />
-                                Refresh Data
-                            </Button>
-                        </div>
-                    </div>
+                {/* Clip Filters */}
+                <div className="shrink-0">
+                    <ClipFilters
+                        filters={clipFilters}
+                        onChange={setClipFilters}
+                        totalCount={allClips?.length || 0}
+                        filteredCount={clips?.length || 0}
+                        syncToUrl={false}
+                    />
+                </div>
+
+                {/* Clips List */}
+                <div className="shrink-0">
+                    <ClipsList
+                        videoId={videoId}
+                        onClipSelect={handleClipSelect}
+                        selectedClipId={selectedClipId}
+                        filters={clipFilters}
+                        viewMode={clipsViewMode}
+                        onViewModeChange={setClipsViewMode}
+                    />
                 </div>
             </div>
         </div>
     );
-}
-
-
-// ============================================================================
-// Utility Functions
-// ============================================================================
-
-/**
- * Format duration in seconds to MM:SS or HH:MM:SS format
- */
-function formatDuration(seconds: number): string {
-    if (!isFinite(seconds) || isNaN(seconds) || seconds < 0) return "0:00";
-
-    const hrs = Math.floor(seconds / 3600);
-    const mins = Math.floor((seconds % 3600) / 60);
-    const secs = Math.floor(seconds % 60);
-
-    if (hrs > 0) {
-        return `${hrs}:${mins.toString().padStart(2, "0")}:${secs.toString().padStart(2, "0")}`;
-    }
-    return `${mins}:${secs.toString().padStart(2, "0")}`;
-}
-
-/**
- * Format file size in bytes to human-readable format
- */
-function formatFileSize(bytes: number): string {
-    if (bytes === 0) return "0 B";
-    const k = 1024;
-    const sizes = ["B", "KB", "MB", "GB"];
-    const i = Math.floor(Math.log(bytes) / Math.log(k));
-    return `${parseFloat((bytes / Math.pow(k, i)).toFixed(1))} ${sizes[i]}`;
 }
