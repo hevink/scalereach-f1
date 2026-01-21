@@ -7,3 +7,5 @@ export { VideoPlayer } from "./video-player";
 export type { VideoPlayerProps, VideoPlayerRef } from "./video-player";
 export { ProcessingStatus } from "./processing-status";
 export type { ProcessingStatusProps } from "./processing-status";
+export { VideoCard } from "./video-card";
+export { VideoGrid } from "./video-grid";

@@ -1,7 +1,19 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { IconChevronLeft, IconChevronRight } from "@tabler/icons-react";
+import {
+  IconBrandInstagram,
+  IconBrandLinkedin,
+  IconBrandTiktok,
+  IconBrandYoutube,
+  IconBriefcase,
+  IconChevronLeft,
+  IconChevronRight,
+  IconMicrophone,
+  IconMovie,
+  IconUsers,
+  IconVideo,
+} from "@tabler/icons-react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
@@ -15,7 +27,8 @@ import { Spinner } from "@/components/ui/spinner";
 import { Textarea } from "@/components/ui/textarea";
 import { authClient } from "@/lib/auth-client";
 import { useCreateWorkspace } from "@/hooks/useWorkspace";
-import { workspaceApi } from "@/lib/api";
+import { workspaceApi, userApi } from "@/lib/api";
+import { cn } from "@/lib/utils";
 
 const SLUG_REGEX = /^[a-zA-Z0-9_-]+$/;
 const MIN_SLUG_LENGTH = 3;
@@ -24,6 +37,21 @@ const MIN_NAME_LENGTH = 1;
 const MAX_NAME_LENGTH = 100;
 const MAX_DESCRIPTION_LENGTH = 500;
 const SLUG_DEBOUNCE_MS = 300;
+
+const ROLES = [
+  { id: "creator", label: "Content Creator", icon: IconVideo },
+  { id: "agency", label: "Marketing Agency", icon: IconBriefcase },
+  { id: "social-manager", label: "Social Media Manager", icon: IconUsers },
+  { id: "podcaster", label: "Podcaster", icon: IconMicrophone },
+  { id: "other", label: "Other", icon: IconMovie },
+] as const;
+
+const PLATFORMS = [
+  { id: "tiktok", label: "TikTok", icon: IconBrandTiktok, color: "hover:border-pink-500 hover:bg-pink-500/10" },
+  { id: "youtube", label: "YouTube", icon: IconBrandYoutube, color: "hover:border-red-500 hover:bg-red-500/10" },
+  { id: "instagram", label: "Instagram", icon: IconBrandInstagram, color: "hover:border-purple-500 hover:bg-purple-500/10" },
+  { id: "linkedin", label: "LinkedIn", icon: IconBrandLinkedin, color: "hover:border-blue-500 hover:bg-blue-500/10" },
+] as const;
 
 const onboardingSchema = z.object({
   name: z
@@ -45,6 +73,8 @@ const onboardingSchema = z.object({
       `Description must be at most ${MAX_DESCRIPTION_LENGTH} characters`
     )
     .optional(),
+  role: z.string().optional(),
+  primaryPlatforms: z.array(z.string()).optional(),
 });
 
 type OnboardingFormData = z.infer<typeof onboardingSchema>;
@@ -85,6 +115,8 @@ export function OnboardingForm() {
   const [checkingSlug, setCheckingSlug] = useState(false);
   const slugDebounceRef = useRef<NodeJS.Timeout | null>(null);
   const slugManuallyEditedRef = useRef<boolean>(false);
+  const [selectedRole, setSelectedRole] = useState<string | null>(null);
+  const [selectedPlatforms, setSelectedPlatforms] = useState<string[]>([]);
 
   const createWorkspaceMutation = useCreateWorkspace();
   const isLoading = createWorkspaceMutation.isPending;
@@ -97,6 +129,8 @@ export function OnboardingForm() {
       name: "",
       slug: "",
       description: "",
+      role: "",
+      primaryPlatforms: [],
     },
     mode: "onChange",
   });
@@ -113,7 +147,7 @@ export function OnboardingForm() {
   }, [currentStep]);
 
   useEffect(() => {
-    if (currentStep !== 3) {
+    if (currentStep !== 4) {
       return;
     }
 
@@ -159,11 +193,11 @@ export function OnboardingForm() {
         | typeof nameSchema
         | typeof slugSchema
         | typeof descriptionSchema;
-      if (step === 2) {
+      if (step === 3) {
         schema = nameSchema;
-      } else if (step === 3) {
-        schema = slugSchema;
       } else if (step === 4) {
+        schema = slugSchema;
+      } else if (step === 5) {
         schema = descriptionSchema;
       } else {
         return true;
@@ -190,44 +224,71 @@ export function OnboardingForm() {
   }, [slugAvailable, slug]);
 
   const handleNext = useCallback(async () => {
-    if (currentStep === 5) {
+    if (currentStep === 7) {
       return;
     }
 
-    if (currentStep === 3) {
-      const isValid = await validateStep(3);
+    if (currentStep === 4) {
+      const isValid = await validateStep(4);
       if (!isValid) {
         return;
       }
       if (!validateSlugAvailability()) {
         return;
       }
-    } else if (currentStep !== 1 && currentStep !== 5) {
+    } else if (currentStep === 3 || currentStep === 5) {
       const isValid = await validateStep(currentStep);
       if (!isValid) {
         return;
       }
     }
 
-    setCurrentStep((prev) => Math.min(prev + 1, 5));
+    setCurrentStep((prev) => Math.min(prev + 1, 7));
   }, [currentStep, validateStep, validateSlugAvailability]);
 
   const handlePrev = useCallback(() => {
     setCurrentStep((prev) => Math.max(prev - 1, 1));
   }, []);
 
+  const handleRoleSelect = (roleId: string) => {
+    setSelectedRole(roleId);
+    form.setValue("role", roleId);
+  };
+
+  const handlePlatformToggle = (platformId: string) => {
+    setSelectedPlatforms((prev) => {
+      const newPlatforms = prev.includes(platformId)
+        ? prev.filter((p) => p !== platformId)
+        : [...prev, platformId];
+      form.setValue("primaryPlatforms", newPlatforms);
+      return newPlatforms;
+    });
+  };
+
   const handleSubmit = useCallback(async () => {
-    const isValid = await form.trigger();
+    const isValid = await form.trigger(["name", "slug", "description"]);
     if (!isValid) {
       toast.error("Please fix all errors before submitting");
       return;
     }
 
-    if (currentStep === 3 && !validateSlugAvailability()) {
+    if (!validateSlugAvailability()) {
       return;
     }
 
     const formData = form.getValues();
+
+    // First update user with role and platforms
+    try {
+      await userApi.updateCurrentUser({
+        role: selectedRole || undefined,
+        primaryPlatforms: selectedPlatforms.length > 0 ? selectedPlatforms : undefined,
+      });
+    } catch (error) {
+      console.error("Error updating user preferences:", error);
+      // Continue with workspace creation even if this fails
+    }
+
     createWorkspaceMutation.mutate(
       {
         name: formData.name.trim(),
@@ -236,7 +297,7 @@ export function OnboardingForm() {
       },
       {
         onSuccess: () => {
-          setCurrentStep(5);
+          setCurrentStep(7);
         },
         onError: (error: any) => {
           console.error("Error creating workspace:", error);
@@ -244,10 +305,10 @@ export function OnboardingForm() {
         },
       }
     );
-  }, [currentStep, form, validateSlugAvailability, createWorkspaceMutation]);
+  }, [form, validateSlugAvailability, createWorkspaceMutation, selectedRole, selectedPlatforms]);
 
   useEffect(() => {
-    if (currentStep === 5) {
+    if (currentStep === 7) {
       const timer = setTimeout(() => {
         router.push("/home");
         router.refresh();
@@ -269,7 +330,7 @@ export function OnboardingForm() {
 
   const handleNameChange = (value: string) => {
     form.setValue("name", value);
-    if (currentStep === 2 && !slugManuallyEditedRef.current) {
+    if (currentStep === 3 && !slugManuallyEditedRef.current) {
       const autoSlug = generateSlugFromName(value);
       if (autoSlug.length >= MIN_SLUG_LENGTH) {
         form.setValue("slug", autoSlug);
@@ -296,7 +357,7 @@ export function OnboardingForm() {
       if (
         hasModifiers &&
         event.key === "Enter" &&
-        currentStep === 4 &&
+        currentStep === 5 &&
         !isLoading
       ) {
         event.preventDefault();
@@ -308,10 +369,14 @@ export function OnboardingForm() {
         event.key === "Enter" &&
         !hasModifiers &&
         !isTextarea &&
-        (currentStep === 2 || currentStep === 3)
+        (currentStep === 2 || currentStep === 3 || currentStep === 4 || currentStep === 6)
       ) {
         event.preventDefault();
-        handleNext();
+        if (currentStep === 6) {
+          handleSubmit();
+        } else {
+          handleNext();
+        }
         return true;
       }
 
@@ -325,9 +390,9 @@ export function OnboardingForm() {
         return true;
       }
 
-      if (event.key === "ArrowRight" && currentStep < 5 && !isLoading) {
+      if (event.key === "ArrowRight" && currentStep < 7 && !isLoading) {
         event.preventDefault();
-        if (currentStep === 4) {
+        if (currentStep === 6) {
           handleSubmit();
         } else {
           handleNext();
@@ -350,13 +415,13 @@ export function OnboardingForm() {
   }, [currentStep, isLoading, handleNext, handlePrev, handleSubmit]);
 
   return (
-    <div className="flex w-full max-w-sm flex-col gap-6">
+    <div className="flex w-full max-w-md flex-col gap-6">
       {/* Header */}
       <div className="flex flex-col items-center justify-center gap-6 text-center">
         <Image alt="Staxk" height={42} src="/logo.svg" width={42} />
 
         {/* Content */}
-        <div className="relative flex min-h-[200px] w-full flex-col gap-6">
+        <div className="relative flex min-h-[320px] w-full flex-col gap-6">
           {/* Step 1: Welcome */}
           <div
             className={`absolute inset-0 flex flex-col gap-2 transition-opacity duration-300 ${currentStep === 1
@@ -373,9 +438,57 @@ export function OnboardingForm() {
             </p>
           </div>
 
-          {/* Step 2: Workspace Name */}
+          {/* Step 2: Role Selection */}
           <div
             className={`absolute inset-0 flex flex-col gap-6 transition-opacity duration-300 ${currentStep === 2
+              ? "pointer-events-auto opacity-100"
+              : "pointer-events-none opacity-0"
+              }`}
+          >
+            <div className="flex flex-col gap-2">
+              <h1 className="font-medium text-xl">What best describes you?</h1>
+              <p className="text-muted-foreground text-sm">This helps us personalize your experience</p>
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              {ROLES.map((role) => {
+                const Icon = role.icon;
+                const isSelected = selectedRole === role.id;
+                return (
+                  <button
+                    key={role.id}
+                    type="button"
+                    onClick={() => handleRoleSelect(role.id)}
+                    className={cn(
+                      "flex flex-col items-center gap-2 rounded-lg border-2 p-4 transition-all",
+                      isSelected
+                        ? "border-primary bg-primary/10"
+                        : "border-border hover:border-primary/50 hover:bg-muted/50"
+                    )}
+                  >
+                    <Icon className={cn("size-6", isSelected ? "text-primary" : "text-muted-foreground")} />
+                    <span className={cn("text-sm font-medium", isSelected ? "text-primary" : "text-foreground")}>
+                      {role.label}
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
+            <div className="flex items-center justify-between gap-4">
+              <Button
+                className="flex-1"
+                disabled={isLoading}
+                onClick={handleNext}
+                type="button"
+              >
+                {selectedRole ? "Continue" : "Skip"}
+                <IconChevronRight className="size-4" />
+              </Button>
+            </div>
+          </div>
+
+          {/* Step 3: Workspace Name */}
+          <div
+            className={`absolute inset-0 flex flex-col gap-6 transition-opacity duration-300 ${currentStep === 3
               ? "pointer-events-auto opacity-100"
               : "pointer-events-none opacity-0"
               }`}
@@ -389,13 +502,23 @@ export function OnboardingForm() {
               <Input
                 id="name"
                 {...form.register("name")}
-                autoFocus={currentStep === 2}
+                autoFocus={currentStep === 3}
                 onChange={(e) => handleNameChange(e.target.value)}
                 placeholder="My Workspace"
               />
               <FieldError>{form.formState.errors.name?.message}</FieldError>
             </div>
             <div className="flex items-center justify-between gap-4">
+              <Button
+                className="flex-1"
+                disabled={isLoading}
+                onClick={handlePrev}
+                type="button"
+                variant="outline"
+              >
+                <IconChevronLeft className="size-4" />
+                Previous
+              </Button>
               <Button
                 className="flex-1"
                 disabled={isLoading}
@@ -408,9 +531,9 @@ export function OnboardingForm() {
             </div>
           </div>
 
-          {/* Step 3: Workspace Slug */}
+          {/* Step 4: Workspace Slug */}
           <div
-            className={`absolute inset-0 flex flex-col gap-6 transition-opacity duration-300 ${currentStep === 3
+            className={`absolute inset-0 flex flex-col gap-6 transition-opacity duration-300 ${currentStep === 4
               ? "pointer-events-auto opacity-100"
               : "pointer-events-none opacity-0"
               }`}
@@ -425,7 +548,7 @@ export function OnboardingForm() {
                 <Input
                   id="slug"
                   {...form.register("slug")}
-                  autoFocus={currentStep === 3}
+                  autoFocus={currentStep === 4}
                   className="pr-20"
                   onChange={(e) => handleSlugChange(e.target.value)}
                   placeholder="my-workspace"
@@ -469,9 +592,9 @@ export function OnboardingForm() {
             </div>
           </div>
 
-          {/* Step 4: Workspace Description */}
+          {/* Step 5: Workspace Description */}
           <div
-            className={`absolute inset-0 flex flex-col gap-6 transition-opacity duration-300 ${currentStep === 4
+            className={`absolute inset-0 flex flex-col gap-6 transition-opacity duration-300 ${currentStep === 5
               ? "pointer-events-auto opacity-100"
               : "pointer-events-none opacity-0"
               }`}
@@ -486,13 +609,78 @@ export function OnboardingForm() {
               <Textarea
                 id="description"
                 {...form.register("description")}
-                autoFocus={currentStep === 4}
+                autoFocus={currentStep === 5}
                 placeholder="A brief description of what this workspace is for..."
                 rows={4}
               />
               <FieldError>
                 {form.formState.errors.description?.message}
               </FieldError>
+            </div>
+            <div className="flex items-center justify-between gap-4">
+              <Button
+                className="flex-1"
+                disabled={isLoading}
+                onClick={handlePrev}
+                type="button"
+                variant="outline"
+              >
+                <IconChevronLeft className="size-4" />
+                Previous
+              </Button>
+              <Button
+                className="flex-1"
+                disabled={isLoading}
+                onClick={handleNext}
+                type="button"
+              >
+                Continue
+                <IconChevronRight className="size-4" />
+              </Button>
+            </div>
+          </div>
+
+          {/* Step 6: Platform Selection */}
+          <div
+            className={`absolute inset-0 flex flex-col gap-6 transition-opacity duration-300 ${currentStep === 6
+              ? "pointer-events-auto opacity-100"
+              : "pointer-events-none opacity-0"
+              }`}
+          >
+            <div className="flex flex-col gap-2">
+              <h1 className="font-medium text-xl">Where do you post your clips?</h1>
+              <p className="text-muted-foreground text-sm">Select all that apply</p>
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              {PLATFORMS.map((platform) => {
+                const Icon = platform.icon;
+                const isSelected = selectedPlatforms.includes(platform.id);
+                return (
+                  <button
+                    key={platform.id}
+                    type="button"
+                    onClick={() => handlePlatformToggle(platform.id)}
+                    className={cn(
+                      "flex flex-col items-center gap-2 rounded-lg border-2 p-4 transition-all",
+                      isSelected
+                        ? "border-primary bg-primary/10"
+                        : `border-border ${platform.color}`
+                    )}
+                  >
+                    <Icon className={cn(
+                      "size-8",
+                      isSelected ? "text-primary" : "text-muted-foreground",
+                      platform.id === "tiktok" && isSelected && "text-pink-500",
+                      platform.id === "youtube" && isSelected && "text-red-500",
+                      platform.id === "instagram" && isSelected && "text-purple-500",
+                      platform.id === "linkedin" && isSelected && "text-blue-500"
+                    )} />
+                    <span className={cn("text-sm font-medium", isSelected ? "text-primary" : "text-foreground")}>
+                      {platform.label}
+                    </span>
+                  </button>
+                );
+              })}
             </div>
             <div className="flex items-center justify-between gap-4">
               <Button
@@ -517,9 +705,9 @@ export function OnboardingForm() {
             </div>
           </div>
 
-          {/* Step 5: Success */}
+          {/* Step 7: Success */}
           <div
-            className={`absolute inset-0 flex flex-col gap-2 transition-opacity duration-300 ${currentStep === 5
+            className={`absolute inset-0 flex flex-col gap-2 transition-opacity duration-300 ${currentStep === 7
               ? "pointer-events-auto opacity-100"
               : "pointer-events-none opacity-0"
               }`}

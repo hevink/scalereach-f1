@@ -288,6 +288,7 @@ export function ClipFilters({
             )}
             role="region"
             aria-label="Clip filters"
+            data-testid="clip-filters"
         >
             {/* Header with filter icon and count - Responsive layout */}
             {/* @validates Requirement 31.3 - Mobile-friendly experience */}
@@ -302,16 +303,16 @@ export function ClipFilters({
                     )}
                 </div>
                 {/* Filtered count display - Requirement 7.5 */}
-                <span className="text-muted-foreground text-xs sm:text-sm">
+                <span className="text-muted-foreground text-xs sm:text-sm" data-testid="filtered-count">
                     {filteredCount} of {totalCount} clips
                 </span>
             </div>
 
             {/* Score Range Filter - Requirement 7.1 */}
-            <div className="flex flex-col gap-2">
+            <div className="flex flex-col gap-2" data-testid="score-filter">
                 <div className="flex items-center justify-between">
                     <Label className="text-xs sm:text-sm font-medium">Score Range</Label>
-                    <span className="text-muted-foreground text-xs tabular-nums">
+                    <span className="text-muted-foreground text-xs tabular-nums" data-testid="score-range-display">
                         {minScore} - {maxScore}
                     </span>
                 </div>
@@ -323,6 +324,7 @@ export function ClipFilters({
                     step={1}
                     aria-label="Score range filter"
                     className="touch-none"
+                    data-testid="score-range-slider"
                 />
                 <div className="flex items-center justify-between">
                     <span className="text-muted-foreground text-xs">0</span>
@@ -331,7 +333,7 @@ export function ClipFilters({
             </div>
 
             {/* Favorites Toggle - Requirement 7.2 */}
-            <div className="flex items-center justify-between">
+            <div className="flex items-center justify-between" data-testid="favorites-filter">
                 <div className="flex items-center gap-2">
                     <IconHeart className="size-4 text-muted-foreground" />
                     <Label htmlFor="favorites-filter" className="text-xs sm:text-sm font-medium">
@@ -343,24 +345,25 @@ export function ClipFilters({
                     checked={filters.favorited === true}
                     onCheckedChange={handleFavoritesToggle}
                     aria-label="Show favorites only"
+                    data-testid="favorites-toggle"
                 />
             </div>
 
             {/* Sort Controls - Requirement 7.3 */}
             {/* @validates Requirement 31.3 - Mobile-friendly sort controls */}
-            <div className="flex flex-col gap-2">
+            <div className="flex flex-col gap-2" data-testid="sort-controls">
                 <Label className="text-xs sm:text-sm font-medium">Sort By</Label>
                 <div className="flex items-center gap-2">
                     <Select
                         value={filters.sortBy}
                         onValueChange={handleSortByChange}
                     >
-                        <SelectTrigger className="flex-1 h-10 sm:h-9 text-xs sm:text-sm" aria-label="Sort by">
+                        <SelectTrigger className="flex-1 h-10 sm:h-9 text-xs sm:text-sm" aria-label="Sort by" data-testid="sort-by-select">
                             <SelectValue />
                         </SelectTrigger>
                         <SelectContent>
                             {SORT_OPTIONS.map((option) => (
-                                <SelectItem key={option.value} value={option.value}>
+                                <SelectItem key={option.value} value={option.value} data-testid={`sort-option-${option.value}`}>
                                     <span className="flex items-center gap-2">
                                         {option.icon}
                                         <span className="text-xs sm:text-sm">{option.label}</span>
@@ -376,6 +379,7 @@ export function ClipFilters({
                         aria-label={`Sort ${filters.sortOrder === "asc" ? "ascending" : "descending"}`}
                         title={filters.sortOrder === "asc" ? "Ascending" : "Descending"}
                         className="h-10 w-10 sm:h-9 sm:w-9 shrink-0"
+                        data-testid="sort-order-toggle"
                     >
                         {filters.sortOrder === "asc" ? (
                             <IconSortAscending className="size-4" />
@@ -393,6 +397,7 @@ export function ClipFilters({
                     size="sm"
                     onClick={handleResetFilters}
                     className="w-full text-xs sm:text-sm"
+                    data-testid="reset-filters-button"
                 >
                     Reset Filters
                 </Button>

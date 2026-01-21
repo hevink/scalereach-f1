@@ -6,7 +6,6 @@ import { useSession } from "@/lib/auth-client";
 import { useWorkspaceBySlug } from "@/hooks/useWorkspace";
 import { useMyVideos, useValidateYouTubeUrl, useSubmitYouTubeUrl, videoKeys } from "@/hooks/useVideo";
 import { Spinner } from "@/components/ui/spinner";
-import { SkeletonVideoGrid } from "@/components/ui/skeletons";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -31,6 +30,7 @@ import Uppy from "@uppy/core";
 import AwsS3 from "@uppy/aws-s3";
 import { useQueryClient } from "@tanstack/react-query";
 import type { VideoInfo } from "@/lib/api/video";
+import { VideoGrid } from "@/components/video/video-grid";
 
 // Import integrated components
 import { ProjectList } from "@/components/project/project-list";
@@ -433,63 +433,11 @@ export default function WorkspacePage({ params }: WorkspacePageProps) {
 
             {/* Videos Tab Content */}
             <TabsContent value="videos" className="mt-0">
-              {videosLoading ? (
-                /* Skeleton loading state - matches video grid layout to prevent layout shift */
-                /* @validates Requirements 29.1, 29.2, 29.3, 29.4 */
-                <SkeletonVideoGrid count={10} />
-              ) : videos && videos.length > 0 ? (
-                /* Responsive video grid - 1 col mobile, 2 col sm, 3 col md, 4 col lg, 5 col xl */
-                /* @validates Requirements 31.1, 31.2, 31.3 - Desktop, tablet, mobile layouts */
-                <div className="grid grid-cols-1 xs:grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3 sm:gap-4">
-                  {videos.map((video) => (
-                    <div
-                      key={video.id}
-                      className="group relative cursor-pointer"
-                      onClick={() => router.push(`/${slug}/videos/${video.id}`)}
-                    >
-                      {/* Video thumbnail - Maintains aspect ratio */}
-                      {/* @validates Requirement 31.4 - Video aspect ratio maintenance */}
-                      <div className="aspect-video bg-muted rounded-lg overflow-hidden relative">
-                        {video.sourceType === "youtube" && video.sourceUrl ? (
-                          <img src={`https://img.youtube.com/vi/${video.sourceUrl.match(/[a-zA-Z0-9_-]{11}/)?.[0]}/mqdefault.jpg`} alt={video.title || ""} className="w-full h-full object-cover" />
-                        ) : (
-                          <div className="w-full h-full flex items-center justify-center">
-                            <IconFile className="size-6 sm:size-8 text-muted-foreground" />
-                          </div>
-                        )}
-                        <div className="absolute top-1.5 sm:top-2 right-1.5 sm:right-2">
-                          {(video.status === "downloading" || video.status === "uploading" || video.status === "transcribing" || video.status === "analyzing") ? (
-                            <Badge variant="secondary" className="text-xs gap-1"><IconLoader2 className="size-3 animate-spin" />Processing</Badge>
-                          ) : video.status === "failed" ? (
-                            <Badge variant="destructive" className="text-xs">Failed</Badge>
-                          ) : null}
-                        </div>
-                        {video.duration && (
-                          <div className="absolute bottom-1.5 sm:bottom-2 left-1.5 sm:left-2 bg-black/70 text-white text-xs px-1 sm:px-1.5 py-0.5 rounded">{formatDuration(video.duration)}</div>
-                        )}
-                        <div className="absolute bottom-1.5 sm:bottom-2 right-1.5 sm:right-2 bg-black/70 text-white text-xs px-1 sm:px-1.5 py-0.5 rounded flex items-center gap-1">
-                          <IconClock className="size-3" />7 days
-                        </div>
-                      </div>
-                      <div className="mt-1.5 sm:mt-2 flex items-start justify-between gap-2">
-                        <div className="min-w-0">
-                          <p className="text-xs sm:text-sm font-medium truncate">{video.title}</p>
-                          <p className="text-xs text-muted-foreground capitalize">{video.sourceType}</p>
-                        </div>
-                        <Button variant="ghost" size="icon" className="size-6 shrink-0 opacity-0 group-hover:opacity-100 transition-opacity" onClick={(e) => e.stopPropagation()}>
-                          <IconDots className="size-4" />
-                        </Button>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <div className="text-center py-8 sm:py-12 text-muted-foreground">
-                  <IconVideo className="size-10 sm:size-12 mx-auto mb-3 sm:mb-4 opacity-50" />
-                  <p className="font-medium text-sm sm:text-base">No videos yet</p>
-                  <p className="text-xs sm:text-sm">Upload a video to get started!</p>
-                </div>
-              )}
+              <VideoGrid
+                videos={videos || []}
+                onVideoClick={(videoId) => router.push(`/${slug}/videos/${videoId}/clips`)}
+                isLoading={videosLoading}
+              />
             </TabsContent>
 
             {/* Projects Tab Content - Requirement 25.1 */}

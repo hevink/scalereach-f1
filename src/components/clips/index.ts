@@ -1,6 +1,13 @@
 export { ClipsList, type ClipsListProps } from "./clips-list";
+export { ClipListItem, type ClipListItemProps } from "./clip-list-item";
 export { ClipFilters, type ClipFiltersProps } from "./clip-filters";
 export { ClipPreview, type ClipPreviewProps } from "./clip-preview";
+export { ClipsGrid, type ClipsGridProps } from "./clips-grid";
+export {
+    ClipDetailModal,
+    useClipModalUrlState,
+    type ClipDetailModalProps,
+} from "./clip-detail-modal";
 export {
     TimelineEditor,
     type TimelineEditorProps,
@@ -21,3 +28,14 @@ export {
     ClipBoundaryEditor,
     type ClipBoundaryEditorProps,
 } from "./clip-boundary-editor";
+export {
+    ViralScoreDisplay,
+    type ViralScoreDisplayProps,
+} from "./viral-score-display";
+export {
+    ViralAnalysisPanel,
+    type ViralAnalysisPanelProps,
+    type ViralAnalysis,
+    type KeyMoment,
+    type EngagementMetrics,
+} from "./viral-analysis-panel";

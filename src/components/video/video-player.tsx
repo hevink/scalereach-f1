@@ -66,6 +66,12 @@ export interface VideoPlayerProps {
      * @validates Requirement 35.3 - Playback starts within 2 seconds
      */
     preload?: "auto" | "metadata" | "none";
+    /**
+     * Show full/expanded controls for modal use
+     * When true, displays larger controls, hover overlay, and enhanced progress bar
+     * @validates Requirements 3.5, 4.1-4.6
+     */
+    showFullControls?: boolean;
 }
 
 export interface VideoPlayerRef {
@@ -326,6 +332,7 @@ export const VideoPlayer = forwardRef<VideoPlayerRef, VideoPlayerProps>(
             loop = false,
             className,
             preload = "auto", // Default to auto for fast playback start (Requirement 35.3)
+            showFullControls = false, // Enhanced controls for modal use
         },
         ref
     ) {
@@ -333,6 +340,7 @@ export const VideoPlayer = forwardRef<VideoPlayerRef, VideoPlayerProps>(
         const videoRef = useRef<HTMLVideoElement>(null);
         const containerRef = useRef<HTMLDivElement>(null);
         const controlsTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+        const progressBarRef = useRef<HTMLDivElement>(null);
 
         // State
         const [isPlaying, setIsPlaying] = useState(false);
@@ -343,6 +351,10 @@ export const VideoPlayer = forwardRef<VideoPlayerRef, VideoPlayerProps>(
         const [isFullscreen, setIsFullscreen] = useState(false);
         const [showControls, setShowControls] = useState(true);
         const [isLoading, setIsLoading] = useState(true);
+        const [isHovering, setIsHovering] = useState(false);
+        const [isDraggingProgress, setIsDraggingProgress] = useState(false);
+        const [hoverTime, setHoverTime] = useState<number | null>(null);
+        const [hoverPosition, setHoverPosition] = useState<number>(0);
 
         // Computed values
         const effectiveEndTime = endTime ?? duration;
@@ -468,6 +480,72 @@ export const VideoPlayer = forwardRef<VideoPlayerRef, VideoPlayerProps>(
             },
             [startTime, effectiveDuration]
         );
+
+        /**
+         * Handle progress bar mouse/touch events for drag-to-seek
+         * @validates Requirement 4.4 - Progress bar for seeking
+         */
+        const calculateTimeFromPosition = useCallback(
+            (clientX: number): number => {
+                if (!progressBarRef.current) return startTime;
+                const rect = progressBarRef.current.getBoundingClientRect();
+                const position = Math.max(0, Math.min(1, (clientX - rect.left) / rect.width));
+                return startTime + position * effectiveDuration;
+            },
+            [startTime, effectiveDuration]
+        );
+
+        const handleProgressBarMouseDown = useCallback(
+            (e: React.MouseEvent<HTMLDivElement>) => {
+                e.preventDefault();
+                setIsDraggingProgress(true);
+                const newTime = calculateTimeFromPosition(e.clientX);
+                if (videoRef.current) {
+                    videoRef.current.currentTime = newTime;
+                }
+            },
+            [calculateTimeFromPosition]
+        );
+
+        const handleProgressBarMouseMove = useCallback(
+            (e: React.MouseEvent<HTMLDivElement>) => {
+                if (!progressBarRef.current) return;
+                const rect = progressBarRef.current.getBoundingClientRect();
+                const position = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
+                const time = startTime + position * effectiveDuration;
+                setHoverTime(time);
+                setHoverPosition(position * 100);
+            },
+            [startTime, effectiveDuration]
+        );
+
+        const handleProgressBarMouseLeave = useCallback(() => {
+            setHoverTime(null);
+        }, []);
+
+        // Global mouse move/up handlers for drag-to-seek
+        useEffect(() => {
+            if (!isDraggingProgress) return;
+
+            const handleMouseMove = (e: MouseEvent) => {
+                const newTime = calculateTimeFromPosition(e.clientX);
+                if (videoRef.current) {
+                    videoRef.current.currentTime = newTime;
+                }
+            };
+
+            const handleMouseUp = () => {
+                setIsDraggingProgress(false);
+            };
+
+            document.addEventListener("mousemove", handleMouseMove);
+            document.addEventListener("mouseup", handleMouseUp);
+
+            return () => {
+                document.removeEventListener("mousemove", handleMouseMove);
+                document.removeEventListener("mouseup", handleMouseUp);
+            };
+        }, [isDraggingProgress, calculateTimeFromPosition]);
 
         const handleVolumeChange = useCallback((value: number | readonly number[]) => {
             const volumeValue = Array.isArray(value) ? value[0] : value;
@@ -603,7 +681,13 @@ export const VideoPlayer = forwardRef<VideoPlayerRef, VideoPlayerProps>(
             if (isPlaying) {
                 setShowControls(false);
             }
+            setIsHovering(false);
         }, [isPlaying]);
+
+        const handleMouseEnter = useCallback(() => {
+            setIsHovering(true);
+            showControlsTemporarily();
+        }, [showControlsTemporarily]);
 
         // Show controls when paused
         useEffect(() => {
@@ -652,9 +736,12 @@ export const VideoPlayer = forwardRef<VideoPlayerRef, VideoPlayerProps>(
                     )}
                     onMouseMove={handleMouseMove}
                     onMouseLeave={handleMouseLeave}
+                    onMouseEnter={handleMouseEnter}
                     tabIndex={0}
                     role="application"
                     aria-label="Video player"
+                    data-testid="video-player"
+                    data-show-full-controls={showFullControls}
                 >
                     {/* Video Element */}
                     {/* @validates Requirement 35.3 - Playback starts within 2 seconds */}
@@ -690,37 +777,95 @@ export const VideoPlayer = forwardRef<VideoPlayerRef, VideoPlayerProps>(
                         currentTime={currentTime}
                     />
 
-                    {/* Play/Pause Overlay (center) */}
-                    {!isPlaying && !isLoading && (
+                    {/* Play/Pause Overlay (center) - Shows when paused or on hover with showFullControls */}
+                    {/* @validates Requirements 4.1, 4.5 - Play/pause functionality */}
+                    {((!isPlaying && !isLoading) || (showFullControls && isHovering && !isLoading)) && (
                         <button
-                            className="absolute inset-0 flex items-center justify-center bg-black/30 transition-opacity focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-black"
+                            className={cn(
+                                "absolute inset-0 flex items-center justify-center transition-opacity focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-black",
+                                !isPlaying ? "bg-black/30" : "bg-black/20 opacity-0 hover:opacity-100"
+                            )}
                             onClick={togglePlay}
-                            aria-label="Play video"
+                            aria-label={isPlaying ? "Pause video" : "Play video"}
+                            data-testid="play-pause-overlay"
                         >
-                            <div className="w-16 h-16 rounded-full bg-white/90 flex items-center justify-center">
-                                <IconPlayerPlay className="w-8 h-8 text-black ml-1" aria-hidden="true" />
+                            <div className={cn(
+                                "rounded-full bg-white/90 flex items-center justify-center transition-transform hover:scale-110",
+                                showFullControls ? "w-20 h-20" : "w-16 h-16"
+                            )}>
+                                {isPlaying ? (
+                                    <IconPlayerPause className={cn(
+                                        "text-black",
+                                        showFullControls ? "w-10 h-10" : "w-8 h-8"
+                                    )} aria-hidden="true" />
+                                ) : (
+                                    <IconPlayerPlay className={cn(
+                                        "text-black ml-1",
+                                        showFullControls ? "w-10 h-10" : "w-8 h-8"
+                                    )} aria-hidden="true" />
+                                )}
                             </div>
                         </button>
                     )}
 
                     {/* Controls Bar */}
+                    {/* @validates Requirement 4.6 - Controls accessible via keyboard */}
                     <div
                         className={cn(
-                            "absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent px-4 py-3 transition-opacity duration-300",
+                            "absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent transition-opacity duration-300",
+                            showFullControls ? "px-5 py-4" : "px-4 py-3",
                             showControls ? "opacity-100" : "opacity-0 pointer-events-none"
                         )}
+                        data-testid="controls-bar"
                     >
-                        {/* Progress Bar */}
-                        <div className="mb-2">
-                            <Slider
-                                value={[progress]}
-                                min={0}
-                                max={100}
-                                step={0.1}
-                                onValueChange={handleSeek}
-                                className="cursor-pointer [&_[data-slot=slider-track]]:h-1 [&_[data-slot=slider-track]]:bg-white/30 [&_[data-slot=slider-range]]:bg-white [&_[data-slot=slider-thumb]]:size-3 [&_[data-slot=slider-thumb]]:border-white hover:[&_[data-slot=slider-track]]:h-1.5"
+                        {/* Progress Bar with enhanced seek functionality */}
+                        {/* @validates Requirement 4.4 - Progress bar for seeking */}
+                        <div className="mb-2 relative">
+                            {/* Time tooltip on hover */}
+                            {hoverTime !== null && (
+                                <div
+                                    className="absolute -top-8 transform -translate-x-1/2 bg-black/90 text-white text-xs px-2 py-1 rounded pointer-events-none z-20"
+                                    style={{ left: `${hoverPosition}%` }}
+                                    data-testid="progress-time-tooltip"
+                                >
+                                    {formatTime(hoverTime - startTime)}
+                                </div>
+                            )}
+                            {/* Enhanced progress bar with drag-to-seek */}
+                            <div
+                                ref={progressBarRef}
+                                className={cn(
+                                    "relative cursor-pointer",
+                                    showFullControls && "py-1"
+                                )}
+                                onMouseDown={handleProgressBarMouseDown}
+                                onMouseMove={handleProgressBarMouseMove}
+                                onMouseLeave={handleProgressBarMouseLeave}
+                                role="slider"
                                 aria-label="Seek"
-                            />
+                                aria-valuemin={0}
+                                aria-valuemax={100}
+                                aria-valuenow={Math.round(progress)}
+                                aria-valuetext={`${formatTime(relativeTime)} of ${formatTime(effectiveDuration)}`}
+                                tabIndex={0}
+                                data-testid="progress-bar"
+                            >
+                                <Slider
+                                    value={[progress]}
+                                    min={0}
+                                    max={100}
+                                    step={0.1}
+                                    onValueChange={handleSeek}
+                                    className={cn(
+                                        "cursor-pointer pointer-events-none",
+                                        "[&_[data-slot=slider-track]]:bg-white/30 [&_[data-slot=slider-range]]:bg-white [&_[data-slot=slider-thumb]]:border-white",
+                                        showFullControls
+                                            ? "[&_[data-slot=slider-track]]:h-2 [&_[data-slot=slider-thumb]]:size-4 hover:[&_[data-slot=slider-track]]:h-2.5"
+                                            : "[&_[data-slot=slider-track]]:h-1 [&_[data-slot=slider-thumb]]:size-3 hover:[&_[data-slot=slider-track]]:h-1.5"
+                                    )}
+                                    aria-hidden="true"
+                                />
+                            </div>
                         </div>
 
                         {/* Controls Row */}
@@ -728,9 +873,13 @@ export const VideoPlayer = forwardRef<VideoPlayerRef, VideoPlayerProps>(
                             {/* Left Controls */}
                             <div className="flex items-center gap-1">
                                 {/* Play/Pause */}
+                                {/* @validates Requirement 4.1 - Play/pause button */}
                                 <ControlButton
                                     onClick={togglePlay}
-                                    icon={isPlaying ? <IconPlayerPause className="w-5 h-5" /> : <IconPlayerPlay className="w-5 h-5" />}
+                                    icon={isPlaying
+                                        ? <IconPlayerPause className={cn(showFullControls ? "w-6 h-6" : "w-5 h-5")} />
+                                        : <IconPlayerPlay className={cn(showFullControls ? "w-6 h-6" : "w-5 h-5")} />
+                                    }
                                     label={isPlaying ? "Pause" : "Play"}
                                     shortcut="Space"
                                 />
@@ -738,7 +887,7 @@ export const VideoPlayer = forwardRef<VideoPlayerRef, VideoPlayerProps>(
                                 {/* Skip Backward */}
                                 <ControlButton
                                     onClick={seekBackward}
-                                    icon={<IconRewindBackward5 className="w-4 h-4" />}
+                                    icon={<IconRewindBackward5 className={cn(showFullControls ? "w-5 h-5" : "w-4 h-4")} />}
                                     label="Rewind 5s"
                                     shortcut="←"
                                 />
@@ -746,40 +895,57 @@ export const VideoPlayer = forwardRef<VideoPlayerRef, VideoPlayerProps>(
                                 {/* Skip Forward */}
                                 <ControlButton
                                     onClick={seekForward}
-                                    icon={<IconRewindForward5 className="w-4 h-4" />}
+                                    icon={<IconRewindForward5 className={cn(showFullControls ? "w-5 h-5" : "w-4 h-4")} />}
                                     label="Forward 5s"
                                     shortcut="→"
                                 />
 
-                                {/* Volume */}
-                                <div className="flex items-center gap-1 ml-2">
+                                {/* Volume - Enhanced for modal use */}
+                                {/* @validates Requirement 4.2 - Volume control with mute toggle */}
+                                <div className="flex items-center gap-1 ml-2 group/volume">
                                     <ControlButton
                                         onClick={toggleMute}
                                         icon={
                                             isMuted || volume === 0 ? (
-                                                <IconVolumeOff className="w-5 h-5" />
+                                                <IconVolumeOff className={cn(showFullControls ? "w-6 h-6" : "w-5 h-5")} />
                                             ) : (
-                                                <IconVolume className="w-5 h-5" />
+                                                <IconVolume className={cn(showFullControls ? "w-6 h-6" : "w-5 h-5")} />
                                             )
                                         }
                                         label={isMuted ? "Unmute" : "Mute"}
                                         shortcut="M"
                                     />
-                                    <div className="w-20 hidden sm:block">
+                                    <div className={cn(
+                                        "hidden sm:block transition-all duration-200",
+                                        showFullControls ? "w-24" : "w-20 group-hover/volume:w-24"
+                                    )}>
                                         <Slider
                                             value={[isMuted ? 0 : volume * 100]}
                                             min={0}
                                             max={100}
                                             step={1}
                                             onValueChange={handleVolumeChange}
-                                            className="cursor-pointer [&_[data-slot=slider-track]]:h-1 [&_[data-slot=slider-track]]:bg-white/30 [&_[data-slot=slider-range]]:bg-white [&_[data-slot=slider-thumb]]:size-3 [&_[data-slot=slider-thumb]]:border-white"
+                                            className={cn(
+                                                "cursor-pointer [&_[data-slot=slider-track]]:bg-white/30 [&_[data-slot=slider-range]]:bg-white [&_[data-slot=slider-thumb]]:border-white",
+                                                showFullControls
+                                                    ? "[&_[data-slot=slider-track]]:h-1.5 [&_[data-slot=slider-thumb]]:size-4"
+                                                    : "[&_[data-slot=slider-track]]:h-1 [&_[data-slot=slider-thumb]]:size-3"
+                                            )}
                                             aria-label="Volume"
+                                            data-testid="volume-slider"
                                         />
                                     </div>
                                 </div>
 
                                 {/* Time Display */}
-                                <span className="text-white text-sm ml-3 tabular-nums">
+                                {/* @validates Requirement 4.3 - Current time and total duration display */}
+                                <span
+                                    className={cn(
+                                        "text-white ml-3 tabular-nums",
+                                        showFullControls ? "text-base" : "text-sm"
+                                    )}
+                                    data-testid="time-display"
+                                >
                                     {formatTime(relativeTime)} / {formatTime(effectiveDuration)}
                                 </span>
                             </div>
@@ -787,13 +953,14 @@ export const VideoPlayer = forwardRef<VideoPlayerRef, VideoPlayerProps>(
                             {/* Right Controls */}
                             <div className="flex items-center gap-1">
                                 {/* Fullscreen */}
+                                {/* @validates Requirement 4.5 - Fullscreen toggle */}
                                 <ControlButton
                                     onClick={toggleFullscreen}
                                     icon={
                                         isFullscreen ? (
-                                            <IconMinimize className="w-5 h-5" />
+                                            <IconMinimize className={cn(showFullControls ? "w-6 h-6" : "w-5 h-5")} />
                                         ) : (
-                                            <IconMaximize className="w-5 h-5" />
+                                            <IconMaximize className={cn(showFullControls ? "w-6 h-6" : "w-5 h-5")} />
                                         )
                                     }
                                     label={isFullscreen ? "Exit fullscreen" : "Fullscreen"}
