@@ -107,8 +107,20 @@ export function useSubmitYouTubeUrl() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: ({ youtubeUrl, projectId, workspaceSlug }: { youtubeUrl: string; projectId?: string; workspaceSlug?: string }) =>
-      videoApi.submitYouTubeUrl(youtubeUrl, projectId, workspaceSlug),
+    mutationFn: ({ youtubeUrl, projectId, workspaceSlug, config }: { 
+      youtubeUrl: string; 
+      projectId?: string; 
+      workspaceSlug?: string;
+      config?: {
+        skipClipping?: boolean;
+        clipModel?: string;
+        genre?: string;
+        clipDurationMin?: number;
+        clipDurationMax?: number;
+        aspectRatio?: string;
+      };
+    }) =>
+      videoApi.submitYouTubeUrl(youtubeUrl, projectId, workspaceSlug, config),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: videoKeys.myVideos() });
     },

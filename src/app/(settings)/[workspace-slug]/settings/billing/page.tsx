@@ -368,8 +368,8 @@ export default function BillingPage({ params }: { params: Promise<{ "workspace-s
     const { "workspace-slug": slug } = use(params);
     const { data: workspace, isLoading } = useWorkspaceBySlug(slug);
 
-    // TODO: Get actual plan from subscription data
-    const currentPlan = "free";
+    // Get plan from workspace data
+    const currentPlan = workspace?.plan || "free";
 
     if (isLoading) {
         return (

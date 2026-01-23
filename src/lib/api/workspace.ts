@@ -6,6 +6,7 @@ export interface Workspace {
   slug: string;
   description: string | null;
   logo?: string | null;
+  plan?: "free" | "pro" | "agency";
   ownerId?: string;
   role: "owner" | "admin" | "member";
   createdAt: string;

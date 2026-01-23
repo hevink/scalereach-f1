@@ -99,7 +99,7 @@ export function NavFooter({ currentSlug }: NavFooterProps) {
       <SidebarMenuItem>
         <PricingDialog
           workspaceId={workspace?.id}
-          currentPlan="free"
+          currentPlan={workspace?.plan || "free"}
           trigger={
             <SidebarMenuButton
               tooltip="Upgrade Plan"

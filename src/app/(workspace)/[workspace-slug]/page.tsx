@@ -243,12 +243,9 @@ export default function WorkspacePage({ params }: WorkspacePageProps) {
 
   const handleSubmitYouTube = useCallback(async () => {
     if (validationState !== "valid" || !url.trim()) return;
-    try {
-      await submitMutation.mutateAsync({ youtubeUrl: url.trim() });
-      toast.success("Video submitted", { description: videoInfo?.title || "Processing started" });
-      setUrl(""); setValidationState("idle"); setVideoInfo(null);
-    } catch { toast.error("Failed to submit video"); }
-  }, [validationState, url, videoInfo, submitMutation]);
+    // Redirect to configure page with URL as query param
+    router.push(`/${slug}/configure?url=${encodeURIComponent(url.trim())}`);
+  }, [validationState, url, slug, router]);
 
   // Project navigation handlers
   const handleProjectSelect = useCallback((projectId: string) => {

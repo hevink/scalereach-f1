@@ -11,6 +11,7 @@ import {
   IconSearch,
   IconSettings,
   IconSettingsFilled,
+  IconTypography,
   IconUsers,
 } from "@tabler/icons-react";
 import { usePathname, useRouter } from "next/navigation";
@@ -134,6 +135,19 @@ export function WorkspaceSettingsSidebar({
         type: "card",
       },
       {
+        title: "Captions",
+        url: `${baseUrl}/captions`,
+        category: "Captions",
+        type: "category",
+      },
+      {
+        title: "Caption Styles",
+        description: "Configure default caption styles and presets for videos.",
+        url: `${baseUrl}/captions`,
+        category: "Captions",
+        type: "card",
+      },
+      {
         title: "Members",
         url: `${baseUrl}/members`,
         category: "Members",
@@ -195,6 +209,12 @@ export function WorkspaceSettingsSidebar({
         url: `${baseUrl}/brand-kit`,
         icon: IconBrush,
         iconFilled: IconBrush,
+      },
+      {
+        title: "Captions",
+        url: `${baseUrl}/captions`,
+        icon: IconTypography,
+        iconFilled: IconTypography,
       },
       {
         title: "Members",
