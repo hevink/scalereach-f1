@@ -5,6 +5,7 @@ import { useCaptionEditor } from "@/hooks/useCaptionEditor";
 import { WordTimeline } from "./word-timeline";
 import { WordEditor } from "./word-editor";
 import { CaptionStylePanel } from "./caption-style-panel";
+import { CaptionLivePreview } from "./caption-live-preview";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Undo2, Redo2, RotateCcw, Save, Loader2 } from "lucide-react";
@@ -190,6 +191,13 @@ export function CaptionEditorPanel({
         </TabsList>
 
         <TabsContent value="words" className="space-y-4 mt-4">
+          {/* Live Preview - shows karaoke effect */}
+          <CaptionLivePreview
+            words={words}
+            style={style}
+            currentTime={currentTime}
+          />
+
           {/* Timeline */}
           <WordTimeline
             words={words}

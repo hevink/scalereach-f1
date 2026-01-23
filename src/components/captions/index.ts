@@ -48,3 +48,4 @@ export {
 export { WordTimeline } from "./word-timeline";
 export { WordEditor } from "./word-editor";
 export { CaptionEditorPanel } from "./caption-editor-panel";
+export { CaptionLivePreview } from "./caption-live-preview";
