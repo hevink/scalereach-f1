@@ -8,7 +8,7 @@ import { CaptionStylePanel } from "./caption-style-panel";
 import { CaptionLivePreview } from "./caption-live-preview";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Undo2, Redo2, RotateCcw, Save, Loader2 } from "lucide-react";
+import { Undo2, Redo2, RotateCcw, Save, Loader2, RefreshCw } from "lucide-react";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -44,6 +44,7 @@ export function CaptionEditorPanel({
     isDirty,
     isLoading,
     isSaving,
+    isRegenerating,
     updateWord,
     addWord,
     removeWord,
@@ -51,6 +52,7 @@ export function CaptionEditorPanel({
     applyTemplate,
     save,
     reset,
+    saveAndRegenerate,
     undo,
     redo,
     canUndo,
@@ -149,6 +151,7 @@ export function CaptionEditorPanel({
             <span className="text-xs text-amber-500">Edited</span>
           )}
           <Button
+            variant="outline"
             size="sm"
             onClick={save}
             disabled={!isDirty || isSaving}
@@ -159,6 +162,18 @@ export function CaptionEditorPanel({
               <Save className="h-4 w-4 mr-1" />
             )}
             Save
+          </Button>
+          <Button
+            size="sm"
+            onClick={saveAndRegenerate}
+            disabled={isSaving || isRegenerating}
+          >
+            {isRegenerating ? (
+              <Loader2 className="h-4 w-4 animate-spin mr-1" />
+            ) : (
+              <RefreshCw className="h-4 w-4 mr-1" />
+            )}
+            Save & Regenerate
           </Button>
         </div>
       </div>

@@ -3,10 +3,12 @@
 import { useState, useCallback, useEffect, useRef } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { captionsApi, CaptionWord, CaptionStyle, ClipCaptionsResponse } from "@/lib/api/captions";
+import { clipsApi } from "@/lib/api/clips";
 import { useUndoRedo } from "./useUndoRedo";
 
 export const captionEditorKeys = {
   captions: (clipId: string) => ["clip-captions", clipId] as const,
+  clipStatus: (clipId: string) => ["clip-status", clipId] as const,
 };
 
 interface CaptionEditorState {
@@ -84,6 +86,15 @@ export function useCaptionEditor(clipId: string) {
       });
       clearHistory();
       setIsDirty(false);
+    },
+  });
+
+  // Regenerate mutation
+  const regenerateMutation = useMutation({
+    mutationFn: () => clipsApi.regenerateClip(clipId),
+    onSuccess: () => {
+      // Invalidate clip status to trigger polling
+      queryClient.invalidateQueries({ queryKey: captionEditorKeys.clipStatus(clipId) });
     },
   });
 
@@ -188,6 +199,17 @@ export function useCaptionEditor(clipId: string) {
     [resetMutation]
   );
 
+  // Save and regenerate - saves captions then triggers video regeneration
+  const saveAndRegenerate = useCallback(async () => {
+    if (saveTimeoutRef.current) {
+      clearTimeout(saveTimeoutRef.current);
+    }
+    // First save the captions
+    await updateWordsMutation.mutateAsync(editorState.words);
+    // Then trigger regeneration
+    await regenerateMutation.mutateAsync();
+  }, [editorState.words, updateWordsMutation, regenerateMutation]);
+
   // Cleanup
   useEffect(() => {
     return () => {
@@ -206,6 +228,7 @@ export function useCaptionEditor(clipId: string) {
     isDirty,
     isLoading,
     isSaving: updateWordsMutation.isPending || updateStyleMutation.isPending,
+    isRegenerating: regenerateMutation.isPending,
     error,
 
     // Word operations
@@ -220,6 +243,7 @@ export function useCaptionEditor(clipId: string) {
     // Actions
     save,
     reset,
+    saveAndRegenerate,
     undo,
     redo,
     canUndo,

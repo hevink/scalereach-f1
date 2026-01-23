@@ -61,10 +61,40 @@ export interface ClipsListResponse {
   filters: ClipFilters;
 }
 
+export interface RegenerateClipResponse {
+  message: string;
+  clipId: string;
+  jobId: string;
+  options: {
+    aspectRatio: AspectRatio;
+    quality: string;
+    startTime: number;
+    endTime: number;
+    duration: number;
+    hasCaptions: boolean;
+    captionWordCount: number;
+  };
+}
+
+export interface ClipStatusResponse {
+  clipId: string;
+  status: ClipStatus;
+  aspectRatio: AspectRatio | null;
+  storageUrl: string | null;
+  errorMessage: string | null;
+  job?: {
+    id: string;
+    state: string;
+    progress: number;
+    failedReason?: string;
+    processedOn?: string;
+    finishedOn?: string;
+  };
+}
+
 export const clipsApi = {
   /**
    * Get all clips for a video with optional filtering and sorting
-   * Requirements: 6.1, 7.4
    */
   getClipsByVideo: async (videoId: string, filters?: Partial<ClipFilters>): Promise<ClipResponse[]> => {
     const searchParams = new URLSearchParams();
@@ -94,7 +124,6 @@ export const clipsApi = {
 
   /**
    * Get a single clip by ID
-   * Requirements: 6.1
    */
   getClipById: async (clipId: string): Promise<ClipResponse> => {
     const response = await api.get<ClipResponse>(`/api/clips/${clipId}`);
@@ -103,7 +132,6 @@ export const clipsApi = {
 
   /**
    * Update clip start and end times
-   * Requirements: 10.8
    */
   updateClipBoundaries: async (
     clipId: string,
@@ -118,7 +146,6 @@ export const clipsApi = {
 
   /**
    * Toggle the favorite status of a clip
-   * Requirements: 9.2
    */
   toggleFavorite: async (clipId: string): Promise<ToggleFavoriteResponse> => {
     const response = await api.post<ToggleFavoriteResponse>(
@@ -129,10 +156,31 @@ export const clipsApi = {
 
   /**
    * Delete a clip
-   * Requirements: 6.1
    */
   deleteClip: async (clipId: string): Promise<DeleteClipResponse> => {
     const response = await api.delete<DeleteClipResponse>(`/api/clips/${clipId}`);
+    return response.data;
+  },
+
+  /**
+   * Regenerate clip with saved captions burned in
+   */
+  regenerateClip: async (
+    clipId: string,
+    options?: { aspectRatio?: AspectRatio; quality?: string }
+  ): Promise<RegenerateClipResponse> => {
+    const response = await api.post<RegenerateClipResponse>(
+      `/api/clips/${clipId}/regenerate`,
+      options || {}
+    );
+    return response.data;
+  },
+
+  /**
+   * Get clip generation status
+   */
+  getClipStatus: async (clipId: string): Promise<ClipStatusResponse> => {
+    const response = await api.get<ClipStatusResponse>(`/api/clips/${clipId}/status`);
     return response.data;
   },
 };
