@@ -369,7 +369,7 @@ export function ClipDetailModal({
         <Dialog open={isOpen} onOpenChange={handleOpenChange}>
             <DialogContent
                 className={cn(
-                    "max-w-2xl max-h-[90vh] overflow-y-auto",
+                    "!max-w-6xl sm:!max-w-4xl max-h-[90vh] overflow-y-auto w-full",
                     className
                 )}
                 showCloseButton={false}
@@ -398,70 +398,76 @@ export function ClipDetailModal({
                             Details for clip: {clip.title}. Viral score: {clip.viralityScore} out of 100.
                         </DialogDescription>
 
-                        {/* Video Player Placeholder - Will be enhanced in task 2.13 */}
-                        <div
-                            className="aspect-video w-full rounded-lg bg-muted flex items-center justify-center"
-                            data-testid="video-player-placeholder"
-                            aria-label="Video player"
-                        >
-                            {clip.storageUrl ? (
-                                <video
-                                    src={clip.storageUrl}
-                                    poster={clip.thumbnailUrl}
-                                    controls
-                                    className="w-full h-full rounded-lg object-contain"
-                                    aria-label={`Video: ${clip.title}`}
-                                >
-                                    Your browser does not support the video tag.
-                                </video>
-                            ) : (
-                                <div className="text-center text-muted-foreground">
-                                    <IconLoader2 className="size-8 mx-auto mb-2 animate-spin" />
-                                    <p className="text-sm">Video loading...</p>
-                                </div>
-                            )}
-                        </div>
-
-                        {/* Metadata (score, duration, hooks) */}
-                        <ClipMetadata clip={clip} />
-
-                        {/* Description / Virality Reason */}
-                        <ClipDescription description={clip.viralityReason} />
-
-                        {/* Viral Analysis Section - Will be enhanced in task 2.11 */}
-                        {clip.viralityReason && (
+                        {/* Main content: Video left, Info right */}
+                        <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+                            {/* Left: Video Player */}
                             <div
-                                className="rounded-lg border bg-muted/50 p-4 space-y-2"
-                                data-testid="viral-analysis-section"
+                                className="aspect-video w-full h-full rounded-lg bg-muted flex items-center justify-center"
+                                data-testid="video-player-placeholder"
+                                aria-label="Video player"
                             >
-                                <h4 className="text-sm font-medium flex items-center gap-2">
-                                    <IconFlame className="size-4 text-orange-500" />
-                                    Why This Clip is Viral
-                                </h4>
-                                <p className="text-sm text-muted-foreground leading-relaxed">
-                                    {clip.viralityReason}
-                                </p>
-
-                                {/* Emotions */}
-                                {clip.emotions.length > 0 && (
-                                    <div className="flex flex-wrap gap-1 pt-2">
-                                        <span className="text-xs text-muted-foreground mr-1">Emotions:</span>
-                                        {clip.emotions.map((emotion, index) => (
-                                            <Badge
-                                                key={`emotion-${index}`}
-                                                variant="secondary"
-                                                className="text-xs"
-                                            >
-                                                {emotion}
-                                            </Badge>
-                                        ))}
+                                {clip.storageUrl ? (
+                                    <video
+                                        src={clip.storageUrl}
+                                        poster={clip.thumbnailUrl}
+                                        controls
+                                        className="w-full h-full rounded-lg object-contain"
+                                        aria-label={`Video: ${clip.title}`}
+                                    >
+                                        Your browser does not support the video tag.
+                                    </video>
+                                ) : (
+                                    <div className="text-center text-muted-foreground">
+                                        <IconLoader2 className="size-8 mx-auto mb-2 animate-spin" />
+                                        <p className="text-sm">Video loading...</p>
                                     </div>
                                 )}
                             </div>
-                        )}
 
-                        {/* Actions */}
-                        <ModalActions clipId={clip.id} onEdit={handleEdit} />
+                            {/* Right: Info */}
+                            <div className="flex flex-col gap-4">
+                                {/* Metadata (score, duration, hooks) */}
+                                <ClipMetadata clip={clip} />
+
+                                {/* Description / Virality Reason */}
+                                <ClipDescription description={clip.viralityReason} />
+
+                                {/* Viral Analysis Section */}
+                                {clip.viralityReason && (
+                                    <div
+                                        className="rounded-lg border bg-muted/50 p-4 space-y-2"
+                                        data-testid="viral-analysis-section"
+                                    >
+                                        <h4 className="text-sm font-medium flex items-center gap-2">
+                                            <IconFlame className="size-4 text-orange-500" />
+                                            Why This Clip is Viral
+                                        </h4>
+                                        <p className="text-sm text-muted-foreground leading-relaxed">
+                                            {clip.viralityReason}
+                                        </p>
+
+                                        {/* Emotions */}
+                                        {clip.emotions.length > 0 && (
+                                            <div className="flex flex-wrap gap-1 pt-2">
+                                                <span className="text-xs text-muted-foreground mr-1">Emotions:</span>
+                                                {clip.emotions.map((emotion, index) => (
+                                                    <Badge
+                                                        key={`emotion-${index}`}
+                                                        variant="secondary"
+                                                        className="text-xs"
+                                                    >
+                                                        {emotion}
+                                                    </Badge>
+                                                ))}
+                                            </div>
+                                        )}
+                                    </div>
+                                )}
+
+                                {/* Actions */}
+                                <ModalActions clipId={clip.id} onEdit={handleEdit} />
+                            </div>
+                        </div>
                     </div>
                 )}
             </DialogContent>

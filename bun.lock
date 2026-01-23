@@ -2,7 +2,7 @@
   "lockfileVersion": 1,
   "workspaces": {
     "": {
-      "name": "staxk",
+      "name": "scalereach-f1",
       "dependencies": {
         "@base-ui/react": "^1.0.0",
         "@better-auth/passkey": "^1.4.10",

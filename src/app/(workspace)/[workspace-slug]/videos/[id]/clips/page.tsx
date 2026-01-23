@@ -1,51 +1,47 @@
 "use client";
 
-import { use, useCallback, useState } from "react";
+import { use, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import {
     IconArrowLeft,
     IconAlertCircle,
     IconVideo,
     IconLoader2,
+    IconFlame,
+    IconClock,
+    IconHeartFilled,
+    IconScissors,
 } from "@tabler/icons-react";
 
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { SkeletonList } from "@/components/ui/skeletons";
-import { ClipFilters } from "@/components/clips/clip-filters";
+import { Badge } from "@/components/ui/badge";
+import { Card, CardContent } from "@/components/ui/card";
 import { ClipDetailModal, useClipModalUrlState } from "@/components/clips/clip-detail-modal";
 import { useVideo } from "@/hooks/useVideo";
 import { useClipsByVideo } from "@/hooks/useClips";
-import type { ClipFilters as ClipFiltersType } from "@/lib/api/clips";
-
-// ============================================================================
-// Types
-// ============================================================================
+import { cn } from "@/lib/utils";
+import type { ClipResponse } from "@/lib/api/clips";
 
 interface VideoClipsPageProps {
     params: Promise<{ "workspace-slug": string; id: string }>;
 }
 
-// ============================================================================
-// Default Filter Values
-// ============================================================================
+function formatDuration(seconds: number): string {
+    const mins = Math.floor(seconds / 60);
+    const secs = Math.floor(seconds % 60);
+    return `${mins}:${secs.toString().padStart(2, "0")}`;
+}
 
-const DEFAULT_FILTERS: ClipFiltersType = {
-    minScore: 0,
-    maxScore: 100,
-    favorited: undefined,
-    sortBy: "score",
-    sortOrder: "desc",
-};
-
-// ============================================================================
-// Loading State Component
-// ============================================================================
+function getScoreColor(score: number): string {
+    if (score >= 70) return "bg-green-500/10 text-green-600 dark:text-green-400";
+    if (score >= 40) return "bg-yellow-500/10 text-yellow-600 dark:text-yellow-400";
+    return "bg-red-500/10 text-red-600 dark:text-red-400";
+}
 
 function VideoClipsLoading() {
     return (
         <div className="flex h-full flex-col">
-            {/* Header skeleton */}
             <div className="flex items-center gap-4 border-b px-4 py-3">
                 <Skeleton className="h-9 w-9 rounded-md" />
                 <div className="flex flex-col gap-1">
@@ -53,22 +49,14 @@ function VideoClipsLoading() {
                     <Skeleton className="h-4 w-32" />
                 </div>
             </div>
-
-            {/* Content skeleton */}
-            <div className="flex flex-1 flex-col gap-4 overflow-auto p-4">
-                {/* Filters skeleton */}
-                <Skeleton className="h-48 w-full max-w-sm rounded-lg" />
-
-                {/* Clips list skeleton */}
-                <SkeletonList count={5} itemType="card" gap={12} />
+            <div className="grid gap-4 p-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+                {Array.from({ length: 8 }).map((_, i) => (
+                    <Skeleton key={i} className="aspect-video rounded-lg" />
+                ))}
             </div>
         </div>
     );
 }
-
-// ============================================================================
-// Error State Component
-// ============================================================================
 
 interface VideoClipsErrorProps {
     error: Error | null;
@@ -95,10 +83,6 @@ function VideoClipsError({ error, onBack }: VideoClipsErrorProps) {
     );
 }
 
-// ============================================================================
-// Video Not Found Component
-// ============================================================================
-
 interface VideoNotFoundProps {
     onBack: () => void;
 }
@@ -122,10 +106,6 @@ function VideoNotFound({ onBack }: VideoNotFoundProps) {
         </div>
     );
 }
-
-// ============================================================================
-// No Clips Component
-// ============================================================================
 
 interface NoClipsProps {
     videoTitle: string;
@@ -160,62 +140,112 @@ function NoClips({ videoTitle, isProcessing }: NoClipsProps) {
     );
 }
 
-// ============================================================================
-// Main Video Clips Page Component
-// ============================================================================
+interface ClipCardProps {
+    clip: ClipResponse;
+    onClick: () => void;
+}
 
-/**
- * VideoClipsPage - Displays all clips from a selected video
- * 
- * Features:
- * - Header with video title and back button
- * - Clips displayed in a list format (NOT cards per requirement 2.2)
- * - Filtering and sorting controls
- * - Click on clip opens ClipDetailModal
- * - URL state sync for deep linking to specific clips
- * - Responsive layout for mobile and desktop
- * 
- * @validates Requirements 2.1, 2.2, 2.3, 2.4, 2.5, 3.1
- */
+function ClipCard({ clip, onClick }: ClipCardProps) {
+    const thumbnailUrl = clip.storageUrl || clip.thumbnailUrl;
+    const scoreColorClass = getScoreColor(clip.viralityScore);
+
+    return (
+        <Card
+            className="group cursor-pointer overflow-hidden transition-all hover:shadow-lg hover:ring-2 hover:ring-primary/20"
+            onClick={onClick}
+        >
+            {/* Thumbnail */}
+            <div className="relative aspect-video bg-muted">
+                {thumbnailUrl ? (
+                    <img
+                        src={thumbnailUrl}
+                        alt={clip.title}
+                        className="h-full w-full object-cover transition-transform group-hover:scale-105"
+                    />
+                ) : (
+                    <div className="flex h-full w-full items-center justify-center">
+                        <IconScissors className="size-12 text-muted-foreground/30" />
+                    </div>
+                )}
+
+                {/* Duration badge */}
+                <div className="absolute right-2 bottom-2 flex items-center gap-1 rounded bg-black/70 px-1.5 py-0.5 text-white text-xs">
+                    <IconClock className="size-3" />
+                    {formatDuration(clip.duration)}
+                </div>
+
+                {/* Viral score badge */}
+                <Badge
+                    className={cn(
+                        "absolute left-2 top-2 flex items-center gap-1",
+                        scoreColorClass
+                    )}
+                >
+                    <IconFlame className="size-3" />
+                    {clip.viralityScore}
+                </Badge>
+
+                {/* Favorite indicator */}
+                {clip.favorited && (
+                    <div className="absolute right-2 top-2">
+                        <IconHeartFilled className="size-5 text-red-500 drop-shadow-md" />
+                    </div>
+                )}
+            </div>
+
+            {/* Content */}
+            <CardContent className="p-3">
+                <h3 className="line-clamp-2 font-medium text-sm leading-tight">
+                    {clip.title}
+                </h3>
+
+                {clip.viralityReason && (
+                    <p className="mt-1 line-clamp-2 text-muted-foreground text-xs">
+                        {clip.viralityReason}
+                    </p>
+                )}
+
+                {clip.hooks.length > 0 && (
+                    <div className="mt-2 flex flex-wrap gap-1">
+                        {clip.hooks.slice(0, 2).map((hook, i) => (
+                            <Badge key={i} variant="outline" className="text-[10px]">
+                                {hook}
+                            </Badge>
+                        ))}
+                        {clip.hooks.length > 2 && (
+                            <Badge variant="outline" className="text-[10px] text-muted-foreground">
+                                +{clip.hooks.length - 2}
+                            </Badge>
+                        )}
+                    </div>
+                )}
+            </CardContent>
+        </Card>
+    );
+}
+
 export default function VideoClipsPage({ params }: VideoClipsPageProps) {
     const { "workspace-slug": slug, id: videoId } = use(params);
     const router = useRouter();
 
-    // State for clip filters
-    const [clipFilters, setClipFilters] = useState<ClipFiltersType>(DEFAULT_FILTERS);
-
-    // Modal state management with URL sync
-    // This enables deep linking to specific clips via ?clip=<clipId>
     const { selectedClipId, isOpen, openModal, closeModal } = useClipModalUrlState();
 
-    // Fetch video data for header
     const {
         data: video,
         isLoading: videoLoading,
         error: videoError,
     } = useVideo(videoId);
 
-    // Fetch clips data with filters
     const {
         data: clips,
         isLoading: clipsLoading,
         error: clipsError,
-    } = useClipsByVideo(videoId, clipFilters);
+    } = useClipsByVideo(videoId);
 
-    // Fetch all clips for filter counts (without filters)
-    const { data: allClips } = useClipsByVideo(videoId);
-
-    // Navigation handlers
     const handleBack = useCallback(() => {
         router.push(`/${slug}/videos/${videoId}`);
     }, [router, slug, videoId]);
 
-    /**
-     * Handle clip selection - opens the ClipDetailModal
-     * Updates URL with ?clip=<clipId> for deep linking
-     * 
-     * @validates Requirements 2.4, 3.1
-     */
     const handleClipSelect = useCallback(
         (clipId: string) => {
             openModal(clipId);
@@ -223,11 +253,6 @@ export default function VideoClipsPage({ params }: VideoClipsPageProps) {
         [openModal]
     );
 
-    /**
-     * Handle edit button click in modal - navigates to clip editor
-     * 
-     * @validates Requirements 3.6, 12.1
-     */
     const handleEditClip = useCallback(
         (clipId: string) => {
             router.push(`/${slug}/clips/${clipId}`);
@@ -235,12 +260,10 @@ export default function VideoClipsPage({ params }: VideoClipsPageProps) {
         [router, slug]
     );
 
-    // Loading state
     if (videoLoading || clipsLoading) {
         return <VideoClipsLoading />;
     }
 
-    // Error state
     if (videoError || clipsError) {
         return (
             <VideoClipsError
@@ -250,19 +273,17 @@ export default function VideoClipsPage({ params }: VideoClipsPageProps) {
         );
     }
 
-    // Not found state
     if (!video) {
         return <VideoNotFound onBack={handleBack} />;
     }
 
-    // Check if video is still processing
     const isProcessing = ["downloading", "uploading", "transcribing", "analyzing", "processing"].includes(
         video.status
     );
 
     return (
         <div className="flex h-full flex-col">
-            {/* Header with back button and video title */}
+            {/* Header */}
             <div className="flex items-center gap-4 border-b px-4 py-3">
                 <Button
                     variant="ghost"
@@ -277,43 +298,29 @@ export default function VideoClipsPage({ params }: VideoClipsPageProps) {
                         {video.title || "Untitled Video"} - Clips
                     </h1>
                     <p className="text-sm text-muted-foreground">
-                        {clips?.length || 0} clip{(clips?.length || 0) !== 1 ? "s" : ""} found
+                        {clips?.length || 0} clip{(clips?.length || 0) !== 1 ? "s" : ""} generated
                     </p>
                 </div>
             </div>
 
-            {/* Content area */}
-            <div className="flex flex-1 flex-col gap-4 overflow-auto p-4 lg:flex-row">
-                {/* Filters sidebar - Desktop: left side, Mobile: top */}
-                <div className="w-full shrink-0 lg:w-72">
-                    <ClipFilters
-                        filters={clipFilters}
-                        onChange={setClipFilters}
-                        totalCount={allClips?.length || 0}
-                        filteredCount={clips?.length || 0}
-                        syncToUrl={true}
+            {/* Clips Grid */}
+            <div className="flex-1 overflow-auto p-4">
+                {!clips || clips.length === 0 ? (
+                    <NoClips
+                        videoTitle={video.title || "this video"}
+                        isProcessing={isProcessing}
                     />
-                </div>
-
-                {/* Clips list */}
-                <div className="min-w-0 flex-1">
-                    {!clips || clips.length === 0 ? (
-                        <NoClips
-                            videoTitle={video.title || "this video"}
-                            isProcessing={isProcessing}
-                        />
-                    ) : (
-                        <div className="flex flex-col gap-3">
-                            {clips.map((clip) => (
-                                <ClipListItem
-                                    key={clip.id}
-                                    clip={clip}
-                                    onClick={() => handleClipSelect(clip.id)}
-                                />
-                            ))}
-                        </div>
-                    )}
-                </div>
+                ) : (
+                    <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+                        {clips.map((clip) => (
+                            <ClipCard
+                                key={clip.id}
+                                clip={clip}
+                                onClick={() => handleClipSelect(clip.id)}
+                            />
+                        ))}
+                    </div>
+                )}
             </div>
 
             {/* Clip Detail Modal */}
@@ -326,9 +333,3 @@ export default function VideoClipsPage({ params }: VideoClipsPageProps) {
         </div>
     );
 }
-
-// ============================================================================
-// Import ClipListItem from shared component
-// ============================================================================
-
-import { ClipListItem } from "@/components/clips/clip-list-item";
