@@ -44,3 +44,7 @@ export {
   CaptionPreview,
   type CaptionPreviewProps,
 } from "./caption-preview";
+
+export { WordTimeline } from "./word-timeline";
+export { WordEditor } from "./word-editor";
+export { CaptionEditorPanel } from "./caption-editor-panel";

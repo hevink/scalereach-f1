@@ -31,10 +31,10 @@ export interface CaptionTemplate {
 }
 
 export interface CaptionWord {
+  id: string;
   word: string;
-  startTime: number;
-  endTime: number;
-  highlight: boolean;
+  start: number;
+  end: number;
 }
 
 export interface Caption {
@@ -43,6 +43,14 @@ export interface Caption {
   startTime: number;
   endTime: number;
   words: CaptionWord[];
+}
+
+export interface ClipCaptionsResponse {
+  clipId: string;
+  words: CaptionWord[];
+  style: CaptionStyle | null;
+  templateId: string | null;
+  isEdited: boolean;
 }
 
 export interface CaptionStyleResponse {
@@ -82,43 +90,101 @@ export interface UpdateCaptionTextResponse {
 export const captionsApi = {
   /**
    * Get all available caption templates
-   * Requirements: 12.1
    */
   getCaptionTemplates: async (): Promise<CaptionTemplate[]> => {
-    const response = await api.get<CaptionTemplate[]>("/api/captions/templates");
+    const response = await api.get<CaptionTemplate[]>("/api/caption-templates");
     return response.data;
   },
 
   /**
-   * Get captions and style for a clip
-   * Requirements: 12.1, 16.5
+   * Get captions and style for a clip (new endpoint)
    */
-  getCaptionsByClip: async (clipId: string): Promise<CaptionsResponse> => {
-    const response = await api.get<CaptionsResponse>(
-      `/api/clips/${clipId}/captions`
-    );
+  getClipCaptions: async (clipId: string): Promise<ClipCaptionsResponse> => {
+    const response = await api.get<ClipCaptionsResponse>(`/api/clips/${clipId}/captions`);
     return response.data;
   },
 
   /**
-   * Update caption style for a clip
-   * Requirements: 12.4, 13.8
+   * Bulk update all caption words
+   */
+  updateCaptionWords: async (clipId: string, words: CaptionWord[]): Promise<ClipCaptionsResponse> => {
+    const response = await api.put<ClipCaptionsResponse>(`/api/clips/${clipId}/captions/words`, { words });
+    return response.data;
+  },
+
+  /**
+   * Update caption style
    */
   updateCaptionStyle: async (
     clipId: string,
-    request: UpdateCaptionStyleRequest
-  ): Promise<UpdateCaptionStyleResponse> => {
-    const response = await api.patch<UpdateCaptionStyleResponse>(
-      `/api/clips/${clipId}/captions/style`,
-      request
+    style: CaptionStyle,
+    templateId?: string
+  ): Promise<ClipCaptionsResponse> => {
+    const response = await api.patch<ClipCaptionsResponse>(`/api/clips/${clipId}/captions/style`, {
+      style,
+      templateId,
+    });
+    return response.data;
+  },
+
+  /**
+   * Add a new word
+   */
+  addCaptionWord: async (
+    clipId: string,
+    word: string,
+    start: number,
+    end: number,
+    afterWordId?: string
+  ): Promise<ClipCaptionsResponse> => {
+    const response = await api.post<ClipCaptionsResponse>(`/api/clips/${clipId}/captions/words`, {
+      word,
+      start,
+      end,
+      afterWordId,
+    });
+    return response.data;
+  },
+
+  /**
+   * Update a single word
+   */
+  updateCaptionWord: async (
+    clipId: string,
+    wordId: string,
+    updates: { word?: string; start?: number; end?: number }
+  ): Promise<ClipCaptionsResponse> => {
+    const response = await api.patch<ClipCaptionsResponse>(
+      `/api/clips/${clipId}/captions/words/${wordId}`,
+      updates
     );
     return response.data;
   },
 
   /**
-   * Update caption text for a specific caption segment
-   * Requirements: 16.5
+   * Remove a word
    */
+  removeCaptionWord: async (clipId: string, wordId: string): Promise<ClipCaptionsResponse> => {
+    const response = await api.delete<ClipCaptionsResponse>(`/api/clips/${clipId}/captions/words/${wordId}`);
+    return response.data;
+  },
+
+  /**
+   * Reset captions to original transcript
+   */
+  resetCaptions: async (clipId: string, resetStyle?: boolean): Promise<ClipCaptionsResponse> => {
+    const response = await api.post<ClipCaptionsResponse>(`/api/clips/${clipId}/captions/reset`, {
+      resetStyle,
+    });
+    return response.data;
+  },
+
+  // Legacy methods for backward compatibility
+  getCaptionsByClip: async (clipId: string): Promise<CaptionsResponse> => {
+    const response = await api.get<CaptionsResponse>(`/api/clips/${clipId}/captions`);
+    return response.data;
+  },
+
   updateCaptionText: async (
     clipId: string,
     request: UpdateCaptionTextRequest
