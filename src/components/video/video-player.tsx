@@ -141,6 +141,7 @@ interface CaptionOverlayProps {
  * Memoized for efficient rendering during playback
  * 
  * @validates Requirement 35.3 - Efficient caption rendering
+ * @validates Requirement 7.2 - Caption overlay shows current caption based on playback time
  */
 const CaptionOverlay = React.memo(function CaptionOverlay({ caption, style, currentTime }: CaptionOverlayProps) {
     if (!caption) return null;
@@ -237,13 +238,14 @@ const CaptionOverlay = React.memo(function CaptionOverlay({ caption, style, curr
     return (
         <div
             className={cn(
-                "absolute left-0 right-0 px-4 pointer-events-none z-10",
+                "absolute left-0 right-0 px-4 pointer-events-none z-10 transition-opacity duration-200",
                 positionClasses[mergedStyle.position],
                 alignmentClasses[mergedStyle.alignment]
             )}
+            data-testid="caption-overlay"
         >
             <div
-                className="inline-block px-3 py-2 rounded-md max-w-[90%]"
+                className="inline-block px-3 py-2 rounded-md max-w-[90%] transition-all duration-200"
                 style={{
                     fontFamily: mergedStyle.fontFamily,
                     fontSize: `${mergedStyle.fontSize}px`,
@@ -597,11 +599,12 @@ export const VideoPlayer = forwardRef<VideoPlayerRef, VideoPlayerProps>(
 
         // ========================================================================
         // Keyboard Shortcuts
+        // @validates Requirements 14.1, 14.2, 14.3 - Keyboard shortcuts for editing
         // ========================================================================
 
         useEffect(() => {
             const handleKeyDown = (e: KeyboardEvent) => {
-                // Only handle if the video player container is focused or no input is focused
+                // Skip if an input element is focused (text editing takes priority)
                 const activeElement = document.activeElement;
                 const isInputFocused =
                     activeElement instanceof HTMLInputElement ||
@@ -610,19 +613,30 @@ export const VideoPlayer = forwardRef<VideoPlayerRef, VideoPlayerProps>(
 
                 if (isInputFocused) return;
 
-                // Check if the event target is within our container
-                if (!containerRef.current?.contains(e.target as Node)) return;
+                // Only handle keyboard events when the video player or its container is focused
+                // Check if:
+                // 1. The container itself is the active element (focused via tabIndex)
+                // 2. The active element is within the container (e.g., a button inside)
+                // 3. The event target is within the container
+                const isContainerFocused = containerRef.current === activeElement;
+                const isChildFocused = containerRef.current?.contains(activeElement as Node);
+                const isEventInContainer = containerRef.current?.contains(e.target as Node);
+
+                if (!isContainerFocused && !isChildFocused && !isEventInContainer) return;
 
                 switch (e.key) {
                     case " ": // Space - Play/Pause
+                        // @validates Requirement 14.1 - Space toggles play/pause
                         e.preventDefault();
                         togglePlay();
                         break;
                     case "ArrowLeft": // Left Arrow - Seek backward 5s
+                        // @validates Requirement 14.2 - Left Arrow skips backward 5 seconds
                         e.preventDefault();
                         seekBackward();
                         break;
                     case "ArrowRight": // Right Arrow - Seek forward 5s
+                        // @validates Requirement 14.3 - Right Arrow skips forward 5 seconds
                         e.preventDefault();
                         seekForward();
                         break;

@@ -3,6 +3,61 @@
 
 @custom-variant dark (&:is(.dark *));
 
+/* 
+ * Custom Viral Fonts (Requirement 8.1)
+ * These fonts require custom font files to be added to /public/fonts/
+ * Currently using system font fallbacks until custom files are provided
+ * 
+ * To add custom fonts:
+ * 1. Add font files (woff2, woff) to /public/fonts/
+ * 2. Uncomment and update the @font-face declarations below
+ */
+
+/* @font-face {
+  font-family: 'Moji Pop';
+  src: url('/fonts/moji-pop.woff2') format('woff2'),
+       url('/fonts/moji-pop.woff') format('woff');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Line';
+  src: url('/fonts/line.woff2') format('woff2'),
+       url('/fonts/line.woff') format('woff');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Brishti';
+  src: url('/fonts/brishti.woff2') format('woff2'),
+       url('/fonts/brishti.woff') format('woff');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Deep';
+  src: url('/fonts/deep.woff2') format('woff2'),
+       url('/fonts/deep.woff') format('woff');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Depo B';
+  src: url('/fonts/depo-b.woff2') format('woff2'),
+       url('/fonts/depo-b.woff') format('woff');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+} */
+
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);

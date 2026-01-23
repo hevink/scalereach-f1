@@ -1,6 +1,6 @@
 "use client";
 
-import { Video } from "@/lib/api/video";
+import { VideoLite } from "@/lib/api/video";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -12,7 +12,7 @@ import {
 } from "@tabler/icons-react";
 
 interface VideoCardProps {
-    video: Video;
+    video: VideoLite;
     onClick?: () => void;
     onMenuClick?: (e: React.MouseEvent) => void;
     className?: string;
@@ -75,9 +75,19 @@ export function VideoCard({
                 "group relative cursor-pointer",
                 "transition-transform duration-200 ease-out",
                 "hover:scale-[1.02] hover:z-10",
+                "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 rounded-lg",
                 className
             )}
             onClick={onClick}
+            onKeyDown={(e) => {
+                if (e.key === "Enter" || e.key === " ") {
+                    e.preventDefault();
+                    onClick?.();
+                }
+            }}
+            role="button"
+            tabIndex={0}
+            aria-label={`View clips for ${video.title?.trim() || "Untitled Video"}`}
         >
             {/* Video thumbnail with aspect ratio preservation */}
             {/* @validates Requirement 1.4 - Aspect ratio maintenance */}

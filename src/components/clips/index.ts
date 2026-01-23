@@ -12,6 +12,7 @@ export {
     TimelineEditor,
     type TimelineEditorProps,
     type TimelineState,
+    type ClipData,
     validateClipDuration,
     clampToBounds,
     MIN_CLIP_DURATION,
@@ -39,3 +40,10 @@ export {
     type KeyMoment,
     type EngagementMetrics,
 } from "./viral-analysis-panel";
+export {
+    EditingLayout,
+    type EditingLayoutProps,
+    DESKTOP_BREAKPOINT,
+    DEFAULT_PANEL_SIZES,
+    MIN_PANEL_SIZES,
+} from "./editing-layout";

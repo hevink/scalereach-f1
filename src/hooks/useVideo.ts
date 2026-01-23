@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { videoApi, type Video, type ValidateYouTubeResponse, type VideoStatusResponse } from "@/lib/api/video";
+import { videoApi, type VideoStatusResponse } from "@/lib/api/video";
 import { toast } from "sonner";
 
 // Query keys
@@ -15,10 +15,11 @@ export const videoKeys = {
  * Get user's videos
  * Requirements: 30.4
  */
-export function useMyVideos() {
+export function useMyVideos(enabled = true) {
   return useQuery({
     queryKey: videoKeys.myVideos(),
     queryFn: () => videoApi.getMyVideos(),
+    enabled,
     retry: (failureCount, error) => {
       // Don't retry on auth errors
       if ((error as any)?.status === 401 || (error as any)?.status === 403) {
@@ -106,8 +107,8 @@ export function useSubmitYouTubeUrl() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: ({ youtubeUrl, projectId }: { youtubeUrl: string; projectId?: string }) =>
-      videoApi.submitYouTubeUrl(youtubeUrl, projectId),
+    mutationFn: ({ youtubeUrl, projectId, workspaceSlug }: { youtubeUrl: string; projectId?: string; workspaceSlug?: string }) =>
+      videoApi.submitYouTubeUrl(youtubeUrl, projectId, workspaceSlug),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: videoKeys.myVideos() });
     },

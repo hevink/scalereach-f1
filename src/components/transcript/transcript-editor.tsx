@@ -54,6 +54,16 @@ export interface TranscriptEditorProps {
     currentTime?: number;
     /** Callback when a segment is clicked (for seek functionality) */
     onSegmentClick?: (timestamp: number) => void;
+    /** Whether to highlight the current caption during playback (default: true) */
+    highlightCurrent?: boolean;
+    /** Whether to auto-scroll to keep the current caption visible (default: true) */
+    autoScroll?: boolean;
+    /**
+     * Callback when a caption is edited (for real-time sync with video overlay)
+     * Called with debounced updates (300ms) for optimistic UI updates
+     * @validates Requirements 6.3 - Real-time caption edit sync
+     */
+    onCaptionEdit?: (segmentId: string, newText: string) => void;
 }
 
 export interface TranscriptEditorRef {
@@ -246,6 +256,7 @@ function WordTimingEditor({
 interface EditableSegmentProps {
     segment: TranscriptSegment;
     isActive: boolean;
+    highlightCurrent: boolean;
     isEditing: boolean;
     onStartEdit: () => void;
     onCancelEdit: () => void;
@@ -257,11 +268,13 @@ interface EditableSegmentProps {
     index: number;
     isSaving: boolean;
     editedText: string;
+    segmentRef?: React.RefObject<HTMLDivElement | null>;
 }
 
 function EditableSegment({
     segment,
     isActive,
+    highlightCurrent,
     isEditing,
     onStartEdit,
     onCancelEdit,
@@ -273,6 +286,7 @@ function EditableSegment({
     index,
     isSaving,
     editedText,
+    segmentRef,
 }: EditableSegmentProps) {
     const textareaRef = useRef<HTMLTextAreaElement>(null);
 
@@ -293,17 +307,23 @@ function EditableSegment({
         }
     };
 
+    // Determine if highlighting should be applied
+    const shouldHighlight = isActive && highlightCurrent;
+
     return (
         <div
+            ref={segmentRef}
             className={cn(
-                "group flex w-full flex-col gap-2 rounded-lg border p-3 transition-all duration-200",
-                isActive && [
-                    "bg-primary/10 border-primary/30",
-                    "hover:bg-primary/15 hover:border-primary/40",
+                "group flex w-full flex-col gap-2 rounded-lg border p-3 transition-all duration-300",
+                shouldHighlight && [
+                    "bg-primary/15 border-primary/50 shadow-sm shadow-primary/20",
+                    "ring-2 ring-primary/30 ring-offset-1 ring-offset-background",
+                    "hover:bg-primary/20 hover:border-primary/60",
                 ],
-                !isActive && "bg-card border-border hover:bg-accent/50 hover:border-accent-foreground/20"
+                !shouldHighlight && "bg-card border-border hover:bg-accent/50 hover:border-accent-foreground/20"
             )}
             data-segment-id={segment.id}
+            data-active={shouldHighlight ? "true" : "false"}
         >
             {/* Header Row */}
             <div className="flex items-center justify-between gap-2">
@@ -314,8 +334,8 @@ function EditableSegment({
                     className={cn(
                         "flex shrink-0 items-center gap-1 rounded-md px-2 py-1 text-xs font-medium tabular-nums transition-colors",
                         "hover:opacity-80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
-                        isActive
-                            ? "bg-primary text-primary-foreground"
+                        shouldHighlight
+                            ? "bg-primary text-primary-foreground animate-pulse"
                             : "bg-muted text-muted-foreground"
                     )}
                     aria-label={`Seek to ${formatTimestamp(segment.startTime)}`}
@@ -331,8 +351,8 @@ function EditableSegment({
 
                 {/* Edit/Play Controls */}
                 <div className="flex items-center gap-1">
-                    {isActive && (
-                        <div className="flex size-5 items-center justify-center rounded-full bg-primary text-primary-foreground">
+                    {shouldHighlight && (
+                        <div className="flex size-5 items-center justify-center rounded-full bg-primary text-primary-foreground animate-pulse">
                             <IconPlayerPlay className="size-3" />
                         </div>
                     )}
@@ -468,7 +488,7 @@ function EditableSegment({
                         "text-left text-sm leading-relaxed w-full",
                         "hover:bg-accent/30 rounded px-1 -mx-1 py-0.5 transition-colors",
                         "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
-                        isActive ? "text-foreground font-medium" : "text-foreground/80"
+                        shouldHighlight ? "text-foreground font-semibold" : "text-foreground/80"
                     )}
                     aria-label={`Edit segment ${index + 1}: ${segment.text.slice(0, 50)}...`}
                 >
@@ -568,10 +588,19 @@ export const TranscriptEditor = forwardRef<
         videoId,
         currentTime = 0,
         onSegmentClick,
+        highlightCurrent = true,
+        autoScroll = true,
+        onCaptionEdit,
     },
     ref
 ) {
     const containerRef = useRef<HTMLDivElement>(null);
+    const activeSegmentRef = useRef<HTMLDivElement>(null);
+    const lastActiveSegmentIdRef = useRef<string | null>(null);
+    const isUserScrollingRef = useRef(false);
+    const userScrollTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+    // Ref for debouncing onCaptionEdit callback (300ms debounce per Requirement 6.3)
+    const captionEditDebounceRef = useRef<Record<string, NodeJS.Timeout>>({});
 
     // Editing state
     const [editingSegmentId, setEditingSegmentId] = useState<string | null>(null);
@@ -629,6 +658,71 @@ export const TranscriptEditor = forwardRef<
 
     const activeSegmentId = activeSegment?.id || null;
 
+    // Auto-scroll to current caption during playback (Requirement 6.6)
+    useEffect(() => {
+        // Only auto-scroll if enabled and we have an active segment
+        if (!autoScroll || !activeSegmentId || !highlightCurrent) return;
+
+        // Only scroll when the active segment changes (not on every time update)
+        if (activeSegmentId === lastActiveSegmentIdRef.current) return;
+
+        // Don't auto-scroll if user is manually scrolling
+        if (isUserScrollingRef.current) return;
+
+        lastActiveSegmentIdRef.current = activeSegmentId;
+
+        // Use requestAnimationFrame for smooth scrolling
+        requestAnimationFrame(() => {
+            if (activeSegmentRef.current) {
+                activeSegmentRef.current.scrollIntoView({
+                    behavior: "smooth",
+                    block: "center",
+                });
+            }
+        });
+    }, [activeSegmentId, autoScroll, highlightCurrent]);
+
+    // Track user scrolling to temporarily disable auto-scroll
+    useEffect(() => {
+        const container = containerRef.current;
+        if (!container) return;
+
+        const handleScroll = () => {
+            isUserScrollingRef.current = true;
+
+            // Clear any existing timeout
+            if (userScrollTimeoutRef.current) {
+                clearTimeout(userScrollTimeoutRef.current);
+            }
+
+            // Re-enable auto-scroll after 3 seconds of no user scrolling
+            userScrollTimeoutRef.current = setTimeout(() => {
+                isUserScrollingRef.current = false;
+            }, 3000);
+        };
+
+        // Find the scroll area element within the container
+        const scrollArea = container.querySelector('[data-radix-scroll-area-viewport]');
+        if (scrollArea) {
+            scrollArea.addEventListener("scroll", handleScroll, { passive: true });
+            return () => {
+                scrollArea.removeEventListener("scroll", handleScroll);
+                if (userScrollTimeoutRef.current) {
+                    clearTimeout(userScrollTimeoutRef.current);
+                }
+            };
+        }
+    }, []);
+
+    // Cleanup debounce timeouts on unmount
+    useEffect(() => {
+        return () => {
+            // Clear all pending debounce timeouts for caption edits
+            Object.values(captionEditDebounceRef.current).forEach(clearTimeout);
+            captionEditDebounceRef.current = {};
+        };
+    }, []);
+
     // Keyboard shortcuts for undo/redo (Requirement 5.5)
     useEffect(() => {
         const handleKeyDown = (e: KeyboardEvent) => {
@@ -676,7 +770,25 @@ export const TranscriptEditor = forwardRef<
     // Update edited text locally
     const handleTextChange = useCallback((segmentId: string, text: string) => {
         setEditedTexts((prev) => ({ ...prev, [segmentId]: text }));
-    }, []);
+
+        /**
+         * Debounced callback for real-time caption edit sync
+         * @validates Requirements 6.3 - Real-time caption edit sync with 300ms debounce
+         */
+        if (onCaptionEdit) {
+            // Clear any existing debounce timeout for this segment
+            if (captionEditDebounceRef.current[segmentId]) {
+                clearTimeout(captionEditDebounceRef.current[segmentId]);
+            }
+
+            // Set new debounced callback (300ms delay)
+            captionEditDebounceRef.current[segmentId] = setTimeout(() => {
+                onCaptionEdit(segmentId, text);
+                // Clean up the timeout reference
+                delete captionEditDebounceRef.current[segmentId];
+            }, 300);
+        }
+    }, [onCaptionEdit]);
 
     // Save text changes (Requirement 5.4)
     const handleTextSave = useCallback(
@@ -876,6 +988,7 @@ export const TranscriptEditor = forwardRef<
                             key={segment.id}
                             segment={segment}
                             isActive={segment.id === activeSegmentId}
+                            highlightCurrent={highlightCurrent}
                             isEditing={editingSegmentId === segment.id}
                             onStartEdit={() => handleStartEdit(segment.id, segment.text)}
                             onCancelEdit={handleCancelEdit}
@@ -891,6 +1004,7 @@ export const TranscriptEditor = forwardRef<
                             index={index}
                             isSaving={isSaving}
                             editedText={editedTexts[segment.id] ?? segment.text}
+                            segmentRef={segment.id === activeSegmentId ? activeSegmentRef : undefined}
                         />
                     ))}
                 </div>

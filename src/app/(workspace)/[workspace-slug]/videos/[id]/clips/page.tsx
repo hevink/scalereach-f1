@@ -13,6 +13,7 @@ import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { SkeletonList } from "@/components/ui/skeletons";
 import { ClipFilters } from "@/components/clips/clip-filters";
+import { ClipDetailModal, useClipModalUrlState } from "@/components/clips/clip-detail-modal";
 import { useVideo } from "@/hooks/useVideo";
 import { useClipsByVideo } from "@/hooks/useClips";
 import type { ClipFilters as ClipFiltersType } from "@/lib/api/clips";
@@ -170,10 +171,11 @@ function NoClips({ videoTitle, isProcessing }: NoClipsProps) {
  * - Header with video title and back button
  * - Clips displayed in a list format (NOT cards per requirement 2.2)
  * - Filtering and sorting controls
- * - Click on clip opens ClipDetailModal (to be implemented in task 2.7)
+ * - Click on clip opens ClipDetailModal
+ * - URL state sync for deep linking to specific clips
  * - Responsive layout for mobile and desktop
  * 
- * @validates Requirements 2.1, 2.2, 2.3, 2.4, 2.5
+ * @validates Requirements 2.1, 2.2, 2.3, 2.4, 2.5, 3.1
  */
 export default function VideoClipsPage({ params }: VideoClipsPageProps) {
     const { "workspace-slug": slug, id: videoId } = use(params);
@@ -181,6 +183,10 @@ export default function VideoClipsPage({ params }: VideoClipsPageProps) {
 
     // State for clip filters
     const [clipFilters, setClipFilters] = useState<ClipFiltersType>(DEFAULT_FILTERS);
+
+    // Modal state management with URL sync
+    // This enables deep linking to specific clips via ?clip=<clipId>
+    const { selectedClipId, isOpen, openModal, closeModal } = useClipModalUrlState();
 
     // Fetch video data for header
     const {
@@ -204,10 +210,26 @@ export default function VideoClipsPage({ params }: VideoClipsPageProps) {
         router.push(`/${slug}/videos/${videoId}`);
     }, [router, slug, videoId]);
 
+    /**
+     * Handle clip selection - opens the ClipDetailModal
+     * Updates URL with ?clip=<clipId> for deep linking
+     * 
+     * @validates Requirements 2.4, 3.1
+     */
     const handleClipSelect = useCallback(
         (clipId: string) => {
-            // TODO: Open ClipDetailModal (task 2.7)
-            // For now, navigate to clip editor
+            openModal(clipId);
+        },
+        [openModal]
+    );
+
+    /**
+     * Handle edit button click in modal - navigates to clip editor
+     * 
+     * @validates Requirements 3.6, 12.1
+     */
+    const handleEditClip = useCallback(
+        (clipId: string) => {
             router.push(`/${slug}/clips/${clipId}`);
         },
         [router, slug]
@@ -293,106 +315,20 @@ export default function VideoClipsPage({ params }: VideoClipsPageProps) {
                     )}
                 </div>
             </div>
+
+            {/* Clip Detail Modal */}
+            <ClipDetailModal
+                clipId={selectedClipId}
+                isOpen={isOpen}
+                onClose={closeModal}
+                onEdit={handleEditClip}
+            />
         </div>
     );
 }
 
 // ============================================================================
-// Clip List Item Component (Table-like row layout per requirement 2.2)
+// Import ClipListItem from shared component
 // ============================================================================
 
-import type { ClipResponse } from "@/lib/api/clips";
-import { cn } from "@/lib/utils";
-import { IconFlame, IconClock, IconSparkles } from "@tabler/icons-react";
-
-interface ClipListItemProps {
-    clip: ClipResponse;
-    onClick: () => void;
-}
-
-/**
- * ClipListItem - Displays a clip in a table-like row format
- * 
- * Shows: thumbnail, title, viral score, duration, hooks
- * NOT a card format per requirement 2.2
- * 
- * @validates Requirements 2.2, 2.3
- */
-function ClipListItem({ clip, onClick }: ClipListItemProps) {
-    // Format duration as MM:SS
-    const formatDuration = (seconds: number): string => {
-        const mins = Math.floor(seconds / 60);
-        const secs = Math.floor(seconds % 60);
-        return `${mins}:${secs.toString().padStart(2, "0")}`;
-    };
-
-    // Get score color based on value
-    const getScoreColor = (score: number): string => {
-        if (score >= 70) return "text-green-500";
-        if (score >= 40) return "text-yellow-500";
-        return "text-red-500";
-    };
-
-    return (
-        <button
-            onClick={onClick}
-            className={cn(
-                "flex w-full items-center gap-4 rounded-lg border bg-card p-3 text-left transition-colors",
-                "hover:bg-accent hover:border-accent-foreground/20",
-                "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-            )}
-            aria-label={`View clip: ${clip.title || "Untitled clip"}`}
-        >
-            {/* Thumbnail */}
-            <div className="relative h-16 w-28 shrink-0 overflow-hidden rounded bg-muted">
-                {clip.thumbnailUrl ? (
-                    <img
-                        src={clip.thumbnailUrl}
-                        alt=""
-                        className="h-full w-full object-cover"
-                    />
-                ) : (
-                    <div className="flex h-full w-full items-center justify-center">
-                        <IconVideo className="size-6 text-muted-foreground" />
-                    </div>
-                )}
-                {/* Duration badge */}
-                <div className="absolute bottom-1 right-1 rounded bg-black/70 px-1.5 py-0.5 text-xs font-medium text-white">
-                    {formatDuration(clip.duration)}
-                </div>
-            </div>
-
-            {/* Title and transcript preview */}
-            <div className="min-w-0 flex-1">
-                <h3 className="truncate font-medium">
-                    {clip.title || "Untitled Clip"}
-                </h3>
-                <p className="mt-0.5 line-clamp-1 text-sm text-muted-foreground">
-                    {clip.transcript || "No transcript available"}
-                </p>
-            </div>
-
-            {/* Viral Score */}
-            <div className="flex shrink-0 items-center gap-1.5">
-                <IconFlame className={cn("size-4", getScoreColor(clip.viralityScore))} />
-                <span className={cn("font-semibold tabular-nums", getScoreColor(clip.viralityScore))}>
-                    {clip.viralityScore}
-                </span>
-            </div>
-
-            {/* Duration */}
-            <div className="hidden shrink-0 items-center gap-1.5 text-muted-foreground sm:flex">
-                <IconClock className="size-4" />
-                <span className="text-sm tabular-nums">{formatDuration(clip.duration)}</span>
-            </div>
-
-            {/* Hooks count */}
-            {clip.hooks && clip.hooks.length > 0 && (
-                <div className="hidden shrink-0 items-center gap-1.5 text-muted-foreground md:flex">
-                    <IconSparkles className="size-4" />
-                    <span className="text-sm">{clip.hooks.length} hook{clip.hooks.length !== 1 ? "s" : ""}</span>
-                </div>
-            )}
-        </button>
-    );
-}
+import { ClipListItem } from "@/components/clips/clip-list-item";

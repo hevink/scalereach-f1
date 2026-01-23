@@ -1,6 +1,6 @@
 "use client";
 
-import { use, useCallback, useRef, useState } from "react";
+import { use, useCallback, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import {
     IconArrowLeft,
@@ -23,6 +23,7 @@ import { ClipsList } from "@/components/clips/clips-list";
 import { ClipFilters } from "@/components/clips/clip-filters";
 import { useVideo } from "@/hooks/useVideo";
 import { useClipsByVideo } from "@/hooks/useClips";
+import { useScrollPosition } from "@/hooks/useScrollPosition";
 import type { ClipFilters as ClipFiltersType } from "@/lib/api/clips";
 
 // ============================================================================
@@ -193,6 +194,19 @@ export default function VideoDetailPage({ params }: VideoDetailPageProps) {
     const videoPlayerRef = useRef<VideoPlayerRef>(null);
     const transcriptEditorRef = useRef<TranscriptEditorRef>(null);
 
+    // Scroll position restoration hook
+    // @validates Requirements 12.2 - Preserve user's position when navigating back
+    const { restoreScrollPosition, saveScrollPosition } = useScrollPosition(`video_clips_${videoId}`);
+
+    // Restore scroll position on mount (when navigating back from editing screen)
+    useEffect(() => {
+        // Small delay to ensure DOM is ready
+        const timeoutId = setTimeout(() => {
+            restoreScrollPosition();
+        }, 100);
+        return () => clearTimeout(timeoutId);
+    }, [restoreScrollPosition]);
+
     // State for current playback time and clip filters
     const [currentTime, setCurrentTime] = useState(0);
     const [selectedClipId, setSelectedClipId] = useState<string | undefined>();
@@ -215,13 +229,20 @@ export default function VideoDetailPage({ params }: VideoDetailPageProps) {
         router.push(`/${slug}`);
     }, [router, slug]);
 
+    /**
+     * Handle clip selection - save scroll position and navigate to clip editor
+     * @validates Requirements 12.2 - Preserve user's position when navigating back
+     * @validates Requirements 12.5 - Update browser URL on navigation
+     */
     const handleClipSelect = useCallback(
         (clipId: string) => {
             setSelectedClipId(clipId);
+            // Save scroll position before navigating to clip editor
+            saveScrollPosition();
             // Navigate to clip editor
             router.push(`/${slug}/clips/${clipId}`);
         },
-        [router, slug]
+        [router, slug, saveScrollPosition]
     );
 
     // Video player time update handler

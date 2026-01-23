@@ -17,6 +17,15 @@ export {
 } from "./caption-style-panel";
 
 export {
+  CaptionStylePresets,
+  type CaptionStylePresetsProps,
+  type CaptionStylePreset,
+  DEFAULT_PRESETS,
+  getPresetById,
+  getPresetStyle,
+} from "./caption-style-presets";
+
+export {
   CaptionAnimationSelector,
   type CaptionAnimationSelectorProps,
 } from "./caption-animation-selector";

@@ -25,12 +25,17 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
+import { Separator } from "@/components/ui/separator";
 import type {
   CaptionPosition,
   CaptionStyle,
   TextAlignment,
 } from "@/lib/api/captions";
 import { cn } from "@/lib/utils";
+import {
+  CaptionStylePresets,
+  type CaptionStylePreset,
+} from "./caption-style-presets";
 
 /**
  * Debounce delay for style changes (ms)
@@ -41,19 +46,52 @@ const DEBOUNCE_DELAY = 300;
 /**
  * Supported fonts for captions
  * Based on design document specification
+ * Includes viral-optimized fonts (Requirement 8.1)
  */
 export const SUPPORTED_FONTS = [
+  // Viral-optimized fonts (Requirement 8.1)
+  "Moji Pop",
+  "Line",
+  "Brishti",
+  "Deep",
+  "Depo B",
+  "Bangers",
+  "Permanent Marker",
+  "Anton",
+  "Bebas Neue",
+  "Oswald",
+  // Standard fonts
   "Inter",
   "Roboto",
   "Open Sans",
   "Montserrat",
   "Poppins",
-  "Oswald",
-  "Bebas Neue",
-  "Anton",
-  "Bangers",
-  "Permanent Marker",
 ] as const;
+
+/**
+ * Mapping of font names to their CSS font-family values
+ * Custom fonts use fallback system fonts
+ */
+export const FONT_FAMILY_MAP: Record<string, string> = {
+  // Viral-optimized fonts (Google Fonts)
+  "Bangers": "var(--font-bangers), cursive",
+  "Permanent Marker": "var(--font-permanent-marker), cursive",
+  "Anton": "var(--font-anton), sans-serif",
+  "Bebas Neue": "var(--font-bebas-neue), sans-serif",
+  "Oswald": "var(--font-oswald), sans-serif",
+  // Custom viral fonts (require custom font files - using fallbacks)
+  "Moji Pop": "'Moji Pop', 'Comic Sans MS', cursive",
+  "Line": "'Line', 'Arial Rounded MT Bold', sans-serif",
+  "Brishti": "'Brishti', 'Brush Script MT', cursive",
+  "Deep": "'Deep', 'Impact', sans-serif",
+  "Depo B": "'Depo B', 'Arial Black', sans-serif",
+  // Standard fonts
+  "Inter": "Inter, sans-serif",
+  "Roboto": "Roboto, sans-serif",
+  "Open Sans": "'Open Sans', sans-serif",
+  "Montserrat": "Montserrat, sans-serif",
+  "Poppins": "Poppins, sans-serif",
+};
 
 /**
  * Font size bounds (12-72px)
@@ -122,7 +160,7 @@ const ALIGNMENT_OPTIONS: {
 /**
  * CaptionStylePanelProps interface
  *
- * @validates Requirements 13.1, 13.2, 13.3, 13.4, 13.5, 13.6, 13.7, 13.8
+ * @validates Requirements 13.1, 13.2, 13.3, 13.4, 13.5, 13.6, 13.7, 13.8, 9.1, 9.2, 9.3, 9.4, 9.5
  */
 export interface CaptionStylePanelProps {
   /** Current caption style configuration */
@@ -133,6 +171,14 @@ export interface CaptionStylePanelProps {
   className?: string;
   /** Whether the panel is disabled */
   disabled?: boolean;
+  /** Available caption style presets (optional, uses defaults if not provided) */
+  presets?: CaptionStylePreset[];
+  /** Currently selected preset ID */
+  selectedPresetId?: string;
+  /** Callback when a preset is selected - receives preset ID and the preset's style */
+  onPresetSelect?: (presetId: string, style: CaptionStyle) => void;
+  /** Whether to show the presets section (default: true) */
+  showPresets?: boolean;
 }
 
 /**
@@ -156,6 +202,15 @@ export function clampOpacity(opacity: number): number {
  */
 export function isValidFont(font: string): boolean {
   return SUPPORTED_FONTS.includes(font as (typeof SUPPORTED_FONTS)[number]);
+}
+
+/**
+ * Gets the CSS font-family value for a given font name
+ * @param fontName - The display name of the font
+ * @returns The CSS font-family value
+ */
+export function getFontFamily(fontName: string): string {
+  return FONT_FAMILY_MAP[fontName] || fontName;
 }
 
 /**
@@ -264,6 +319,7 @@ function SwitchField({
  * CaptionStylePanel Component
  *
  * A comprehensive panel for customizing caption appearance including:
+ * - Caption style presets for quick application (Requirements 9.1, 9.2, 9.3)
  * - Font family dropdown with supported fonts (Requirement 13.1)
  * - Font size slider (12-72px) (Requirement 13.2)
  * - Color pickers for text, background, and highlight colors (Requirement 13.3)
@@ -282,16 +338,24 @@ function SwitchField({
  * <CaptionStylePanel
  *   style={style}
  *   onChange={(newStyle) => setStyle(newStyle)}
+ *   onPresetSelect={(presetId, presetStyle) => {
+ *     setStyle(presetStyle);
+ *     // Save as last used style
+ *   }}
  * />
  * ```
  *
- * @validates Requirements 13.1, 13.2, 13.3, 13.4, 13.5, 13.6, 13.7, 13.8, 31.1, 31.2, 31.3
+ * @validates Requirements 9.1, 9.2, 9.3, 9.4, 9.5, 13.1, 13.2, 13.3, 13.4, 13.5, 13.6, 13.7, 13.8, 31.1, 31.2, 31.3
  */
 export function CaptionStylePanel({
   style,
   onChange,
   className,
   disabled = false,
+  presets,
+  selectedPresetId,
+  onPresetSelect,
+  showPresets = true,
 }: CaptionStylePanelProps) {
   // Local state for immediate UI updates
   const [localStyle, setLocalStyle] = useState<CaptionStyle>(style);
@@ -364,6 +428,29 @@ export function CaptionStylePanel({
     [updateStyle]
   );
 
+  /**
+   * Handle preset selection
+   * Applies all style properties from the selected preset
+   * @validates Requirements 9.2 - Apply all style properties from selected preset
+   */
+  const handlePresetSelect = useCallback(
+    (presetId: string) => {
+      // Find the preset by ID
+      const { getPresetById } = require("./caption-style-presets");
+      const preset = getPresetById(presetId);
+
+      if (preset && onPresetSelect) {
+        // Call the onPresetSelect callback with both the preset ID and the style
+        // This allows the parent component to:
+        // 1. Apply the style (Requirement 9.2)
+        // 2. Track the selected preset
+        // 3. Save as last used style (Requirement 9.5)
+        onPresetSelect(presetId, { ...preset.style });
+      }
+    },
+    [onPresetSelect]
+  );
+
   return (
     <section
       aria-label="Caption style customization"
@@ -376,6 +463,19 @@ export function CaptionStylePanel({
         <span className="font-medium text-sm">Caption Style</span>
       </div>
 
+      {/* Style Presets Section - Requirement 9.1, 9.2, 9.3 */}
+      {showPresets && (
+        <>
+          <CaptionStylePresets
+            presets={presets}
+            selectedPresetId={selectedPresetId}
+            onSelect={handlePresetSelect}
+            disabled={disabled}
+          />
+          <Separator className="my-2" />
+        </>
+      )}
+
       {/* Typography Section */}
       {/* @validates Requirement 31.3 - Mobile-friendly forms */}
       <div className="flex flex-col gap-3 sm:gap-4">
@@ -383,7 +483,7 @@ export function CaptionStylePanel({
           Typography
         </h3>
 
-        {/* Font Family Dropdown - Requirement 13.1 */}
+        {/* Font Family Dropdown - Requirement 13.1, 8.1 */}
         <div className="flex flex-col gap-2">
           <Label className="font-medium text-foreground text-xs sm:text-sm">
             Font Family
@@ -397,9 +497,22 @@ export function CaptionStylePanel({
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              {SUPPORTED_FONTS.map((font) => (
+              {/* Viral-optimized fonts section */}
+              <div className="px-2 py-1.5 text-xs font-semibold text-muted-foreground">
+                Viral Fonts
+              </div>
+              {SUPPORTED_FONTS.slice(0, 10).map((font) => (
                 <SelectItem key={font} value={font}>
-                  <span style={{ fontFamily: font }}>{font}</span>
+                  <span style={{ fontFamily: getFontFamily(font) }}>{font}</span>
+                </SelectItem>
+              ))}
+              {/* Standard fonts section */}
+              <div className="px-2 py-1.5 text-xs font-semibold text-muted-foreground border-t mt-1 pt-2">
+                Standard Fonts
+              </div>
+              {SUPPORTED_FONTS.slice(10).map((font) => (
+                <SelectItem key={font} value={font}>
+                  <span style={{ fontFamily: getFontFamily(font) }}>{font}</span>
                 </SelectItem>
               ))}
             </SelectContent>

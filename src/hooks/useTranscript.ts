@@ -6,6 +6,10 @@ import {
   type UpdateTranscriptTextRequest,
   type UpdateWordTimingRequest,
 } from "@/lib/api/transcript";
+import {
+  preserveWordTiming,
+  needsTimingRecalculation,
+} from "@/lib/word-timing-preservation";
 
 // Query keys following the design document pattern
 export const transcriptKeys = {
@@ -234,11 +238,33 @@ export function useTranscriptEditor(videoId: string) {
   );
 
   // Update a segment's text locally (for undo/redo)
+  // Preserves word-level timing when text is modified
+  // @validates Requirements 6.4 - Preserve word-level timing information when text is modified
   const updateSegmentText = useCallback(
     (segmentId: string, text: string) => {
-      const newSegments = undoRedo.state.map((segment) =>
-        segment.id === segmentId ? { ...segment, text } : segment
-      );
+      const newSegments = undoRedo.state.map((segment) => {
+        if (segment.id !== segmentId) return segment;
+
+        // Check if we need to recalculate word timing
+        if (needsTimingRecalculation(segment.text, text)) {
+          // Preserve word timing using smart matching algorithm
+          const preservedWords = preserveWordTiming(
+            segment.words,
+            text,
+            segment.startTime,
+            segment.endTime
+          );
+
+          return {
+            ...segment,
+            text,
+            words: preservedWords,
+          };
+        }
+
+        // Text is essentially the same, just update the text
+        return { ...segment, text };
+      });
       undoRedo.set(newSegments);
     },
     [undoRedo]

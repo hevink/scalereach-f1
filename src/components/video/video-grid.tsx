@@ -1,13 +1,13 @@
 "use client";
 
-import { Video } from "@/lib/api/video";
+import { VideoLite } from "@/lib/api/video";
 import { VideoCard } from "./video-card";
 import { SkeletonVideoGrid } from "@/components/ui/skeletons";
 import { IconVideo } from "@tabler/icons-react";
 import { cn } from "@/lib/utils";
 
 interface VideoGridProps {
-    videos: Video[];
+    videos: VideoLite[];
     onVideoClick: (videoId: string) => void;
     isLoading?: boolean;
     className?: string;

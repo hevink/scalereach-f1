@@ -1,7 +1,7 @@
 import { describe, it, expect, vi } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import { VideoGrid } from './video-grid';
-import { Video } from '@/lib/api/video';
+import { VideoLite } from '@/lib/api/video';
 import * as fc from 'fast-check';
 
 /**
@@ -15,40 +15,24 @@ import * as fc from 'fast-check';
  */
 
 describe('VideoGrid Component - Unit Tests', () => {
-    const mockVideos: Video[] = [
+    const mockVideos: VideoLite[] = [
         {
             id: '1',
-            projectId: null,
-            userId: 'user1',
             sourceType: 'youtube',
             sourceUrl: 'https://youtube.com/watch?v=test1',
             status: 'completed',
             title: 'Test Video 1',
             duration: 120,
-            storageKey: null,
-            storageUrl: null,
-            transcript: null,
-            errorMessage: null,
-            metadata: null,
             createdAt: '2024-01-01T00:00:00Z',
-            updatedAt: '2024-01-01T00:00:00Z',
         },
         {
             id: '2',
-            projectId: null,
-            userId: 'user1',
             sourceType: 'youtube',
             sourceUrl: 'https://youtube.com/watch?v=test2',
             status: 'transcribing',
             title: 'Test Video 2',
             duration: 180,
-            storageKey: null,
-            storageUrl: null,
-            transcript: null,
-            errorMessage: null,
-            metadata: null,
             createdAt: '2024-01-02T00:00:00Z',
-            updatedAt: '2024-01-02T00:00:00Z',
         },
     ];
 
@@ -174,13 +158,11 @@ describe('VideoGrid Component - Unit Tests', () => {
  */
 
 describe('VideoGrid Component - Property-Based Tests', () => {
-    // Define an arbitrary generator for Video objects (shared across tests)
-    const videoArbitrary = fc.record({
+    // Define an arbitrary generator for VideoLite objects (shared across tests)
+    const videoLiteArbitrary = fc.record({
         id: fc.uuid(),
-        projectId: fc.option(fc.uuid(), { nil: null }),
-        userId: fc.uuid(),
         sourceType: fc.constantFrom('youtube' as const, 'upload' as const),
-        sourceUrl: fc.webUrl(),
+        sourceUrl: fc.option(fc.webUrl(), { nil: null }),
         status: fc.constantFrom(
             'pending' as const,
             'downloading' as const,
@@ -192,14 +174,8 @@ describe('VideoGrid Component - Property-Based Tests', () => {
         ),
         title: fc.option(fc.string({ minLength: 1, maxLength: 100 }), { nil: null }),
         duration: fc.option(fc.integer({ min: 1, max: 7200 }), { nil: null }),
-        storageKey: fc.option(fc.string(), { nil: null }),
-        storageUrl: fc.option(fc.webUrl(), { nil: null }),
-        transcript: fc.option(fc.string(), { nil: null }),
-        errorMessage: fc.option(fc.string(), { nil: null }),
-        metadata: fc.option(fc.dictionary(fc.string(), fc.anything()), { nil: null }),
         createdAt: fc.integer({ min: 1577836800000, max: 1767225600000 }).map(ts => new Date(ts).toISOString()),
-        updatedAt: fc.integer({ min: 1577836800000, max: 1767225600000 }).map(ts => new Date(ts).toISOString()),
-    }) as fc.Arbitrary<Video>;
+    }) as fc.Arbitrary<VideoLite>;
 
     /**
      * Property 1: Video Grid Displays All Videos
@@ -218,7 +194,7 @@ describe('VideoGrid Component - Property-Based Tests', () => {
         // Property: For any array of videos, the grid should display all of them
         fc.assert(
             fc.property(
-                fc.array(videoArbitrary, { minLength: 1, maxLength: 50 }),
+                fc.array(videoLiteArbitrary, { minLength: 1, maxLength: 50 }),
                 (videos) => {
                     const { container } = render(
                         <VideoGrid
@@ -241,7 +217,7 @@ describe('VideoGrid Component - Property-Based Tests', () => {
                     expect(listItems.length).toBe(videos.length);
                 }
             ),
-            { numRuns: 20 } // Run 100 iterations as specified in the design
+            { numRuns: 20 } // Run 20 iterations for faster tests
         );
     });
 
@@ -264,7 +240,7 @@ describe('VideoGrid Component - Property-Based Tests', () => {
         // Property: For any video, clicking its card should call onVideoClick with the correct ID
         fc.assert(
             fc.property(
-                fc.array(videoArbitrary, { minLength: 1, maxLength: 20 }),
+                fc.array(videoLiteArbitrary, { minLength: 1, maxLength: 20 }),
                 fc.integer({ min: 0, max: 19 }), // Index of video to click
                 (videos, clickIndexRaw) => {
                     // Ensure we have at least one video and a valid index
@@ -299,7 +275,7 @@ describe('VideoGrid Component - Property-Based Tests', () => {
                     // which navigates to the clips page for that video
                 }
             ),
-            { numRuns: 20 } // Run 100 iterations as specified in the design
+            { numRuns: 20 } // Run 20 iterations for faster tests
         );
     });
 });

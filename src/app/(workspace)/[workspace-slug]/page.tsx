@@ -20,8 +20,6 @@ import {
   IconX,
   IconFile,
   IconAlertCircle,
-  IconDots,
-  IconClock,
   IconVideo,
   IconFolder,
 } from "@tabler/icons-react";
@@ -81,7 +79,8 @@ export default function WorkspacePage({ params }: WorkspacePageProps) {
   const router = useRouter();
   const { data: session, isPending: sessionPending } = useSession();
   const { data: workspace, isLoading: workspaceLoading, error } = useWorkspaceBySlug(slug);
-  const { data: videos, isLoading: videosLoading } = useMyVideos();
+  const { data: videos, isLoading: videosLoading, error: videosError } = useMyVideos(!!session?.user);
+
   const queryClient = useQueryClient();
 
   const [url, setUrl] = useState("");
@@ -433,11 +432,19 @@ export default function WorkspacePage({ params }: WorkspacePageProps) {
 
             {/* Videos Tab Content */}
             <TabsContent value="videos" className="mt-0">
-              <VideoGrid
-                videos={videos || []}
-                onVideoClick={(videoId) => router.push(`/${slug}/videos/${videoId}/clips`)}
-                isLoading={videosLoading}
-              />
+              {videosError ? (
+                <div className="text-center py-8 sm:py-12 text-muted-foreground">
+                  <IconAlertCircle className="size-10 sm:size-12 mx-auto mb-3 sm:mb-4 text-red-500 opacity-50" />
+                  <p className="font-medium text-sm sm:text-base text-red-500">Failed to load videos</p>
+                  <p className="text-xs sm:text-sm">{(videosError as Error)?.message || "Please try again"}</p>
+                </div>
+              ) : (
+                <VideoGrid
+                  videos={videos || []}
+                  onVideoClick={(videoId) => router.push(`/${slug}/videos/${videoId}/clips`)}
+                  isLoading={videosLoading || sessionPending}
+                />
+              )}
             </TabsContent>
 
             {/* Projects Tab Content - Requirement 25.1 */}
