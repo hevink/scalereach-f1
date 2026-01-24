@@ -5,7 +5,7 @@ import { useCaptionEditor } from "@/hooks/useCaptionEditor";
 import { WordTimeline } from "./word-timeline";
 import { WordEditor } from "./word-editor";
 import { CaptionStylePanel } from "./caption-style-panel";
-import { CaptionLivePreview } from "./caption-live-preview";
+import { VideoPreviewWithCaptions } from "./video-preview-with-captions";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Undo2, Redo2, RotateCcw, Save, Loader2, RefreshCw } from "lucide-react";
@@ -22,15 +22,20 @@ import {
 
 interface CaptionEditorPanelProps {
   clipId: string;
+  /** Video URL for preview */
+  videoUrl: string;
   duration: number;
   currentTime: number;
+  onTimeUpdate?: (time: number) => void;
   onSeek: (time: number) => void;
 }
 
 export function CaptionEditorPanel({
   clipId,
+  videoUrl,
   duration,
   currentTime,
+  onTimeUpdate,
   onSeek,
 }: CaptionEditorPanelProps) {
   const [selectedWordId, setSelectedWordId] = useState<string | null>(null);
@@ -206,11 +211,15 @@ export function CaptionEditorPanel({
         </TabsList>
 
         <TabsContent value="words" className="space-y-4 mt-4">
-          {/* Live Preview - shows karaoke effect */}
-          <CaptionLivePreview
+          {/* Live Video Preview with Captions */}
+          <VideoPreviewWithCaptions
+            videoUrl={videoUrl}
             words={words}
             style={style}
             currentTime={currentTime}
+            onTimeUpdate={onTimeUpdate}
+            onSeek={onSeek}
+            className="aspect-[9/16] max-h-[300px] mx-auto"
           />
 
           {/* Timeline */}

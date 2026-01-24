@@ -16,6 +16,8 @@ export {
   isValidFont,
 } from "./caption-style-panel";
 
+export { DraggableCaption } from "./draggable-caption";
+
 export {
   CaptionStylePresets,
   type CaptionStylePresetsProps,
@@ -49,3 +51,4 @@ export { WordTimeline } from "./word-timeline";
 export { WordEditor } from "./word-editor";
 export { CaptionEditorPanel } from "./caption-editor-panel";
 export { CaptionLivePreview } from "./caption-live-preview";
+export { VideoPreviewWithCaptions } from "./video-preview-with-captions";

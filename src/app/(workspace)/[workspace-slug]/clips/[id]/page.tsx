@@ -28,6 +28,7 @@ import { EditingLayout } from "@/components/clips/editing-layout";
 import { TimelineEditor } from "@/components/clips/timeline-editor";
 import { CaptionStylePanel } from "@/components/captions/caption-style-panel";
 import { VideoPlayer, type VideoPlayerRef } from "@/components/video/video-player";
+import { CanvasVideoPlayer } from "@/components/video/canvas-video-player";
 import { TranscriptEditor, type TranscriptEditorRef } from "@/components/transcript/transcript-editor";
 import { ExportOptions } from "@/components/export/export-options";
 import { ExportProgress } from "@/components/export/export-progress";
@@ -883,9 +884,12 @@ export default function ClipEditorPage({ params }: ClipEditorPageProps) {
      * @validates Requirements 15.5 - Retry failed saves up to 3 times
      */
     const handleStyleChange = useCallback(
-        (newStyle: CaptionStyle) => {
+        (newStyle: CaptionStyle | Partial<CaptionStyle>) => {
+            // Merge with existing style for partial updates
+            const mergedStyle = { ...captionStyle, ...newStyle } as CaptionStyle;
+            
             // Update local state immediately for responsive UI
-            setCaptionStyle(newStyle);
+            setCaptionStyle(mergedStyle);
 
             // Clear the selected preset since user is manually editing
             // @validates Requirements 9.4 - Allow users to modify preset styles after application
@@ -894,7 +898,7 @@ export default function ClipEditorPage({ params }: ClipEditorPageProps) {
 
             // Save the style as last used (without preset association)
             // @validates Requirements 9.5 - Save last used caption style as default
-            saveLastUsedStyle(newStyle);
+            saveLastUsedStyle(mergedStyle);
 
             // Mark style as dirty (unsaved changes)
             setStyleDirty(true);
@@ -926,7 +930,7 @@ export default function ClipEditorPage({ params }: ClipEditorPageProps) {
                         updateCaptionStyle.mutate(
                             {
                                 clipId,
-                                style: newStyle,
+                                style: mergedStyle,
                             },
                             {
                                 onSuccess: () => resolve(),
@@ -1370,13 +1374,48 @@ export default function ClipEditorPage({ params }: ClipEditorPageProps) {
     }
 
     // Get video source URL and thumbnail
-    const videoSrc = video?.storageUrl || video?.sourceUrl || "";
+    // Use clip's storageUrl if available (generated clip), otherwise fall back to original video
+    const videoSrc = clip.storageUrl || video?.storageUrl || video?.sourceUrl || "";
     const thumbnailUrl = (video?.metadata?.thumbnail as string) || undefined;
     const videoDuration = video?.duration || clip.duration || 60;
 
     // Get captions for preview - use local captions for real-time sync, fallback to server data
     // @validates Requirements 6.3 - Real-time caption edit sync with optimistic UI updates
-    const captions = localCaptions ?? captionData?.captions ?? [];
+    // Convert words to Caption format for VideoPlayer
+    const captions = (() => {
+        if (localCaptions && localCaptions.length > 0) return localCaptions;
+        if (captionData?.captions && captionData.captions.length > 0) return captionData.captions;
+        
+        // Convert words array to Caption format if available
+        const words = (captionData as any)?.words;
+        if (words && Array.isArray(words) && words.length > 0) {
+            const segments: Caption[] = [];
+            let currentWords: any[] = [];
+            
+            for (let i = 0; i < words.length; i++) {
+                currentWords.push({
+                    word: words[i].word,
+                    startTime: words[i].start,
+                    endTime: words[i].end,
+                    highlight: false,
+                });
+                
+                if (/[.!?]$/.test(words[i].word) || currentWords.length >= 10 || i === words.length - 1) {
+                    segments.push({
+                        id: `caption-${segments.length}`,
+                        text: currentWords.map(w => w.word).join(" "),
+                        startTime: currentWords[0].startTime,
+                        endTime: currentWords[currentWords.length - 1].endTime,
+                        words: currentWords,
+                    });
+                    currentWords = [];
+                }
+            }
+            return segments;
+        }
+        
+        return [];
+    })();
 
     // Credit cost (example: 5 credits per export)
     const creditCost = 5;
@@ -1443,17 +1482,12 @@ export default function ClipEditorPage({ params }: ClipEditorPageProps) {
                                 Preview
                             </h2>
                             {videoSrc ? (
-                                <VideoPlayer
-                                    ref={videoPlayerRef}
+                                <CanvasVideoPlayer
                                     src={videoSrc}
-                                    poster={thumbnailUrl}
-                                    startTime={clipWithBoundaries.startTime}
-                                    endTime={clipWithBoundaries.endTime}
                                     captions={captions}
                                     captionStyle={captionStyle}
-                                    onTimeUpdate={handleTimeUpdate}
-                                    showFullControls
-                                    className="aspect-video w-full rounded-lg overflow-hidden"
+                                    onCaptionStyleChange={handleStyleChange}
+                                    className="aspect-video w-full"
                                 />
                             ) : (
                                 <div className="flex aspect-video w-full items-center justify-center rounded-lg border bg-muted">

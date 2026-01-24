@@ -30,6 +30,7 @@ import {
     TooltipTrigger,
 } from "@/components/ui/tooltip";
 import type { Caption, CaptionStyle } from "@/lib/api/captions";
+import { DraggableCaption } from "@/components/captions/draggable-caption";
 
 // ============================================================================
 // Types
@@ -48,6 +49,10 @@ export interface VideoPlayerProps {
     captions?: Caption[];
     /** Caption styling configuration */
     captionStyle?: CaptionStyle;
+    /** Callback when caption style changes (enables editable mode) */
+    onCaptionStyleChange?: (style: Partial<CaptionStyle>) => void;
+    /** Callback when caption text changes */
+    onCaptionTextChange?: (text: string) => void;
     /** Callback when playback time updates */
     onTimeUpdate?: (time: number) => void;
     /** Callback when video ends */
@@ -90,7 +95,7 @@ export interface VideoPlayerRef {
  * Format seconds to MM:SS or HH:MM:SS format
  */
 function formatTime(seconds: number): string {
-    if (!isFinite(seconds) || isNaN(seconds)) return "0:00";
+    if (!isFinite(seconds) || isNaN(seconds) || seconds < 0) return "0:00";
 
     const hrs = Math.floor(seconds / 3600);
     const mins = Math.floor((seconds % 3600) / 60);
@@ -122,7 +127,7 @@ function getCurrentCaption(
  */
 function getCurrentWordIndex(caption: Caption, currentTime: number): number {
     return caption.words.findIndex(
-        (word) => currentTime >= word.startTime && currentTime <= word.endTime
+        (word) => currentTime >= (word.start ?? (word as any).startTime) && currentTime <= (word.end ?? (word as any).endTime)
     );
 }
 
@@ -188,7 +193,7 @@ const CaptionOverlay = React.memo(function CaptionOverlay({ caption, style, curr
             const isCurrentWord = index === currentWordIndex;
             const isPastWord = index < currentWordIndex;
             const shouldHighlight =
-                word.highlight ||
+                (word as any).highlight ||
                 (mergedStyle.highlightEnabled && isCurrentWord);
 
             let wordClassName = "inline-block mx-0.5 transition-all duration-150";
@@ -328,6 +333,8 @@ export const VideoPlayer = forwardRef<VideoPlayerRef, VideoPlayerProps>(
             endTime,
             captions = [],
             captionStyle,
+            onCaptionStyleChange,
+            onCaptionTextChange,
             onTimeUpdate,
             onEnded,
             autoPlay = false,
@@ -354,6 +361,9 @@ export const VideoPlayer = forwardRef<VideoPlayerRef, VideoPlayerProps>(
         const [showControls, setShowControls] = useState(true);
         const [isLoading, setIsLoading] = useState(true);
         const [isHovering, setIsHovering] = useState(false);
+        
+        // Editable caption mode
+        const isEditableCaption = !!onCaptionStyleChange;
         const [isDraggingProgress, setIsDraggingProgress] = useState(false);
         const [hoverTime, setHoverTime] = useState<number | null>(null);
         const [hoverPosition, setHoverPosition] = useState<number>(0);
@@ -784,12 +794,22 @@ export const VideoPlayer = forwardRef<VideoPlayerRef, VideoPlayerProps>(
                         </div>
                     )}
 
-                    {/* Caption Overlay */}
-                    <CaptionOverlay
-                        caption={currentCaption}
-                        style={captionStyle}
-                        currentTime={currentTime}
-                    />
+                    {/* Caption Overlay - Editable or Read-only */}
+                    {isEditableCaption && currentCaption ? (
+                        <DraggableCaption
+                            text={currentCaption.text}
+                            style={captionStyle || {}}
+                            onStyleChange={onCaptionStyleChange}
+                            onTextChange={onCaptionTextChange}
+                            containerRef={containerRef as React.RefObject<HTMLDivElement>}
+                        />
+                    ) : (
+                        <CaptionOverlay
+                            caption={currentCaption}
+                            style={captionStyle}
+                            currentTime={currentTime}
+                        />
+                    )}
 
                     {/* Play/Pause Overlay (center) - Shows when paused or on hover with showFullControls */}
                     {/* @validates Requirements 4.1, 4.5 - Play/pause functionality */}

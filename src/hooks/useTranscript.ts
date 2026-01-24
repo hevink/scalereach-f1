@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useCallback, useReducer } from "react";
+import { useCallback, useReducer, useRef } from "react";
 import {
   transcriptApi,
   type TranscriptSegment,
@@ -228,21 +228,18 @@ export function useTranscriptEditor(videoId: string) {
 
   // Initialize undo/redo state with empty array, will be updated when data loads
   const undoRedo = useUndoRedo<TranscriptSegment[]>([]);
-
-  // Sync local state with server data when it changes
-  const syncWithServer = useCallback(
-    (segments: TranscriptSegment[]) => {
-      undoRedo.reset(segments);
-    },
-    [undoRedo]
-  );
+  
+  // Store undoRedo in ref to avoid dependency issues
+  const undoRedoRef = useRef(undoRedo);
+  undoRedoRef.current = undoRedo;
 
   // Update a segment's text locally (for undo/redo)
   // Preserves word-level timing when text is modified
   // @validates Requirements 6.4 - Preserve word-level timing information when text is modified
   const updateSegmentText = useCallback(
     (segmentId: string, text: string) => {
-      const newSegments = undoRedo.state.map((segment) => {
+      const { state, set } = undoRedoRef.current;
+      const newSegments = state.map((segment) => {
         if (segment.id !== segmentId) return segment;
 
         // Check if we need to recalculate word timing
@@ -265,24 +262,25 @@ export function useTranscriptEditor(videoId: string) {
         // Text is essentially the same, just update the text
         return { ...segment, text };
       });
-      undoRedo.set(newSegments);
+      set(newSegments);
     },
-    [undoRedo]
+    []
   );
 
   // Update word timing locally (for undo/redo)
   const updateWordTimingLocal = useCallback(
     (segmentId: string, wordIndex: number, start: number, end: number) => {
-      const newSegments = undoRedo.state.map((segment) => {
+      const { state, set } = undoRedoRef.current;
+      const newSegments = state.map((segment) => {
         if (segment.id !== segmentId) return segment;
         const newWords = segment.words.map((word, index) =>
           index === wordIndex ? { ...word, start, end } : word
         );
         return { ...segment, words: newWords };
       });
-      undoRedo.set(newSegments);
+      set(newSegments);
     },
-    [undoRedo]
+    []
   );
 
   // Save transcript text to server
@@ -318,7 +316,7 @@ export function useTranscriptEditor(videoId: string) {
     // Local editable state with undo/redo
     segments: undoRedo.state,
     setSegments: undoRedo.set,
-    syncWithServer,
+    syncWithServer: undoRedo.reset,
 
     // Undo/Redo controls
     undo: undoRedo.undo,

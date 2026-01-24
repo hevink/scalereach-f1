@@ -1,7 +1,7 @@
 "use client";
 
 import { use, useEffect } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, usePathname } from "next/navigation";
 import { useSession } from "@/lib/auth-client";
 import { useWorkspaceBySlug } from "@/hooks/useWorkspace";
 import {
@@ -24,6 +24,7 @@ export default function WorkspaceLayout({
 }: WorkspaceLayoutProps) {
   const { "workspace-slug": slug } = use(params);
   const router = useRouter();
+  const pathname = usePathname();
   const { data: session, isPending: sessionPending } = useSession();
   const { data: workspace, isLoading: workspaceLoading, error } = useWorkspaceBySlug(slug);
 
@@ -51,6 +52,18 @@ export default function WorkspaceLayout({
 
   if (!workspace) {
     return null;
+  }
+
+  // Hide sidebar on clip editor page
+  const isClipEditor = /\/clips\/[^/]+$/.test(pathname);
+  
+  if (isClipEditor) {
+    return (
+      <>
+        <WorkspaceTracker slug={slug} />
+        {children}
+      </>
+    );
   }
 
   return (
