@@ -28,7 +28,6 @@ import { EditingLayout } from "@/components/clips/editing-layout";
 import { TimelineEditor } from "@/components/clips/timeline-editor";
 import { CaptionStylePanel } from "@/components/captions/caption-style-panel";
 import { VideoPlayer, type VideoPlayerRef } from "@/components/video/video-player";
-import { CanvasVideoPlayer } from "@/components/video/canvas-video-player";
 import { TranscriptEditor, type TranscriptEditorRef } from "@/components/transcript/transcript-editor";
 import { ExportOptions } from "@/components/export/export-options";
 import { ExportProgress } from "@/components/export/export-progress";
@@ -1482,12 +1481,18 @@ export default function ClipEditorPage({ params }: ClipEditorPageProps) {
                                 Preview
                             </h2>
                             {videoSrc ? (
-                                <CanvasVideoPlayer
+                                <VideoPlayer
+                                    ref={videoPlayerRef}
                                     src={videoSrc}
+                                    poster={thumbnailUrl}
+                                    startTime={clipWithBoundaries.startTime}
+                                    endTime={clipWithBoundaries.endTime}
                                     captions={captions}
                                     captionStyle={captionStyle}
                                     onCaptionStyleChange={handleStyleChange}
-                                    className="aspect-video w-full"
+                                    onTimeUpdate={handleTimeUpdate}
+                                    showFullControls
+                                    className="aspect-video w-full rounded-lg overflow-hidden"
                                 />
                             ) : (
                                 <div className="flex aspect-video w-full items-center justify-center rounded-lg border bg-muted">
