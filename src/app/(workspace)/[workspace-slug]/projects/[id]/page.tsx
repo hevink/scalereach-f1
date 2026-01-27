@@ -164,7 +164,7 @@ export default function ProjectDetailPage({ params }: ProjectDetailPageProps) {
 
     const handleVideoSelect = useCallback(
         (videoId: string) => {
-            router.push(`/${slug}/videos/${videoId}`);
+            router.push(`/${slug}/videos/${videoId}/clips`);
         },
         [router, slug]
     );

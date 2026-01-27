@@ -9,3 +9,8 @@ export {
   type TranscriptEditorProps,
   type TranscriptEditorRef,
 } from "./transcript-editor";
+
+export {
+  TranscriptParagraphView,
+  type TranscriptParagraphViewProps,
+} from "./transcript-paragraph-view";

@@ -16,6 +16,11 @@ export {
   isValidFont,
 } from "./caption-style-panel";
 
+export {
+  CaptionPanelTabs,
+  type CaptionPanelTabsProps,
+} from "./caption-panel-tabs";
+
 export { DraggableCaption } from "./draggable-caption";
 
 export {

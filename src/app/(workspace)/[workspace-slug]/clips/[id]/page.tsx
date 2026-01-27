@@ -26,9 +26,9 @@ import {
 } from "@/components/ui/breadcrumb";
 import { EditingLayout } from "@/components/clips/editing-layout";
 import { TimelineEditor } from "@/components/clips/timeline-editor";
-import { CaptionStylePanel } from "@/components/captions/caption-style-panel";
+import { CaptionPanelTabs } from "@/components/captions/caption-panel-tabs";
 import { VideoPlayer, type VideoPlayerRef } from "@/components/video/video-player";
-import { TranscriptEditor, type TranscriptEditorRef } from "@/components/transcript/transcript-editor";
+import { TranscriptParagraphView } from "@/components/transcript/transcript-paragraph-view";
 import { ExportOptions } from "@/components/export/export-options";
 import { ExportProgress } from "@/components/export/export-progress";
 import { useClip, useUpdateClipBoundaries } from "@/hooks/useClips";
@@ -307,7 +307,7 @@ function EditorHeader({
                             <BreadcrumbItem>
                                 <BreadcrumbLink
                                     render={
-                                        <Link href={`/${workspaceSlug}/videos/${videoId}`}>
+                                        <Link href={`/${workspaceSlug}/videos/${videoId}/clips`}>
                                             {videoTitle || "Video"}
                                         </Link>
                                     }
@@ -463,7 +463,6 @@ export default function ClipEditorPage({ params }: ClipEditorPageProps) {
 
     // Refs
     const videoPlayerRef = useRef<VideoPlayerRef>(null);
-    const transcriptEditorRef = useRef<TranscriptEditorRef>(null);
 
     // State
     const [captionStyle, setCaptionStyle] = useState<CaptionStyle>(DEFAULT_CAPTION_STYLE);
@@ -665,7 +664,7 @@ export default function ClipEditorPage({ params }: ClipEditorPageProps) {
                 // Save scroll position for the video clips page before navigating
                 if (clip?.videoId) {
                     savePageScrollPosition(`video_clips_${clip.videoId}`);
-                    router.push(`/${slug}/videos/${clip.videoId}`);
+                    router.push(`/${slug}/videos/${clip.videoId}/clips`);
                 } else {
                     router.push(`/${slug}`);
                 }
@@ -680,7 +679,7 @@ export default function ClipEditorPage({ params }: ClipEditorPageProps) {
         if (clip?.videoId) {
             // Save scroll position with video ID as key so it can be restored
             savePageScrollPosition(`video_clips_${clip.videoId}`);
-            router.push(`/${slug}/videos/${clip.videoId}`);
+            router.push(`/${slug}/videos/${clip.videoId}/clips`);
         } else {
             router.push(`/${slug}`);
         }
@@ -886,7 +885,7 @@ export default function ClipEditorPage({ params }: ClipEditorPageProps) {
         (newStyle: CaptionStyle | Partial<CaptionStyle>) => {
             // Merge with existing style for partial updates
             const mergedStyle = { ...captionStyle, ...newStyle } as CaptionStyle;
-            
+
             // Update local state immediately for responsive UI
             setCaptionStyle(mergedStyle);
 
@@ -1384,13 +1383,13 @@ export default function ClipEditorPage({ params }: ClipEditorPageProps) {
     const captions = (() => {
         if (localCaptions && localCaptions.length > 0) return localCaptions;
         if (captionData?.captions && captionData.captions.length > 0) return captionData.captions;
-        
+
         // Convert words array to Caption format if available
         const words = (captionData as any)?.words;
         if (words && Array.isArray(words) && words.length > 0) {
             const segments: Caption[] = [];
             let currentWords: any[] = [];
-            
+
             for (let i = 0; i < words.length; i++) {
                 currentWords.push({
                     word: words[i].word,
@@ -1398,7 +1397,7 @@ export default function ClipEditorPage({ params }: ClipEditorPageProps) {
                     endTime: words[i].end,
                     highlight: false,
                 });
-                
+
                 if (/[.!?]$/.test(words[i].word) || currentWords.length >= 10 || i === words.length - 1) {
                     segments.push({
                         id: `caption-${segments.length}`,
@@ -1412,7 +1411,7 @@ export default function ClipEditorPage({ params }: ClipEditorPageProps) {
             }
             return segments;
         }
-        
+
         return [];
     })();
 
@@ -1434,7 +1433,7 @@ export default function ClipEditorPage({ params }: ClipEditorPageProps) {
     return (
         <>
             <EditingLayout
-                className="h-full"
+                className="h-screen"
                 header={
                     <EditorHeader
                         title={clip.title || "Untitled Clip"}
@@ -1450,19 +1449,30 @@ export default function ClipEditorPage({ params }: ClipEditorPageProps) {
                 }
             >
                 {{
-                    /* Left Panel: Caption Editor (TranscriptEditor) */
+                    /* Left Panel: Caption Editor (Paragraph View) */
                     captionEditor: (
                         <div className="flex flex-col gap-4">
                             <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">
                                 Captions
                             </h2>
                             {video?.id ? (
-                                <TranscriptEditor
-                                    ref={transcriptEditorRef}
-                                    videoId={video.id}
+                                <TranscriptParagraphView
+                                    segments={captions.map((c) => ({
+                                        id: c.id,
+                                        text: c.text,
+                                        startTime: c.startTime,
+                                        endTime: c.endTime,
+                                        words: c.words.map((w) => ({
+                                            word: w.word,
+                                            start: w.start,
+                                            end: w.end,
+                                            confidence: 1,
+                                        })),
+                                    }))}
                                     currentTime={currentTime}
-                                    onSegmentClick={handleSegmentClick}
-                                    onCaptionEdit={handleCaptionEdit}
+                                    onWordClick={handleSegmentClick}
+                                    onTextEdit={handleCaptionEdit}
+                                    highlightCurrent
                                 />
                             ) : (
                                 <div className="flex items-center justify-center h-64 rounded-lg border bg-muted/50">
@@ -1506,22 +1516,14 @@ export default function ClipEditorPage({ params }: ClipEditorPageProps) {
 
                     /* Right Panel: Caption Style Panel */
                     stylePanel: (
-                        <div className="flex flex-col gap-4">
-                            <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">
-                                Caption Style
-                            </h2>
-                            <div className="rounded-lg border bg-card p-4 overflow-y-auto max-h-[calc(100vh-200px)]">
-                                <CaptionStylePanel
-                                    style={captionStyle}
-                                    onChange={handleStyleChange}
-                                    disabled={updateCaptionStyle.isPending}
-                                    presets={presets}
-                                    selectedPresetId={currentPresetId}
-                                    onPresetSelect={handlePresetSelect}
-                                    showPresets={true}
-                                />
-                            </div>
-                        </div>
+                        <CaptionPanelTabs
+                            style={captionStyle}
+                            onChange={handleStyleChange}
+                            disabled={updateCaptionStyle.isPending}
+                            presets={presets}
+                            selectedPresetId={currentPresetId}
+                            onPresetSelect={handlePresetSelect}
+                        />
                     ),
 
                     /* Bottom Panel: Timeline Editor */

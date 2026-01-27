@@ -47,3 +47,8 @@ export {
     DEFAULT_PANEL_SIZES,
     MIN_PANEL_SIZES,
 } from "./editing-layout";
+export {
+    EditorToolbar,
+    type EditorToolbarProps,
+    type ToolbarPanel,
+} from "./editor-toolbar";

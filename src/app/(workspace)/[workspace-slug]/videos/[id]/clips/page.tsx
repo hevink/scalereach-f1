@@ -243,8 +243,8 @@ export default function VideoClipsPage({ params }: VideoClipsPageProps) {
     } = useClipsByVideo(videoId);
 
     const handleBack = useCallback(() => {
-        router.push(`/${slug}/videos/${videoId}`);
-    }, [router, slug, videoId]);
+        router.push(`/${slug}`);
+    }, [router, slug]);
 
     const handleClipSelect = useCallback(
         (clipId: string) => {
@@ -289,18 +289,20 @@ export default function VideoClipsPage({ params }: VideoClipsPageProps) {
                     variant="ghost"
                     size="icon"
                     onClick={handleBack}
-                    aria-label="Go back to video"
+                    aria-label="Go back"
                 >
                     <IconArrowLeft className="size-5" />
                 </Button>
-                <div className="min-w-0 flex-1">
-                    <h1 className="truncate text-lg font-semibold">
-                        {video.title || "Untitled Video"} - Clips
-                    </h1>
-                    <p className="text-sm text-muted-foreground">
-                        {clips?.length || 0} clip{(clips?.length || 0) !== 1 ? "s" : ""} generated
-                    </p>
-                </div>
+                {video.thumbnailUrl && (
+                    <img
+                        src={video.thumbnailUrl}
+                        alt={video.title || "Video thumbnail"}
+                        className="h-12 w-20 rounded object-cover"
+                    />
+                )}
+                <h1 className="min-w-0 flex-1 truncate text-lg font-semibold">
+                    {video.title || "Untitled Video"}
+                </h1>
             </div>
 
             {/* Clips Grid */}

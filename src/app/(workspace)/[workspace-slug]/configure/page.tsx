@@ -91,7 +91,7 @@ export default function ConfigurePage() {
             toast.success("Processing started!", {
                 description: "Your video is being processed. Clips will be ready soon.",
             });
-            router.push(`/${workspaceSlug}/videos/${result.video.id}`);
+            router.push(`/${workspaceSlug}/videos/${result.video.id}/clips`);
         },
         onError: (error: Error) => {
             toast.error("Failed to process video", {
