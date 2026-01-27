@@ -26,7 +26,7 @@ export default function OnboardingPage() {
         }
 
         if (data.user.isOnboarded) {
-          router.replace("/home");
+          router.replace("/workspaces");
           return;
         }
       } catch (error) {

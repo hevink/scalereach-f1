@@ -310,7 +310,7 @@ export function OnboardingForm() {
   useEffect(() => {
     if (currentStep === 7) {
       const timer = setTimeout(() => {
-        router.push("/home");
+        router.push("/workspaces");
         router.refresh();
       }, 5000);
       return () => clearTimeout(timer);

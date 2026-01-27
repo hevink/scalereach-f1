@@ -125,8 +125,8 @@ export function LoginForm() {
         return;
       }
 
-      // If there's a redirect (e.g., from invite), go there; otherwise go to home
-      router.push(redirect || "/home");
+      // If there's a redirect (e.g., from invite), go there; otherwise go to workspaces
+      router.push(redirect || "/workspaces");
       router.refresh();
     } catch (error) {
       const errorMessage = getAuthErrorMessage(

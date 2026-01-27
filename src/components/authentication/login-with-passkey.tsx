@@ -118,7 +118,7 @@ export function LoginWithPasskey({
       }
 
       toast.success("Signed in successfully");
-      router.push("/home");
+      router.push("/workspaces");
       router.refresh();
     } catch (error) {
       setIsLoading(false);

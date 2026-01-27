@@ -20,9 +20,9 @@ export default function TwoFactorVerifyPage() {
         const response = await fetch("/api/auth/session");
         const data = await response.json();
         setUser(data.user);
-        // If user is authenticated and doesn't have 2FA enabled, redirect to home
+        // If user is authenticated and doesn't have 2FA enabled, redirect to workspaces
         if (data.user && !data.user.twoFactorEnabled) {
-          router.replace("/home");
+          router.replace("/workspaces");
         }
       } catch (error) {
         console.error("Failed to check session:", error);
