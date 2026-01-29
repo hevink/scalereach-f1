@@ -109,10 +109,10 @@ function DesktopLayout({ children, header, onPanelResize, className }: DesktopLa
                             id="caption-editor-panel"
                             defaultSize={DEFAULT_PANEL_SIZES.captionEditor}
                             minSize={MIN_PANEL_SIZES.captionEditor}
-                            className="overflow-auto"
+                            className="overflow-hidden"
                             data-testid="editing-layout-caption-editor"
                         >
-                            <div className="h-full overflow-auto p-4">
+                            <div className="h-full overflow-hidden">
                                 {children.captionEditor}
                             </div>
                         </ResizablePanel>
@@ -144,12 +144,10 @@ function DesktopLayout({ children, header, onPanelResize, className }: DesktopLa
 
             {/* Bottom Row: Timeline Editor */}
             <div
-                className="shrink-0 border-t bg-background"
+                className="shrink-0 border-t bg-zinc-900"
                 data-testid="editing-layout-timeline"
             >
-                <div className="p-4">
-                    {children.timeline}
-                </div>
+                {children.timeline}
             </div>
         </div>
     );
@@ -214,12 +212,10 @@ function MobileLayout({ children, header, className }: MobileLayoutProps) {
 
             {/* Timeline Editor (Bottom - Fixed) */}
             <div
-                className="shrink-0 border-t bg-background"
+                className="shrink-0 border-t bg-zinc-900"
                 data-testid="editing-layout-timeline"
             >
-                <div className="p-4">
-                    {children.timeline}
-                </div>
+                {children.timeline}
             </div>
         </div>
     );

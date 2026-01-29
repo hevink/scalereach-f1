@@ -52,3 +52,7 @@ export {
     type EditorToolbarProps,
     type ToolbarPanel,
 } from "./editor-toolbar";
+export {
+    ClipTimeline,
+    type ClipTimelineProps,
+} from "./clip-timeline";

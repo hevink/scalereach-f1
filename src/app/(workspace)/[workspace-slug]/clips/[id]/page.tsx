@@ -25,7 +25,7 @@ import {
     BreadcrumbSeparator,
 } from "@/components/ui/breadcrumb";
 import { EditingLayout } from "@/components/clips/editing-layout";
-import { TimelineEditor } from "@/components/clips/timeline-editor";
+import { ClipTimeline } from "@/components/clips/clip-timeline";
 import { CaptionPanelTabs } from "@/components/captions/caption-panel-tabs";
 import { VideoPlayer, type VideoPlayerRef } from "@/components/video/video-player";
 import { TranscriptParagraphView } from "@/components/transcript/transcript-paragraph-view";
@@ -467,6 +467,7 @@ export default function ClipEditorPage({ params }: ClipEditorPageProps) {
     // State
     const [captionStyle, setCaptionStyle] = useState<CaptionStyle>(DEFAULT_CAPTION_STYLE);
     const [currentTime, setCurrentTime] = useState(0);
+    const [isPlaying, setIsPlaying] = useState(false);
     const [activeExportId, setActiveExportId] = useState<string | null>(null);
     const [exportDialogOpen, setExportDialogOpen] = useState(false);
     const [clipBoundaries, setClipBoundaries] = useState<{ start: number; end: number } | null>(null);
@@ -756,6 +757,37 @@ export default function ClipEditorPage({ params }: ClipEditorPageProps) {
     const handleTimeUpdate = useCallback((time: number) => {
         setCurrentTime(time);
     }, []);
+
+    // Play/pause toggle handler
+    const handlePlayPause = useCallback(() => {
+        if (videoPlayerRef.current) {
+            if (isPlaying) {
+                videoPlayerRef.current.pause();
+            } else {
+                videoPlayerRef.current.play();
+            }
+            setIsPlaying(!isPlaying);
+        }
+    }, [isPlaying]);
+
+    // Skip forward handler (5 seconds)
+    const handleSkipForward = useCallback(() => {
+        if (videoPlayerRef.current) {
+            const newTime = Math.min(
+                currentTime + 5,
+                (clipBoundaries?.end ?? clip?.endTime ?? 0) - (clipBoundaries?.start ?? clip?.startTime ?? 0)
+            );
+            videoPlayerRef.current.seek(newTime + (clipBoundaries?.start ?? clip?.startTime ?? 0));
+        }
+    }, [currentTime, clipBoundaries, clip]);
+
+    // Skip backward handler (5 seconds)
+    const handleSkipBackward = useCallback(() => {
+        if (videoPlayerRef.current) {
+            const newTime = Math.max(0, currentTime - 5);
+            videoPlayerRef.current.seek(newTime + (clipBoundaries?.start ?? clip?.startTime ?? 0));
+        }
+    }, [currentTime, clipBoundaries, clip]);
 
     // Segment click handler - seek video to timestamp
     const handleSegmentClick = useCallback((timestamp: number) => {
@@ -1451,10 +1483,7 @@ export default function ClipEditorPage({ params }: ClipEditorPageProps) {
                 {{
                     /* Left Panel: Caption Editor (Paragraph View) */
                     captionEditor: (
-                        <div className="flex flex-col gap-4">
-                            <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">
-                                Captions
-                            </h2>
+                        <div className="h-full">
                             {video?.id ? (
                                 <TranscriptParagraphView
                                     segments={captions.map((c) => ({
@@ -1473,10 +1502,11 @@ export default function ClipEditorPage({ params }: ClipEditorPageProps) {
                                     onWordClick={handleSegmentClick}
                                     onTextEdit={handleCaptionEdit}
                                     highlightCurrent
+                                    className="h-full"
                                 />
                             ) : (
-                                <div className="flex items-center justify-center h-64 rounded-lg border bg-muted/50">
-                                    <p className="text-sm text-muted-foreground">
+                                <div className="flex items-center justify-center h-full bg-zinc-900">
+                                    <p className="text-sm text-zinc-500">
                                         No video available for transcript
                                     </p>
                                 </div>
@@ -1528,17 +1558,17 @@ export default function ClipEditorPage({ params }: ClipEditorPageProps) {
 
                     /* Bottom Panel: Timeline Editor */
                     timeline: (
-                        <TimelineEditor
-                            clipId={clipId}
-                            clipData={{
-                                startTime: clipWithBoundaries.startTime,
-                                endTime: clipWithBoundaries.endTime,
-                                duration: videoDuration,
-                            }}
+                        <ClipTimeline
+                            clipStartTime={clipWithBoundaries.startTime}
+                            clipEndTime={clipWithBoundaries.endTime}
+                            currentTime={currentTime - clipWithBoundaries.startTime}
+                            isPlaying={isPlaying}
+                            onSeek={(time) => videoPlayerRef.current?.seek(time + clipWithBoundaries.startTime)}
+                            onPlayPause={handlePlayPause}
+                            onSkipForward={handleSkipForward}
+                            onSkipBackward={handleSkipBackward}
+                            videoSrc={videoSrc}
                             captions={captions}
-                            currentTime={currentTime}
-                            onSeek={(time) => videoPlayerRef.current?.seek(time)}
-                            onBoundaryChange={handleBoundaryChange}
                             className="w-full"
                         />
                     ),
