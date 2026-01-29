@@ -109,31 +109,107 @@ function VideoNotFound({ onBack }: VideoNotFoundProps) {
 
 interface NoClipsProps {
     videoTitle: string;
-    isProcessing: boolean;
+    videoStatus: string;
 }
 
-function NoClips({ videoTitle, isProcessing }: NoClipsProps) {
-    if (isProcessing) {
+function NoClips({ videoTitle, videoStatus }: NoClipsProps) {
+    // Processing states
+    if (videoStatus === "downloading") {
         return (
             <div className="flex flex-col items-center justify-center gap-4 rounded-lg border bg-muted/30 p-8">
                 <IconLoader2 className="size-8 animate-spin text-primary" />
                 <div className="text-center">
-                    <h3 className="font-medium">Processing Video</h3>
+                    <h3 className="font-medium">Downloading Video</h3>
                     <p className="mt-1 text-sm text-muted-foreground">
-                        Clips are being generated for &quot;{videoTitle}&quot;. This may take a few minutes.
+                        Downloading &quot;{videoTitle}&quot; from YouTube...
                     </p>
                 </div>
             </div>
         );
     }
 
+    if (videoStatus === "uploading") {
+        return (
+            <div className="flex flex-col items-center justify-center gap-4 rounded-lg border bg-muted/30 p-8">
+                <IconLoader2 className="size-8 animate-spin text-primary" />
+                <div className="text-center">
+                    <h3 className="font-medium">Uploading Video</h3>
+                    <p className="mt-1 text-sm text-muted-foreground">
+                        Uploading video to storage...
+                    </p>
+                </div>
+            </div>
+        );
+    }
+
+    if (videoStatus === "transcribing") {
+        return (
+            <div className="flex flex-col items-center justify-center gap-4 rounded-lg border bg-muted/30 p-8">
+                <IconLoader2 className="size-8 animate-spin text-primary" />
+                <div className="text-center">
+                    <h3 className="font-medium">Transcribing Audio</h3>
+                    <p className="mt-1 text-sm text-muted-foreground">
+                        Converting speech to text for &quot;{videoTitle}&quot;...
+                    </p>
+                </div>
+            </div>
+        );
+    }
+
+    if (videoStatus === "analyzing" || videoStatus === "processing") {
+        return (
+            <div className="flex flex-col items-center justify-center gap-4 rounded-lg border bg-muted/30 p-8">
+                <IconLoader2 className="size-8 animate-spin text-primary" />
+                <div className="text-center">
+                    <h3 className="font-medium">Detecting Viral Clips</h3>
+                    <p className="mt-1 text-sm text-muted-foreground">
+                        AI is analyzing &quot;{videoTitle}&quot; for viral moments. This may take a few minutes.
+                    </p>
+                </div>
+            </div>
+        );
+    }
+
+    // Error state
+    if (videoStatus === "failed" || videoStatus === "error") {
+        return (
+            <div className="flex flex-col items-center justify-center gap-4 rounded-lg border border-destructive/30 bg-destructive/5 p-8">
+                <div className="flex size-12 items-center justify-center rounded-full bg-destructive/10">
+                    <IconAlertCircle className="size-6 text-destructive" />
+                </div>
+                <div className="text-center max-w-md">
+                    <h3 className="font-medium text-destructive">Something went wrong</h3>
+                    <p className="mt-2 text-sm text-muted-foreground">
+                        We couldn&apos;t process this video. Please try again or use a different video.
+                    </p>
+                </div>
+            </div>
+        );
+    }
+
+    // Pending state (not started yet)
+    if (videoStatus === "pending") {
+        return (
+            <div className="flex flex-col items-center justify-center gap-4 rounded-lg border bg-muted/30 p-8">
+                <IconClock className="size-8 text-muted-foreground" />
+                <div className="text-center">
+                    <h3 className="font-medium">Queued for Processing</h3>
+                    <p className="mt-1 text-sm text-muted-foreground">
+                        &quot;{videoTitle}&quot; is waiting in the queue. Processing will start soon.
+                    </p>
+                </div>
+            </div>
+        );
+    }
+
+    // Completed but no clips (shouldn't happen normally)
     return (
         <div className="flex flex-col items-center justify-center gap-4 rounded-lg border bg-muted/30 p-8">
             <IconVideo className="size-8 text-muted-foreground" />
             <div className="text-center">
                 <h3 className="font-medium">No Clips Found</h3>
                 <p className="mt-1 text-sm text-muted-foreground">
-                    No clips have been generated for this video yet.
+                    No viral clips were detected in this video. Try a video with more engaging content.
                 </p>
             </div>
         </div>
@@ -277,10 +353,6 @@ export default function VideoClipsPage({ params }: VideoClipsPageProps) {
         return <VideoNotFound onBack={handleBack} />;
     }
 
-    const isProcessing = ["downloading", "uploading", "transcribing", "analyzing", "processing"].includes(
-        video.status
-    );
-
     return (
         <div className="flex h-full flex-col">
             {/* Header */}
@@ -293,9 +365,9 @@ export default function VideoClipsPage({ params }: VideoClipsPageProps) {
                 >
                     <IconArrowLeft className="size-5" />
                 </Button>
-                {video.thumbnailUrl && (
+                {typeof video.metadata?.thumbnail === 'string' && (
                     <img
-                        src={video.thumbnailUrl}
+                        src={video.metadata.thumbnail}
                         alt={video.title || "Video thumbnail"}
                         className="h-12 w-20 rounded object-cover"
                     />
@@ -310,7 +382,7 @@ export default function VideoClipsPage({ params }: VideoClipsPageProps) {
                 {!clips || clips.length === 0 ? (
                     <NoClips
                         videoTitle={video.title || "this video"}
-                        isProcessing={isProcessing}
+                        videoStatus={video.status}
                     />
                 ) : (
                     <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
