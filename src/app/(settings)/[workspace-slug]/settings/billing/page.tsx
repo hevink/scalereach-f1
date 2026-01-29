@@ -1,17 +1,15 @@
 "use client";
 
-import { use } from "react";
+import { useState } from "react";
+import { useParams } from "next/navigation";
 import {
     IconCreditCard,
-    IconSparkles,
     IconHistory,
     IconExternalLink,
-    IconRocket,
-    IconBuilding,
     IconCheck,
     IconTrendingUp,
+    IconInfoCircle,
 } from "@tabler/icons-react";
-import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import {
     Card,
@@ -21,279 +19,280 @@ import {
     CardTitle,
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Skeleton } from "@/components/ui/skeleton";
 import { Progress } from "@/components/ui/progress";
+import {
+    Tooltip,
+    TooltipContent,
+    TooltipProvider,
+    TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { useWorkspaceBySlug } from "@/hooks/useWorkspace";
 import { useCreditBalance, useCreditTransactions } from "@/hooks/useCredits";
-import { PricingDialog } from "@/components/pricing/pricing-dialog";
-import { creditsApi } from "@/lib/api/credits";
 import { cn } from "@/lib/utils";
 
-// Plan configurations
-const planConfig = {
-    free: {
-        name: "Free",
-        icon: IconSparkles,
-        color: "text-muted-foreground",
-        bgColor: "bg-muted",
-        limits: {
-            videos: 5,
-            videoLength: "30 min",
-            clips: 20,
-            download: "720p",
-        },
-    },
-    pro: {
-        name: "Pro",
-        icon: IconRocket,
-        color: "text-blue-500",
-        bgColor: "bg-blue-500/10",
-        limits: {
-            videos: 30,
-            videoLength: "2 hours",
-            clips: 300,
-            download: "4K",
-        },
-    },
-    agency: {
-        name: "Agency",
-        icon: IconBuilding,
-        color: "text-purple-500",
-        bgColor: "bg-purple-500/10",
-        limits: {
-            videos: 100,
-            videoLength: "3 hours",
-            clips: 1000,
-            download: "4K",
-        },
-    },
-};
+// ============================================================================
+// Types
+// ============================================================================
 
-function CurrentPlanCard({ workspaceId, currentPlan = "free" }: { workspaceId?: string; currentPlan?: string }) {
-    const plan = planConfig[currentPlan as keyof typeof planConfig] || planConfig.free;
-    const PlanIcon = plan.icon;
-
-    const handleManageBilling = async () => {
-        if (!workspaceId) return;
-
-        try {
-            const { portalUrl } = await creditsApi.getCustomerPortal(workspaceId);
-            window.open(portalUrl, "_blank");
-        } catch (error) {
-            toast.error("Failed to open billing portal");
-        }
-    };
-
-    return (
-        <Card>
-            <CardHeader>
-                <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                        <div className={cn("flex size-10 items-center justify-center rounded-lg", plan.bgColor)}>
-                            <PlanIcon className={cn("size-5", plan.color)} />
-                        </div>
-                        <div>
-                            <CardTitle className="flex items-center gap-2">
-                                {plan.name} Plan
-                                {currentPlan !== "free" && (
-                                    <Badge variant="secondary" className="text-xs">Active</Badge>
-                                )}
-                            </CardTitle>
-                            <CardDescription>
-                                {currentPlan === "free"
-                                    ? "Upgrade to unlock more features"
-                                    : "Your current subscription plan"}
-                            </CardDescription>
-                        </div>
-                    </div>
-                    <div className="flex gap-2">
-                        {currentPlan !== "free" && (
-                            <Button variant="outline" size="sm" onClick={handleManageBilling}>
-                                <IconCreditCard className="size-4 mr-2" />
-                                Manage Billing
-                                <IconExternalLink className="size-3 ml-1" />
-                            </Button>
-                        )}
-                        <PricingDialog
-                            workspaceId={workspaceId}
-                            currentPlan={currentPlan}
-                            trigger={
-                                <Button size="sm" variant={currentPlan === "free" ? "default" : "outline"}>
-                                    <IconSparkles className="size-4 mr-2" />
-                                    {currentPlan === "free" ? "Upgrade" : "Change Plan"}
-                                </Button>
-                            }
-                        />
-                    </div>
-                </div>
-            </CardHeader>
-            <CardContent>
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                    <div className="flex flex-col gap-1">
-                        <span className="text-sm text-muted-foreground">Videos/month</span>
-                        <span className="text-lg font-semibold">{plan.limits.videos}</span>
-                    </div>
-                    <div className="flex flex-col gap-1">
-                        <span className="text-sm text-muted-foreground">Max length</span>
-                        <span className="text-lg font-semibold">{plan.limits.videoLength}</span>
-                    </div>
-                    <div className="flex flex-col gap-1">
-                        <span className="text-sm text-muted-foreground">Clips/month</span>
-                        <span className="text-lg font-semibold">{plan.limits.clips}</span>
-                    </div>
-                    <div className="flex flex-col gap-1">
-                        <span className="text-sm text-muted-foreground">Download</span>
-                        <span className="text-lg font-semibold">{plan.limits.download}</span>
-                    </div>
-                </div>
-            </CardContent>
-        </Card>
-    );
+interface PlanFeature {
+    text: string;
+    tooltip?: string;
+    highlighted?: boolean;
 }
 
-function UsageCard({ workspaceId, currentPlan = "free" }: { workspaceId?: string; currentPlan?: string }) {
-    const { data: balance, isLoading } = useCreditBalance(workspaceId);
-    const plan = planConfig[currentPlan as keyof typeof planConfig] || planConfig.free;
+interface PricingPlan {
+    id: string;
+    name: string;
+    badge?: string;
+    monthlyPrice: number;
+    yearlyPrice: number;
+    features: PlanFeature[];
+    highlighted?: boolean;
+}
 
-    // Mock usage data - replace with actual usage tracking
-    const usage = {
-        videos: { used: 3, limit: plan.limits.videos },
-        clips: { used: 45, limit: plan.limits.clips },
-    };
+// ============================================================================
+// Pricing Data
+// ============================================================================
 
-    if (isLoading) {
-        return (
-            <Card>
-                <CardHeader>
-                    <Skeleton className="h-6 w-32" />
-                    <Skeleton className="h-4 w-48" />
-                </CardHeader>
-                <CardContent>
-                    <Skeleton className="h-24 w-full" />
-                </CardContent>
-            </Card>
-        );
-    }
+const plans: PricingPlan[] = [
+    {
+        id: "starter",
+        name: "ScaleReach",
+        monthlyPrice: 29,
+        yearlyPrice: 17,
+        features: [
+            { text: "Upload 10 videos monthly" },
+            { text: "Up to 45 minutes long videos" },
+            { text: "Generate 100 clips monthly", highlighted: true },
+            { text: "HD download" },
+        ],
+    },
+    {
+        id: "pro",
+        name: "ScaleReach",
+        badge: "Pro",
+        monthlyPrice: 79,
+        yearlyPrice: 47,
+        features: [
+            { text: "Upload 30 videos monthly" },
+            { text: "Up to 2 hours long videos" },
+            { text: "Generate 300 clips monthly", highlighted: true },
+            { text: "4K download" },
+            { text: "Translate to 29 languages (AI Dubbing)" },
+        ],
+        highlighted: true,
+    },
+    {
+        id: "pro-plus",
+        name: "ScaleReach",
+        badge: "Pro+",
+        monthlyPrice: 189,
+        yearlyPrice: 113,
+        features: [
+            { text: "Upload 100 videos monthly" },
+            { text: "Up to 3 hours long videos" },
+            { text: "Generate 1000 clips monthly", highlighted: true },
+            { text: "4K download" },
+            { text: "Translate to 29 languages (AI Dubbing)" },
+        ],
+    },
+];
 
+// ============================================================================
+// Components
+// ============================================================================
+
+function BillingToggle({
+    isYearly,
+    onToggle,
+}: {
+    isYearly: boolean;
+    onToggle: (yearly: boolean) => void;
+}) {
     return (
-        <Card>
-            <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                    <IconTrendingUp className="size-5" />
-                    Usage This Month
-                </CardTitle>
-                <CardDescription>Track your resource consumption</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-6">
-                <div className="space-y-2">
-                    <div className="flex justify-between text-sm">
-                        <span>Videos uploaded</span>
-                        <span className="font-medium">{usage.videos.used} / {usage.videos.limit}</span>
-                    </div>
-                    <Progress value={(usage.videos.used / usage.videos.limit) * 100} className="h-2" />
-                </div>
-                <div className="space-y-2">
-                    <div className="flex justify-between text-sm">
-                        <span>Clips generated</span>
-                        <span className="font-medium">{usage.clips.used} / {usage.clips.limit}</span>
-                    </div>
-                    <Progress value={(usage.clips.used / usage.clips.limit) * 100} className="h-2" />
-                </div>
-                {balance && (
-                    <div className="pt-4 border-t">
-                        <div className="flex justify-between items-center">
-                            <div>
-                                <p className="text-sm text-muted-foreground">Credit Balance</p>
-                                <p className="text-2xl font-bold">{balance.balance.toLocaleString()}</p>
-                            </div>
-                            <div className="text-right">
-                                <p className="text-sm text-muted-foreground">Lifetime Credits</p>
-                                <p className="text-lg font-medium text-muted-foreground">{balance.lifetimeCredits.toLocaleString()}</p>
-                            </div>
-                        </div>
-                    </div>
+        <div className="inline-flex items-center rounded-full border border-zinc-700 bg-zinc-800/50 p-1">
+            <button
+                onClick={() => onToggle(false)}
+                className={cn(
+                    "rounded-full px-5 py-2 text-sm font-medium transition-all",
+                    !isYearly
+                        ? "bg-zinc-700 text-white shadow-sm"
+                        : "text-zinc-400 hover:text-white"
                 )}
-            </CardContent>
-        </Card>
+            >
+                Monthly
+            </button>
+            <button
+                onClick={() => onToggle(true)}
+                className={cn(
+                    "rounded-full px-5 py-2 text-sm font-medium transition-all flex items-center gap-2",
+                    isYearly
+                        ? "bg-zinc-700 text-white shadow-sm"
+                        : "text-zinc-400 hover:text-white"
+                )}
+            >
+                Yearly
+                <Badge className="bg-emerald-500/10 text-emerald-500 hover:bg-emerald-500/10 border-0 text-xs">
+                    40% off
+                </Badge>
+            </button>
+        </div>
     );
 }
 
-function TransactionHistoryCard({ workspaceId }: { workspaceId?: string }) {
-    const { data: transactions, isLoading } = useCreditTransactions(workspaceId, { limit: 5 });
+function FeatureItem({ feature }: { feature: PlanFeature }) {
+    return (
+        <li className="flex items-start gap-3">
+            <div className={cn(
+                "flex size-5 shrink-0 items-center justify-center rounded-full mt-0.5",
+                feature.highlighted ? "bg-emerald-500/10" : "bg-zinc-700"
+            )}>
+                <IconCheck className={cn(
+                    "size-3",
+                    feature.highlighted ? "text-emerald-500" : "text-zinc-400"
+                )} />
+            </div>
+            <span className={cn(
+                "text-sm flex-1",
+                feature.highlighted ? "text-white font-medium" : "text-zinc-400"
+            )}>
+                {feature.text}
+            </span>
+            {feature.tooltip && (
+                <TooltipProvider>
+                    <Tooltip>
+                        <TooltipTrigger asChild>
+                            <IconInfoCircle className="size-4 text-zinc-500 shrink-0 cursor-help" />
+                        </TooltipTrigger>
+                        <TooltipContent>
+                            <p className="text-xs">{feature.tooltip}</p>
+                        </TooltipContent>
+                    </Tooltip>
+                </TooltipProvider>
+            )}
+        </li>
+    );
+}
 
-    const getTransactionIcon = (type: string) => {
-        switch (type) {
-            case "purchase":
-                return <IconCreditCard className="size-4 text-green-500" />;
-            case "usage":
-                return <IconSparkles className="size-4 text-orange-500" />;
-            case "bonus":
-                return <IconSparkles className="size-4 text-blue-500" />;
-            default:
-                return <IconHistory className="size-4 text-muted-foreground" />;
-        }
-    };
-
-    const getTransactionColor = (amount: number) => {
-        return amount > 0 ? "text-green-600" : "text-orange-600";
-    };
-
-    if (isLoading) {
-        return (
-            <Card>
-                <CardHeader>
-                    <Skeleton className="h-6 w-40" />
-                    <Skeleton className="h-4 w-56" />
-                </CardHeader>
-                <CardContent>
-                    <div className="space-y-3">
-                        {[1, 2, 3].map((i) => (
-                            <Skeleton key={i} className="h-12 w-full" />
-                        ))}
-                    </div>
-                </CardContent>
-            </Card>
-        );
-    }
+function PricingCard({
+    plan,
+    isYearly,
+    isCurrentPlan,
+    onSelect,
+}: {
+    plan: PricingPlan;
+    isYearly: boolean;
+    isCurrentPlan?: boolean;
+    onSelect: (planId: string) => void;
+}) {
+    const price = isYearly ? plan.yearlyPrice : plan.monthlyPrice;
 
     return (
-        <Card>
+        <div
+            className={cn(
+                "relative flex flex-col rounded-2xl border p-6 transition-all",
+                plan.highlighted
+                    ? "bg-zinc-800 border-zinc-700 shadow-2xl scale-105 z-10"
+                    : "bg-zinc-900 border-zinc-800 hover:border-zinc-700"
+            )}
+        >
+            {isCurrentPlan && (
+                <div className="absolute -top-3 left-1/2 -translate-x-1/2">
+                    <Badge className="bg-emerald-500 text-white hover:bg-emerald-500">
+                        Current Plan
+                    </Badge>
+                </div>
+            )}
+
+            {/* Plan Name */}
+            <div className="flex items-center gap-2 mb-6">
+                <div className={cn(
+                    "flex size-8 items-center justify-center rounded-lg",
+                    plan.highlighted ? "bg-white/10" : "bg-zinc-800"
+                )}>
+                    <svg className="size-5 text-white" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" />
+                    </svg>
+                </div>
+                <span className="text-lg font-semibold text-white">{plan.name}</span>
+                {plan.badge && (
+                    <span className="text-sm text-zinc-400">{plan.badge}</span>
+                )}
+            </div>
+
+            {/* Price */}
+            <div className="mb-2">
+                <span className="text-5xl font-bold tracking-tight text-white">${price}</span>
+                <span className="text-lg text-zinc-400">/month</span>
+            </div>
+
+            {/* Billing info */}
+            <p className="text-sm mb-6 text-zinc-400">
+                Billed {isYearly ? "yearly" : "monthly"}
+            </p>
+
+            {/* CTA Button */}
+            <Button
+                onClick={() => onSelect(plan.id)}
+                variant={plan.highlighted ? "secondary" : "outline"}
+                disabled={isCurrentPlan}
+                className={cn(
+                    "w-full mb-8",
+                    plan.highlighted
+                        ? "bg-white text-zinc-900 hover:bg-zinc-100"
+                        : "border-zinc-700 text-white hover:bg-zinc-800"
+                )}
+            >
+                {isCurrentPlan ? "Current Plan" : "Upgrade"}
+            </Button>
+
+            {/* Features */}
+            <ul className="space-y-4 flex-1">
+                {plan.features.map((feature, index) => (
+                    <FeatureItem key={index} feature={feature} />
+                ))}
+            </ul>
+        </div>
+    );
+}
+
+function UsageCard({ workspaceId }: { workspaceId: string }) {
+    const { data: balance, isLoading } = useCreditBalance(workspaceId);
+
+    const currentBalance = balance?.balance ?? 0;
+    const lifetimeCredits = balance?.lifetimeCredits ?? 100;
+    const usedCredits = lifetimeCredits - currentBalance;
+    const usagePercent = lifetimeCredits > 0 ? (usedCredits / lifetimeCredits) * 100 : 0;
+
+    return (
+        <Card className="bg-zinc-900 border-zinc-800">
             <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                    <IconHistory className="size-5" />
-                    Recent Transactions
+                <CardTitle className="flex items-center gap-2 text-white">
+                    <IconTrendingUp className="size-5" />
+                    Credit Balance
                 </CardTitle>
-                <CardDescription>Your credit transaction history</CardDescription>
+                <CardDescription className="text-zinc-400">
+                    Your available credits for clip generation
+                </CardDescription>
             </CardHeader>
             <CardContent>
-                {!transactions || transactions.length === 0 ? (
-                    <div className="text-center py-8 text-muted-foreground">
-                        <IconHistory className="size-8 mx-auto mb-2 opacity-50" />
-                        <p className="text-sm">No transactions yet</p>
+                {isLoading ? (
+                    <div className="space-y-3">
+                        <div className="h-4 bg-zinc-800 rounded animate-pulse" />
+                        <div className="h-2 bg-zinc-800 rounded animate-pulse" />
                     </div>
                 ) : (
                     <div className="space-y-3">
-                        {transactions.map((tx) => (
-                            <div key={tx.id} className="flex items-center justify-between py-2 border-b last:border-0">
-                                <div className="flex items-center gap-3">
-                                    {getTransactionIcon(tx.type)}
-                                    <div>
-                                        <p className="text-sm font-medium">{tx.description || tx.type}</p>
-                                        <p className="text-xs text-muted-foreground">
-                                            {new Date(tx.createdAt).toLocaleDateString()}
-                                        </p>
-                                    </div>
-                                </div>
-                                <div className="text-right">
-                                    <p className={cn("text-sm font-semibold", getTransactionColor(tx.amount))}>
-                                        {tx.amount > 0 ? "+" : ""}{tx.amount}
-                                    </p>
-                                    <p className="text-xs text-muted-foreground">
-                                        Balance: {tx.balanceAfter}
-                                    </p>
-                                </div>
-                            </div>
-                        ))}
+                        <div className="flex justify-between text-sm">
+                            <span className="text-zinc-400">Credits Used</span>
+                            <span className="text-white font-medium">
+                                {usedCredits} / {lifetimeCredits}
+                            </span>
+                        </div>
+                        <Progress value={usagePercent} className="h-2 bg-zinc-800" />
+                        <p className="text-xs text-zinc-500">
+                            {currentBalance} credits remaining
+                        </p>
                     </div>
                 )}
             </CardContent>
@@ -301,117 +300,152 @@ function TransactionHistoryCard({ workspaceId }: { workspaceId?: string }) {
     );
 }
 
-function PlanComparisonCard({ currentPlan = "free" }: { currentPlan?: string }) {
-    const features = [
-        { name: "Videos per month", free: "5", pro: "30", agency: "100" },
-        { name: "Max video length", free: "30 min", pro: "2 hours", agency: "3 hours" },
-        { name: "Clips per month", free: "20", pro: "300", agency: "1000" },
-        { name: "Download quality", free: "720p", pro: "4K", agency: "4K" },
-        { name: "AI Dubbing", free: false, pro: true, agency: true },
-        { name: "Priority support", free: false, pro: true, agency: true },
-        { name: "Custom integrations", free: false, pro: false, agency: true },
-    ];
+function TransactionHistoryCard({ workspaceId }: { workspaceId: string }) {
+    const { data: transactions, isLoading } = useCreditTransactions(workspaceId);
 
     return (
-        <Card>
+        <Card className="bg-zinc-900 border-zinc-800">
             <CardHeader>
-                <CardTitle>Plan Comparison</CardTitle>
-                <CardDescription>Compare features across all plans</CardDescription>
+                <CardTitle className="flex items-center gap-2 text-white">
+                    <IconHistory className="size-5" />
+                    Recent Activity
+                </CardTitle>
+                <CardDescription className="text-zinc-400">
+                    Your recent billing and usage activity
+                </CardDescription>
             </CardHeader>
             <CardContent>
-                <div className="overflow-x-auto">
-                    <table className="w-full text-sm">
-                        <thead>
-                            <tr className="border-b">
-                                <th className="text-left py-3 font-medium">Feature</th>
-                                <th className={cn("text-center py-3 font-medium", currentPlan === "free" && "text-primary")}>Free</th>
-                                <th className={cn("text-center py-3 font-medium", currentPlan === "pro" && "text-primary")}>Pro</th>
-                                <th className={cn("text-center py-3 font-medium", currentPlan === "agency" && "text-primary")}>Agency</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {features.map((feature, index) => (
-                                <tr key={index} className="border-b last:border-0">
-                                    <td className="py-3 text-muted-foreground">{feature.name}</td>
-                                    <td className="text-center py-3">
-                                        {typeof feature.free === "boolean" ? (
-                                            feature.free ? <IconCheck className="size-4 text-green-500 mx-auto" /> : <span className="text-muted-foreground">—</span>
-                                        ) : (
-                                            feature.free
-                                        )}
-                                    </td>
-                                    <td className="text-center py-3">
-                                        {typeof feature.pro === "boolean" ? (
-                                            feature.pro ? <IconCheck className="size-4 text-green-500 mx-auto" /> : <span className="text-muted-foreground">—</span>
-                                        ) : (
-                                            feature.pro
-                                        )}
-                                    </td>
-                                    <td className="text-center py-3">
-                                        {typeof feature.agency === "boolean" ? (
-                                            feature.agency ? <IconCheck className="size-4 text-green-500 mx-auto" /> : <span className="text-muted-foreground">—</span>
-                                        ) : (
-                                            feature.agency
-                                        )}
-                                    </td>
-                                </tr>
-                            ))}
-                        </tbody>
-                    </table>
-                </div>
+                {isLoading ? (
+                    <div className="space-y-3">
+                        {[1, 2, 3].map((i) => (
+                            <div key={i} className="h-12 bg-zinc-800 rounded animate-pulse" />
+                        ))}
+                    </div>
+                ) : transactions && transactions.length > 0 ? (
+                    <div className="space-y-3">
+                        {transactions.slice(0, 5).map((tx) => (
+                            <div
+                                key={tx.id}
+                                className="flex items-center justify-between py-2 border-b border-zinc-800 last:border-0"
+                            >
+                                <div>
+                                    <p className="text-sm text-white">{tx.description}</p>
+                                    <p className="text-xs text-zinc-500">
+                                        {new Date(tx.createdAt).toLocaleDateString()}
+                                    </p>
+                                </div>
+                                <span className={cn(
+                                    "text-sm font-medium",
+                                    tx.amount > 0 ? "text-emerald-500" : "text-zinc-400"
+                                )}>
+                                    {tx.amount > 0 ? "+" : ""}{tx.amount} credits
+                                </span>
+                            </div>
+                        ))}
+                    </div>
+                ) : (
+                    <p className="text-sm text-zinc-500 text-center py-4">
+                        No recent activity
+                    </p>
+                )}
             </CardContent>
         </Card>
     );
 }
 
-export default function BillingPage({ params }: { params: Promise<{ "workspace-slug": string }> }) {
-    const { "workspace-slug": slug } = use(params);
-    const { data: workspace, isLoading } = useWorkspaceBySlug(slug);
+function ManageBillingCard() {
+    return (
+        <Card className="bg-zinc-900 border-zinc-800">
+            <CardHeader>
+                <CardTitle className="flex items-center gap-2 text-white">
+                    <IconCreditCard className="size-5" />
+                    Payment Method
+                </CardTitle>
+                <CardDescription className="text-zinc-400">
+                    Manage your payment methods and billing information
+                </CardDescription>
+            </CardHeader>
+            <CardContent>
+                <Button
+                    variant="outline"
+                    className="w-full border-zinc-700 text-white hover:bg-zinc-800"
+                >
+                    <IconExternalLink className="size-4 mr-2" />
+                    Manage Billing
+                </Button>
+            </CardContent>
+        </Card>
+    );
+}
 
-    // Get plan from workspace data
-    const currentPlan = workspace?.plan || "free";
+// ============================================================================
+// Main Page
+// ============================================================================
 
-    if (isLoading) {
-        return (
-            <div className="flex flex-col gap-6">
-                <div className="flex flex-col gap-2">
-                    <Skeleton className="h-8 w-32" />
-                    <Skeleton className="h-4 w-64" />
-                </div>
-                <Skeleton className="h-48 w-full" />
-                <div className="grid md:grid-cols-2 gap-6">
-                    <Skeleton className="h-64 w-full" />
-                    <Skeleton className="h-64 w-full" />
-                </div>
-            </div>
-        );
-    }
+export default function BillingPage() {
+    const params = useParams();
+    const workspaceSlug = params["workspace-slug"] as string;
+    const { data: workspace } = useWorkspaceBySlug(workspaceSlug);
+    const [isYearly, setIsYearly] = useState(true);
 
-    if (!workspace) {
-        return (
-            <div className="flex flex-col gap-6">
-                <h1 className="font-medium text-2xl">Workspace not found</h1>
-            </div>
-        );
-    }
+    const currentPlanId = workspace?.plan ?? "starter";
+
+    const handleSelectPlan = (planId: string) => {
+        // TODO: Integrate with Polar checkout
+        console.log("Selected plan:", planId, "Yearly:", isYearly);
+    };
 
     return (
-        <div className="flex flex-col gap-6">
-            <div className="flex flex-col gap-1">
-                <h1 className="font-medium text-2xl">Billing & Plans</h1>
-                <p className="text-muted-foreground text-sm">
-                    Manage your subscription and view usage
+        <div className="space-y-8">
+            {/* Header */}
+            <div>
+                <h1 className="text-2xl font-bold text-white">Billing</h1>
+                <p className="text-zinc-400">
+                    Manage your subscription and billing information
                 </p>
             </div>
 
-            <CurrentPlanCard workspaceId={workspace.id} currentPlan={currentPlan} />
-
-            <div className="grid md:grid-cols-2 gap-6">
-                <UsageCard workspaceId={workspace.id} currentPlan={currentPlan} />
-                <TransactionHistoryCard workspaceId={workspace.id} />
+            {/* Usage & Activity Cards */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <UsageCard workspaceId={workspace?.id ?? ""} />
+                <TransactionHistoryCard workspaceId={workspace?.id ?? ""} />
             </div>
 
-            <PlanComparisonCard currentPlan={currentPlan} />
+            {/* Manage Billing */}
+            <ManageBillingCard />
+
+            {/* Plans Section */}
+            <div className="space-y-6">
+                <div className="flex items-center justify-between">
+                    <div>
+                        <h2 className="text-xl font-semibold text-white">Plans</h2>
+                        <p className="text-sm text-zinc-400">
+                            Choose the plan that works best for you
+                        </p>
+                    </div>
+                    <BillingToggle isYearly={isYearly} onToggle={setIsYearly} />
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6 items-start">
+                    {plans.map((plan) => (
+                        <PricingCard
+                            key={plan.id}
+                            plan={plan}
+                            isYearly={isYearly}
+                            isCurrentPlan={plan.id === currentPlanId}
+                            onSelect={handleSelectPlan}
+                        />
+                    ))}
+                </div>
+            </div>
+
+            {/* Footer */}
+            <p className="text-center text-sm text-zinc-500">
+                Need more?{" "}
+                <a href="mailto:support@scalereach.com" className="text-emerald-500 hover:underline">
+                    Let&apos;s talk!
+                </a>
+            </p>
         </div>
     );
 }
