@@ -97,8 +97,8 @@ export const videoConfigApi = {
    * Get all caption templates
    */
   getCaptionTemplates: async (): Promise<CaptionTemplate[]> => {
-    const response = await api.get<{ templates: CaptionTemplate[] }>("/api/caption-templates");
-    return response.data.templates;
+    const response = await api.get<{ success: boolean; data: { templates: CaptionTemplate[]; total: number } }>("/api/caption-templates");
+    return response.data.data.templates;
   },
 };
 

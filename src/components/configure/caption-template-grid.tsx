@@ -21,10 +21,6 @@ export function CaptionTemplateGrid({
 }: CaptionTemplateGridProps) {
     const [activeTab, setActiveTab] = useState("presets");
 
-    // Separate new templates for highlighting
-    const newTemplates = templates.filter((t) => t.isNew);
-    const regularTemplates = templates.filter((t) => !t.isNew);
-
     return (
         <div className="space-y-4">
             <Tabs value={activeTab} onValueChange={setActiveTab}>
@@ -67,6 +63,8 @@ interface TemplateCardProps {
 }
 
 function TemplateCard({ template, isSelected, onSelect, disabled }: TemplateCardProps) {
+    const style = template.style;
+
     return (
         <button
             type="button"
@@ -80,53 +78,80 @@ function TemplateCard({ template, isSelected, onSelect, disabled }: TemplateCard
                 disabled && "cursor-not-allowed opacity-50"
             )}
         >
-            {/* Preview */}
-            <div
-                className="relative aspect-9/16 w-full"
-                style={{ backgroundColor: template.style.backgroundColor || "#000" }}
-            >
-                {/* Sample text preview */}
+            {/* Preview - Square box */}
+            <div className="relative aspect-square w-full bg-zinc-900 overflow-hidden">
+                {/* Simulated video background */}
+                <div className="absolute inset-0 bg-gradient-to-b from-zinc-800 to-zinc-900" />
+
+                {/* Caption preview */}
                 <div
                     className={cn(
-                        "absolute inset-x-2 flex items-center justify-center",
-                        template.style.position === "top" && "top-4",
-                        template.style.position === "center" && "top-1/2 -translate-y-1/2",
-                        template.style.position === "bottom" && "bottom-4"
+                        "absolute inset-x-2 flex items-center justify-center px-1",
+                        style.position === "top" && "top-3",
+                        style.position === "center" && "top-1/2 -translate-y-1/2",
+                        style.position === "bottom" && "bottom-3"
                     )}
                 >
-                    <span
-                        className="truncate px-2 py-1 text-center font-bold"
+                    <div
+                        className="rounded px-2 py-1"
                         style={{
-                            fontFamily: template.style.fontFamily,
-                            fontSize: "10px",
-                            color: template.style.textColor,
-                            textShadow: template.style.shadow ? "1px 1px 2px rgba(0,0,0,0.8)" : undefined,
-                            WebkitTextStroke: template.style.outline
-                                ? `0.5px ${template.style.outlineColor || "#000"}`
-                                : undefined,
+                            backgroundColor: style.backgroundColor
+                                ? `${style.backgroundColor}${Math.round((style.backgroundOpacity / 100) * 255).toString(16).padStart(2, '0')}`
+                                : 'transparent',
                         }}
                     >
-                        Sample Text
-                    </span>
+                        <span
+                            className="block text-center font-bold leading-tight"
+                            style={{
+                                fontFamily: style.fontFamily,
+                                fontSize: "14px",
+                                color: style.textColor,
+                                textShadow: style.shadow ? "1px 1px 2px rgba(0,0,0,0.9)" : undefined,
+                                WebkitTextStroke: style.outline
+                                    ? `0.5px ${style.outlineColor || "#000"}`
+                                    : undefined,
+                            }}
+                        >
+                            Sample
+                        </span>
+                        <span
+                            className="block text-center font-bold leading-tight"
+                            style={{
+                                fontFamily: style.fontFamily,
+                                fontSize: "14px",
+                                color: style.highlightEnabled ? style.highlightColor : style.textColor,
+                                textShadow: style.shadow ? "1px 1px 2px rgba(0,0,0,0.9)" : undefined,
+                                WebkitTextStroke: style.outline
+                                    ? `0.5px ${style.outlineColor || "#000"}`
+                                    : undefined,
+                            }}
+                        >
+                            Text
+                        </span>
+                    </div>
                 </div>
 
                 {/* New badge */}
                 {template.isNew && (
-                    <Badge className="absolute top-1 right-1 text-[10px]" variant="default">
+                    <Badge className="absolute top-1 right-1 text-[8px] px-1 py-0" variant="default">
                         New
                     </Badge>
+                )}
+
+                {/* Selection checkmark */}
+                {isSelected && (
+                    <div className="absolute top-1 left-1 size-4 rounded-full bg-primary flex items-center justify-center">
+                        <svg className="size-2.5 text-primary-foreground" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                        </svg>
+                    </div>
                 )}
             </div>
 
             {/* Name */}
-            <div className="border-t bg-background p-2">
-                <p className="truncate text-center font-medium text-xs">{template.name}</p>
+            <div className="border-t bg-background p-1.5">
+                <p className="truncate text-center font-medium text-[10px]">{template.name}</p>
             </div>
-
-            {/* Selection indicator */}
-            {isSelected && (
-                <div className="absolute inset-0 bg-primary/10 pointer-events-none" />
-            )}
         </button>
     );
 }
