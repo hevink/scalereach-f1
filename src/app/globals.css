@@ -283,4 +283,41 @@
   .animate-fade-in {
     animation: fade-in 0.5s ease-out forwards;
   }
+
+  /* Corner bevel/notch effect utilities */
+  .corner-bevel {
+    corner-top-left-shape: bevel;
+    corner-top-right-shape: bevel;
+  }
+
+  .corner-t-notch {
+    corner-top-left-shape: notch;
+    corner-top-right-shape: notch;
+  }
+
+  /* Custom spacing for hero section */
+  .pt-15 {
+    padding-top: 3.75rem;
+    /* 60px */
+  }
+
+  .h-15 {
+    height: 3.75rem;
+    /* 60px */
+  }
+
+  .top-15 {
+    top: 3.75rem;
+  }
+
+  /* Custom max-widths for corner notch effect */
+  /* max-w-6xl = 72rem = 1152px */
+  /* The inner notch lines create the 2-line effect on each side */
+  .max-w-316 {
+    max-width: calc(72rem - 3.5rem);
+  }
+
+  .max-w-332 {
+    max-width: 72rem;
+  }
 }
