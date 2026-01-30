@@ -38,7 +38,7 @@ export default function WorkspaceLayout({
     }
 
     if (error || !workspace) {
-      router.replace("/");
+      router.replace("/workspaces");
       return;
     }
   }, [session, workspace, error, sessionPending, workspaceLoading, router]);
