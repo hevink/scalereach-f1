@@ -2,6 +2,7 @@
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { IconEye, IconEyeOff } from "@tabler/icons-react";
+import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import { Controller, useForm } from "react-hook-form";
@@ -208,15 +209,12 @@ export function LoginForm() {
           </div>
         )}
       />
-      <Controller
-        control={form.control}
-        name="rememberMe"
-        render={({ field, fieldState }) => (
-          <div className="flex flex-col gap-2">
-            <Label
-              className="flex items-center gap-2 font-normal"
-              htmlFor={field.name}
-            >
+      <div className="flex items-center justify-between">
+        <Controller
+          control={form.control}
+          name="rememberMe"
+          render={({ field, fieldState }) => (
+            <Label className="flex items-center gap-2 font-normal" htmlFor={field.name}>
               <Checkbox
                 aria-invalid={fieldState.invalid}
                 checked={field.value}
@@ -227,9 +225,12 @@ export function LoginForm() {
               />
               Remember me
             </Label>
-          </div>
-        )}
-      />
+          )}
+        />
+        <Link href="/forgot-password" className="text-sm text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white">
+          Forgot password?
+        </Link>
+      </div>
       <div className="flex flex-col gap-1">
         <Button
           disabled={isLoading}
