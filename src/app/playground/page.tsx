@@ -1,5 +1,6 @@
 import { HeroSection } from "./hero-section";
 import { Testimonials } from "./testimonials";
+import { PricingSection } from "./pricing-section";
 
 export default function PlaygroundPage() {
     return (
@@ -9,6 +10,7 @@ export default function PlaygroundPage() {
                 <HeroSection />
                 <LogoCloud />
                 <Testimonials />
+                <PricingSection />
             </main>
         </div>
     );
