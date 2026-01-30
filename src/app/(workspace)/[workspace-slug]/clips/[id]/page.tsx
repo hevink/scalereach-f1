@@ -26,6 +26,7 @@ import {
 } from "@/components/ui/breadcrumb";
 import { EditingLayout } from "@/components/clips/editing-layout";
 import { ClipTimeline } from "@/components/clips/clip-timeline";
+import { KeyboardShortcutsModal, useKeyboardShortcutsModal } from "@/components/clips/keyboard-shortcuts-modal";
 import { CaptionPanelTabs } from "@/components/captions/caption-panel-tabs";
 import { VideoPlayer, type VideoPlayerRef } from "@/components/video/video-player";
 import { TranscriptParagraphView } from "@/components/transcript/transcript-paragraph-view";
@@ -460,6 +461,9 @@ function ExportDialog({
 export default function ClipEditorPage({ params }: ClipEditorPageProps) {
     const { "workspace-slug": slug, id: clipId } = use(params);
     const router = useRouter();
+
+    // Keyboard shortcuts modal
+    const { open: shortcutsModalOpen, setOpen: setShortcutsModalOpen } = useKeyboardShortcutsModal();
 
     // Refs
     const videoPlayerRef = useRef<VideoPlayerRef>(null);
@@ -1616,6 +1620,12 @@ export default function ClipEditorPage({ params }: ClipEditorPageProps) {
                     </AlertDialogFooter>
                 </AlertDialogContent>
             </AlertDialog>
+
+            {/* Keyboard Shortcuts Modal */}
+            <KeyboardShortcutsModal
+                open={shortcutsModalOpen}
+                onOpenChange={setShortcutsModalOpen}
+            />
         </>
     );
 }

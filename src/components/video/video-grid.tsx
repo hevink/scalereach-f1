@@ -3,12 +3,16 @@
 import { VideoLite } from "@/lib/api/video";
 import { VideoCard } from "./video-card";
 import { SkeletonVideoGrid } from "@/components/ui/skeletons";
-import { IconVideo } from "@tabler/icons-react";
+import { IconVideo, IconUpload } from "@tabler/icons-react";
 import { cn } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
 
 interface VideoGridProps {
     videos: VideoLite[];
     onVideoClick: (videoId: string) => void;
+    onDeleteVideo?: (videoId: string) => void;
+    onRenameVideo?: (videoId: string, newTitle: string) => void;
+    onDuplicateVideo?: (videoId: string) => void;
     isLoading?: boolean;
     className?: string;
 }
@@ -19,14 +23,15 @@ interface VideoGridProps {
  * Features:
  * - Responsive CSS Grid with auto-fill columns
  * - Skeleton loading states
- * - Empty state handling
- * - 1 column (mobile), 2 columns (tablet), 3-5 columns (desktop)
- * 
- * @validates Requirements 1.1, 1.5 - Video grid display with responsive layout
+ * - Empty state handling with engaging CTA
+ * - Video card menu options (delete, rename, duplicate)
  */
 export function VideoGrid({
     videos,
     onVideoClick,
+    onDeleteVideo,
+    onRenameVideo,
+    onDuplicateVideo,
     isLoading = false,
     className,
 }: VideoGridProps) {
@@ -38,25 +43,53 @@ export function VideoGrid({
     // Show empty state when no videos
     if (videos.length === 0) {
         return (
-            <div className={cn("text-center py-8 sm:py-12 text-muted-foreground", className)}>
-                <IconVideo className="size-10 sm:size-12 mx-auto mb-3 sm:mb-4 opacity-50" />
-                <p className="font-medium text-sm sm:text-base">No videos yet</p>
-                <p className="text-xs sm:text-sm">Upload a video to get started!</p>
+            <div className={cn(
+                "flex flex-col items-center justify-center py-16 px-4 text-center",
+                "rounded-2xl border-2 border-dashed border-zinc-800 bg-zinc-900/50",
+                className
+            )}>
+                {/* Illustration */}
+                <div className="relative mb-6">
+                    <div className="flex size-20 items-center justify-center rounded-2xl bg-zinc-800">
+                        <IconVideo className="size-10 text-zinc-500" />
+                    </div>
+                    <div className="absolute -bottom-2 -right-2 flex size-8 items-center justify-center rounded-full bg-emerald-500/10 border-2 border-zinc-900">
+                        <IconUpload className="size-4 text-emerald-500" />
+                    </div>
+                </div>
+
+                {/* Text */}
+                <h3 className="text-lg font-semibold text-white mb-2">
+                    No videos yet
+                </h3>
+                <p className="text-sm text-zinc-400 max-w-sm mb-6">
+                    Upload your first video or paste a YouTube link above to start creating viral clips with AI.
+                </p>
+
+                {/* Features hint */}
+                <div className="flex flex-wrap justify-center gap-3 text-xs text-zinc-500">
+                    <span className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-zinc-800/50">
+                        <span className="size-1.5 rounded-full bg-emerald-500" />
+                        AI clip detection
+                    </span>
+                    <span className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-zinc-800/50">
+                        <span className="size-1.5 rounded-full bg-emerald-500" />
+                        Auto captions
+                    </span>
+                    <span className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-zinc-800/50">
+                        <span className="size-1.5 rounded-full bg-emerald-500" />
+                        One-click export
+                    </span>
+                </div>
             </div>
         );
     }
 
     // Render video grid
-    // @validates Requirement 1.1 - Display all videos in responsive grid
-    // @validates Requirement 1.5 - Skeleton loading states prevent layout shift
     return (
         <div
             data-testid="video-grid"
             className={cn(
-                // Responsive grid with auto-fill
-                // Mobile: 1 column (default, < 640px)
-                // Tablet: 2 columns (sm, 640px+)
-                // Desktop: 3-5 columns based on screen width (md: 768px+, lg: 1024px+, xl: 1280px+)
                 "grid gap-3 sm:gap-4",
                 "grid-cols-1",
                 "xs:grid-cols-2",
@@ -74,6 +107,9 @@ export function VideoGrid({
                     <VideoCard
                         video={video}
                         onClick={() => onVideoClick(video.id)}
+                        onDelete={onDeleteVideo}
+                        onRename={onRenameVideo}
+                        onDuplicate={onDuplicateVideo}
                     />
                 </div>
             ))}

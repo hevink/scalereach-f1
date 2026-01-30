@@ -4,7 +4,7 @@ import { use, useEffect, useState, useRef, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { useSession } from "@/lib/auth-client";
 import { useWorkspaceBySlug } from "@/hooks/useWorkspace";
-import { useMyVideos, useValidateYouTubeUrl, useSubmitYouTubeUrl, videoKeys } from "@/hooks/useVideo";
+import { useMyVideos, useValidateYouTubeUrl, useSubmitYouTubeUrl, useDeleteVideo, videoKeys } from "@/hooks/useVideo";
 import { Spinner } from "@/components/ui/spinner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -95,6 +95,7 @@ export default function WorkspacePage({ params }: WorkspacePageProps) {
 
   const validateMutation = useValidateYouTubeUrl();
   const submitMutation = useSubmitYouTubeUrl();
+  const deleteMutation = useDeleteVideo();
 
   useEffect(() => {
     if (sessionPending || workspaceLoading) return;
@@ -439,6 +440,7 @@ export default function WorkspacePage({ params }: WorkspacePageProps) {
                 <VideoGrid
                   videos={videos || []}
                   onVideoClick={(videoId) => router.push(`/${slug}/videos/${videoId}/clips`)}
+                  onDeleteVideo={(videoId) => deleteMutation.mutate(videoId)}
                   isLoading={videosLoading || sessionPending}
                 />
               )}

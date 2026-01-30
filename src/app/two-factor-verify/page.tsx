@@ -2,17 +2,14 @@
 
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-import { AuthHeader } from "@/components/authentication/auth-header";
+import { AuthLayout } from "@/components/authentication/auth-layout";
 import { TwoFactorVerify } from "@/components/authentication/two-factor-verify";
 import { Spinner } from "@/components/ui/spinner";
 
 export default function TwoFactorVerifyPage() {
   const router = useRouter();
   const [isPending, setIsPending] = useState(true);
-  const [user, setUser] = useState<{
-    id: string;
-    twoFactorEnabled?: boolean;
-  } | null>(null);
+  const [user, setUser] = useState<{ id: string; twoFactorEnabled?: boolean } | null>(null);
 
   useEffect(() => {
     const checkSession = async () => {
@@ -20,7 +17,6 @@ export default function TwoFactorVerifyPage() {
         const response = await fetch("/api/auth/session");
         const data = await response.json();
         setUser(data.user);
-        // If user is authenticated and doesn't have 2FA enabled, redirect to workspaces
         if (data.user && !data.user.twoFactorEnabled) {
           router.replace("/workspaces");
         }
@@ -31,29 +27,22 @@ export default function TwoFactorVerifyPage() {
         setIsPending(false);
       }
     };
-
     checkSession();
   }, [router]);
 
   if (isPending) {
     return (
-      <div className="flex min-h-screen items-center justify-center">
+      <div className="flex min-h-screen items-center justify-center bg-white dark:bg-zinc-950">
         <Spinner />
       </div>
     );
   }
 
-  // If user is already authenticated without 2FA, don't render (will redirect)
-  if (user && !user.twoFactorEnabled) {
-    return null;
-  }
+  if (user && !user.twoFactorEnabled) return null;
 
   return (
-    <div className="flex min-h-screen items-center justify-center">
-      <div className="flex w-full max-w-sm flex-col gap-6 p-4">
-        <AuthHeader />
-        <TwoFactorVerify />
-      </div>
-    </div>
+    <AuthLayout title="Two-factor authentication" subtitle="Enter the code from your authenticator app">
+      <TwoFactorVerify />
+    </AuthLayout>
   );
 }

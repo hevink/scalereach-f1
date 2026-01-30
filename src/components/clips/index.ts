@@ -56,3 +56,7 @@ export {
     ClipTimeline,
     type ClipTimelineProps,
 } from "./clip-timeline";
+export {
+    KeyboardShortcutsModal,
+    useKeyboardShortcutsModal,
+} from "./keyboard-shortcuts-modal";

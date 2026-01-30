@@ -153,11 +153,13 @@ function NoProjectsEmptyState({ onCreateProject }: { onCreateProject: () => void
         <EmptyState
             icon={<IconFolder className="size-6" />}
             title="No projects yet"
-            description="Create your first project to start organizing your videos and clips."
+            description="Create your first project to start organizing your videos and clips into collections."
             action={{
                 label: "Create Project",
                 onClick: onCreateProject,
             }}
+            features={["Organize videos", "Track progress", "Collaborate with team"]}
+            variant="card"
         />
     );
 }
@@ -173,7 +175,8 @@ function NoSearchResults({ searchQuery }: { searchQuery: string }) {
         <EmptyState
             icon={<IconSearch className="size-6" />}
             title="No projects found"
-            description={`No projects match "${searchQuery}". Try a different search term.`}
+            description={`No projects match "${searchQuery}". Try a different search term or create a new project.`}
+            variant="minimal"
         />
     );
 }
