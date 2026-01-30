@@ -55,7 +55,7 @@ export function useUpdateCaptionStyle() {
     }: {
       clipId: string;
       style: Partial<CaptionStyle>;
-    }) => captionsApi.updateCaptionStyle(clipId, { style }),
+    }) => captionsApi.updateCaptionStyle(clipId, style as CaptionStyle),
     onMutate: async ({ clipId, style }) => {
       // Cancel any outgoing refetches to avoid overwriting optimistic update
       await queryClient.cancelQueries({ queryKey: captionKeys.byClip(clipId) });
@@ -93,19 +93,6 @@ export function useUpdateCaptionStyle() {
           context.previousCaptions
         );
       }
-    },
-    onSuccess: (data, { clipId }) => {
-      // Update the cache with the server response
-      queryClient.setQueryData<CaptionsResponse>(
-        captionKeys.byClip(clipId),
-        (oldData) => {
-          if (!oldData) return oldData;
-          return {
-            ...oldData,
-            style: data.style,
-          };
-        }
-      );
     },
     onSettled: (_data, _error, { clipId }) => {
       // Always refetch after error or success to ensure cache is in sync

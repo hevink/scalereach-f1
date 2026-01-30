@@ -440,7 +440,7 @@ export function WordHighlightControls({
                     <div className="flex flex-wrap gap-1.5 rounded-lg border border-border bg-muted/30 p-3 max-h-[200px] overflow-y-auto">
                         {words.map((word, index) => (
                             <button
-                                key={`${word.word}-${word.startTime}-${index}`}
+                                key={`${word.word}-${word.start}-${index}`}
                                 type="button"
                                 onClick={() => handleToggleWordHighlight(index)}
                                 disabled={disabled}

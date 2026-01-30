@@ -22,13 +22,21 @@ function SelectGroup({ className, ...props }: SelectPrimitive.Group.Props) {
   );
 }
 
-function SelectValue({ className, ...props }: SelectPrimitive.Value.Props) {
+function SelectValue({ className, placeholder, children, ...props }: SelectPrimitive.Value.Props & { placeholder?: string }) {
   return (
     <SelectPrimitive.Value
       className={cn("flex flex-1 text-left", className)}
       data-slot="select-value"
       {...props}
-    />
+    >
+      {(state) => {
+        const hasValue = state.value !== null && state.value !== undefined && state.value !== '';
+        if (!hasValue && placeholder) {
+          return <span className="text-muted-foreground">{placeholder}</span>;
+        }
+        return typeof children === 'function' ? children(state) : children;
+      }}
+    </SelectPrimitive.Value>
   );
 }
 

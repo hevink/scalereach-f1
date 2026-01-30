@@ -19,6 +19,7 @@ import {
 import { useWorkspaceBySlug } from "@/hooks/useWorkspace";
 import { useCreditBalance } from "@/hooks/useCredits";
 import { cn } from "@/lib/utils";
+import { useWorkspaceShortcuts } from "@/components/workspace/workspace-shortcuts-provider";
 
 interface NavFooterProps {
   currentSlug: string;
@@ -29,6 +30,7 @@ export function NavFooter({ currentSlug }: NavFooterProps) {
   const router = useRouter();
   const { data: workspace } = useWorkspaceBySlug(currentSlug);
   const { data: credits } = useCreditBalance(workspace?.id);
+  const { openShortcutsHelp } = useWorkspaceShortcuts();
 
   const settingsUrl = `/${currentSlug}/settings`;
   const isSettingsActive =
@@ -50,7 +52,7 @@ export function NavFooter({ currentSlug }: NavFooterProps) {
       title: "Shortcuts",
       icon: IconKeyboard,
       onClick: () => {
-        // TODO: Open keyboard shortcuts modal
+        openShortcutsHelp();
       },
     },
     {

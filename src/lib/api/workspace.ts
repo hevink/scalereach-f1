@@ -1,4 +1,5 @@
 import { api } from "../axios";
+import type { CaptionStyle } from "./captions";
 
 export interface Workspace {
   id: string;
@@ -9,6 +10,7 @@ export interface Workspace {
   plan?: "free" | "pro" | "agency";
   ownerId?: string;
   role: "owner" | "admin" | "member";
+  defaultCaptionStyle?: CaptionStyle | null;
   createdAt: string;
   updatedAt: string;
 }

@@ -218,10 +218,16 @@ export function ClipBoundaryEditor({
 
             {/* Timeline Editor Section */}
             <TimelineEditor
-                clip={clipForTimeline}
-                videoDuration={videoDuration}
-                onChange={handleTimelineChange}
-                waveformUrl={waveformUrl}
+                clipId={clipId}
+                clipData={{
+                    startTime,
+                    endTime,
+                    duration: endTime - startTime,
+                }}
+                captions={[]}
+                currentTime={startTime}
+                onSeek={() => {}}
+                onBoundaryChange={handleTimelineChange}
             />
 
             {/* Save Button Section */}

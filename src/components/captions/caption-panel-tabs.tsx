@@ -81,11 +81,15 @@ const DEFAULT_PRESETS: CaptionStylePreset[] = [
     {
         id: "no-captions",
         name: "No captions",
+        description: "Disable captions",
+        tags: [],
         style: {} as CaptionStyle,
     },
     {
         id: "karaoke",
         name: "Karaoke",
+        description: "Highlighted word-by-word style",
+        tags: ["viral", "bold"],
         style: {
             fontFamily: "Bangers",
             fontSize: 32,
@@ -105,6 +109,8 @@ const DEFAULT_PRESETS: CaptionStylePreset[] = [
     {
         id: "beasty",
         name: "Beasty",
+        description: "Bold outlined style",
+        tags: ["bold", "youtube"],
         style: {
             fontFamily: "Anton",
             fontSize: 28,
@@ -124,6 +130,8 @@ const DEFAULT_PRESETS: CaptionStylePreset[] = [
     {
         id: "deep-diver",
         name: "Deep Diver",
+        description: "Clean with background",
+        tags: ["minimal", "clean"],
         style: {
             fontFamily: "Inter",
             fontSize: 24,
@@ -143,6 +151,8 @@ const DEFAULT_PRESETS: CaptionStylePreset[] = [
     {
         id: "youshaei",
         name: "Youshaei",
+        description: "Green text word-by-word",
+        tags: ["viral", "tiktok"],
         style: {
             fontFamily: "Montserrat",
             fontSize: 26,
@@ -162,6 +172,8 @@ const DEFAULT_PRESETS: CaptionStylePreset[] = [
     {
         id: "pod-p",
         name: "Pod P",
+        description: "Bouncy podcast style",
+        tags: ["podcast", "fun"],
         style: {
             fontFamily: "Poppins",
             fontSize: 24,
@@ -181,6 +193,8 @@ const DEFAULT_PRESETS: CaptionStylePreset[] = [
     {
         id: "mozi",
         name: "Mozi",
+        description: "Red accent with white background",
+        tags: ["clean", "minimal"],
         style: {
             fontFamily: "Bebas Neue",
             fontSize: 30,
@@ -200,7 +214,8 @@ const DEFAULT_PRESETS: CaptionStylePreset[] = [
     {
         id: "popline",
         name: "Popline",
-        isNew: true,
+        description: "Purple karaoke style",
+        tags: ["viral", "new"],
         style: {
             fontFamily: "Oswald",
             fontSize: 28,
@@ -220,6 +235,8 @@ const DEFAULT_PRESETS: CaptionStylePreset[] = [
     {
         id: "glitch-infinite",
         name: "Glitch Infinite",
+        description: "Cyberpunk glitch effect",
+        tags: ["bold", "edgy"],
         style: {
             fontFamily: "Anton",
             fontSize: 26,
@@ -239,7 +256,8 @@ const DEFAULT_PRESETS: CaptionStylePreset[] = [
     {
         id: "seamless-bounce",
         name: "Seamless Bounce",
-        isNew: true,
+        description: "Green bouncy style",
+        tags: ["fun", "new"],
         style: {
             fontFamily: "Poppins",
             fontSize: 28,
@@ -309,7 +327,7 @@ function PresetCard({ preset, isSelected, onClick }: PresetCardProps) {
             <span className="absolute bottom-1 text-[9px] text-zinc-400 truncate max-w-full px-1">
                 {preset.name}
             </span>
-            {preset.isNew && (
+            {preset.tags?.includes("new") && (
                 <span className="absolute top-1 right-1 text-[8px] bg-green-500 text-black px-1.5 py-0.5 rounded font-medium">
                     New
                 </span>
@@ -373,8 +391,8 @@ function FontTab({ style, onChange, disabled }: FontTabProps) {
                 <CollapsibleContent className="flex flex-col gap-3 pt-2">
                     {/* Font Family */}
                     <Select
-                        value={style.fontFamily}
-                        onValueChange={(value) => onChange({ fontFamily: value })}
+                        value={style.fontFamily ?? undefined}
+                        onValueChange={(value) => onChange({ fontFamily: value || undefined })}
                         disabled={disabled}
                     >
                         <SelectTrigger className="w-full bg-zinc-800 border-zinc-700 text-white">

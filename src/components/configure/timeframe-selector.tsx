@@ -38,12 +38,14 @@ export function TimeframeSelector({
     const savingsPercent = Math.round((1 - processingDuration / videoDuration) * 100);
 
     const handleSliderChange = useCallback(
-        (values: number[]) => {
-            const [newStart, newEnd] = values;
-            onChange(
-                newStart,
-                newEnd === videoDuration ? null : newEnd
-            );
+        (value: number | readonly number[]) => {
+            if (Array.isArray(value)) {
+                const [newStart, newEnd] = value;
+                onChange(
+                    newStart,
+                    newEnd === videoDuration ? null : newEnd
+                );
+            }
         },
         [onChange, videoDuration]
     );

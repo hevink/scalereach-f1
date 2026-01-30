@@ -104,7 +104,7 @@ export function NavMain({ currentSlug }: NavMainProps) {
     },
   ];
 
-  const isActive = (item: typeof mainItems[0]) => {
+  const isActive = (item: { url: string; exact?: boolean; matchPath?: (p: string) => boolean }) => {
     if (item.matchPath) {
       return item.matchPath(pathname);
     }

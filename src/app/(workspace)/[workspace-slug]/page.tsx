@@ -33,6 +33,7 @@ import { VideoGrid } from "@/components/video/video-grid";
 // Import integrated components
 import { ProjectList } from "@/components/project/project-list";
 import { CreditBalance } from "@/components/project/credit-balance";
+import { useWorkspaceShortcuts } from "@/components/workspace/workspace-shortcuts-provider";
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3001";
 
@@ -92,6 +93,9 @@ export default function WorkspacePage({ params }: WorkspacePageProps) {
   const uppyRef = useRef<Uppy | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const videoIdsRef = useRef<Map<string, string>>(new Map());
+
+  // Use workspace shortcuts context for create project dialog
+  const { openCreateProjectDialog } = useWorkspaceShortcuts();
 
   const validateMutation = useValidateYouTubeUrl();
   const submitMutation = useSubmitYouTubeUrl();
@@ -254,9 +258,8 @@ export default function WorkspacePage({ params }: WorkspacePageProps) {
   }, [router, slug]);
 
   const handleCreateProject = useCallback(() => {
-    // TODO: Open create project dialog
-    toast.info("Create project feature coming soon");
-  }, []);
+    openCreateProjectDialog();
+  }, [openCreateProjectDialog]);
 
   if (sessionPending || workspaceLoading) return <div className="flex min-h-[50vh] items-center justify-center"><Spinner /></div>;
   if (!workspace) return null;

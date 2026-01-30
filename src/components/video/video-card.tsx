@@ -207,7 +207,7 @@ export function VideoCard({
 
                     {/* Menu button with dropdown */}
                     <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
+                        <DropdownMenuTrigger>
                             <Button
                                 variant="ghost"
                                 size="icon"

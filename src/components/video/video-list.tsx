@@ -8,7 +8,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { EmptyState } from "@/components/ui/empty-state";
 import { useMyVideos, useDeleteVideo } from "@/hooks/useVideo";
 import { toast } from "sonner";
-import type { Video } from "@/lib/api/video";
+import type { Video, VideoLite } from "@/lib/api/video";
 
 function formatDuration(seconds: number | null): string {
     if (!seconds) return "--:--";
@@ -33,6 +33,7 @@ function formatDate(dateString: string): string {
 
 const STATUS_CONFIG: Record<Video["status"], { label: string; variant: "default" | "secondary" | "destructive" | "outline"; icon: React.ReactNode }> = {
     pending: { label: "Pending", variant: "secondary", icon: <IconClock className="size-3" /> },
+    pending_config: { label: "Awaiting Config", variant: "secondary", icon: <IconClock className="size-3" /> },
     downloading: { label: "Downloading", variant: "default", icon: <IconLoader2 className="size-3 animate-spin" /> },
     uploading: { label: "Uploading", variant: "default", icon: <IconLoader2 className="size-3 animate-spin" /> },
     transcribing: { label: "Transcribing", variant: "default", icon: <IconLoader2 className="size-3 animate-spin" /> },
@@ -71,30 +72,21 @@ function VideoItemSkeleton() {
 }
 
 interface VideoItemProps {
-    video: Video;
+    video: VideoLite;
     onDelete: (id: string) => void;
     isDeleting: boolean;
 }
 
 function VideoItem({ video, onDelete, isDeleting }: VideoItemProps) {
     const statusConfig = STATUS_CONFIG[video.status];
-    const metadata = video.metadata as { thumbnail?: string } | null;
 
     return (
         <div className="flex items-center gap-4 rounded-lg border p-4">
             {/* Thumbnail */}
             <div className="relative h-16 w-28 shrink-0 overflow-hidden rounded bg-muted">
-                {metadata?.thumbnail ? (
-                    <img
-                        src={metadata.thumbnail}
-                        alt={video.title || "Video thumbnail"}
-                        className="h-full w-full object-cover"
-                    />
-                ) : (
-                    <div className="flex h-full w-full items-center justify-center">
-                        <IconVideo className="size-6 text-muted-foreground" />
-                    </div>
-                )}
+                <div className="flex h-full w-full items-center justify-center">
+                    <IconVideo className="size-6 text-muted-foreground" />
+                </div>
                 {video.duration && (
                     <span className="absolute right-1 bottom-1 rounded bg-black/70 px-1 text-white text-xs">
                         {formatDuration(video.duration)}
@@ -110,9 +102,6 @@ function VideoItem({ video, onDelete, isDeleting }: VideoItemProps) {
                 <p className="text-muted-foreground text-xs">
                     {formatDate(video.createdAt)}
                 </p>
-                {video.errorMessage && (
-                    <p className="truncate text-red-500 text-xs">{video.errorMessage}</p>
-                )}
             </div>
 
             {/* Status */}

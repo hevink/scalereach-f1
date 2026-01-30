@@ -1,7 +1,7 @@
 "use client";
 
-import { use, useCallback, useState } from "react";
-import { useWorkspaceBySlug } from "@/hooks/useWorkspace";
+import { use, useCallback, useState, useEffect } from "react";
+import { useWorkspaceBySlug, useUpdateWorkspaceBySlug } from "@/hooks/useWorkspace";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { IconRefresh, IconTypography, IconDeviceFloppy } from "@tabler/icons-react";
@@ -62,33 +62,62 @@ export default function CaptionsSettingsPage({
         refetch,
     } = useWorkspaceBySlug(slug);
 
+    const updateWorkspace = useUpdateWorkspaceBySlug();
+
     const [captionStyle, setCaptionStyle] = useState<CaptionStyle>(DEFAULT_CAPTION_STYLE);
     const [selectedPresetId, setSelectedPresetId] = useState<string | undefined>();
-    const [isSaving, setIsSaving] = useState(false);
+    const [hasChanges, setHasChanges] = useState(false);
+
+    // Load existing caption settings from workspace
+    useEffect(() => {
+        if (workspace?.defaultCaptionStyle) {
+            setCaptionStyle(workspace.defaultCaptionStyle);
+            // Check if the loaded style matches a preset
+            if (workspace.defaultCaptionStyle.templateId) {
+                setSelectedPresetId(workspace.defaultCaptionStyle.templateId);
+            }
+        }
+    }, [workspace?.defaultCaptionStyle]);
 
     const handleStyleChange = useCallback((newStyle: CaptionStyle) => {
         setCaptionStyle(newStyle);
         // Clear preset selection when manually changing style
         setSelectedPresetId(undefined);
+        setHasChanges(true);
     }, []);
 
     const handlePresetSelect = useCallback((presetId: string, style: CaptionStyle) => {
         setSelectedPresetId(presetId);
-        setCaptionStyle(style);
+        setCaptionStyle({ ...style, templateId: presetId });
+        setHasChanges(true);
     }, []);
 
     const handleSave = useCallback(async () => {
-        setIsSaving(true);
-        try {
-            // TODO: Implement API call to save caption settings
-            await new Promise((resolve) => setTimeout(resolve, 1000));
-            toast.success("Caption settings saved successfully");
-        } catch (err) {
-            toast.error("Failed to save caption settings");
-        } finally {
-            setIsSaving(false);
-        }
-    }, [captionStyle]);
+        if (!workspace) return;
+
+        const styleToSave: CaptionStyle = {
+            ...captionStyle,
+            templateId: selectedPresetId,
+        };
+
+        updateWorkspace.mutate(
+            {
+                slug,
+                data: {
+                    defaultCaptionStyle: styleToSave
+                }
+            },
+            {
+                onSuccess: () => {
+                    toast.success("Caption settings saved successfully");
+                    setHasChanges(false);
+                },
+                onError: (err) => {
+                    toast.error(err.message || "Failed to save caption settings");
+                },
+            }
+        );
+    }, [captionStyle, selectedPresetId, slug, workspace, updateWorkspace]);
 
     // Loading state
     if (workspaceLoading) {
@@ -196,9 +225,9 @@ export default function CaptionsSettingsPage({
 
             {/* Save Button */}
             <div className="flex justify-end">
-                <Button onClick={handleSave} disabled={isSaving}>
+                <Button onClick={handleSave} disabled={updateWorkspace.isPending || !hasChanges}>
                     <IconDeviceFloppy className="mr-2 size-4" />
-                    {isSaving ? "Saving..." : "Save Settings"}
+                    {updateWorkspace.isPending ? "Saving..." : "Save Settings"}
                 </Button>
             </div>
         </div>

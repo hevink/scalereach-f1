@@ -81,7 +81,7 @@ function getCurrentCaption(
  */
 function getCurrentWordIndex(caption: Caption, currentTime: number): number {
     return caption.words.findIndex(
-        (word) => currentTime >= word.startTime && currentTime <= word.endTime
+        (word) => currentTime >= word.start && currentTime <= word.end
     );
 }
 
@@ -140,8 +140,7 @@ function CaptionOverlay({ caption, style, currentTime }: CaptionOverlayProps) {
         return caption.words.map((word, index) => {
             const isCurrentWord = index === currentWordIndex;
             const isPastWord = index < currentWordIndex;
-            const shouldHighlight =
-                word.highlight || (style.highlightEnabled && isCurrentWord);
+            const shouldHighlight = style.highlightEnabled && isCurrentWord;
 
             let wordClassName = "inline-block mx-0.5 transition-all duration-150";
             const wordStyle: React.CSSProperties = {};

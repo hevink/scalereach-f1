@@ -56,7 +56,7 @@ export function ClipSettingsPanel({
                 <Label>Clip Model</Label>
                 <Select
                     value={config.clipModel}
-                    onValueChange={(value) => onChange({ clipModel: value as "ClipBasic" | "ClipPro" })}
+                    onValueChange={(value) => value && onChange({ clipModel: value as "ClipBasic" | "ClipPro" })}
                     disabled={disabled}
                 >
                     <SelectTrigger>
@@ -80,7 +80,7 @@ export function ClipSettingsPanel({
                 <Label>Genre</Label>
                 <Select
                     value={config.genre}
-                    onValueChange={(value) => onChange({ genre: value as VideoConfigInput["genre"] })}
+                    onValueChange={(value) => value && onChange({ genre: value as VideoConfigInput["genre"] })}
                     disabled={disabled}
                 >
                     <SelectTrigger>
@@ -101,7 +101,7 @@ export function ClipSettingsPanel({
                 <Label>Clip Length</Label>
                 <Select
                     value={currentDuration}
-                    onValueChange={handleDurationChange}
+                    onValueChange={(value) => value && handleDurationChange(value)}
                     disabled={disabled}
                 >
                     <SelectTrigger>

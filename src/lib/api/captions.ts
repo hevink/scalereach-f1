@@ -35,6 +35,7 @@ export interface CaptionWord {
   word: string;
   start: number;
   end: number;
+  highlight?: boolean;
 }
 
 export interface Caption {

@@ -41,7 +41,7 @@ export function AspectRatioSelector({
     return (
         <div className="space-y-2">
             <Label>Aspect Ratio</Label>
-            <Select value={value} onValueChange={onChange} disabled={disabled}>
+            <Select value={value} onValueChange={(val) => val && onChange(val)} disabled={disabled}>
                 <SelectTrigger>
                     <SelectValue>
                         {selected && (

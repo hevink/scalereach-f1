@@ -45,6 +45,15 @@ const STATUS_CONFIG: Record<VideoStatus, StatusConfig> = {
         borderColor: "border-muted",
         badgeVariant: "secondary",
     },
+    pending_config: {
+        label: "Awaiting Config",
+        description: "Waiting for configuration...",
+        icon: <IconClock className="size-5" />,
+        color: "text-yellow-500",
+        bgColor: "bg-yellow-500/10",
+        borderColor: "border-yellow-500/30",
+        badgeVariant: "secondary",
+    },
     downloading: {
         label: "Downloading",
         description: "Downloading video from source...",
