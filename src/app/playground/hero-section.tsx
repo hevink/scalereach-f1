@@ -5,7 +5,7 @@ export function HeroSection() {
         <section className="selection:bg-primary-foreground selection:text-primary relative">
             <div className="pt-15 mt-px">
                 {/* Outer vertical border lines - full height */}
-                <div aria-hidden="true" className="pointer-events-none absolute inset-0 z-10 mx-auto max-w-6xl border-x z-50" />
+                <div aria-hidden="true" className="pointer-events-none absolute inset-0 mx-auto max-w-6xl border-x z-50" />
                 {/* <div aria-hidden="true" className="top-15 corner-bevel max-w-332 pointer-events-none absolute inset-0 inset-x-0 z-10 mx-auto rounded-t-[2rem] border-x border-t" /> */}
 
                 {/* Inner rounded container with corner bevel */}
