@@ -1,8 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
-import { IconCheck, IconInfoCircle, IconLoader2 } from "@tabler/icons-react";
+import { useParams, useRouter } from "next/navigation";
+import { IconCheck, IconInfoCircle, IconLoader2, IconArrowLeft } from "@tabler/icons-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -12,8 +12,11 @@ import {
     TooltipProvider,
     TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { useSession } from "@/lib/auth-client";
+import { creditsApi } from "@/lib/api/credits";
+import { useWorkspaceBySlug } from "@/hooks/useWorkspace";
+import { useCreditBalance } from "@/hooks/useCredits";
 import { toast } from "sonner";
+import Link from "next/link";
 
 // ============================================================================
 // Types
@@ -73,8 +76,8 @@ const plans: PricingPlan[] = [
             { text: "Translate to 29 languages (AI Dubbing)", tooltip: "AI-powered dubbing in 29 languages" },
         ],
         highlighted: true,
-        dodoProductIdMonthly: "pdt_pro_monthly", // Replace with actual Dodo product ID
-        dodoProductIdYearly: "pdt_pro_yearly",   // Replace with actual Dodo product ID
+        dodoProductIdMonthly: "pdt_pro_monthly", // TODO: Create in Dodo dashboard
+        dodoProductIdYearly: "pdt_pro_yearly",   // TODO: Create in Dodo dashboard
     },
     {
         id: "pro-plus",
@@ -90,8 +93,8 @@ const plans: PricingPlan[] = [
             { text: "4K download", tooltip: "Download clips in 4K ultra HD quality" },
             { text: "Translate to 29 languages (AI Dubbing)", tooltip: "AI-powered dubbing in 29 languages" },
         ],
-        dodoProductIdMonthly: "pdt_pro_plus_monthly", // Replace with actual Dodo product ID
-        dodoProductIdYearly: "pdt_pro_plus_yearly",   // Replace with actual Dodo product ID
+        dodoProductIdMonthly: "pdt_pro_plus_monthly", // TODO: Create in Dodo dashboard
+        dodoProductIdYearly: "pdt_pro_plus_yearly",   // TODO: Create in Dodo dashboard
     },
 ];
 
@@ -176,12 +179,14 @@ function FeatureItem({ feature }: { feature: PlanFeature }) {
 function PricingCard({
     plan,
     isYearly,
+    isCurrentPlan,
     onSelect,
     isLoading,
     loadingPlanId,
 }: {
     plan: PricingPlan;
     isYearly: boolean;
+    isCurrentPlan: boolean;
     onSelect: (planId: string, productId: string) => void;
     isLoading: boolean;
     loadingPlanId: string | null;
@@ -199,6 +204,14 @@ function PricingCard({
                     : "bg-card border-border hover:border-primary/30"
             )}
         >
+            {isCurrentPlan && (
+                <div className="absolute -top-3 left-1/2 -translate-x-1/2">
+                    <Badge className="bg-emerald-500 text-white hover:bg-emerald-500">
+                        Current Plan
+                    </Badge>
+                </div>
+            )}
+
             {/* Plan Name */}
             <div className="flex items-center gap-2 mb-6">
                 <div className={cn(
@@ -256,7 +269,7 @@ function PricingCard({
             {/* CTA Button */}
             <Button
                 onClick={() => onSelect(plan.id, productId)}
-                disabled={isLoading}
+                disabled={isCurrentPlan || isLoading}
                 variant={plan.highlighted ? "secondary" : "outline"}
                 className={cn(
                     "w-full mb-8",
@@ -270,8 +283,10 @@ function PricingCard({
                         <IconLoader2 className="size-4 mr-2 animate-spin" />
                         Processing...
                     </>
+                ) : isCurrentPlan ? (
+                    "Current Plan"
                 ) : (
-                    "Get Started"
+                    "Subscribe"
                 )}
             </Button>
 
@@ -285,42 +300,129 @@ function PricingCard({
     );
 }
 
+function CurrentPlanBanner({
+    plan,
+    credits,
+    workspaceSlug
+}: {
+    plan: PricingPlan | undefined;
+    credits: number;
+    workspaceSlug: string;
+}) {
+    if (!plan) return null;
+
+    return (
+        <div className="bg-muted/50 border rounded-xl p-6 mb-8">
+            <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+                <div>
+                    <p className="text-sm text-muted-foreground mb-1">Current Plan</p>
+                    <h2 className="text-2xl font-bold">
+                        {plan.name} {plan.badge && <span className="text-muted-foreground">{plan.badge}</span>}
+                    </h2>
+                    <p className="text-muted-foreground mt-1">
+                        {credits} credits remaining • {plan.monthlyCredits} credits/month
+                    </p>
+                </div>
+                <div className="flex gap-3">
+                    <Link href={`/${workspaceSlug}/settings/billing`}>
+                        <Button variant="outline">
+                            Manage Billing
+                        </Button>
+                    </Link>
+                </div>
+            </div>
+        </div>
+    );
+}
+
 // ============================================================================
 // Main Page
 // ============================================================================
 
-export default function PricingPage() {
+export default function WorkspacePricingPage() {
+    const params = useParams();
     const router = useRouter();
-    const { data: session } = useSession();
+    const workspaceSlug = params["workspace-slug"] as string;
+
+    const { data: workspace, isLoading: workspaceLoading } = useWorkspaceBySlug(workspaceSlug);
+    const { data: creditBalance } = useCreditBalance(workspace?.id ?? "");
+
     const [isYearly, setIsYearly] = useState(true);
     const [isLoading, setIsLoading] = useState(false);
     const [loadingPlanId, setLoadingPlanId] = useState<string | null>(null);
 
+    const currentPlanId = workspace?.plan ?? "free";
+    const currentPlan = plans.find(p => p.id === currentPlanId);
+    const currentCredits = creditBalance?.balance ?? 0;
+
     const handleSelectPlan = async (planId: string, productId: string) => {
-        // If not logged in, redirect to sign up with plan info
-        if (!session?.user) {
-            router.push(`/sign-up?plan=${planId}&billing=${isYearly ? "yearly" : "monthly"}`);
+        if (!workspace?.id) {
+            toast.error("Workspace not found");
             return;
         }
 
-        // Logged in users should use workspace-specific pricing
-        // Redirect to onboarding to select/create workspace
-        toast.info("Please select a workspace to upgrade");
-        router.push("/onboarding");
+        setIsLoading(true);
+        setLoadingPlanId(planId);
+
+        try {
+            const response = await creditsApi.createCheckout(workspace.id, productId, {
+                isSubscription: true,
+                successUrl: `${window.location.origin}/checkout/success?workspace=${workspaceSlug}`,
+                cancelUrl: `${window.location.origin}/checkout/cancel?workspace=${workspaceSlug}`,
+            });
+
+            if (response.checkoutUrl) {
+                window.location.href = response.checkoutUrl;
+            } else {
+                throw new Error("No checkout URL received");
+            }
+        } catch (error: any) {
+            console.error("Checkout error:", error);
+            toast.error(error.response?.data?.error || "Failed to create checkout. Please try again.");
+            setIsLoading(false);
+            setLoadingPlanId(null);
+        }
     };
+
+    if (workspaceLoading) {
+        return (
+            <div className="min-h-screen flex items-center justify-center">
+                <IconLoader2 className="size-8 animate-spin text-muted-foreground" />
+            </div>
+        );
+    }
 
     return (
         <div className="min-h-screen bg-background">
-            <div className="container mx-auto px-4 py-16 md:py-24">
+            <div className="container mx-auto px-4 py-8 md:py-16">
+                {/* Back Button */}
+                <Button
+                    variant="ghost"
+                    className="mb-6"
+                    onClick={() => router.back()}
+                >
+                    <IconArrowLeft className="size-4 mr-2" />
+                    Back
+                </Button>
+
                 {/* Header */}
-                <div className="text-center mb-12">
+                <div className="text-center mb-8">
                     <h1 className="text-4xl md:text-5xl font-bold tracking-tight mb-4">
-                        Plans
+                        Choose Your Plan
                     </h1>
                     <p className="text-lg text-muted-foreground">
-                        No hidden fees. Cancel anytime.
+                        Upgrade your workspace to unlock more features
                     </p>
                 </div>
+
+                {/* Current Plan Banner */}
+                {currentPlan && (
+                    <CurrentPlanBanner
+                        plan={currentPlan}
+                        credits={currentCredits}
+                        workspaceSlug={workspaceSlug}
+                    />
+                )}
 
                 {/* Billing Toggle */}
                 <div className="flex justify-center mb-12">
@@ -334,6 +436,7 @@ export default function PricingPage() {
                             key={plan.id}
                             plan={plan}
                             isYearly={isYearly}
+                            isCurrentPlan={plan.id === currentPlanId}
                             onSelect={handleSelectPlan}
                             isLoading={isLoading}
                             loadingPlanId={loadingPlanId}

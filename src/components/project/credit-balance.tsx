@@ -1,11 +1,9 @@
 "use client";
 
-import { useState } from "react";
 import {
     IconCoin,
     IconAlertTriangle,
     IconPlus,
-    IconExternalLink,
 } from "@tabler/icons-react";
 
 import { Badge } from "@/components/ui/badge";
@@ -19,36 +17,22 @@ import {
 } from "@/components/ui/tooltip";
 import { useCreditBalance } from "@/hooks/useCredits";
 import { cn } from "@/lib/utils";
-import { PricingDialog } from "@/components/pricing/pricing-dialog";
+import Link from "next/link";
 
 /**
  * Low credit threshold for warning display
- * @validates Requirement 27.3
  */
 const LOW_CREDIT_THRESHOLD = 10;
 
-/**
- * CreditBalanceProps interface
- *
- * @validates Requirements 27.1, 27.2, 27.3, 27.4, 27.5
- */
 export interface CreditBalanceProps {
-    /** The workspace ID to fetch credit balance for */
     workspaceId: string;
-    /** Whether to show warning when balance is low */
+    workspaceSlug: string;
     showWarning?: boolean;
-    /** Display mode - compact for header, expanded for detailed view */
     variant?: "compact" | "expanded";
-    /** Credit cost to display before processing (optional) */
     creditCost?: number;
-    /** Additional className */
     className?: string;
 }
 
-/**
- * Format credit balance for display
- * @validates Requirement 27.1
- */
 function formatBalance(balance: number): string {
     if (balance >= 1000) {
         return `${(balance / 1000).toFixed(1)}k`;
@@ -56,11 +40,6 @@ function formatBalance(balance: number): string {
     return balance.toString();
 }
 
-/**
- * CreditBalanceSkeleton Component
- *
- * Loading skeleton for credit balance display.
- */
 function CreditBalanceSkeleton({ variant }: { variant: "compact" | "expanded" }) {
     if (variant === "compact") {
         return (
@@ -84,24 +63,17 @@ function CreditBalanceSkeleton({ variant }: { variant: "compact" | "expanded" })
     );
 }
 
-/**
- * CompactCreditBalance Component
- *
- * Compact display for header showing current balance with optional warning.
- *
- * @validates Requirements 27.1, 27.3, 27.4
- */
 function CompactCreditBalance({
     balance,
     isLowBalance,
     showWarning,
-    workspaceId,
+    workspaceSlug,
     className,
 }: {
     balance: number;
     isLowBalance: boolean;
     showWarning: boolean;
-    workspaceId: string;
+    workspaceSlug: string;
     className?: string;
 }) {
     return (
@@ -132,39 +104,28 @@ function CompactCreditBalance({
                     </TooltipContent>
                 </Tooltip>
 
-                {/* Buy Credits Button - Requirement 27.4 */}
-                <PricingDialog
-                    workspaceId={workspaceId}
-                    trigger={
-                        <Button
-                            variant="ghost"
-                            size="sm"
-                            className="h-7 gap-1 px-2 text-xs"
-                        >
-                            <IconPlus className="size-3" />
-                            Buy
-                        </Button>
-                    }
-                />
+                <Link href={`/${workspaceSlug}/pricing`}>
+                    <Button
+                        variant="ghost"
+                        size="sm"
+                        className="h-7 gap-1 px-2 text-xs"
+                    >
+                        <IconPlus className="size-3" />
+                        Buy
+                    </Button>
+                </Link>
             </div>
         </TooltipProvider>
     );
 }
 
-/**
- * ExpandedCreditBalance Component
- *
- * Expanded display showing detailed credit information with cost preview.
- *
- * @validates Requirements 27.1, 27.2, 27.3, 27.4
- */
 function ExpandedCreditBalance({
     balance,
     lifetimeCredits,
     isLowBalance,
     showWarning,
     creditCost,
-    workspaceId,
+    workspaceSlug,
     className,
 }: {
     balance: number;
@@ -172,7 +133,7 @@ function ExpandedCreditBalance({
     isLowBalance: boolean;
     showWarning: boolean;
     creditCost?: number;
-    workspaceId: string;
+    workspaceSlug: string;
     className?: string;
 }) {
     const hasEnoughCredits = creditCost === undefined || balance >= creditCost;
@@ -186,7 +147,6 @@ function ExpandedCreditBalance({
                 className
             )}
         >
-            {/* Header with icon and warning */}
             <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
                     <div
@@ -203,7 +163,6 @@ function ExpandedCreditBalance({
                         Credit Balance
                     </span>
                 </div>
-                {/* Low balance warning badge - Requirement 27.3 */}
                 {isLowBalance && showWarning && (
                     <Badge variant="outline" className="border-amber-500/50 text-amber-600 dark:text-amber-400">
                         <IconAlertTriangle className="mr-1 size-3" />
@@ -212,13 +171,11 @@ function ExpandedCreditBalance({
                 )}
             </div>
 
-            {/* Current Balance - Requirement 27.1 */}
             <div className="flex items-baseline gap-2">
                 <span className="text-3xl font-bold">{balance.toLocaleString()}</span>
                 <span className="text-sm text-muted-foreground">credits</span>
             </div>
 
-            {/* Credit Cost Preview - Requirement 27.2 */}
             {creditCost !== undefined && (
                 <div className="flex flex-col gap-1 rounded-md bg-muted/50 p-2.5">
                     <div className="flex items-center justify-between text-sm">
@@ -244,12 +201,10 @@ function ExpandedCreditBalance({
                 </div>
             )}
 
-            {/* Lifetime credits info */}
             <p className="text-xs text-muted-foreground">
                 Lifetime credits used: {(lifetimeCredits - balance).toLocaleString()}
             </p>
 
-            {/* Low balance warning message - Requirement 27.3 */}
             {isLowBalance && showWarning && (
                 <div className="flex items-start gap-2 rounded-md bg-amber-500/10 p-2.5 text-sm text-amber-600 dark:text-amber-400">
                     <IconAlertTriangle className="mt-0.5 size-4 shrink-0" />
@@ -260,73 +215,30 @@ function ExpandedCreditBalance({
                 </div>
             )}
 
-            {/* Buy Credits Button - Requirement 27.4 */}
-            <PricingDialog
-                workspaceId={workspaceId}
-                trigger={
-                    <Button className="w-full gap-2">
-                        <IconPlus className="size-4" />
-                        Buy Credits
-                        <IconExternalLink className="size-3.5" />
-                    </Button>
-                }
-            />
+            <Link href={`/${workspaceSlug}/pricing`}>
+                <Button className="w-full gap-2">
+                    <IconPlus className="size-4" />
+                    Buy Credits
+                </Button>
+            </Link>
         </div>
     );
 }
 
-/**
- * CreditBalance Component
- *
- * A credit balance display component that shows:
- * - Current balance in header (Requirement 27.1)
- * - Credit cost before processing (Requirement 27.2)
- * - Warning when below 10 credits (Requirement 27.3)
- * - Link to purchase credits (Requirement 27.4)
- * - Updates after processing starts (Requirement 27.5)
- *
- * Supports two display modes:
- * - `compact`: Minimal display for header/navigation
- * - `expanded`: Detailed view with cost preview and warnings
- *
- * @example
- * ```tsx
- * // Compact mode for header
- * <CreditBalance
- *   workspaceId="workspace-123"
- *   variant="compact"
- * />
- *
- * // Expanded mode with cost preview
- * <CreditBalance
- *   workspaceId="workspace-123"
- *   variant="expanded"
- *   creditCost={5}
- *   showWarning
- * />
- * ```
- *
- * @validates Requirements 27.1, 27.2, 27.3, 27.4, 27.5
- */
 export function CreditBalance({
     workspaceId,
+    workspaceSlug,
     showWarning = true,
     variant = "compact",
     creditCost,
     className,
 }: CreditBalanceProps) {
-    /**
-     * Fetch credit balance data
-     * Uses React Query for automatic updates after processing (Requirement 27.5)
-     */
     const { data: creditData, isLoading, error } = useCreditBalance(workspaceId);
 
-    // Loading state
     if (isLoading) {
         return <CreditBalanceSkeleton variant={variant} />;
     }
 
-    // Error state - show minimal fallback
     if (error || !creditData) {
         return (
             <div className={cn("flex items-center gap-2 text-muted-foreground", className)}>
@@ -340,14 +252,13 @@ export function CreditBalance({
     const lifetimeCredits = creditData.lifetimeCredits;
     const isLowBalance = balance < LOW_CREDIT_THRESHOLD;
 
-    // Render based on variant
     if (variant === "compact") {
         return (
             <CompactCreditBalance
                 balance={balance}
                 isLowBalance={isLowBalance}
                 showWarning={showWarning}
-                workspaceId={workspaceId}
+                workspaceSlug={workspaceSlug}
                 className={className}
             />
         );
@@ -360,7 +271,7 @@ export function CreditBalance({
             isLowBalance={isLowBalance}
             showWarning={showWarning}
             creditCost={creditCost}
-            workspaceId={workspaceId}
+            workspaceSlug={workspaceSlug}
             className={className}
         />
     );

@@ -16,7 +16,6 @@ import {
   SidebarMenuItem,
   SidebarMenuBadge,
 } from "@/components/ui/sidebar";
-import { PricingDialog } from "@/components/pricing/pricing-dialog";
 import { useWorkspaceBySlug } from "@/hooks/useWorkspace";
 import { useCreditBalance } from "@/hooks/useCredits";
 import { cn } from "@/lib/utils";
@@ -95,21 +94,16 @@ export function NavFooter({ currentSlug }: NavFooterProps) {
         </SidebarMenuBadge>
       </SidebarMenuItem>
 
-      {/* Upgrade Button */}
+      {/* Upgrade Button - Links to pricing page */}
       <SidebarMenuItem>
-        <PricingDialog
-          workspaceId={workspace?.id}
-          currentPlan={workspace?.plan || "free"}
-          trigger={
-            <SidebarMenuButton
-              tooltip="Upgrade Plan"
-              className="bg-linear-to-r from-primary/10 to-primary/5 hover:from-primary/20 hover:to-primary/10 border border-primary/20"
-            >
-              <IconSparkles className="text-primary" />
-              <span className="font-[490] text-[13px] text-primary">Upgrade</span>
-            </SidebarMenuButton>
-          }
-        />
+        <SidebarMenuButton
+          tooltip="Upgrade Plan"
+          onClick={() => router.push(`/${currentSlug}/pricing`)}
+          className="bg-linear-to-r from-primary/10 to-primary/5 hover:from-primary/20 hover:to-primary/10 border border-primary/20"
+        >
+          <IconSparkles className="text-primary" />
+          <span className="font-[490] text-[13px] text-primary">Upgrade</span>
+        </SidebarMenuButton>
       </SidebarMenuItem>
 
       {footerItems.map((item) => {
