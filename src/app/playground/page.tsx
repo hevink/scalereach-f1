@@ -1,4 +1,5 @@
 import { HeroSection } from "./hero-section";
+import { Testimonials } from "./testimonials";
 
 export default function PlaygroundPage() {
     return (
@@ -7,6 +8,7 @@ export default function PlaygroundPage() {
             <main role="main" className="bg-background overflow-hidden">
                 <HeroSection />
                 <LogoCloud />
+                <Testimonials />
             </main>
         </div>
     );
