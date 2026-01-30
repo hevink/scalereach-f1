@@ -2,6 +2,7 @@ import { HeroSection } from "./hero-section";
 import { Testimonials } from "./testimonials";
 import { PricingSection } from "./pricing-section";
 import { IntegrationsSection } from "./integrations-section";
+import { FAQSection } from "./faq-section";
 
 export default function PlaygroundPage() {
     return (
@@ -13,6 +14,7 @@ export default function PlaygroundPage() {
                 <IntegrationsSection />
                 <Testimonials />
                 <PricingSection />
+                <FAQSection />
             </main>
         </div>
     );
