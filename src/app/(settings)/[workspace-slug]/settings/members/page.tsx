@@ -110,17 +110,15 @@ function ConfirmDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent>
         <DialogHeader>
-          <div className="flex items-center gap-3">
+          <DialogTitle className="flex items-center gap-3">
             {variant === "destructive" && (
-              <div className="flex size-10 items-center justify-center rounded-full bg-destructive/10">
-                <IconAlertTriangle className="size-5 text-destructive" />
+              <div className="flex size-8 shrink-0 items-center justify-center rounded-full bg-destructive/10">
+                <IconAlertTriangle className="size-4 text-destructive" />
               </div>
             )}
-            <div>
-              <DialogTitle>{title}</DialogTitle>
-              <DialogDescription className="mt-1">{description}</DialogDescription>
-            </div>
-          </div>
+            {title}
+          </DialogTitle>
+          <DialogDescription>{description}</DialogDescription>
         </DialogHeader>
         <DialogFooter>
           <DialogClose render={<Button variant="outline" disabled={isLoading} />}>
@@ -184,7 +182,7 @@ function InviteMemberDialog({ workspaceId }: { workspaceId: string }) {
             <Label htmlFor="role">Role</Label>
             <Select value={role} onValueChange={(value) => value && setRole(value)}>
               <SelectTrigger>
-                <SelectValue />
+                <SelectValue placeholder="Select a role" />
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="member">Member</SelectItem>
