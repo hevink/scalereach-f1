@@ -9,6 +9,7 @@ import { DocumentFlowCard } from "./document-flow-card";
 import { FooterSection } from "./footer-section";
 import { StatsSection } from "./stats-section";
 import { Header } from "./header";
+import { FeaturesCarousel } from "./features-carousel";
 
 export default function PlaygroundPage() {
     return (
@@ -18,6 +19,7 @@ export default function PlaygroundPage() {
                 <HeroSection />
                 <LogoCloud />
                 <StatsSection />
+                <FeaturesCarousel />
                 <IntegrationsSection />
                 <DocumentFlowCard />
                 <Testimonials />
