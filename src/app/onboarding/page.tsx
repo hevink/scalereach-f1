@@ -1,45 +1,29 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { OnboardingForm } from "@/components/onboarding/onboarding-form";
 import { Spinner } from "@/components/ui/spinner";
+import { authClient, type ExtendedUser } from "@/lib/auth-client";
 
 export default function OnboardingPage() {
   const router = useRouter();
-  const [isPending, setIsPending] = useState(true);
-  const [user, setUser] = useState<{
-    id: string;
-    isOnboarded?: boolean;
-  } | null>(null);
+  const { data: session, isPending } = authClient.useSession();
+
+  const user = session?.user as ExtendedUser | undefined;
 
   useEffect(() => {
-    const checkSession = async () => {
-      try {
-        const response = await fetch("/api/auth/session");
-        const data = await response.json();
-        setUser(data.user);
+    if (isPending) return;
 
-        if (!data.user) {
-          router.replace("/login");
-          return;
-        }
+    if (!user) {
+      router.replace("/login");
+      return;
+    }
 
-        if (data.user.isOnboarded) {
-          router.replace("/workspaces");
-          return;
-        }
-      } catch (error) {
-        console.error("Failed to check session:", error);
-        setUser(null);
-        router.replace("/login");
-      } finally {
-        setIsPending(false);
-      }
-    };
-
-    checkSession();
-  }, [router]);
+    if (user.isOnboarded) {
+      router.replace("/workspaces");
+    }
+  }, [user, isPending, router]);
 
   if (isPending) {
     return (

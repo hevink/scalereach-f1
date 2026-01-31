@@ -13,7 +13,7 @@ import {
 } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Spinner } from "@/components/ui/spinner";
-import { authClient } from "@/lib/auth-client";
+import { authClient, type ExtendedUser } from "@/lib/auth-client";
 import { useWorkspaces } from "@/hooks/useWorkspace";
 
 function WorkspaceCardSkeleton({
@@ -55,15 +55,23 @@ export default function WorkspacesPage() {
     authClient.useSession();
   const { data: workspaces = [], isLoading } = useWorkspaces();
 
+  const user = session?.user as ExtendedUser | undefined;
+
   useEffect(() => {
     if (isSessionPending) {
       return;
     }
 
-    if (!session?.user) {
+    if (!user) {
       router.replace("/login");
+      return;
     }
-  }, [session, isSessionPending, router]);
+
+    // Redirect to onboarding if user hasn't completed it
+    if (user.isOnboarded === false) {
+      router.replace("/onboarding");
+    }
+  }, [user, isSessionPending, router]);
 
   const handleWorkspaceSelect = (slug: string) => {
     router.push(`/${slug}`);
@@ -79,7 +87,7 @@ export default function WorkspacesPage() {
     );
   }
 
-  if (!session?.user) {
+  if (!user || user.isOnboarded === false) {
     return null;
   }
 
