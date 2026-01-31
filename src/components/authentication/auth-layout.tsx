@@ -5,6 +5,7 @@ import { useEffect, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { Spinner } from "@/components/ui/spinner";
+import { LogoIcon } from "@/components/ui/logo";
 
 const PLATFORMS = [
   { name: "TikTok", logo: "/model/tiktok.svg" },
@@ -78,8 +79,8 @@ export function AuthLayout({ children, title, subtitle }: AuthLayoutProps) {
         <div className="relative z-10 w-full max-w-xl transition-all duration-500">
           <div className="mb-12">
             <Link href="/" className="flex items-center gap-3">
-              <Image alt="Logo" height={40} priority src="/logo.svg" width={40} />
-              <span className="text-xl font-bold text-zinc-900 dark:text-white">ScaleReach</span>
+              <LogoIcon size={40} />
+              <span className="text-xl font-bold text-zinc-900 dark:text-white">Scale Reach</span>
             </Link>
           </div>
           <div>
@@ -145,7 +146,7 @@ export function AuthLayout({ children, title, subtitle }: AuthLayoutProps) {
         <div className="w-full max-w-sm space-y-8">
           <div className="flex flex-col items-center gap-4 lg:hidden">
             <Link href="/" className="flex items-center gap-2">
-              <Image alt="Logo" height={38} priority src="/logo.svg" width={38} />
+              <LogoIcon size={38} />
             </Link>
           </div>
           <div className="text-center lg:text-left">

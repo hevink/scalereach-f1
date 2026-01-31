@@ -14,10 +14,10 @@ import {
   IconUsers,
   IconVideo,
 } from "@tabler/icons-react";
-import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
+import { LogoIcon } from "@/components/ui/logo";
 import { toast } from "sonner";
 import { z } from "zod";
 import { Button } from "@/components/ui/button";
@@ -418,7 +418,7 @@ export function OnboardingForm() {
     <div className="flex w-full max-w-md flex-col gap-6">
       {/* Header */}
       <div className="flex flex-col items-center justify-center gap-6 text-center">
-        <Image alt="Staxk" height={42} src="/logo.svg" width={42} />
+        <LogoIcon size={42} />
 
         {/* Content */}
         <div className="relative flex min-h-[320px] w-full flex-col gap-6">

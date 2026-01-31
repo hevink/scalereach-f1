@@ -1,5 +1,5 @@
-import Image from "next/image";
 import Link from "next/link";
+import { LogoIcon } from "@/components/ui/logo";
 
 export function FooterSection() {
     return (
@@ -9,16 +9,11 @@ export function FooterSection() {
                 <div>
                     <div className="mr-0 mb-4 md:mr-4 md:flex">
                         <Link href="/" className="relative z-20 mr-4 flex items-center space-x-2 px-2 py-1 text-sm font-normal">
-                            <Image
-                                src="/logo.svg"
-                                alt="logo"
-                                width={30}
-                                height={30}
-                            />
-                            <span className="font-medium text-foreground">ScaleReach</span>
+                            <LogoIcon size={30} />
+                            <span className="font-medium text-foreground">Scale Reach</span>
                         </Link>
                     </div>
-                    <div className="mt-2 ml-2">© copyright ScaleReach 2025. All rights reserved.</div>
+                    <div className="mt-2 ml-2">© copyright Scale Reach 2025. All rights reserved.</div>
                 </div>
 
                 {/* Links Grid */}
@@ -68,8 +63,8 @@ export function FooterSection() {
             </div>
 
             {/* Large Brand Text */}
-            <p className="inset-x-0 mt-20 bg-gradient-to-b from-neutral-50 to-neutral-200 bg-clip-text text-center text-5xl font-bold text-transparent md:text-9xl lg:text-[12rem] xl:text-[13rem] dark:from-neutral-950 dark:to-neutral-800">
-                ScaleReach
+            <p className="inset-x-0 mt-20 bg-linear-to-b from-neutral-50 to-neutral-200 bg-clip-text text-center text-5xl font-bold text-transparent md:text-9xl lg:text-[12rem] xl:text-[13rem] dark:from-neutral-950 dark:to-neutral-800">
+                Scale Reach
             </p>
         </footer>
     );
