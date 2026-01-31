@@ -55,10 +55,10 @@ export function FeaturesCarousel() {
     const features = getFeatures();
 
     return (
-        <section className="bg-background @container py-24 max-lg:px-1">
+        <section className="bg-background @container relative py-24 max-lg:px-1">
             <div className="relative mx-auto">
                 <div className="mx-auto max-w-6xl">
-                    <div className="flex flex-wrap items-end justify-between gap-4 border-x border-dashed px-6 pb-6 pt-24 lg:px-8 lg:pb-12">
+                    <div className="flex flex-wrap items-end justify-between gap-4 px-6 pb-6 pt-24 lg:px-8 lg:pb-12">
                         <h2 className="text-foreground max-w-xl text-balance text-4xl font-semibold lg:text-5xl">
                             Everything you need to create viral clips
                         </h2>
@@ -89,7 +89,7 @@ export function FeaturesCarousel() {
                     <div aria-hidden="true" className="border-y border-dashed max-lg:hidden" />
                 </div>
 
-                <div className="mx-auto w-full max-w-6xl border-x border-dashed pb-24" />
+                <div className="mx-auto w-full max-w-6xl pb-24" />
             </div>
         </section>
     );

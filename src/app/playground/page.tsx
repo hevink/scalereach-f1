@@ -15,7 +15,10 @@ export default function PlaygroundPage() {
     return (
         <div data-theme="global" className="scheme-light selection:bg-foreground/10 selection:text-foreground bg-background dark:scheme-dark">
             <Header />
-            <main role="main" className="bg-background overflow-hidden">
+            <main role="main" className="bg-background overflow-hidden relative">
+                {/* Global continuous vertical border lines */}
+                <div aria-hidden="true" className="pointer-events-none absolute inset-0 mx-auto max-w-6xl border-x z-50" />
+
                 <HeroSection />
                 <LogoCloud />
                 <StatsSection />
