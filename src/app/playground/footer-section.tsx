@@ -3,8 +3,8 @@ import { LogoIcon } from "@/components/ui/logo";
 
 export function FooterSection() {
     return (
-        <footer className="relative w-full overflow-hidden border-t border-border bg-background px-8 py-20">
-            <div className="mx-auto flex max-w-7xl flex-col items-start justify-between text-sm text-muted-foreground sm:flex-row md:px-8">
+        <footer className="relative w-full overflow-hidden border-t border-border bg-background py-20">
+            <div className="mx-auto flex max-w-6xl flex-col items-start justify-between px-6 text-sm text-muted-foreground sm:flex-row">
                 {/* Logo & Copyright */}
                 <div>
                     <div className="mr-0 mb-4 md:mr-4 md:flex">
