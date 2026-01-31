@@ -4,6 +4,9 @@ import { PricingSection } from "./pricing-section";
 import { IntegrationsSection } from "./integrations-section";
 import { FAQSection } from "./faq-section";
 import { CTASection } from "./cta-section";
+import { SupportSection } from "./support-section";
+import { DocumentFlowCard } from "./document-flow-card";
+import { FooterSection } from "./footer-section";
 
 export default function PlaygroundPage() {
     return (
@@ -13,10 +16,13 @@ export default function PlaygroundPage() {
                 <HeroSection />
                 <LogoCloud />
                 <IntegrationsSection />
+                <DocumentFlowCard />
                 <Testimonials />
                 <PricingSection />
                 <FAQSection />
+                <SupportSection />
                 <CTASection />
+                <FooterSection />
             </main>
         </div>
     );
