@@ -7,6 +7,7 @@ import { CTASection } from "./cta-section";
 import { SupportSection } from "./support-section";
 import { DocumentFlowCard } from "./document-flow-card";
 import { FooterSection } from "./footer-section";
+import { StatsSection } from "./stats-section";
 
 export default function PlaygroundPage() {
     return (
@@ -15,6 +16,7 @@ export default function PlaygroundPage() {
             <main role="main" className="bg-background overflow-hidden">
                 <HeroSection />
                 <LogoCloud />
+                <StatsSection />
                 <IntegrationsSection />
                 <DocumentFlowCard />
                 <Testimonials />
