@@ -383,17 +383,9 @@ export function SignUpForm() {
                     {!checkingUsername &&
                       username &&
                       username.trim().length >= 3 &&
-                      usernameAvailable !== null && (
-                        <FieldDescription
-                          className={
-                            usernameAvailable
-                              ? "text-green-600 dark:text-green-400"
-                              : "text-destructive"
-                          }
-                        >
-                          {usernameAvailable
-                            ? "Username is available"
-                            : "Username is not available"}
+                      usernameAvailable === true && (
+                        <FieldDescription className="text-green-600 dark:text-green-400">
+                          Username is available
                         </FieldDescription>
                       )}
                     {fieldState.invalid && (
