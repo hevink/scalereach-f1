@@ -1,7 +1,14 @@
 "use client";
 
-import { useState, type ReactNode } from "react";
-import { ArrowLeft, ArrowRight, Sparkles, Captions, TrendingUp, Share2, Maximize, Palette, Plus, Type, type LucideIcon } from "lucide-react";
+import { type ReactNode } from "react";
+import { Sparkles, Captions, TrendingUp, Share2, Plus, Type, type LucideIcon } from "lucide-react";
+import {
+    Carousel,
+    CarouselContent,
+    CarouselItem,
+    CarouselNext,
+    CarouselPrevious,
+} from "@/components/ui/carousel";
 
 interface Feature {
     id: string;
@@ -41,74 +48,43 @@ function getFeatures(): Feature[] {
             icon: Captions,
             visual: <CaptionsVisual />,
         },
-        {
-            id: "auto-reframe",
-            title: "Auto-Reframing",
-            description: "Smart cropping that follows the action. Support for 9:16, 1:1, and 16:9 aspect ratios.",
-            icon: Maximize,
-            visual: <AutoReframeVisual />,
-        },
-        {
-            id: "brand-kit",
-            title: "Brand Kit Customization",
-            description: "Save your colors, fonts, and logos. Apply consistent branding across all your clips.",
-            icon: Palette,
-            visual: <BrandKitVisual />,
-        },
     ];
 }
 
 export function FeaturesCarousel() {
-    const [currentIndex, setCurrentIndex] = useState(0);
     const features = getFeatures();
-
-    const nextSlide = () => {
-        setCurrentIndex((prev) => (prev + 1) % Math.ceil(features.length / 3));
-    };
-
-    const prevSlide = () => {
-        setCurrentIndex((prev) => (prev - 1 + Math.ceil(features.length / 3)) % Math.ceil(features.length / 3));
-    };
-
-    const visibleFeatures = features.slice(currentIndex * 3, currentIndex * 3 + 3);
 
     return (
         <section className="bg-background @container py-24 max-lg:px-1">
-            <div className="relative mx-auto" role="region" aria-roledescription="carousel">
+            <div className="relative mx-auto">
                 <div className="mx-auto max-w-6xl">
                     <div className="flex flex-wrap items-end justify-between gap-4 border-x border-dashed px-6 pb-6 pt-24 lg:px-8 lg:pb-12">
                         <h2 className="text-foreground max-w-xl text-balance text-4xl font-semibold lg:text-5xl">
                             Everything you need to create viral clips
                         </h2>
-                        <div className="flex items-center gap-2">
-                            <button
-                                onClick={prevSlide}
-                                className="cursor-pointer inline-flex items-center justify-center gap-2 whitespace-nowrap text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 shadow-sm shadow-black/15 border border-transparent bg-card ring-1 ring-foreground/10 duration-200 hover:bg-muted/50 dark:ring-foreground/15 dark:hover:bg-muted/50 size-8 rounded-full"
-                            >
-                                <ArrowLeft className="h-4 w-4" />
-                                <span className="sr-only">Previous slide</span>
-                            </button>
-                            <button
-                                onClick={nextSlide}
-                                className="cursor-pointer inline-flex items-center justify-center gap-2 whitespace-nowrap text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 shadow-sm shadow-black/15 border border-transparent bg-card ring-1 ring-foreground/10 duration-200 hover:bg-muted/50 dark:ring-foreground/15 dark:hover:bg-muted/50 size-8 rounded-full"
-                            >
-                                <ArrowRight className="h-4 w-4" />
-                                <span className="sr-only">Next slide</span>
-                            </button>
-                        </div>
                     </div>
                 </div>
 
                 <div className="lg:grid lg:grid-cols-[1fr_auto_1fr]">
                     <div aria-hidden="true" className="border-y border-dashed max-lg:hidden" />
                     <div className="mx-auto border lg:max-w-6xl">
-                        <div className="overflow-hidden px-4">
-                            <div className="flex -ml-4 *:bg-card *:not-dark:bg-card/50 *:p-8 *:pt-12 md:divide-x md:*:basis-1/2 lg:*:basis-1/3">
-                                {visibleFeatures.map((feature) => (
-                                    <FeatureCard key={feature.id} feature={feature} />
+                        <Carousel
+                            opts={{
+                                align: "start",
+                                loop: true,
+                            }}
+                            className="w-full"
+                        >
+                            <CarouselContent className="-ml-4">
+                                {features.map((feature) => (
+                                    <CarouselItem key={feature.id} className="pl-4 md:basis-1/2 lg:basis-1/3">
+                                        <FeatureCard feature={feature} />
+                                    </CarouselItem>
                                 ))}
-                            </div>
-                        </div>
+                            </CarouselContent>
+                            <CarouselPrevious className="left-2" />
+                            <CarouselNext className="right-2" />
+                        </Carousel>
                     </div>
                     <div aria-hidden="true" className="border-y border-dashed max-lg:hidden" />
                 </div>
@@ -120,17 +96,12 @@ export function FeaturesCarousel() {
 }
 
 function FeatureCard({ feature }: { feature: Feature }) {
-    const Icon = feature.icon;
     return (
-        <div
-            role="group"
-            aria-roledescription="slide"
-            className="min-w-0 shrink-0 grow-0 basis-full pl-4 grid-rows-subgrid row-span-2 grid gap-12"
-        >
-            <div className="m-auto scale-90 self-center">
+        <div className="bg-card p-8 pt-12 h-full flex flex-col gap-8 min-w-sm">
+            <div className="flex-1 flex items-center justify-center">
                 {feature.visual}
             </div>
-            <p className="text-foreground/65 self-end text-balance font-medium lg:max-w-xs">
+            <p className="text-foreground/65 text-balance font-medium">
                 <strong className="text-foreground font-medium">{feature.title}</strong>
                 {" "}{feature.description}
             </p>
@@ -372,73 +343,4 @@ function YouTubeShortsIcon() {
     );
 }
 
-function AutoReframeVisual() {
-    return (
-        <div aria-hidden="true" className="min-w-2xs max-w-2xs mx-auto">
-            <div className="flex items-end justify-center gap-3">
-                <div className="flex flex-col items-center gap-2">
-                    <div className="w-8 h-14 bg-gradient-to-b from-primary/20 to-primary/40 rounded-md ring-2 ring-primary flex items-center justify-center">
-                        <span className="text-[8px] font-bold text-primary">9:16</span>
-                    </div>
-                    <span className="text-xs text-muted-foreground">Vertical</span>
-                </div>
-                <div className="flex flex-col items-center gap-2">
-                    <div className="size-12 bg-gradient-to-br from-emerald-500/20 to-emerald-500/40 rounded-md ring-2 ring-emerald-500 flex items-center justify-center">
-                        <span className="text-[8px] font-bold text-emerald-600">1:1</span>
-                    </div>
-                    <span className="text-xs text-muted-foreground">Square</span>
-                </div>
-                <div className="flex flex-col items-center gap-2">
-                    <div className="w-16 h-9 bg-gradient-to-r from-blue-500/20 to-blue-500/40 rounded-md ring-2 ring-blue-500 flex items-center justify-center">
-                        <span className="text-[8px] font-bold text-blue-600">16:9</span>
-                    </div>
-                    <span className="text-xs text-muted-foreground">Landscape</span>
-                </div>
-            </div>
-            <div className="mt-4 text-center">
-                <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-muted rounded-full text-xs">
-                    <Maximize className="size-3" />
-                    <span>Smart face tracking enabled</span>
-                </div>
-            </div>
-        </div>
-    );
-}
 
-function BrandKitVisual() {
-    return (
-        <div aria-hidden="true" className="min-w-2xs max-w-2xs mx-auto">
-            <div className="ring-border bg-background/75 shadow-black/6.5 rounded-xl p-4 shadow-lg ring-1">
-                <div className="flex items-center gap-2 mb-4">
-                    <Palette className="size-4 text-pink-500" />
-                    <span className="font-medium text-sm">Brand Kit</span>
-                </div>
-                <div className="space-y-4">
-                    <div>
-                        <span className="text-xs text-muted-foreground mb-2 block">Colors</span>
-                        <div className="flex gap-2">
-                            <div className="size-8 rounded-lg bg-[#6366f1] ring-2 ring-offset-2 ring-[#6366f1]" />
-                            <div className="size-8 rounded-lg bg-[#ec4899]" />
-                            <div className="size-8 rounded-lg bg-[#14b8a6]" />
-                            <div className="size-8 rounded-lg bg-[#f59e0b]" />
-                            <div className="size-8 rounded-lg bg-foreground/10 flex items-center justify-center text-muted-foreground">+</div>
-                        </div>
-                    </div>
-                    <div>
-                        <span className="text-xs text-muted-foreground mb-2 block">Font</span>
-                        <div className="bg-muted rounded-lg p-2 text-sm font-semibold">
-                            Inter Bold
-                        </div>
-                    </div>
-                    <div>
-                        <span className="text-xs text-muted-foreground mb-2 block">Logo</span>
-                        <div className="bg-muted rounded-lg p-3 flex items-center gap-2">
-                            <div className="size-8 bg-gradient-to-br from-primary to-emerald-500 rounded-md" />
-                            <span className="text-sm">logo.png</span>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    );
-}
