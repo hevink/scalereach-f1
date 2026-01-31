@@ -7,68 +7,70 @@ import { Check } from "lucide-react";
 type BillingPeriod = "monthly" | "annually";
 
 const plans = {
-    free: {
-        name: "Free",
-        description: "For developers trying out Tailark for the first time",
-        monthly: 0,
-        annually: 0,
+    starter: {
+        name: "Starter",
+        description: "Perfect for creators just getting started with short-form content",
+        monthly: 29,
+        annually: 23,
         features: [
-            "Basic Analytics Dashboard",
-            "5GB Cloud Storage",
-            "Email and Chat Support",
+            "Upload 10 videos monthly",
+            "Up to 45 min long videos",
+            "Generate 100 clips monthly",
+            "HD download quality",
+            "Auto captions",
+            "Basic templates",
         ],
         featured: false,
     },
     pro: {
         name: "Pro",
-        description: "Ideal for developers who need more features and support",
-        monthly: 19,
-        annually: 14,
+        description: "For serious creators who need more power and flexibility",
+        monthly: 79,
+        annually: 63,
         features: [
-            "Everything in Free Plan, plus:",
-            "5GB Cloud Storage",
-            "Email and Chat Support",
-            "Access to Community Forum",
-            "Single User Access",
-            "Access to Basic Templates",
-            "Mobile App Access",
-            "1 Custom Report Per Month",
-            "Monthly Product Updates",
-            "Standard Security Features",
+            "Everything in Starter, plus:",
+            "Upload 30 videos monthly",
+            "Up to 2 hours long videos",
+            "Generate 300 clips monthly",
+            "4K download quality",
+            "AI Dubbing (29 languages)",
+            "Priority processing",
+            "Advanced templates",
+            "Remove watermark",
         ],
         featured: true,
     },
-    startup: {
-        name: "Startup",
-        description: "For startups that need more advanced features and support.",
-        monthly: 49,
-        annually: 37,
+    proPlus: {
+        name: "Pro+",
+        description: "For agencies and teams with high-volume content needs",
+        monthly: 189,
+        annually: 151,
         features: [
-            "Everything in Pro Plan, plus:",
-            "5GB Cloud Storage",
-            "Email and Chat Support",
-            "Multi-User Access",
-            "1 Custom Report Per Month",
-            "Monthly Product Updates",
-            "Standard Security Features",
-            "Access to Advanced Templates",
-            "Access to Community Forum",
-            "Mobile App Access",
+            "Everything in Pro, plus:",
+            "Upload 100 videos monthly",
+            "Up to 3 hours long videos",
+            "Generate 1000 clips monthly",
+            "4K download quality",
+            "AI Dubbing (29 languages)",
+            "Fastest processing",
+            "Custom branding",
+            "API access",
+            "Dedicated support",
         ],
         featured: false,
     },
 };
 
 const enterpriseFeatures = [
-    "1 Custom Report Per Month",
-    "Standard Security Features",
-    "Access to Advanced Templates",
-    "Access to Community Forum",
-    "Mobile App Access",
-    "Custom Invoicing",
-    "Custom User Roles",
-    "Enhanced Reporting",
-    "Priority Support",
+    "Unlimited video uploads",
+    "Unlimited clip generation",
+    "Custom video length limits",
+    "White-label solution",
+    "Custom AI training",
+    "Dedicated account manager",
+    "SLA guarantee",
+    "Custom integrations",
+    "Team collaboration",
 ];
 
 export function PricingSection() {
@@ -86,10 +88,10 @@ export function PricingSection() {
                     className="mx-auto max-w-2xl text-center"
                 >
                     <h2 className="text-balance text-3xl font-bold md:text-4xl lg:text-5xl lg:tracking-tight">
-                        Pricing that scales with your business
+                        Simple pricing for every creator
                     </h2>
                     <p className="text-muted-foreground mx-auto mt-4 max-w-xl text-balance text-lg">
-                        Choose the perfect plan for your needs and start optimizing your workflow today
+                        Turn your long-form content into viral clips. No hidden fees, cancel anytime.
                     </p>
 
                     {/* Billing Toggle */}
@@ -120,7 +122,7 @@ export function PricingSection() {
                             animate={{ opacity: 1 }}
                             className="mt-3 text-center text-xs"
                         >
-                            <span className="text-primary font-medium">Save 25%</span> On Annual Billing
+                            <span className="text-primary font-medium">Save 20%</span> with annual billing
                         </motion.div>
                     </div>
                 </motion.div>
@@ -164,7 +166,7 @@ function PricingCard({
     period,
     index,
 }: {
-    plan: typeof plans.free;
+    plan: typeof plans.starter;
     period: BillingPeriod;
     index: number;
 }) {
@@ -177,8 +179,8 @@ function PricingCard({
             viewport={{ once: true }}
             transition={{ duration: 0.5, delay: index * 0.1 }}
             className={`@max-4xl:p-9 row-span-4 grid grid-rows-subgrid gap-8 p-8 ${plan.featured
-                    ? "rounded-[--radius] ring-border bg-card @4xl:my-2 @max-4xl:mx-1 shadow-black/6.5 shadow-xl ring-1 backdrop-blur"
-                    : ""
+                ? "rounded-[--radius] ring-border bg-card @4xl:my-2 @max-4xl:mx-1 shadow-black/6.5 shadow-xl ring-1 backdrop-blur"
+                : ""
                 }`}
         >
             {/* Plan name and description */}
@@ -203,7 +205,7 @@ function PricingCard({
                         ${price}
                     </motion.div>
                 </AnimatePresence>
-                <div className="text-muted-foreground text-sm">Per month</div>
+                <div className="text-muted-foreground text-sm">Per month, billed {period}</div>
             </div>
 
             {/* CTA Button */}
@@ -211,12 +213,12 @@ function PricingCard({
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
                 className={`cursor-pointer inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium transition-colors h-9 px-4 py-2 w-full ${plan.featured
-                        ? "shadow-md border-[0.5px] border-white/10 shadow-black/15 bg-primary text-primary-foreground hover:bg-primary/90"
-                        : "shadow-sm shadow-black/15 border border-transparent bg-card ring-1 ring-foreground/10 hover:bg-muted/50"
+                    ? "shadow-md border-[0.5px] border-white/10 shadow-black/15 bg-primary text-primary-foreground hover:bg-primary/90"
+                    : "shadow-sm shadow-black/15 border border-transparent bg-card ring-1 ring-foreground/10 hover:bg-muted/50"
                     }`}
-                href="#"
+                href="/sign-up"
             >
-                Get Started
+                Start Free Trial
             </motion.a>
 
             {/* Features list */}
@@ -252,9 +254,9 @@ function EnterpriseSection() {
             <div className="@4xl:grid-cols-3 @max-4xl:divide-y @4xl:divide-x grid border-t">
                 <div className="space-y-6 p-8">
                     <div className="self-end">
-                        <div className="tracking-tight text-lg font-medium">Enterprise Custom Plan</div>
+                        <div className="tracking-tight text-lg font-medium">Enterprise</div>
                         <div className="text-muted-foreground mt-1 text-balance text-sm">
-                            For large organizations with complex workflows and advanced reporting requirements.
+                            For media companies and agencies with custom requirements and high-volume needs.
                         </div>
                     </div>
                     <motion.a

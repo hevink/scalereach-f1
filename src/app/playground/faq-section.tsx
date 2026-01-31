@@ -6,36 +6,53 @@ import { ChevronDown } from "lucide-react";
 
 const faqCategories = [
     {
-        title: "General",
+        title: "Getting Started",
         items: [
             {
-                question: "How long does shipping take?",
-                answer: "Standard shipping takes 3-5 business days, depending on your location. Express shipping options are available at checkout for 1-2 business day delivery.",
+                question: "How does the AI clip generation work?",
+                answer: "Our AI analyzes your video content to identify the most engaging moments - viral hooks, emotional peaks, and key insights. It then automatically creates short clips optimized for each social platform with proper aspect ratios and captions.",
             },
             {
-                question: "What payment methods do you accept?",
-                answer: "We accept all major credit cards (Visa, MasterCard, American Express), PayPal, and Apple Pay. All transactions are secured with industry-standard encryption.",
+                question: "What video formats do you support?",
+                answer: "We support all major video formats including MP4, MOV, AVI, and MKV. You can also paste YouTube links directly and we'll process the video for you.",
             },
             {
-                question: "Can I change or cancel my order?",
-                answer: "You can modify or cancel your order within 1 hour of placing it. After that, please contact our support team and we'll do our best to accommodate your request.",
+                question: "How long does it take to generate clips?",
+                answer: "Most videos are processed within 5-10 minutes. Pro and Pro+ users get priority processing, which can reduce this to 2-3 minutes for most videos.",
             },
         ],
     },
     {
-        title: "Shipping",
+        title: "Features",
         items: [
             {
-                question: "Do you ship internationally?",
-                answer: "Yes, we ship to over 100 countries worldwide. International shipping times vary by location, typically 7-14 business days.",
+                question: "Can I edit the generated clips?",
+                answer: "Yes! You can trim clips, adjust captions, change styles, and customize branding. Our editor lets you fine-tune every clip before downloading.",
             },
             {
-                question: "What is your return policy?",
-                answer: "We offer a 30-day return policy for all unused items in their original packaging. Simply contact our support team to initiate a return.",
+                question: "What is AI Dubbing?",
+                answer: "AI Dubbing automatically translates and dubs your clips into 29 different languages, helping you reach a global audience. Available on Pro and Pro+ plans.",
             },
             {
-                question: "How can I track my order?",
-                answer: "Once your order ships, you'll receive an email with a tracking number. You can use this to track your package on our website or the carrier's site.",
+                question: "Do clips have watermarks?",
+                answer: "Free trial clips include a small watermark. Pro and Pro+ plans allow you to remove watermarks and add your own custom branding.",
+            },
+        ],
+    },
+    {
+        title: "Billing",
+        items: [
+            {
+                question: "Can I cancel anytime?",
+                answer: "Yes, you can cancel your subscription at any time. You'll continue to have access until the end of your billing period.",
+            },
+            {
+                question: "Do unused credits roll over?",
+                answer: "Video uploads and clip credits reset each month and don't roll over. We recommend choosing a plan that matches your monthly content needs.",
+            },
+            {
+                question: "Is there a free trial?",
+                answer: "Yes! All new users get a 7-day free trial with access to Pro features. No credit card required to start.",
             },
         ],
     },
@@ -59,7 +76,7 @@ const itemVariants = {
 };
 
 export function FAQSection() {
-    const [openItems, setOpenItems] = useState<string[]>(["General-0"]);
+    const [openItems, setOpenItems] = useState<string[]>(["Getting Started-0"]);
 
     const toggleItem = (id: string) => {
         setOpenItems((prev) =>
@@ -81,12 +98,12 @@ export function FAQSection() {
                     >
                         <h2 className="text-foreground text-4xl font-semibold">FAQs</h2>
                         <p className="text-muted-foreground mt-4 text-balance text-lg">
-                            Your questions answered
+                            Everything you need to know about creating viral clips
                         </p>
                         <p className="text-muted-foreground mt-6 max-md:hidden">
-                            Can&apos;t find what you&apos;re looking for? Contact our{" "}
+                            Still have questions? Contact our{" "}
                             <a className="text-primary font-medium hover:underline" href="#">
-                                customer support team
+                                support team
                             </a>
                         </p>
                     </motion.div>
@@ -139,9 +156,9 @@ export function FAQSection() {
                     transition={{ duration: 0.5, delay: 0.3 }}
                     className="text-muted-foreground mt-12 px-6 md:hidden"
                 >
-                    Can&apos;t find what you&apos;re looking for? Contact our{" "}
+                    Still have questions? Contact our{" "}
                     <a className="text-primary font-medium hover:underline" href="#">
-                        customer support team
+                        support team
                     </a>
                 </motion.p>
             </div>
