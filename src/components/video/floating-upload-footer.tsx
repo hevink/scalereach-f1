@@ -74,9 +74,10 @@ interface FileState {
 
 interface FloatingUploadFooterProps {
     projectId?: string;
+    workspaceId: string;
 }
 
-export function FloatingUploadFooter({ projectId }: FloatingUploadFooterProps) {
+export function FloatingUploadFooter({ projectId, workspaceId }: FloatingUploadFooterProps) {
     const [url, setUrl] = useState("");
     const [validationState, setValidationState] = useState<"idle" | "validating" | "valid" | "invalid">("idle");
     const [videoInfo, setVideoInfo] = useState<VideoInfo | null>(null);
@@ -164,7 +165,7 @@ export function FloatingUploadFooter({ projectId }: FloatingUploadFooterProps) {
                     body: JSON.stringify({
                         filename: file.name,
                         type: file.type,
-                        metadata: { projectId },
+                        metadata: { projectId, workspaceId },
                     }),
                 });
 
@@ -227,7 +228,7 @@ export function FloatingUploadFooter({ projectId }: FloatingUploadFooterProps) {
                     body: JSON.stringify({
                         filename: file.name,
                         type: file.type,
-                        metadata: { projectId },
+                        metadata: { projectId, workspaceId },
                     }),
                 });
 
@@ -296,7 +297,7 @@ export function FloatingUploadFooter({ projectId }: FloatingUploadFooterProps) {
                 description: `${file.name} is now being processed`,
             });
 
-            queryClient.invalidateQueries({ queryKey: videoKeys.myVideos() });
+            queryClient.invalidateQueries({ queryKey: videoKeys.myVideos(workspaceId) });
 
             setTimeout(() => {
                 uppy.removeFile(file.id);
@@ -374,11 +375,12 @@ export function FloatingUploadFooter({ projectId }: FloatingUploadFooterProps) {
     }, []);
 
     const handleSubmitYouTube = useCallback(async () => {
-        if (validationState !== "valid" || !url.trim()) return;
+        if (validationState !== "valid" || !url.trim() || !workspaceId) return;
 
         try {
             await submitMutation.mutateAsync({
                 youtubeUrl: url.trim(),
+                workspaceId,
                 projectId,
             });
 
@@ -394,7 +396,7 @@ export function FloatingUploadFooter({ projectId }: FloatingUploadFooterProps) {
                 description: error instanceof Error ? error.message : "Please try again",
             });
         }
-    }, [validationState, url, projectId, videoInfo, submitMutation]);
+    }, [validationState, url, workspaceId, projectId, videoInfo, submitMutation]);
 
     const handleKeyDown = useCallback(
         (e: React.KeyboardEvent) => {

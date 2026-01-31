@@ -30,12 +30,13 @@ import { useMyVideos } from "@/hooks/useVideo";
 
 interface NavMainProps {
   currentSlug: string;
+  workspaceId?: string;
 }
 
-export function NavMain({ currentSlug }: NavMainProps) {
+export function NavMain({ currentSlug, workspaceId }: NavMainProps) {
   const pathname = usePathname();
   const router = useRouter();
-  const { data: videos } = useMyVideos();
+  const { data: videos } = useMyVideos(workspaceId || "", !!workspaceId);
 
   // Count videos by status
   const processingCount = videos?.filter(

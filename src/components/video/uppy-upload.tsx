@@ -22,6 +22,7 @@ const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3001";
 
 interface UppyUploadProps {
     projectId?: string;
+    workspaceId: string;
     onUploadSuccess?: (videoId: string) => void;
 }
 
@@ -42,7 +43,7 @@ function formatFileSize(bytes: number): string {
     return `${parseFloat((bytes / Math.pow(k, i)).toFixed(1))} ${sizes[i]}`;
 }
 
-export function UppyUpload({ projectId, onUploadSuccess }: UppyUploadProps) {
+export function UppyUpload({ projectId, workspaceId, onUploadSuccess }: UppyUploadProps) {
     const [files, setFiles] = useState<FileState[]>([]);
     const [isDragging, setIsDragging] = useState(false);
     const uppyRef = useRef<Uppy | null>(null);
@@ -82,7 +83,7 @@ export function UppyUpload({ projectId, onUploadSuccess }: UppyUploadProps) {
                     body: JSON.stringify({
                         filename: file.name,
                         type: file.type,
-                        metadata: { projectId },
+                        metadata: { projectId, workspaceId },
                     }),
                 });
 
@@ -145,7 +146,7 @@ export function UppyUpload({ projectId, onUploadSuccess }: UppyUploadProps) {
                     body: JSON.stringify({
                         filename: file.name,
                         type: file.type,
-                        metadata: { projectId },
+                        metadata: { projectId, workspaceId },
                     }),
                 });
 
@@ -216,7 +217,7 @@ export function UppyUpload({ projectId, onUploadSuccess }: UppyUploadProps) {
             });
 
             if (videoId) onUploadSuccess?.(videoId);
-            queryClient.invalidateQueries({ queryKey: videoKeys.myVideos() });
+            queryClient.invalidateQueries({ queryKey: videoKeys.all });
 
             // Remove completed file after delay
             setTimeout(() => {

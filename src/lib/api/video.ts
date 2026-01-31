@@ -104,12 +104,14 @@ export const videoApi = {
   // Submit YouTube URL for processing (with optional config)
   submitYouTubeUrl: async (
     youtubeUrl: string,
+    workspaceId: string,
     projectId?: string,
     workspaceSlug?: string,
     config?: SubmitVideoWithConfigRequest["config"]
   ): Promise<SubmitVideoResponse> => {
     const response = await api.post<SubmitVideoResponse>("/api/videos/youtube", {
       youtubeUrl,
+      workspaceId,
       projectId,
       workspaceSlug,
       config,
@@ -118,8 +120,8 @@ export const videoApi = {
   },
 
   // Get user's videos (lite version for grid display)
-  getMyVideos: async (): Promise<VideoLite[]> => {
-    const response = await api.get<VideoLite[]>("/api/videos/my-videos");
+  getMyVideos: async (workspaceId: string): Promise<VideoLite[]> => {
+    const response = await api.get<VideoLite[]>(`/api/videos/my-videos?workspaceId=${workspaceId}`);
     return response.data;
   },
 

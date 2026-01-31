@@ -129,13 +129,14 @@ function VideoItem({ video, onDelete, isDeleting }: VideoItemProps) {
 }
 
 interface VideoListProps {
+    workspaceId: string;
     onVideoClick?: (videoId: string) => void;
     /** Callback when upload button is clicked in empty state */
     onUploadClick?: () => void;
 }
 
-export function VideoList({ onVideoClick, onUploadClick }: VideoListProps) {
-    const { data: videos, isLoading, error } = useMyVideos();
+export function VideoList({ workspaceId, onVideoClick, onUploadClick }: VideoListProps) {
+    const { data: videos, isLoading, error } = useMyVideos(workspaceId, !!workspaceId);
     const deleteMutation = useDeleteVideo();
 
     const handleDelete = async (id: string) => {

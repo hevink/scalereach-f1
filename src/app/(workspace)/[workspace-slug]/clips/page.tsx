@@ -26,6 +26,7 @@ import {
 import { ClipDetailModal, useClipModalUrlState } from "@/components/clips/clip-detail-modal";
 import { useMyVideos } from "@/hooks/useVideo";
 import { useClipsByVideo } from "@/hooks/useClips";
+import { useWorkspaceBySlug } from "@/hooks/useWorkspace";
 import { cn } from "@/lib/utils";
 import type { ClipResponse } from "@/lib/api/clips";
 
@@ -135,7 +136,8 @@ export default function AllClipsPage({ params, searchParams }: AllClipsPageProps
 
     const { selectedClipId, isOpen, openModal, closeModal } = useClipModalUrlState();
 
-    const { data: videos, isLoading: videosLoading } = useMyVideos();
+    const { data: workspace } = useWorkspaceBySlug(slug);
+    const { data: videos, isLoading: videosLoading } = useMyVideos(workspace?.id || "", !!workspace?.id);
 
     // Get completed videos
     const completedVideos = videos?.filter((v) => v.status === "completed") || [];

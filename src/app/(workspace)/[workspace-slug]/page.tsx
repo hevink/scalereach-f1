@@ -80,7 +80,7 @@ export default function WorkspacePage({ params }: WorkspacePageProps) {
   const router = useRouter();
   const { data: session, isPending: sessionPending } = useSession();
   const { data: workspace, isLoading: workspaceLoading, error } = useWorkspaceBySlug(slug);
-  const { data: videos, isLoading: videosLoading, error: videosError } = useMyVideos(!!session?.user);
+  const { data: videos, isLoading: videosLoading, error: videosError } = useMyVideos(workspace?.id || "", !!session?.user && !!workspace?.id);
 
   const queryClient = useQueryClient();
 
@@ -93,6 +93,12 @@ export default function WorkspacePage({ params }: WorkspacePageProps) {
   const uppyRef = useRef<Uppy | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const videoIdsRef = useRef<Map<string, string>>(new Map());
+  const workspaceRef = useRef<typeof workspace>(workspace);
+
+  // Keep workspaceRef in sync
+  useEffect(() => {
+    workspaceRef.current = workspace;
+  }, [workspace]);
 
   // Use workspace shortcuts context for create project dialog
   const { openCreateProjectDialog } = useWorkspaceShortcuts();
@@ -141,9 +147,11 @@ export default function WorkspacePage({ params }: WorkspacePageProps) {
       shouldUseMultipart: (file) => (file.size ?? 0) > 100 * 1024 * 1024,
       limit: 4,
       async createMultipartUpload(file) {
+        const workspaceId = workspaceRef.current?.id;
+        if (!workspaceId) throw new Error("Workspace not found");
         const response = await fetch(`${API_BASE_URL}/api/uppy/multipart`, {
           method: "POST", credentials: "include", headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ filename: file.name, type: file.type, metadata: {} }),
+          body: JSON.stringify({ filename: file.name, type: file.type, metadata: { workspaceId } }),
         });
         if (!response.ok) throw new Error("Failed to create upload");
         const data = await response.json();
@@ -173,9 +181,11 @@ export default function WorkspacePage({ params }: WorkspacePageProps) {
         await fetch(`${API_BASE_URL}/api/uppy/multipart/${uploadId}?key=${encodeURIComponent(key)}`, { method: "DELETE", credentials: "include" });
       },
       async getUploadParameters(file) {
+        const workspaceId = workspaceRef.current?.id;
+        if (!workspaceId) throw new Error("Workspace not found");
         const response = await fetch(`${API_BASE_URL}/api/uppy/multipart`, {
           method: "POST", credentials: "include", headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ filename: file.name, type: file.type, metadata: {} }),
+          body: JSON.stringify({ filename: file.name, type: file.type, metadata: { workspaceId } }),
         });
         if (!response.ok) throw new Error("Failed to get upload URL");
         const data = await response.json();
@@ -200,7 +210,7 @@ export default function WorkspacePage({ params }: WorkspacePageProps) {
       console.log("[UPPY] Upload success:", file.name);
       setFiles((prev) => prev.map((f) => f.id === file.id ? { ...f, progress: 100, status: "complete" } : f));
       toast.success("Upload complete", { description: `${file.name} is now being processed` });
-      queryClient.invalidateQueries({ queryKey: videoKeys.myVideos() });
+      queryClient.invalidateQueries({ queryKey: videoKeys.all });
       setTimeout(() => {
         uppy.removeFile(file.id);
         setFiles((prev) => prev.filter((f) => f.id !== file.id));

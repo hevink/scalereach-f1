@@ -5,21 +5,21 @@ import { toast } from "sonner";
 // Query keys
 export const videoKeys = {
   all: ["videos"] as const,
-  myVideos: () => [...videoKeys.all, "my"] as const,
+  myVideos: (workspaceId: string) => [...videoKeys.all, "my", workspaceId] as const,
   byProject: (projectId: string) => [...videoKeys.all, "project", projectId] as const,
   byId: (id: string) => [...videoKeys.all, id] as const,
   status: (id: string) => [...videoKeys.all, id, "status"] as const,
 };
 
 /**
- * Get user's videos
+ * Get user's videos for a workspace
  * Requirements: 30.4
  */
-export function useMyVideos(enabled = true) {
+export function useMyVideos(workspaceId: string, enabled = true) {
   return useQuery({
-    queryKey: videoKeys.myVideos(),
-    queryFn: () => videoApi.getMyVideos(),
-    enabled,
+    queryKey: videoKeys.myVideos(workspaceId),
+    queryFn: () => videoApi.getMyVideos(workspaceId),
+    enabled: enabled && !!workspaceId,
     retry: (failureCount, error) => {
       // Don't retry on auth errors
       if ((error as any)?.status === 401 || (error as any)?.status === 403) {
@@ -107,8 +107,9 @@ export function useSubmitYouTubeUrl() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: ({ youtubeUrl, projectId, workspaceSlug, config }: {
+    mutationFn: ({ youtubeUrl, workspaceId, projectId, workspaceSlug, config }: {
       youtubeUrl: string;
+      workspaceId: string;
       projectId?: string;
       workspaceSlug?: string;
       config?: {
@@ -120,9 +121,9 @@ export function useSubmitYouTubeUrl() {
         aspectRatio?: "9:16" | "16:9" | "1:1";
       };
     }) =>
-      videoApi.submitYouTubeUrl(youtubeUrl, projectId, workspaceSlug, config),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: videoKeys.myVideos() });
+      videoApi.submitYouTubeUrl(youtubeUrl, workspaceId, projectId, workspaceSlug, config),
+    onSuccess: (_data, variables) => {
+      queryClient.invalidateQueries({ queryKey: videoKeys.myVideos(variables.workspaceId) });
     },
     onError: (error) => {
       // Log error for debugging (Requirement 30.5)

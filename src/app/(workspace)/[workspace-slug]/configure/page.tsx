@@ -17,6 +17,7 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 import { useValidateYouTubeUrl } from "@/hooks/useVideo";
+import { useWorkspaceBySlug } from "@/hooks/useWorkspace";
 import { videoApi } from "@/lib/api/video";
 import { videoConfigApi, DEFAULT_VIDEO_CONFIG, type VideoConfigInput, type CaptionTemplate } from "@/lib/api/video-config";
 import { toast } from "sonner";
@@ -57,6 +58,9 @@ export default function ConfigurePage() {
     // Get URL from query params if provided
     const urlFromQuery = searchParams.get("url") || "";
 
+    // Get workspace data to get workspaceId
+    const { data: workspace } = useWorkspaceBySlug(workspaceSlug);
+
     const [url, setUrl] = useState(urlFromQuery);
     const [validationState, setValidationState] = useState<"idle" | "validating" | "valid" | "invalid">(urlFromQuery ? "validating" : "idle");
     const [videoInfo, setVideoInfo] = useState<VideoInfo | null>(null);
@@ -75,7 +79,10 @@ export default function ConfigurePage() {
     // Submit mutation - creates video + starts processing
     const submitMutation = useMutation({
         mutationFn: async (youtubeUrl: string) => {
-            const result = await videoApi.submitYouTubeUrl(youtubeUrl, undefined, workspaceSlug, {
+            if (!workspace?.id) {
+                throw new Error("Workspace not found");
+            }
+            const result = await videoApi.submitYouTubeUrl(youtubeUrl, workspace.id, undefined, workspaceSlug, {
                 skipClipping: config.skipClipping,
                 clipModel: config.clipModel,
                 genre: config.genre,

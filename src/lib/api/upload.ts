@@ -32,12 +32,14 @@ export const uploadApi = {
     filename: string,
     fileSize: number,
     contentType: string,
+    workspaceId: string,
     projectId?: string
   ): Promise<InitUploadResponse> => {
     const response = await api.post<InitUploadResponse>("/api/upload/init", {
       filename,
       fileSize,
       contentType,
+      workspaceId,
       projectId,
     });
     return response.data;
