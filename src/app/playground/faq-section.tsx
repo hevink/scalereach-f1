@@ -85,7 +85,7 @@ export function FAQSection() {
     };
 
     return (
-        <section className="bg-background py-16 md:py-24">
+        <section className="bg-background py-24">
             <div className="mx-auto max-w-5xl px-1 md:px-6">
                 <div className="grid max-md:gap-8 md:grid-cols-5 md:divide-x md:border">
                     {/* Left column - Header */}

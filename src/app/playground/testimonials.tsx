@@ -2,7 +2,7 @@ import Image from "next/image";
 
 export function Testimonials() {
     return (
-        <section id="reviews" className="bg-background py-12 md:py-24">
+        <section id="reviews" className="bg-background py-24">
             <div className="mx-auto max-w-5xl px-6">
                 <div className="mx-auto max-w-2xl text-balance text-center">
                     <h2 className="text-foreground mb-4 text-3xl font-semibold tracking-tight md:text-4xl">

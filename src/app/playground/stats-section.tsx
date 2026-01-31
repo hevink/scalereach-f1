@@ -1,12 +1,12 @@
 export function StatsSection() {
     return (
-        <section className="bg-background py-16 md:py-24">
+        <section className="bg-background py-24">
             <div className="mx-auto max-w-5xl px-6">
                 <h2 className="mx-auto max-w-2xl text-balance text-center text-3xl font-semibold lg:text-4xl">
                     Trusted by creators worldwide
                 </h2>
-                <p className="text-muted-foreground mx-auto mt-6 max-w-xl text-pretty text-center text-lg">
-                    Our platform helps creators <strong className="text-foreground font-semibold">turn long-form content into viral clips</strong> that drive engagement across all platforms.
+                <p className="text-muted-foreground mx-auto mt-4 max-w-2xl text-pretty text-center text-lg">
+                    Join thousands of content creators who save hours every week by automatically transforming their podcasts, streams, and videos into scroll-stopping clips.
                 </p>
 
                 <div className="relative mt-12">

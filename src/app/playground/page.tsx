@@ -20,16 +20,26 @@ export default function PlaygroundPage() {
                 <div aria-hidden="true" className="pointer-events-none absolute inset-0 mx-auto max-w-6xl border-x z-50" />
 
                 <HeroSection />
-                <LogoCloud />
+                <div className="w-full border-b border-dashed" />
+                {/* <LogoCloud /> */}
                 <StatsSection />
+                <div className="w-full border-b border-dashed" />
                 <FeaturesCarousel />
+                <div className="w-full border-b border-dashed" />
                 <IntegrationsSection />
+                <div className="w-full border-b border-dashed" />
                 <DocumentFlowCard />
+                <div className="w-full border-b border-dashed" />
                 <Testimonials />
+                <div className="w-full border-b border-dashed" />
                 <PricingSection />
+                <div className="w-full border-b border-dashed" />
                 <FAQSection />
+                <div className="w-full border-b border-dashed" />
                 <SupportSection />
+                <div className="w-full border-b border-dashed" />
                 <CTASection />
+                <div className="w-full border-b border-dashed" />
                 <FooterSection />
             </main>
         </div>

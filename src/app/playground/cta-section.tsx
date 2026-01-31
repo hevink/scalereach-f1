@@ -2,7 +2,7 @@ import Image from "next/image";
 
 export function CTASection() {
     return (
-        <section id="cta" className="flex flex-col items-center justify-center w-full py-16 md:py-24 px-6">
+        <section id="cta" className="flex flex-col items-center justify-center w-full py-24 px-6">
             <div className="w-full max-w-5xl">
                 <div className="h-[400px] md:h-[400px] overflow-hidden shadow-xl w-full border border-border rounded-xl bg-[#155dfc] relative z-20">
                     <Image

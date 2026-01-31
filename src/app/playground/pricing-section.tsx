@@ -77,7 +77,7 @@ export function PricingSection() {
     const [period, setPeriod] = useState<BillingPeriod>("annually");
 
     return (
-        <section className="bg-background relative py-16 md:py-32">
+        <section className="bg-background relative py-24">
             <div className="mx-auto max-w-5xl px-6">
                 {/* Header */}
                 <motion.div

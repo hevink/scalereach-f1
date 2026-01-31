@@ -58,10 +58,13 @@ export function FeaturesCarousel() {
         <section className="bg-background @container relative py-24 max-lg:px-1">
             <div className="relative mx-auto">
                 <div className="mx-auto max-w-6xl">
-                    <div className="flex flex-wrap items-end justify-between gap-4 px-6 pb-6 pt-24 lg:px-8 lg:pb-12">
-                        <h2 className="text-foreground max-w-xl text-balance text-4xl font-semibold lg:text-5xl">
+                    <div className="flex flex-col items-center px-6 pb-6 lg:px-8 lg:pb-12">
+                        <h2 className="text-foreground text-center text-balance text-3xl font-semibold lg:text-4xl">
                             Everything you need to create viral clips
                         </h2>
+                        <p className="text-muted-foreground mx-auto mt-4 max-w-2xl text-pretty text-center text-lg">
+                            Powerful AI-driven tools that analyze, edit, and optimize your content for maximum engagement across every platform.
+                        </p>
                     </div>
                 </div>
 
@@ -88,8 +91,6 @@ export function FeaturesCarousel() {
                     </div>
                     <div aria-hidden="true" className="border-y border-dashed max-lg:hidden" />
                 </div>
-
-                <div className="mx-auto w-full max-w-6xl pb-24" />
             </div>
         </section>
     );

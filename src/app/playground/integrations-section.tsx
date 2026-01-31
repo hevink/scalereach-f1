@@ -1,6 +1,6 @@
 export function IntegrationsSection() {
     return (
-        <section className="bg-background py-24 md:py-32">
+        <section className="bg-background py-24">
             <div className="mx-auto max-w-5xl px-6">
                 <div className="*:rounded-md space-y-3">
                     <div className="flex justify-center gap-3">
