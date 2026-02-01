@@ -1,84 +1,12 @@
-"use client";
+import { pageMetadata } from "@/lib/seo";
+import { SettingsLayoutContent } from "@/components/settings/settings-layout-content";
 
-import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
-import { SettingsSidebar } from "@/components/settings/settings-sidebar";
-import { Button } from "@/components/ui/button";
-import {
-  SidebarInset,
-  SidebarProvider,
-  SidebarTrigger,
-} from "@/components/ui/sidebar";
-import { Spinner } from "@/components/ui/spinner";
-import { authClient } from "@/lib/auth-client";
-import { useWorkspaces } from "@/hooks/useWorkspace";
+export const metadata = pageMetadata.settings;
 
 interface SettingsLayoutProps {
   children: React.ReactNode;
 }
 
 export default function SettingsLayout({ children }: SettingsLayoutProps) {
-  const router = useRouter();
-  const { data: session, isPending } = authClient.useSession();
-  const { data: workspaces = [] } = useWorkspaces();
-  const [homeUrl, setHomeUrl] = useState<string>("/");
-
-  useEffect(() => {
-    if (!(isPending || session?.user)) {
-      router.replace("/login");
-      return;
-    }
-
-    if (session?.user) {
-      const lastWorkspace = localStorage.getItem("lastWorkspace");
-      if (lastWorkspace) {
-        setHomeUrl(`/${lastWorkspace}`);
-        return;
-      }
-
-      if (workspaces.length > 0) {
-        setHomeUrl(`/${workspaces[0].slug}`);
-      }
-    }
-  }, [session, isPending, router, workspaces]);
-
-  if (isPending) {
-    return (
-      <div className="flex min-h-screen items-center justify-center">
-        <Spinner />
-      </div>
-    );
-  }
-
-  if (!session?.user) {
-    return null;
-  }
-
-  return (
-    <SidebarProvider>
-      <SettingsSidebar />
-      <SidebarInset>
-        <header className="flex h-16 shrink-0 items-center gap-2 border-b px-4">
-          <SidebarTrigger />
-          <Button
-            aria-label="Go to home"
-            className="h-fit w-fit p-0"
-            size="sm"
-            variant="outline"
-          >
-            <Link
-              className="flex h-7.5 items-center justify-center px-3.5"
-              href={homeUrl}
-            >
-              <span className="font-[490] text-[13px]">Go Home</span>
-            </Link>
-          </Button>
-        </header>
-        <main className="mx-auto flex w-full max-w-xl flex-1 flex-col gap-4 p-4 md:p-6">
-          {children}
-        </main>
-      </SidebarInset>
-    </SidebarProvider>
-  );
+  return <SettingsLayoutContent>{children}</SettingsLayoutContent>;
 }
