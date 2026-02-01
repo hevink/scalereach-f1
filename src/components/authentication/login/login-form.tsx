@@ -15,6 +15,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { authClient } from "@/lib/auth-client";
 import { getAuthErrorMessage } from "@/lib/auth-errors";
+import { analytics } from "@/lib/analytics";
 import { LoginWithGoogle } from "../login-with-google";
 import { LoginWithPasskey } from "../login-with-passkey";
 
@@ -127,6 +128,12 @@ export function LoginForm() {
       }
 
       // If there's a redirect (e.g., from invite), go there; otherwise go to workspaces
+      analytics.login("email");
+      if (result.data?.user?.id) {
+        analytics.identify(result.data.user.id, {
+          email: isEmailFormat ? identifier : undefined,
+        });
+      }
       router.push(redirect || "/workspaces");
       router.refresh();
     } catch (error) {

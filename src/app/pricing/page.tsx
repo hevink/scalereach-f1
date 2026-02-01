@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { IconCheck, IconInfoCircle, IconLoader2 } from "@tabler/icons-react";
 import { cn } from "@/lib/utils";
@@ -14,6 +14,7 @@ import {
 } from "@/components/ui/tooltip";
 import { useSession } from "@/lib/auth-client";
 import { toast } from "sonner";
+import { analytics } from "@/lib/analytics";
 
 // ============================================================================
 // Types
@@ -296,7 +297,23 @@ export default function PricingPage() {
     const [isLoading, setIsLoading] = useState(false);
     const [loadingPlanId, setLoadingPlanId] = useState<string | null>(null);
 
+    // Track pricing page view
+    useEffect(() => {
+        analytics.pricingViewed();
+    }, []);
+
     const handleSelectPlan = async (planId: string, productId: string) => {
+        const plan = plans.find(p => p.id === planId);
+        const price = isYearly ? plan?.yearlyPrice : plan?.monthlyPrice;
+
+        // Track plan selection
+        analytics.planSelected({
+            planId,
+            planName: plan?.name + (plan?.badge ? ` ${plan.badge}` : "") || planId,
+            price: price || 0,
+            billing: isYearly ? "yearly" : "monthly",
+        });
+
         // If not logged in, redirect to sign up with plan info
         if (!session?.user) {
             router.push(`/sign-up?plan=${planId}&billing=${isYearly ? "yearly" : "monthly"}`);

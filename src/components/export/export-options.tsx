@@ -32,6 +32,7 @@ import type {
   VideoResolution,
 } from "@/lib/api/export";
 import { cn } from "@/lib/utils";
+import { analytics } from "@/lib/analytics";
 
 /**
  * ExportOptionsProps interface
@@ -66,9 +67,9 @@ const FORMAT_OPTIONS: Array<{
   label: string;
   recommended?: boolean;
 }> = [
-  { value: "mp4", label: "MP4", recommended: true },
-  { value: "mov", label: "MOV" },
-];
+    { value: "mp4", label: "MP4", recommended: true },
+    { value: "mov", label: "MOV" },
+  ];
 
 /**
  * Resolution options with labels, recommendations, and estimated file size multipliers
@@ -83,15 +84,15 @@ const RESOLUTION_OPTIONS: Array<{
   /** Whether this resolution requires Pro access */
   requiresPro?: boolean;
 }> = [
-  { value: "720p", label: "720p (HD)", sizeMultiplier: 1 },
-  {
-    value: "1080p",
-    label: "1080p (Full HD)",
-    recommended: true,
-    sizeMultiplier: 2.25,
-  },
-  { value: "4k", label: "4K (Ultra HD)", sizeMultiplier: 9, requiresPro: true },
-];
+    { value: "720p", label: "720p (HD)", sizeMultiplier: 1 },
+    {
+      value: "1080p",
+      label: "1080p (Full HD)",
+      recommended: true,
+      sizeMultiplier: 2.25,
+    },
+    { value: "4k", label: "4K (Ultra HD)", sizeMultiplier: 9, requiresPro: true },
+  ];
 
 /**
  * Base file size estimate in MB for a 1-minute clip at 720p
@@ -189,6 +190,15 @@ export function ExportOptions({
       ...(captionStyleId && { captionStyleId }),
       ...(brandKitId && { brandKitId }),
     };
+
+    // Track export event
+    analytics.featureUsed("clip_export", {
+      format,
+      resolution,
+      hasCaptions: !!captionStyleId,
+      hasBrandKit: !!brandKitId,
+    });
+
     onExport(options);
   }, [format, resolution, captionStyleId, brandKitId, onExport]);
 

@@ -6,6 +6,7 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { authClient } from "@/lib/auth-client";
 import { getAuthErrorMessage } from "@/lib/auth-errors";
+import { analytics } from "@/lib/analytics";
 
 interface LoginWithGoogleProps {
   variant?: ComponentProps<typeof Button>["variant"];
@@ -35,6 +36,9 @@ export function LoginWithGoogle({
         toast.error(errorMessage);
         return;
       }
+
+      // Track Google login (will redirect, so track before)
+      analytics.login("google");
     } catch (error) {
       setIsLoading(false);
       const errorMessage = getAuthErrorMessage(

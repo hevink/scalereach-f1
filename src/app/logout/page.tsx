@@ -5,6 +5,7 @@ import { useEffect } from "react";
 import { toast } from "sonner";
 import { Spinner } from "@/components/ui/spinner";
 import { authClient } from "@/lib/auth-client";
+import { analytics } from "@/lib/analytics";
 
 export default function LogoutPage() {
   const router = useRouter();
@@ -12,6 +13,7 @@ export default function LogoutPage() {
   useEffect(() => {
     const logout = async () => {
       try {
+        analytics.logout();
         await authClient.signOut();
         router.push("/login");
         router.refresh();

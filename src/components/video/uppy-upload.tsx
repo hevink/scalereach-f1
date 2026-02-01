@@ -6,6 +6,7 @@ import AwsS3 from "@uppy/aws-s3";
 import { useQueryClient } from "@tanstack/react-query";
 import { videoKeys } from "@/hooks/useVideo";
 import { toast } from "sonner";
+import { analytics } from "@/lib/analytics";
 import {
     IconUpload,
     IconX,
@@ -216,7 +217,14 @@ export function UppyUpload({ projectId, workspaceId, onUploadSuccess }: UppyUplo
                 description: `${file.name} is now being processed`,
             });
 
-            if (videoId) onUploadSuccess?.(videoId);
+            // Track video upload
+            if (videoId) {
+                analytics.videoUploaded({
+                    videoId,
+                    source: "upload",
+                });
+                onUploadSuccess?.(videoId);
+            }
             queryClient.invalidateQueries({ queryKey: videoKeys.all });
 
             // Remove completed file after delay

@@ -13,6 +13,7 @@ import { ThemeProvider } from "next-themes";
 import { Toaster } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryProvider } from "@/providers/query-provider";
+import { PostHogProvider } from "@/providers/posthog-provider";
 import { constructMetadata } from "@/lib/seo";
 
 const geistSans = Geist({
@@ -74,12 +75,14 @@ export default function RootLayout({
         className={`${geistSans.variable} ${geistMono.variable} ${bangers.variable} ${permanentMarker.variable} ${anton.variable} ${bebasNeue.variable} ${oswald.variable} antialiased`}
       >
         <QueryProvider>
-          <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
-            <TooltipProvider delay={400}>
-              <Toaster position="bottom-center" />
-              <main className="root">{children}</main>
-            </TooltipProvider>
-          </ThemeProvider>
+          <PostHogProvider>
+            <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
+              <TooltipProvider delay={400}>
+                <Toaster position="bottom-center" />
+                <main className="root">{children}</main>
+              </TooltipProvider>
+            </ThemeProvider>
+          </PostHogProvider>
         </QueryProvider>
       </body>
     </html>
