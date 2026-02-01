@@ -39,19 +39,7 @@ export {
   type UpdateCaptionTextRequest,
   type UpdateCaptionTextResponse,
 } from "./captions";
-export {
-  brandKitApi,
-  type LogoPosition,
-  type BrandKit,
-  type LogoSettings,
-  type BrandingOptions,
-  type BrandKitResponse,
-  type CreateBrandKitRequest,
-  type CreateBrandKitResponse,
-  type UpdateBrandKitRequest,
-  type UpdateBrandKitResponse,
-  type UploadLogoResponse,
-} from "./brand-kit";
+
 export {
   exportApi,
   type ExportFormat,
