@@ -8,6 +8,8 @@ import { authClient } from "@/lib/auth-client";
 import { getAuthErrorMessage } from "@/lib/auth-errors";
 import { analytics } from "@/lib/analytics";
 
+const FRONTEND_URL = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
+
 interface LoginWithGoogleProps {
   variant?: ComponentProps<typeof Button>["variant"];
   showHelperText?: boolean;
@@ -24,7 +26,7 @@ export function LoginWithGoogle({
     try {
       const result = await authClient.signIn.social({
         provider: "google",
-        callbackURL: "/",
+        callbackURL: `${FRONTEND_URL}/`,
       });
 
       if (result.error) {
