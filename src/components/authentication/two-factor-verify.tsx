@@ -102,13 +102,6 @@ export function TwoFactorVerify() {
 
   return (
     <div className="flex flex-col gap-8">
-      <div className="flex flex-col items-center justify-center gap-2 text-center">
-        <h1 className="font-medium text-2xl">Two-Factor Authentication</h1>
-        <p className="text-muted-foreground text-sm">
-          Enter the verification code from your authenticator app to continue.
-        </p>
-      </div>
-
       <form className="flex flex-col gap-8" onSubmit={handleSubmit}>
         {useBackupCode ? (
           <div className="flex flex-col gap-2">
