@@ -411,7 +411,7 @@ function MembersList({ workspaceId, currentUserId, currentUserRole }: { workspac
           <div key={member.id} className="flex items-center justify-between gap-3 py-3">
             <div className="flex items-center gap-3">
               <Avatar className="size-10">
-                <AvatarImage src={member.user?.image} />
+                <AvatarImage referrerPolicy="no-referrer" src={member.user?.image} />
                 <AvatarFallback>
                   {member.user?.name?.charAt(0) || member.user?.email?.charAt(0) || "?"}
                 </AvatarFallback>
