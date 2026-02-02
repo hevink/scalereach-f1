@@ -11,7 +11,7 @@ const plans = {
         name: "Starter",
         description: "Perfect for creators just getting started with short-form content",
         monthly: 29,
-        annually: 23,
+        annually: 15, // 50% off
         features: [
             "Upload 10 videos monthly",
             "Up to 45 min long videos",
@@ -26,7 +26,7 @@ const plans = {
         name: "Pro",
         description: "For serious creators who need more power and flexibility",
         monthly: 79,
-        annually: 63,
+        annually: 40, // 50% off
         features: [
             "Everything in Starter, plus:",
             "Upload 30 videos monthly",
@@ -44,7 +44,7 @@ const plans = {
         name: "Pro+",
         description: "For agencies and teams with high-volume content needs",
         monthly: 189,
-        annually: 151,
+        annually: 95, // 50% off
         features: [
             "Everything in Pro, plus:",
             "Upload 100 videos monthly",
@@ -122,7 +122,7 @@ export function PricingSection() {
                             animate={{ opacity: 1 }}
                             className="mt-3 text-center text-xs"
                         >
-                            <span className="text-primary font-medium">Save 20%</span> with annual billing
+                            <span className="text-primary font-medium">Save 50%</span> with annual billing
                         </motion.div>
                     </div>
                 </motion.div>
