@@ -14,6 +14,10 @@ export interface VideoConfigInput {
   captionTemplateId?: string;
   aspectRatio?: "9:16" | "16:9" | "1:1";
   enableWatermark?: boolean;
+  // Editing Options
+  enableCaptions?: boolean;
+  enableEmojis?: boolean;
+  enableIntroTitle?: boolean;
 }
 
 export interface VideoConfig extends VideoConfigInput {
@@ -117,4 +121,8 @@ export const DEFAULT_VIDEO_CONFIG: VideoConfigInput = {
   captionTemplateId: "karaoke",
   aspectRatio: "9:16",
   enableWatermark: true,
+  // Editing Options
+  enableCaptions: true,
+  enableEmojis: true,
+  enableIntroTitle: true,
 };

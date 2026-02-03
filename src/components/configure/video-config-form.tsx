@@ -1,17 +1,20 @@
 "use client";
 
-import { IconLoader2, IconPlayerPlay, IconBookmark } from "@tabler/icons-react";
+import { IconLoader2, IconPlayerPlay, IconBookmark, IconTextCaption, IconMoodSmile, IconTypography, IconChevronDown } from "@tabler/icons-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { ClippingModeSelector } from "./clipping-mode-selector";
 import { ClipSettingsPanel } from "./clip-settings-panel";
 import { TimeframeSelector } from "./timeframe-selector";
 import { CaptionTemplateGrid } from "./caption-template-grid";
 import { AspectRatioSelector } from "./aspect-ratio-selector";
 import type { VideoConfigInput, CaptionTemplate } from "@/lib/api/video-config";
+import { useState } from "react";
+import { cn } from "@/lib/utils";
 
 interface VideoConfigFormProps {
     config: VideoConfigInput;
@@ -35,6 +38,7 @@ export function VideoConfigForm({
     onSaveAsDefault,
 }: VideoConfigFormProps) {
     const isDisabled = isLoading || isSaving;
+    const [editingOptionsOpen, setEditingOptionsOpen] = useState(true);
 
     return (
         <div className="space-y-6">
@@ -109,6 +113,66 @@ export function VideoConfigForm({
                         disabled={isDisabled}
                     />
                 </CardContent>
+            </Card>
+
+            {/* Editing Options */}
+            <Card>
+                <Collapsible open={editingOptionsOpen} onOpenChange={setEditingOptionsOpen}>
+                    <CollapsibleTrigger className="w-full">
+                        <CardHeader className="cursor-pointer hover:bg-muted/50 transition-colors rounded-t-lg">
+                            <div className="flex items-center justify-between">
+                                <CardTitle>Editing options</CardTitle>
+                                <IconChevronDown className={cn(
+                                    "size-5 text-muted-foreground transition-transform",
+                                    editingOptionsOpen && "rotate-180"
+                                )} />
+                            </div>
+                        </CardHeader>
+                    </CollapsibleTrigger>
+                    <CollapsibleContent>
+                        <Separator />
+                        <CardContent className="pt-6 space-y-4">
+                            {/* Captions Toggle */}
+                            <div className="flex items-center justify-between">
+                                <div className="flex items-center gap-3">
+                                    <IconTextCaption className="size-5 text-muted-foreground" />
+                                    <Label className="text-base font-medium">Captions</Label>
+                                </div>
+                                <Switch
+                                    checked={config.enableCaptions ?? true}
+                                    onCheckedChange={(checked) => onChange({ enableCaptions: checked })}
+                                    disabled={isDisabled}
+                                />
+                            </div>
+
+                            {/* Emojis Toggle */}
+                            <div className="flex items-center justify-between">
+                                <div className="flex items-center gap-3">
+                                    <IconMoodSmile className="size-5 text-muted-foreground" />
+                                    <Label className="text-base font-medium">Emojis</Label>
+                                </div>
+                                <Switch
+                                    checked={config.enableEmojis ?? true}
+                                    onCheckedChange={(checked) => onChange({ enableEmojis: checked })}
+                                    disabled={isDisabled}
+                                />
+                            </div>
+
+                            {/* Intro Title Toggle */}
+                            <div className="flex items-center justify-between">
+                                <div className="flex items-center gap-3">
+                                    <IconTypography className="size-5 text-muted-foreground" />
+                                    <Label className="text-base font-medium">Intro title</Label>
+                                </div>
+                                <Switch
+                                    checked={config.enableIntroTitle ?? true}
+                                    onCheckedChange={(checked) => onChange({ enableIntroTitle: checked })}
+                                    disabled={isDisabled}
+                                />
+                            </div>
+                        </CardContent>
+                    </CollapsibleContent>
+                </Collapsible>
             </Card>
 
             {/* Output Settings */}
