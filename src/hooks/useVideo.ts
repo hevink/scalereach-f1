@@ -1,6 +1,61 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { videoApi, type VideoStatusResponse } from "@/lib/api/video";
+import { videoApi, type VideoStatusResponse, type Video } from "@/lib/api/video";
 import { toast } from "sonner";
+
+// Adaptive polling configuration
+type VideoStatus = Video["status"];
+
+// Base polling intervals based on video duration (in milliseconds)
+function getBasePollingInterval(durationSeconds?: number | null): number {
+  if (!durationSeconds) return 5000; // Default 5s if unknown
+
+  const durationMinutes = durationSeconds / 60;
+
+  if (durationMinutes < 10) return 5000;      // < 10 min: 5 seconds
+  if (durationMinutes < 30) return 15000;     // 10-30 min: 15 seconds
+  if (durationMinutes < 60) return 30000;     // 30-60 min: 30 seconds
+  return 60000;                                // > 60 min: 60 seconds
+}
+
+// Stage multipliers - poll faster at start and end, slower in middle
+const STAGE_MULTIPLIERS: Record<VideoStatus, number> = {
+  pending: 1.0,           // Normal - waiting to start
+  pending_config: 2.0,    // Slow - waiting for user
+  downloading: 0.5,       // Fast - quick stage, user wants to see progress
+  uploading: 1.0,         // Normal - medium duration
+  transcribing: 1.5,      // Slow - longest stage
+  analyzing: 0.3,         // Very fast - almost done, user is excited!
+  completed: 0,           // Stop polling
+  failed: 0,              // Stop polling
+};
+
+// Calculate adaptive polling interval
+function calculatePollingInterval(
+  status?: VideoStatus,
+  durationSeconds?: number | null,
+  jobProgress?: number
+): number | false {
+  // Stop polling for terminal states
+  if (!status || status === "completed" || status === "failed") {
+    return false;
+  }
+
+  const baseInterval = getBasePollingInterval(durationSeconds);
+  const stageMultiplier = STAGE_MULTIPLIERS[status] || 1.0;
+
+  // If we're close to completing current stage (>80%), poll slightly faster
+  const progressMultiplier = jobProgress && jobProgress > 80 ? 0.7 : 1.0;
+
+  const interval = Math.round(baseInterval * stageMultiplier * progressMultiplier);
+
+  // Clamp between 3 seconds (min) and 120 seconds (max)
+  const finalInterval = Math.max(3000, Math.min(interval, 120000));
+
+  // Debug log - remove in production
+  console.log(`[Adaptive Polling] Status: ${status}, Duration: ${durationSeconds}s, Progress: ${jobProgress}%, Interval: ${finalInterval / 1000}s`);
+
+  return finalInterval;
+}
 
 // Query keys
 export const videoKeys = {
@@ -60,7 +115,10 @@ export function useVideo(id: string) {
 }
 
 /**
- * Get video status with polling
+ * Get video status with adaptive polling
+ * - Polls faster for short videos, slower for long videos
+ * - Polls faster at start and end stages, slower in middle
+ * - Stops polling when completed or failed
  * Requirements: 30.4
  */
 export function useVideoStatus(id: string, enabled = true) {
@@ -72,12 +130,14 @@ export function useVideoStatus(id: string, enabled = true) {
     retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000),
     refetchInterval: (query) => {
       const data = query.state.data as VideoStatusResponse | undefined;
-      // Stop polling when video is completed or failed
-      if (data?.video.status === "completed" || data?.video.status === "failed") {
-        return false;
-      }
-      // Poll every 3 seconds while processing
-      return 3000;
+
+      if (!data?.video) return 5000; // Default while loading
+
+      return calculatePollingInterval(
+        data.video.status,
+        data.video.duration,
+        data.job?.progress
+      );
     },
   });
 }
