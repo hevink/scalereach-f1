@@ -4,6 +4,14 @@ import { api } from "../axios";
 export type ClipStatus = "detected" | "generating" | "ready" | "exported" | "failed";
 export type AspectRatio = "9:16" | "1:1" | "16:9";
 
+export type RecommendedPlatform =
+  | "youtube_shorts"
+  | "instagram_reels"
+  | "tiktok"
+  | "linkedin"
+  | "twitter"
+  | "facebook_reels";
+
 export interface ClipResponse {
   id: string;
   videoId: string;
@@ -16,6 +24,7 @@ export interface ClipResponse {
   viralityReason: string;
   hooks: string[];
   emotions: string[];
+  recommendedPlatforms?: RecommendedPlatform[];
   thumbnailUrl?: string;
   storageKey: string | null;
   storageUrl: string | null;

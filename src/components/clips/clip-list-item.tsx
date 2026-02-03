@@ -10,10 +10,16 @@ import {
     IconLoader2,
     IconClock,
     IconFlame,
+    IconBrandYoutube,
+    IconBrandInstagram,
+    IconBrandTiktok,
+    IconBrandLinkedin,
+    IconBrandTwitter,
+    IconBrandFacebook,
 } from "@tabler/icons-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import type { ClipResponse } from "@/lib/api/clips";
+import type { ClipResponse, RecommendedPlatform } from "@/lib/api/clips";
 
 /**
  * Format duration in seconds to MM:SS format
@@ -27,7 +33,7 @@ function formatDuration(seconds: number): string {
 /**
  * Get color class for virality score badge
  * Green for high (≥70), yellow for medium (40-69), red for low (<40)
- * 
+ *
  * @validates Requirements 2.3
  */
 function getScoreColor(score: number): string {
@@ -35,6 +41,18 @@ function getScoreColor(score: number): string {
     if (score >= 40) return "bg-yellow-500/10 text-yellow-600 dark:text-yellow-400";
     return "bg-red-500/10 text-red-600 dark:text-red-400";
 }
+
+/**
+ * Platform configuration for icons and labels
+ */
+const PLATFORM_CONFIG: Record<RecommendedPlatform, { icon: React.ElementType; label: string; color: string }> = {
+    youtube_shorts: { icon: IconBrandYoutube, label: "YT Shorts", color: "text-red-500" },
+    instagram_reels: { icon: IconBrandInstagram, label: "Reels", color: "text-pink-500" },
+    tiktok: { icon: IconBrandTiktok, label: "TikTok", color: "text-foreground" },
+    linkedin: { icon: IconBrandLinkedin, label: "LinkedIn", color: "text-blue-600" },
+    twitter: { icon: IconBrandTwitter, label: "Twitter", color: "text-sky-500" },
+    facebook_reels: { icon: IconBrandFacebook, label: "FB Reels", color: "text-blue-500" },
+};
 
 /**
  * ClipListItemProps interface
@@ -196,6 +214,35 @@ export function ClipListItem({
                         {clip.hooks.length > 3 && (
                             <Badge variant="outline" className="text-xs text-muted-foreground">
                                 +{clip.hooks.length - 3}
+                            </Badge>
+                        )}
+                    </div>
+                )}
+                {/* Recommended Platforms */}
+                {clip.recommendedPlatforms && clip.recommendedPlatforms.length > 0 && (
+                    <div
+                        className="flex flex-wrap items-center gap-1"
+                        data-testid="clip-platforms"
+                    >
+                        <span className="text-xs text-muted-foreground">Best for:</span>
+                        {clip.recommendedPlatforms.slice(0, 3).map((platform) => {
+                            const config = PLATFORM_CONFIG[platform];
+                            if (!config) return null;
+                            const Icon = config.icon;
+                            return (
+                                <Badge
+                                    key={platform}
+                                    variant="secondary"
+                                    className="flex items-center gap-1 text-xs"
+                                >
+                                    <Icon className={cn("size-3", config.color)} />
+                                    {config.label}
+                                </Badge>
+                            );
+                        })}
+                        {clip.recommendedPlatforms.length > 3 && (
+                            <Badge variant="secondary" className="text-xs text-muted-foreground">
+                                +{clip.recommendedPlatforms.length - 3}
                             </Badge>
                         )}
                     </div>

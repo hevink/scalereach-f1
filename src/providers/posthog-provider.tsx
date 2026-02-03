@@ -2,7 +2,7 @@
 
 import posthog from "posthog-js";
 import { PostHogProvider as PHProvider } from "posthog-js/react";
-import { useEffect } from "react";
+import { useEffect, Suspense } from "react";
 import { usePathname, useSearchParams } from "next/navigation";
 
 // Initialize PostHog only on client side
@@ -16,7 +16,7 @@ if (typeof window !== "undefined") {
     });
 }
 
-function PostHogPageView() {
+function PostHogPageViewInner() {
     const pathname = usePathname();
     const searchParams = useSearchParams();
 
@@ -31,6 +31,14 @@ function PostHogPageView() {
     }, [pathname, searchParams]);
 
     return null;
+}
+
+function PostHogPageView() {
+    return (
+        <Suspense fallback={null}>
+            <PostHogPageViewInner />
+        </Suspense>
+    );
 }
 
 export function PostHogProvider({ children }: { children: React.ReactNode }) {

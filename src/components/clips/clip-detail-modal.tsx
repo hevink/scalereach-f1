@@ -18,14 +18,32 @@ import {
     IconEdit,
     IconClock,
     IconLoader2,
+    IconBrandYoutube,
+    IconBrandInstagram,
+    IconBrandTiktok,
+    IconBrandLinkedin,
+    IconBrandTwitter,
+    IconBrandFacebook,
 } from "@tabler/icons-react";
 import { cn } from "@/lib/utils";
 import { useClip } from "@/hooks/useClips";
-import type { ClipResponse } from "@/lib/api/clips";
+import type { ClipResponse, RecommendedPlatform } from "@/lib/api/clips";
 
 // ============================================================================
 // Types
 // ============================================================================
+
+/**
+ * Platform configuration for icons and labels
+ */
+const PLATFORM_CONFIG: Record<RecommendedPlatform, { icon: React.ElementType; label: string; color: string }> = {
+    youtube_shorts: { icon: IconBrandYoutube, label: "YouTube Shorts", color: "text-red-500" },
+    instagram_reels: { icon: IconBrandInstagram, label: "Instagram Reels", color: "text-pink-500" },
+    tiktok: { icon: IconBrandTiktok, label: "TikTok", color: "text-foreground" },
+    linkedin: { icon: IconBrandLinkedin, label: "LinkedIn", color: "text-blue-600" },
+    twitter: { icon: IconBrandTwitter, label: "Twitter", color: "text-sky-500" },
+    facebook_reels: { icon: IconBrandFacebook, label: "Facebook Reels", color: "text-blue-500" },
+};
 
 /**
  * ClipDetailModalProps interface
@@ -461,6 +479,33 @@ export function ClipDetailModal({
                                                 ))}
                                             </div>
                                         )}
+                                    </div>
+                                )}
+
+                                {/* Recommended Platforms Section */}
+                                {clip.recommendedPlatforms && clip.recommendedPlatforms.length > 0 && (
+                                    <div
+                                        className="rounded-lg border bg-muted/50 p-4 space-y-2"
+                                        data-testid="recommended-platforms-section"
+                                    >
+                                        <h4 className="text-sm font-medium">Best Platforms for This Clip</h4>
+                                        <div className="flex flex-wrap gap-2">
+                                            {clip.recommendedPlatforms.map((platform) => {
+                                                const config = PLATFORM_CONFIG[platform];
+                                                if (!config) return null;
+                                                const Icon = config.icon;
+                                                return (
+                                                    <Badge
+                                                        key={platform}
+                                                        variant="outline"
+                                                        className="flex items-center gap-1.5 px-3 py-1.5"
+                                                    >
+                                                        <Icon className={cn("size-4", config.color)} />
+                                                        {config.label}
+                                                    </Badge>
+                                                );
+                                            })}
+                                        </div>
                                     </div>
                                 )}
 
