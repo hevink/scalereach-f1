@@ -1,12 +1,12 @@
 "use client";
 
 import {
-  IconHome,
-  IconHomeFilled,
+  // IconHome,
+  // IconHomeFilled,
   IconVideo,
   IconVideoFilled,
-  IconFolder,
-  IconFolderFilled,
+  // IconFolder,
+  // IconFolderFilled,
   IconScissors,
   IconDownload,
   IconPalette,
@@ -16,7 +16,7 @@ import {
   IconStarFilled,
   IconClock,
 } from "@tabler/icons-react";
-import { usePathname, useRouter } from "next/navigation";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import {
   SidebarGroup,
   SidebarGroupContent,
@@ -36,6 +36,7 @@ interface NavMainProps {
 export function NavMain({ currentSlug, workspaceId }: NavMainProps) {
   const pathname = usePathname();
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { data: videos } = useMyVideos(workspaceId || "", !!workspaceId);
 
   // Count videos by status
@@ -45,13 +46,6 @@ export function NavMain({ currentSlug, workspaceId }: NavMainProps) {
 
   const mainItems = [
     {
-      title: "Home",
-      url: `/${currentSlug}`,
-      icon: IconHome,
-      iconFilled: IconHomeFilled,
-      exact: true,
-    },
-    {
       title: "Videos",
       url: `/${currentSlug}`,
       icon: IconVideo,
@@ -59,13 +53,14 @@ export function NavMain({ currentSlug, workspaceId }: NavMainProps) {
       exact: true,
       badge: videos?.length,
     },
-    {
-      title: "Projects",
-      url: `/${currentSlug}?tab=projects`,
-      icon: IconFolder,
-      iconFilled: IconFolderFilled,
-      matchPath: (p: string) => p.includes("/projects") || p.includes("tab=projects"),
-    },
+    // TEMPORARILY COMMENTED - Projects
+    // {
+    //   title: "Projects",
+    //   url: `/${currentSlug}?tab=projects`,
+    //   icon: IconFolder,
+    //   iconFilled: IconFolderFilled,
+    //   matchPath: (p: string) => p.includes("/projects") || p.includes("tab=projects"),
+    // },
   ];
 
   const libraryItems = [
@@ -74,13 +69,14 @@ export function NavMain({ currentSlug, workspaceId }: NavMainProps) {
       url: `/${currentSlug}/clips`,
       icon: IconScissors,
       iconFilled: IconScissors,
+      matchPath: (p: string) => p.includes("/clips") && !searchParams.get("favorites"),
     },
     {
       title: "Favorites",
       url: `/${currentSlug}/clips?favorites=true`,
       icon: IconStar,
       iconFilled: IconStarFilled,
-      matchPath: (p: string) => p.includes("favorites=true"),
+      matchPath: () => searchParams.get("favorites") === "true",
     },
     {
       title: "Exports",

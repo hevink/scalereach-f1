@@ -170,10 +170,9 @@ export default function ProjectDetailPage({ params }: ProjectDetailPageProps) {
     );
 
     const handleAddVideo = useCallback(() => {
-        // Navigate to workspace page where upload UI is available
-        // In the future, this could open an upload dialog directly
-        router.push(`/${slug}`);
-    }, [router, slug]);
+        // Navigate to workspace page with project context for upload
+        router.push(`/${slug}?uploadToProject=${projectId}`);
+    }, [router, slug, projectId]);
 
     // Loading state
     if (projectLoading) {

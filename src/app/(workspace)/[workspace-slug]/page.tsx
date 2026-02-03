@@ -1,15 +1,14 @@
 "use client";
 
 import { use, useEffect, useState, useRef, useCallback } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
+// import { motion, AnimatePresence } from "framer-motion";
 import { useSession } from "@/lib/auth-client";
 import { useWorkspaceBySlug } from "@/hooks/useWorkspace";
 import { useMyVideos, useSubmitYouTubeUrl, useDeleteVideo, videoKeys } from "@/hooks/useVideo";
 import { Spinner } from "@/components/ui/spinner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import {
@@ -20,7 +19,7 @@ import {
   IconFile,
   IconAlertCircle,
   IconVideo,
-  IconFolder,
+  // IconFolder,
 } from "@tabler/icons-react";
 import { YouTubeIcon } from "@/components/icons/youtube-icon";
 import { Progress } from "@/components/ui/progress";
@@ -30,9 +29,9 @@ import { useQueryClient } from "@tanstack/react-query";
 import { VideoGrid } from "@/components/video/video-grid";
 
 // Import integrated components
-import { ProjectList } from "@/components/project/project-list";
+// import { ProjectList } from "@/components/project/project-list";
 import { CreditBalance } from "@/components/project/credit-balance";
-import { useWorkspaceShortcuts } from "@/components/workspace/workspace-shortcuts-provider";
+// import { useWorkspaceShortcuts } from "@/components/workspace/workspace-shortcuts-provider";
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3001";
 
@@ -71,6 +70,8 @@ interface WorkspacePageProps {
 export default function WorkspacePage({ params }: WorkspacePageProps) {
   const { "workspace-slug": slug } = use(params);
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const uploadToProject = searchParams.get("uploadToProject");
   const { data: session, isPending: sessionPending } = useSession();
   const { data: workspace, isLoading: workspaceLoading, error } = useWorkspaceBySlug(slug);
   const { data: videos, isLoading: videosLoading, error: videosError } = useMyVideos(workspace?.id || "", !!session?.user && !!workspace?.id);
@@ -81,9 +82,10 @@ export default function WorkspacePage({ params }: WorkspacePageProps) {
   const [isValidUrl, setIsValidUrl] = useState(false);
   const [files, setFiles] = useState<FileState[]>([]);
   const [uppyReady, setUppyReady] = useState(false);
-  const [activeTab, setActiveTab] = useState<"videos" | "projects">("videos");
+  // const [activeTab, setActiveTab] = useState<"videos" | "projects">("videos");
   const uppyRef = useRef<Uppy | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+  const uploadSectionRef = useRef<HTMLDivElement>(null);
   const videoIdsRef = useRef<Map<string, string>>(new Map());
   const workspaceRef = useRef<typeof workspace>(workspace);
 
@@ -92,8 +94,19 @@ export default function WorkspacePage({ params }: WorkspacePageProps) {
     workspaceRef.current = workspace;
   }, [workspace]);
 
+  // Scroll to upload section when coming from project page
+  useEffect(() => {
+    if (uploadToProject && uploadSectionRef.current && !workspaceLoading) {
+      uploadSectionRef.current.scrollIntoView({ behavior: "smooth", block: "center" });
+      // Focus the input after scrolling
+      setTimeout(() => {
+        inputRef.current?.focus();
+      }, 500);
+    }
+  }, [uploadToProject, workspaceLoading]);
+
   // Use workspace shortcuts context for create project dialog
-  const { openCreateProjectDialog } = useWorkspaceShortcuts();
+  // const { openCreateProjectDialog } = useWorkspaceShortcuts();
 
   const submitMutation = useSubmitYouTubeUrl();
   const deleteMutation = useDeleteVideo();
@@ -243,14 +256,14 @@ export default function WorkspacePage({ params }: WorkspacePageProps) {
     router.push(`/${slug}/configure?url=${encodeURIComponent(url.trim())}`);
   }, [isValidUrl, url, slug, router]);
 
-  // Project navigation handlers
-  const handleProjectSelect = useCallback((projectId: string) => {
-    router.push(`/${slug}/projects/${projectId}`);
-  }, [router, slug]);
+  // Project navigation handlers - TEMPORARILY COMMENTED
+  // const handleProjectSelect = useCallback((projectId: string) => {
+  //   router.push(`/${slug}/projects/${projectId}`);
+  // }, [router, slug]);
 
-  const handleCreateProject = useCallback(() => {
-    openCreateProjectDialog();
-  }, [openCreateProjectDialog]);
+  // const handleCreateProject = useCallback(() => {
+  //   openCreateProjectDialog();
+  // }, [openCreateProjectDialog]);
 
   if (sessionPending || workspaceLoading) return <div className="flex min-h-[50vh] items-center justify-center"><Spinner /></div>;
   if (!workspace) return null;
@@ -268,7 +281,24 @@ export default function WorkspacePage({ params }: WorkspacePageProps) {
         </div>
 
         {/* Upload Card - Enhanced Upload UI (Requirements 1.1, 2.1) */}
-        <div className="bg-card border rounded-2xl p-4 sm:p-6 space-y-3 sm:space-y-4">
+        <div ref={uploadSectionRef} className={cn(
+          "bg-card rounded-2xl p-4 sm:p-6 space-y-3 sm:space-y-4 transition-all",
+          uploadToProject ? "ring-2 ring-primary" : "border"
+        )}>
+          {/* Show project context when uploading to a specific project */}
+          {uploadToProject && (
+            <div className="flex items-center justify-between text-sm text-muted-foreground bg-muted/50 rounded-lg px-3 py-2">
+              <span>Adding video to project</span>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => router.replace(`/${slug}`)}
+                className="h-auto py-1 px-2 text-xs"
+              >
+                Cancel
+              </Button>
+            </div>
+          )}
           {/* YouTube URL Input - Requirement 1.1 */}
           <div className="relative">
             <div className="pointer-events-none absolute inset-y-0 left-3 sm:left-4 flex items-center">
@@ -379,61 +409,106 @@ export default function WorkspacePage({ params }: WorkspacePageProps) {
         </div>
       </div>
 
-      {/* Content Section with Tabs for Videos and Projects */}
+      {/* Content Section - Videos Only (Projects temporarily disabled) */}
       <div className="w-full border-t">
         <div className="max-w-6xl mx-auto px-4 py-4">
-          {/* Tabs for Videos and Projects - Requirements 25.1, 27.1 */}
-          {/* @validates Requirement 31.3 - Mobile-friendly tabs */}
-          <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as "videos" | "projects")} className="w-full">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4 mb-4 sm:mb-6">
-              <TabsList className="bg-transparent p-0 h-auto gap-3 sm:gap-4 w-full sm:w-auto justify-start">
-                <TabsTrigger
-                  value="videos"
-                  className="data-[state=active]:bg-transparent data-[state=active]:shadow-none px-0 text-muted-foreground data-[state=active]:text-foreground flex items-center gap-1.5 sm:gap-2 text-sm"
+          {/* Videos Header */}
+          <div className="flex items-center gap-2 mb-4">
+            <IconVideo className="size-5" />
+            <h2 className="text-lg font-semibold">Videos ({videos?.length || 0})</h2>
+          </div>
+
+          {/* Videos Content */}
+          {videosError ? (
+            <div className="text-center py-8 sm:py-12 text-muted-foreground">
+              <IconAlertCircle className="size-10 sm:size-12 mx-auto mb-3 sm:mb-4 text-red-500 opacity-50" />
+              <p className="font-medium text-sm sm:text-base text-red-500">Failed to load videos</p>
+              <p className="text-xs sm:text-sm">{(videosError as Error)?.message || "Please try again"}</p>
+            </div>
+          ) : (
+            <VideoGrid
+              videos={videos || []}
+              onVideoClick={(videoId) => router.push(`/${slug}/videos/${videoId}/clips`)}
+              onDeleteVideo={(videoId) => deleteMutation.mutate(videoId)}
+              isLoading={videosLoading || sessionPending}
+            />
+          )}
+
+          {/* TEMPORARILY COMMENTED - Tabs for Videos and Projects
+          <div className="w-full">
+            <div className="relative inline-flex gap-1 rounded-lg bg-muted p-1">
+              {[
+                { value: "videos" as const, label: `Videos (${videos?.length || 0})`, icon: IconVideo },
+                { value: "projects" as const, label: "Projects", icon: IconFolder },
+              ].map((tab) => (
+                <button
+                  key={tab.value}
+                  onClick={() => setActiveTab(tab.value)}
+                  className={cn(
+                    "relative z-10 flex items-center gap-1.5 rounded-md px-3 py-1.5 text-sm font-medium transition-colors",
+                    activeTab === tab.value
+                      ? "text-foreground"
+                      : "text-muted-foreground hover:text-foreground"
+                  )}
                 >
-                  <IconVideo className="size-4" />
-                  Videos ({videos?.length || 0})
-                </TabsTrigger>
-                <TabsTrigger
-                  value="projects"
-                  className="data-[state=active]:bg-transparent data-[state=active]:shadow-none px-0 text-muted-foreground data-[state=active]:text-foreground flex items-center gap-1.5 sm:gap-2 text-sm"
-                >
-                  <IconFolder className="size-4" />
-                  Projects
-                </TabsTrigger>
-              </TabsList>
-              <div className="hidden sm:flex items-center gap-4 text-sm text-muted-foreground">
-                <Badge variant="secondary" className="gap-1"><span className="size-1.5 rounded-full bg-green-500" />Auto-save</Badge>
-              </div>
+                  {activeTab === tab.value && (
+                    <motion.div
+                      layoutId="activeTabBg"
+                      className="absolute inset-0 rounded-md bg-background shadow-sm"
+                      transition={{ type: "spring", stiffness: 500, damping: 30 }}
+                    />
+                  )}
+                  <motion.div
+                    className="relative z-10"
+                    animate={{ scale: activeTab === tab.value ? 1.05 : 1 }}
+                    transition={{ type: "spring", stiffness: 300, damping: 20 }}
+                  >
+                    <tab.icon className="size-4" />
+                  </motion.div>
+                  <span className="relative z-10">{tab.label}</span>
+                </button>
+              ))}
             </div>
 
-            {/* Videos Tab Content */}
-            <TabsContent value="videos" className="mt-0">
-              {videosError ? (
-                <div className="text-center py-8 sm:py-12 text-muted-foreground">
-                  <IconAlertCircle className="size-10 sm:size-12 mx-auto mb-3 sm:mb-4 text-red-500 opacity-50" />
-                  <p className="font-medium text-sm sm:text-base text-red-500">Failed to load videos</p>
-                  <p className="text-xs sm:text-sm">{(videosError as Error)?.message || "Please try again"}</p>
-                </div>
-              ) : (
-                <VideoGrid
-                  videos={videos || []}
-                  onVideoClick={(videoId) => router.push(`/${slug}/videos/${videoId}/clips`)}
-                  onDeleteVideo={(videoId) => deleteMutation.mutate(videoId)}
-                  isLoading={videosLoading || sessionPending}
-                />
-              )}
-            </TabsContent>
+            <AnimatePresence mode="wait">
+              <motion.div
+                key={activeTab}
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -10 }}
+                transition={{ duration: 0.2, ease: "easeOut" }}
+                className="mt-4"
+              >
+                {activeTab === "videos" && (
+                  <>
+                    {videosError ? (
+                      <div className="text-center py-8 sm:py-12 text-muted-foreground">
+                        <IconAlertCircle className="size-10 sm:size-12 mx-auto mb-3 sm:mb-4 text-red-500 opacity-50" />
+                        <p className="font-medium text-sm sm:text-base text-red-500">Failed to load videos</p>
+                        <p className="text-xs sm:text-sm">{(videosError as Error)?.message || "Please try again"}</p>
+                      </div>
+                    ) : (
+                      <VideoGrid
+                        videos={videos || []}
+                        onVideoClick={(videoId) => router.push(`/${slug}/videos/${videoId}/clips`)}
+                        onDeleteVideo={(videoId) => deleteMutation.mutate(videoId)}
+                        isLoading={videosLoading || sessionPending}
+                      />
+                    )}
+                  </>
+                )}
 
-            {/* Projects Tab Content - Requirement 25.1 */}
-            <TabsContent value="projects" className="mt-0">
-              <ProjectList
-                workspaceId={workspace.id}
-                onProjectSelect={handleProjectSelect}
-                onCreateProject={handleCreateProject}
-              />
-            </TabsContent>
-          </Tabs>
+                {activeTab === "projects" && (
+                  <ProjectList
+                    workspaceId={workspace.id}
+                    onProjectSelect={handleProjectSelect}
+                    onCreateProject={handleCreateProject}
+                  />
+                )}
+              </motion.div>
+            </AnimatePresence>
+          </div>
+          */}
         </div>
       </div>
     </div>
