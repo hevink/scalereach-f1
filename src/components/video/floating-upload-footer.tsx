@@ -21,9 +21,8 @@ import {
     DialogHeader,
     DialogTitle,
 } from "@/components/ui/dialog";
-import { useValidateYouTubeUrl, useSubmitYouTubeUrl, videoKeys } from "@/hooks/useVideo";
+import { useSubmitYouTubeUrl, videoKeys } from "@/hooks/useVideo";
 import { toast } from "sonner";
-import type { VideoInfo } from "@/lib/api/video";
 import Uppy from "@uppy/core";
 import AwsS3 from "@uppy/aws-s3";
 import { useQueryClient } from "@tanstack/react-query";
@@ -42,17 +41,6 @@ const YOUTUBE_URL_PATTERNS = [
 
 function isValidYouTubeUrl(url: string): boolean {
     return YOUTUBE_URL_PATTERNS.some((pattern) => pattern.test(url.trim()));
-}
-
-function formatDuration(seconds: number): string {
-    const hrs = Math.floor(seconds / 3600);
-    const mins = Math.floor((seconds % 3600) / 60);
-    const secs = Math.floor(seconds % 60);
-
-    if (hrs > 0) {
-        return `${hrs}:${mins.toString().padStart(2, "0")}:${secs.toString().padStart(2, "0")}`;
-    }
-    return `${mins}:${secs.toString().padStart(2, "0")}`;
 }
 
 function formatFileSize(bytes: number): string {
@@ -79,8 +67,7 @@ interface FloatingUploadFooterProps {
 
 export function FloatingUploadFooter({ projectId, workspaceId }: FloatingUploadFooterProps) {
     const [url, setUrl] = useState("");
-    const [validationState, setValidationState] = useState<"idle" | "validating" | "valid" | "invalid">("idle");
-    const [videoInfo, setVideoInfo] = useState<VideoInfo | null>(null);
+    const [isValidUrl, setIsValidUrl] = useState(false);
     const [isUploadDialogOpen, setIsUploadDialogOpen] = useState(false);
     const [files, setFiles] = useState<FileState[]>([]);
     const [isDragging, setIsDragging] = useState(false);
@@ -90,45 +77,12 @@ export function FloatingUploadFooter({ projectId, workspaceId }: FloatingUploadF
     const queryClient = useQueryClient();
     const videoIdsRef = useRef<Map<string, string>>(new Map());
 
-    const validateMutation = useValidateYouTubeUrl();
     const submitMutation = useSubmitYouTubeUrl();
 
-    // Debounced validation for YouTube URL
+    // Client-side only validation for YouTube URL
     useEffect(() => {
         const trimmedUrl = url.trim();
-
-        if (!trimmedUrl) {
-            setValidationState("idle");
-            setVideoInfo(null);
-            return;
-        }
-
-        if (!isValidYouTubeUrl(trimmedUrl)) {
-            setValidationState("invalid");
-            setVideoInfo(null);
-            return;
-        }
-
-        const timeoutId = setTimeout(async () => {
-            setValidationState("validating");
-
-            try {
-                const result = await validateMutation.mutateAsync(trimmedUrl);
-
-                if (result.valid && result.videoInfo) {
-                    setValidationState("valid");
-                    setVideoInfo(result.videoInfo);
-                } else {
-                    setValidationState("invalid");
-                    setVideoInfo(null);
-                }
-            } catch {
-                setValidationState("invalid");
-                setVideoInfo(null);
-            }
-        }, 500);
-
-        return () => clearTimeout(timeoutId);
+        setIsValidUrl(trimmedUrl ? isValidYouTubeUrl(trimmedUrl) : false);
     }, [url]);
 
     // Initialize Uppy when dialog opens
@@ -375,7 +329,7 @@ export function FloatingUploadFooter({ projectId, workspaceId }: FloatingUploadF
     }, []);
 
     const handleSubmitYouTube = useCallback(async () => {
-        if (validationState !== "valid" || !url.trim() || !workspaceId) return;
+        if (!isValidUrl || !url.trim() || !workspaceId) return;
 
         try {
             await submitMutation.mutateAsync({
@@ -385,26 +339,25 @@ export function FloatingUploadFooter({ projectId, workspaceId }: FloatingUploadF
             });
 
             toast.success("Video submitted for processing", {
-                description: videoInfo?.title || "Your video is being processed",
+                description: "Your video is being processed",
             });
 
             setUrl("");
-            setValidationState("idle");
-            setVideoInfo(null);
+            setIsValidUrl(false);
         } catch (error) {
             toast.error("Failed to submit video", {
                 description: error instanceof Error ? error.message : "Please try again",
             });
         }
-    }, [validationState, url, workspaceId, projectId, videoInfo, submitMutation]);
+    }, [isValidUrl, url, workspaceId, projectId, submitMutation]);
 
     const handleKeyDown = useCallback(
         (e: React.KeyboardEvent) => {
-            if (e.key === "Enter" && validationState === "valid") {
+            if (e.key === "Enter" && isValidUrl) {
                 handleSubmitYouTube();
             }
         },
-        [validationState, handleSubmitYouTube]
+        [isValidUrl, handleSubmitYouTube]
     );
 
     return (
@@ -425,19 +378,16 @@ export function FloatingUploadFooter({ projectId, workspaceId }: FloatingUploadF
                             onKeyDown={handleKeyDown}
                             className={cn(
                                 "pl-10 pr-10",
-                                validationState === "valid" && "border-green-500 focus-visible:ring-green-500",
-                                validationState === "invalid" && "border-red-500 focus-visible:ring-red-500"
+                                url && isValidUrl && "border-green-500 focus-visible:ring-green-500",
+                                url && !isValidUrl && "border-red-500 focus-visible:ring-red-500"
                             )}
                             disabled={submitMutation.isPending}
                         />
                         <div className="absolute inset-y-0 right-3 flex items-center">
-                            {validationState === "validating" && (
-                                <IconLoader2 className="size-4 animate-spin text-muted-foreground" />
-                            )}
-                            {validationState === "valid" && (
+                            {url && isValidUrl && (
                                 <IconCheck className="size-4 text-green-500" />
                             )}
-                            {validationState === "invalid" && url && (
+                            {url && !isValidUrl && (
                                 <IconX className="size-4 text-red-500" />
                             )}
                         </div>
@@ -447,7 +397,7 @@ export function FloatingUploadFooter({ projectId, workspaceId }: FloatingUploadF
                     <Button
                         size="icon"
                         onClick={handleSubmitYouTube}
-                        disabled={validationState !== "valid" || submitMutation.isPending}
+                        disabled={!isValidUrl || submitMutation.isPending}
                         className="shrink-0"
                     >
                         {submitMutation.isPending ? (
@@ -471,37 +421,6 @@ export function FloatingUploadFooter({ projectId, workspaceId }: FloatingUploadF
                         <IconUpload className="size-4" />
                     </Button>
                 </div>
-
-                {/* Video Preview */}
-                {videoInfo && validationState === "valid" && (
-                    <div className="border-t bg-muted/50">
-                        <div className="mx-auto flex max-w-4xl items-center gap-3 px-4 py-2">
-                            <img
-                                src={videoInfo.thumbnail}
-                                alt={videoInfo.title}
-                                className="h-12 w-20 rounded object-cover"
-                            />
-                            <div className="flex-1 overflow-hidden">
-                                <p className="truncate text-sm font-medium">{videoInfo.title}</p>
-                                <p className="text-xs text-muted-foreground">
-                                    {videoInfo.channelName} • {formatDuration(videoInfo.duration)}
-                                </p>
-                            </div>
-                            <Button
-                                variant="ghost"
-                                size="icon"
-                                className="size-8 shrink-0"
-                                onClick={() => {
-                                    setUrl("");
-                                    setValidationState("idle");
-                                    setVideoInfo(null);
-                                }}
-                            >
-                                <IconX className="size-4" />
-                            </Button>
-                        </div>
-                    </div>
-                )}
             </div>
 
             {/* Upload Dialog */}

@@ -3,7 +3,6 @@
 import { useState, useCallback, useEffect } from "react";
 import { useRouter, useParams, useSearchParams } from "next/navigation";
 import {
-    IconBrandYoutube,
     IconCheck,
     IconLoader2,
     IconX,
@@ -25,6 +24,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import type { VideoInfo } from "@/lib/api/video";
 import { CaptionTemplateGrid } from "@/components/configure/caption-template-grid";
 import { AspectRatioSelector } from "@/components/configure/aspect-ratio-selector";
+import { YouTubeIcon } from "@/components/icons/youtube-icon";
 
 const YOUTUBE_URL_PATTERNS = [
     /^(https?:\/\/)?(www\.)?youtube\.com\/watch\?v=([a-zA-Z0-9_-]{11})/,
@@ -183,7 +183,7 @@ export default function ConfigurePage() {
             {/* Header */}
             <div className="mb-8 text-center">
                 <div className="mx-auto mb-3 flex size-14 items-center justify-center rounded-full bg-red-500/10">
-                    <IconBrandYoutube className="size-7 text-red-500" />
+                    <YouTubeIcon className="size-7" />
                 </div>
                 <h1 className="font-bold text-2xl">Get Viral Clips</h1>
                 <p className="mt-1 text-muted-foreground">

@@ -4,7 +4,7 @@ import { use, useEffect, useState, useRef, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { useSession } from "@/lib/auth-client";
 import { useWorkspaceBySlug } from "@/hooks/useWorkspace";
-import { useMyVideos, useValidateYouTubeUrl, useSubmitYouTubeUrl, useDeleteVideo, videoKeys } from "@/hooks/useVideo";
+import { useMyVideos, useSubmitYouTubeUrl, useDeleteVideo, videoKeys } from "@/hooks/useVideo";
 import { Spinner } from "@/components/ui/spinner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -13,7 +13,6 @@ import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import {
-  IconBrandYoutube,
   IconUpload,
   IconLoader2,
   IconCheck,
@@ -23,11 +22,11 @@ import {
   IconVideo,
   IconFolder,
 } from "@tabler/icons-react";
+import { YouTubeIcon } from "@/components/icons/youtube-icon";
 import { Progress } from "@/components/ui/progress";
 import Uppy from "@uppy/core";
 import AwsS3 from "@uppy/aws-s3";
 import { useQueryClient } from "@tanstack/react-query";
-import type { VideoInfo } from "@/lib/api/video";
 import { VideoGrid } from "@/components/video/video-grid";
 
 // Import integrated components
@@ -56,12 +55,6 @@ function formatFileSize(bytes: number): string {
   return `${parseFloat((bytes / Math.pow(k, i)).toFixed(1))} ${sizes[i]}`;
 }
 
-function formatDuration(seconds: number): string {
-  const mins = Math.floor(seconds / 60);
-  const secs = Math.floor(seconds % 60);
-  return `${mins}:${secs.toString().padStart(2, "0")}`;
-}
-
 interface FileState {
   id: string;
   name: string;
@@ -85,8 +78,7 @@ export default function WorkspacePage({ params }: WorkspacePageProps) {
   const queryClient = useQueryClient();
 
   const [url, setUrl] = useState("");
-  const [validationState, setValidationState] = useState<"idle" | "validating" | "valid" | "invalid">("idle");
-  const [videoInfo, setVideoInfo] = useState<VideoInfo | null>(null);
+  const [isValidUrl, setIsValidUrl] = useState(false);
   const [files, setFiles] = useState<FileState[]>([]);
   const [uppyReady, setUppyReady] = useState(false);
   const [activeTab, setActiveTab] = useState<"videos" | "projects">("videos");
@@ -103,7 +95,6 @@ export default function WorkspacePage({ params }: WorkspacePageProps) {
   // Use workspace shortcuts context for create project dialog
   const { openCreateProjectDialog } = useWorkspaceShortcuts();
 
-  const validateMutation = useValidateYouTubeUrl();
   const submitMutation = useSubmitYouTubeUrl();
   const deleteMutation = useDeleteVideo();
 
@@ -113,20 +104,10 @@ export default function WorkspacePage({ params }: WorkspacePageProps) {
     if (error || !workspace) { router.replace("/"); return; }
   }, [session, workspace, error, sessionPending, workspaceLoading, router]);
 
-  // YouTube URL validation effect
+  // Client-side only YouTube URL validation
   useEffect(() => {
     const trimmedUrl = url.trim();
-    if (!trimmedUrl) { setValidationState("idle"); setVideoInfo(null); return; }
-    if (!isValidYouTubeUrl(trimmedUrl)) { setValidationState("invalid"); setVideoInfo(null); return; }
-    const timeoutId = setTimeout(async () => {
-      setValidationState("validating");
-      try {
-        const result = await validateMutation.mutateAsync(trimmedUrl);
-        if (result.valid && result.videoInfo) { setValidationState("valid"); setVideoInfo(result.videoInfo); }
-        else { setValidationState("invalid"); setVideoInfo(null); }
-      } catch { setValidationState("invalid"); setVideoInfo(null); }
-    }, 500);
-    return () => clearTimeout(timeoutId);
+    setIsValidUrl(trimmedUrl ? isValidYouTubeUrl(trimmedUrl) : false);
   }, [url]);
 
   // Initialize Uppy on mount
@@ -257,10 +238,10 @@ export default function WorkspacePage({ params }: WorkspacePageProps) {
   }, []);
 
   const handleSubmitYouTube = useCallback(async () => {
-    if (validationState !== "valid" || !url.trim()) return;
+    if (!isValidUrl || !url.trim()) return;
     // Redirect to configure page with URL as query param
     router.push(`/${slug}/configure?url=${encodeURIComponent(url.trim())}`);
-  }, [validationState, url, slug, router]);
+  }, [isValidUrl, url, slug, router]);
 
   // Project navigation handlers
   const handleProjectSelect = useCallback((projectId: string) => {
@@ -291,41 +272,26 @@ export default function WorkspacePage({ params }: WorkspacePageProps) {
           {/* YouTube URL Input - Requirement 1.1 */}
           <div className="relative">
             <div className="pointer-events-none absolute inset-y-0 left-3 sm:left-4 flex items-center">
-              <IconBrandYoutube className="size-4 sm:size-5 text-muted-foreground" />
+              <YouTubeIcon className="size-4 sm:size-5" />
             </div>
             <Input
               type="url"
               placeholder="Drop a YouTube link"
               value={url}
               onChange={(e) => setUrl(e.target.value)}
-              onKeyDown={(e) => e.key === "Enter" && validationState === "valid" && handleSubmitYouTube()}
+              onKeyDown={(e) => e.key === "Enter" && isValidUrl && handleSubmitYouTube()}
               className={cn(
                 "h-10 sm:h-12 pl-10 sm:pl-12 pr-10 sm:pr-12 bg-muted/50 border-0 text-sm sm:text-base",
-                validationState === "valid" && "ring-1 ring-green-500",
-                validationState === "invalid" && url && "ring-1 ring-red-500"
+                url && isValidUrl && "ring-1 ring-green-500",
+                url && !isValidUrl && "ring-1 ring-red-500"
               )}
               disabled={submitMutation.isPending}
             />
             <div className="absolute inset-y-0 right-3 sm:right-4 flex items-center">
-              {validationState === "validating" && <IconLoader2 className="size-4 animate-spin text-muted-foreground" />}
-              {validationState === "valid" && <IconCheck className="size-4 text-green-500" />}
-              {validationState === "invalid" && url && <IconX className="size-4 text-red-500" />}
+              {url && isValidUrl && <IconCheck className="size-4 text-green-500" />}
+              {url && !isValidUrl && <IconX className="size-4 text-red-500" />}
             </div>
           </div>
-
-          {/* Video Preview - Responsive layout */}
-          {videoInfo && validationState === "valid" && (
-            <div className="flex items-center gap-2 sm:gap-3 p-2 sm:p-3 bg-muted/50 rounded-lg">
-              <img src={videoInfo.thumbnail} alt="" className="h-12 sm:h-14 w-20 sm:w-24 rounded object-cover shrink-0" />
-              <div className="flex-1 min-w-0">
-                <p className="text-xs sm:text-sm font-medium truncate">{videoInfo.title}</p>
-                <p className="text-xs text-muted-foreground">{videoInfo.channelName} • {formatDuration(videoInfo.duration)}</p>
-              </div>
-              <Button variant="ghost" size="icon" className="shrink-0 size-8 sm:size-9" onClick={() => { setUrl(""); setVideoInfo(null); setValidationState("idle"); }}>
-                <IconX className="size-4" />
-              </Button>
-            </div>
-          )}
 
           {/* File Upload Button - Requirement 2.1 */}
           <div className="flex flex-wrap items-center gap-3 sm:gap-4">
@@ -406,7 +372,7 @@ export default function WorkspacePage({ params }: WorkspacePageProps) {
           <Button
             className="w-full h-10 sm:h-12 text-sm sm:text-base font-medium"
             onClick={handleSubmitYouTube}
-            disabled={validationState !== "valid" || submitMutation.isPending}
+            disabled={!isValidUrl || submitMutation.isPending}
           >
             {submitMutation.isPending ? <><IconLoader2 className="mr-2 size-4 animate-spin" />Processing...</> : "Get clips in 1 click"}
           </Button>
