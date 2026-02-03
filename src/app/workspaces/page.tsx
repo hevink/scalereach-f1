@@ -123,7 +123,7 @@ export default function WorkspacesPage() {
       return (
         <Card
           className={[
-            "flex flex-row justify-between rounded-none border-b border-b-foreground/10 py-2 transition-colors hover:bg-accent",
+            "flex flex-row justify-between rounded-none border-b border-b-foreground/10 py-2 transition-colors hover:bg-accent items-center",
             isFirst && "rounded-t-lg",
             isLast && "rounded-b-lg border-b-0",
             !isLast && "border-b-0",
