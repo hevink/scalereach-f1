@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useCallback } from "react";
+import { useEffect, useCallback, useState, useRef } from "react";
 import {
     IconClock,
     IconDownload,
@@ -11,6 +11,8 @@ import {
     IconX,
     IconRefresh,
     IconLoader2,
+    IconBell,
+    IconBellOff,
 } from "@tabler/icons-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -120,6 +122,18 @@ const PROCESSING_STAGES: VideoStatus[] = [
     "completed",
 ];
 
+// Estimated time per stage in seconds (based on average processing times)
+const STAGE_ESTIMATED_TIMES: Record<VideoStatus, number> = {
+    pending: 10,
+    pending_config: 0,
+    downloading: 60,
+    uploading: 45,
+    transcribing: 90,
+    analyzing: 120,
+    completed: 0,
+    failed: 0,
+};
+
 // Get stage index for progress calculation
 function getStageIndex(status: VideoStatus): number {
     if (status === "failed") return -1;
@@ -146,6 +160,70 @@ function calculateStageProgress(status: VideoStatus, jobProgress?: number): numb
     return baseProgress;
 }
 
+// Calculate estimated time remaining in seconds
+function calculateEstimatedTime(status: VideoStatus, jobProgress?: number, videoDuration?: number | null): number {
+    if (status === "failed" || status === "completed") return 0;
+
+    const currentIndex = getStageIndex(status);
+    if (currentIndex === -1) return 0;
+
+    // Calculate time for current stage (adjusted by job progress)
+    const currentStageTime = STAGE_ESTIMATED_TIMES[status];
+    const currentStageRemaining = jobProgress
+        ? currentStageTime * (1 - jobProgress / 100)
+        : currentStageTime;
+
+    // Calculate time for remaining stages
+    let remainingStagesTime = 0;
+    for (let i = currentIndex + 1; i < PROCESSING_STAGES.length - 1; i++) {
+        remainingStagesTime += STAGE_ESTIMATED_TIMES[PROCESSING_STAGES[i]];
+    }
+
+    // Adjust based on video duration (longer videos take more time)
+    const durationMultiplier = videoDuration ? Math.max(1, videoDuration / 600) : 1;
+
+    return Math.ceil((currentStageRemaining + remainingStagesTime) * durationMultiplier);
+}
+
+// Format seconds to human readable string
+function formatEstimatedTime(seconds: number): string {
+    if (seconds <= 0) return "";
+    if (seconds < 60) return "Less than a minute";
+    if (seconds < 120) return "~1 minute";
+    const minutes = Math.ceil(seconds / 60);
+    if (minutes < 60) return `~${minutes} minutes`;
+    const hours = Math.floor(minutes / 60);
+    const remainingMins = minutes % 60;
+    if (remainingMins === 0) return `~${hours} hour${hours > 1 ? "s" : ""}`;
+    return `~${hours}h ${remainingMins}m`;
+}
+
+// Browser notification helper
+async function requestNotificationPermission(): Promise<boolean> {
+    if (!("Notification" in window)) return false;
+    if (Notification.permission === "granted") return true;
+    if (Notification.permission === "denied") return false;
+    const permission = await Notification.requestPermission();
+    return permission === "granted";
+}
+
+function sendBrowserNotification(title: string, body: string, icon?: string) {
+    if (!("Notification" in window) || Notification.permission !== "granted") return;
+
+    const notification = new Notification(title, {
+        body,
+        icon: icon || "/favicon.ico",
+        badge: "/favicon.ico",
+        tag: "video-processing",
+        requireInteraction: true,
+    });
+
+    notification.onclick = () => {
+        window.focus();
+        notification.close();
+    };
+}
+
 export interface ProcessingStatusProps {
     videoId: string;
     onComplete?: () => void;
@@ -154,29 +232,79 @@ export interface ProcessingStatusProps {
 
 export function ProcessingStatus({ videoId, onComplete, onError }: ProcessingStatusProps) {
     const { data, isLoading, error, refetch } = useVideoStatus(videoId);
+    const [notificationsEnabled, setNotificationsEnabled] = useState(false);
+    const [notificationPermission, setNotificationPermission] = useState<NotificationPermission | "unsupported">("default");
+    const hasNotifiedCompletion = useRef(false);
 
     const video = data?.video;
     const job = data?.job;
     const status = video?.status ?? "pending";
     const statusConfig = STATUS_CONFIG[status];
     const progress = calculateStageProgress(status, job?.progress);
+    const estimatedTime = calculateEstimatedTime(status, job?.progress, video?.duration);
+    const estimatedTimeText = formatEstimatedTime(estimatedTime);
 
-    // Handle completion callback
+    // Check notification permission on mount
     useEffect(() => {
-        if (status === "completed" && onComplete) {
+        if (!("Notification" in window)) {
+            setNotificationPermission("unsupported");
+            return;
+        }
+        setNotificationPermission(Notification.permission);
+        if (Notification.permission === "granted") {
+            setNotificationsEnabled(true);
+        }
+    }, []);
+
+    // Handle enabling notifications
+    const handleEnableNotifications = useCallback(async () => {
+        const granted = await requestNotificationPermission();
+        setNotificationPermission(granted ? "granted" : "denied");
+        setNotificationsEnabled(granted);
+        if (granted) {
+            toast.success("Notifications enabled", {
+                description: "We'll notify you when your video is ready.",
+            });
+        } else {
+            toast.error("Notifications blocked", {
+                description: "Please enable notifications in your browser settings.",
+            });
+        }
+    }, []);
+
+    // Handle completion callback and browser notification
+    useEffect(() => {
+        if (status === "completed" && !hasNotifiedCompletion.current) {
+            hasNotifiedCompletion.current = true;
+
             toast.success("Video processing complete!", {
                 description: "Your video is ready. You can now view the detected clips.",
             });
-            onComplete();
+
+            // Send browser notification if enabled
+            if (notificationsEnabled) {
+                sendBrowserNotification(
+                    "Video Ready!",
+                    `"${video?.title || "Your video"}" has been processed. Click to view your clips.`
+                );
+            }
+
+            onComplete?.();
         }
-    }, [status, onComplete]);
+    }, [status, onComplete, notificationsEnabled, video?.title]);
 
     // Handle error callback
     useEffect(() => {
         if (status === "failed" && onError && video?.errorMessage) {
+            if (notificationsEnabled) {
+                sendBrowserNotification(
+                    "Processing Failed",
+                    `There was an error processing "${video?.title || "your video"}".`
+                );
+            }
             onError(video.errorMessage);
         }
-    }, [status, onError, video?.errorMessage]);
+    }, [status, onError, video?.errorMessage, video?.title, notificationsEnabled]);
 
     const handleRetry = useCallback(async () => {
         // Refetch to check if status has changed
@@ -251,10 +379,59 @@ export function ProcessingStatus({ videoId, onComplete, onError }: ProcessingSta
                     <div className="space-y-2">
                         <div className="flex w-full items-center justify-between">
                             <span className="font-medium text-sm">Progress</span>
-                            <span className="text-muted-foreground text-sm tabular-nums">{Math.round(progress)}%</span>
+                            <div className="flex items-center gap-3">
+                                {estimatedTimeText && status !== "completed" && (
+                                    <span className="text-muted-foreground text-sm flex items-center gap-1">
+                                        <IconClock className="size-3.5" />
+                                        {estimatedTimeText}
+                                    </span>
+                                )}
+                                <span className="text-muted-foreground text-sm tabular-nums">{Math.round(progress)}%</span>
+                            </div>
                         </div>
                         <Progress value={progress} className="w-full" />
                     </div>
+                )}
+
+                {/* Browser notification toggle */}
+                {status !== "completed" && status !== "failed" && notificationPermission !== "unsupported" && (
+                    <div className="flex items-center justify-between rounded-lg bg-muted/30 p-3">
+                        <div className="flex items-center gap-2">
+                            {notificationsEnabled ? (
+                                <IconBell className="size-4 text-green-500" />
+                            ) : (
+                                <IconBellOff className="size-4 text-muted-foreground" />
+                            )}
+                            <span className="text-sm">
+                                {notificationsEnabled
+                                    ? "We'll notify you when done"
+                                    : "Get notified when ready"}
+                            </span>
+                        </div>
+                        {!notificationsEnabled && (
+                            <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={handleEnableNotifications}
+                                className="h-7 text-xs"
+                            >
+                                Enable
+                            </Button>
+                        )}
+                        {notificationsEnabled && (
+                            <Badge variant="outline" className="text-green-500 border-green-500/30">
+                                <IconCheck className="size-3 mr-1" />
+                                Enabled
+                            </Badge>
+                        )}
+                    </div>
+                )}
+
+                {/* Safe to leave message */}
+                {status !== "completed" && status !== "failed" && (
+                    <p className="text-xs text-muted-foreground text-center">
+                        You can close this page. {notificationsEnabled ? "We'll send you a notification" : "We'll email you"} when your video is ready.
+                    </p>
                 )}
 
                 {/* Stage indicators */}
