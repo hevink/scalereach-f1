@@ -125,8 +125,8 @@ export function ClipListItem({
 }: ClipListItemProps) {
     const scoreColorClass = getScoreColor(clip.viralityScore);
 
-    // Generate placeholder thumbnail if none exists
-    const thumbnailUrl = clip.storageUrl || clip.thumbnailUrl;
+    // Use thumbnail URL if available, otherwise fall back to video URL
+    const thumbnailUrl = clip.thumbnailUrl || clip.storageUrl;
 
     return (
         <div
