@@ -13,13 +13,11 @@ import {
     IconSubtask,
     IconMoodSmile,
     IconTypography,
-    IconChevronDown,
 } from "@tabler/icons-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Switch } from "@/components/ui/switch";
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { cn } from "@/lib/utils";
 import { useValidateYouTubeUrl, useVideo } from "@/hooks/useVideo";
 import { useWorkspaceBySlug } from "@/hooks/useWorkspace";
@@ -377,96 +375,87 @@ export default function ConfigurePage() {
 
                 {/* Configuration Options - Show when valid (for both modes) */}
                 {validationState === "valid" && (mode === "upload" ? uploadedVideo : true) && (
-                    <>
-                        {/* Caption Template */}
-                        <Card>
-                            <CardHeader>
-                                <CardTitle>Caption Style</CardTitle>
-                                <CardDescription>
-                                    Choose how captions appear on your clips
-                                </CardDescription>
-                            </CardHeader>
-                            <CardContent>
+                    <Card>
+                        <CardContent className="space-y-8 pt-6">
+                            {/* Caption Style Section */}
+                            <div className="space-y-4">
+                                <div>
+                                    <h3 className="font-semibold">Caption Style</h3>
+                                    <p className="text-muted-foreground text-sm">
+                                        Choose how captions appear on your clips
+                                    </p>
+                                </div>
                                 <CaptionTemplateGrid
                                     templates={templates}
                                     selectedId={config.captionTemplateId ?? "classic"}
                                     onSelect={(id) => updateConfig({ captionTemplateId: id })}
                                     disabled={isSubmitting}
                                 />
-                            </CardContent>
-                        </Card>
+                            </div>
 
-                        {/* Aspect Ratio */}
-                        <Card>
-                            <CardHeader>
-                                <CardTitle>Aspect Ratio</CardTitle>
-                                <CardDescription>
-                                    Choose the output format for your clips
-                                </CardDescription>
-                            </CardHeader>
-                            <CardContent>
+                            {/* Aspect Ratio Section */}
+                            <div className="space-y-4 border-t pt-6">
+                                <div>
+                                    <h3 className="font-semibold">Aspect Ratio</h3>
+                                    <p className="text-muted-foreground text-sm">
+                                        Choose the output format for your clips
+                                    </p>
+                                </div>
                                 <AspectRatioSelector
                                     value={config.aspectRatio ?? "9:16"}
                                     onChange={(ratio) => updateConfig({ aspectRatio: ratio })}
                                     disabled={isSubmitting}
                                 />
-                            </CardContent>
-                        </Card>
+                            </div>
 
-                        {/* Editing Options */}
-                        <Card>
-                            <Collapsible defaultOpen>
-                                <CardHeader className="cursor-pointer hover:bg-muted/50 transition-colors p-0">
-                                    <CollapsibleTrigger className="flex w-full items-center justify-between p-6">
-                                        <CardTitle>Editing options</CardTitle>
-                                        <IconChevronDown className="size-5 text-muted-foreground transition-transform duration-200 group-data-[state=open]:rotate-180" />
-                                    </CollapsibleTrigger>
-                                </CardHeader>
-                                <CollapsibleContent>
-                                    <CardContent className="space-y-1 pt-0">
-                                        {/* Captions */}
-                                        <div className="flex items-center justify-between py-4 border-t">
-                                            <div className="flex items-center gap-3">
-                                                <IconSubtask className="size-5 text-muted-foreground" />
-                                                <span className="font-medium">Captions</span>
-                                            </div>
-                                            <Switch
-                                                checked={config.enableCaptions ?? true}
-                                                onCheckedChange={(checked) => updateConfig({ enableCaptions: checked })}
-                                                disabled={isSubmitting}
-                                            />
+                            {/* Editing Options Section */}
+                            <div className="space-y-4 border-t pt-6">
+                                <div>
+                                    <h3 className="font-semibold">Editing Options</h3>
+                                </div>
+                                <div className="space-y-1">
+                                    {/* Captions */}
+                                    <div className="flex items-center justify-between py-3">
+                                        <div className="flex items-center gap-3">
+                                            <IconSubtask className="size-5 text-muted-foreground" />
+                                            <span className="font-medium">Captions</span>
                                         </div>
+                                        <Switch
+                                            checked={config.enableCaptions ?? true}
+                                            onCheckedChange={(checked) => updateConfig({ enableCaptions: checked })}
+                                            disabled={isSubmitting}
+                                        />
+                                    </div>
 
-                                        {/* Emojis */}
-                                        <div className="flex items-center justify-between py-4 border-t">
-                                            <div className="flex items-center gap-3">
-                                                <IconMoodSmile className="size-5 text-muted-foreground" />
-                                                <span className="font-medium">Emojis</span>
-                                            </div>
-                                            <Switch
-                                                checked={config.enableEmojis ?? true}
-                                                onCheckedChange={(checked) => updateConfig({ enableEmojis: checked })}
-                                                disabled={isSubmitting}
-                                            />
+                                    {/* Emojis */}
+                                    <div className="flex items-center justify-between py-3">
+                                        <div className="flex items-center gap-3">
+                                            <IconMoodSmile className="size-5 text-muted-foreground" />
+                                            <span className="font-medium">Emojis</span>
                                         </div>
+                                        <Switch
+                                            checked={config.enableEmojis ?? true}
+                                            onCheckedChange={(checked) => updateConfig({ enableEmojis: checked })}
+                                            disabled={isSubmitting}
+                                        />
+                                    </div>
 
-                                        {/* Intro Title */}
-                                        <div className="flex items-center justify-between py-4 border-t">
-                                            <div className="flex items-center gap-3">
-                                                <IconTypography className="size-5 text-muted-foreground" />
-                                                <span className="font-medium">Intro title</span>
-                                            </div>
-                                            <Switch
-                                                checked={config.enableIntroTitle ?? true}
-                                                onCheckedChange={(checked) => updateConfig({ enableIntroTitle: checked })}
-                                                disabled={isSubmitting}
-                                            />
+                                    {/* Intro Title */}
+                                    <div className="flex items-center justify-between py-3">
+                                        <div className="flex items-center gap-3">
+                                            <IconTypography className="size-5 text-muted-foreground" />
+                                            <span className="font-medium">Intro title</span>
                                         </div>
-                                    </CardContent>
-                                </CollapsibleContent>
-                            </Collapsible>
-                        </Card>
-                    </>
+                                        <Switch
+                                            checked={config.enableIntroTitle ?? true}
+                                            onCheckedChange={(checked) => updateConfig({ enableIntroTitle: checked })}
+                                            disabled={isSubmitting}
+                                        />
+                                    </div>
+                                </div>
+                            </div>
+                        </CardContent>
+                    </Card>
                 )}
 
                 {/* Get Clips Button */}
