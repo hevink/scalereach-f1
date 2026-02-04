@@ -60,6 +60,18 @@ export interface InvitationDetails {
   };
 }
 
+export interface DeleteWorkspaceResponse {
+  message: string;
+  creditsLost?: number;
+}
+
+export interface DeleteWorkspaceError {
+  error: string;
+  message?: string;
+  credits?: number;
+  requiresConfirmation?: boolean;
+}
+
 export const workspaceApi = {
   // Get all workspaces for current user
   getAll: async () => {
@@ -98,8 +110,8 @@ export const workspaceApi = {
   },
 
   // Delete workspace
-  delete: async (id: string) => {
-    const response = await api.delete(`/api/workspaces/${id}`);
+  delete: async (id: string, force: boolean = false): Promise<DeleteWorkspaceResponse> => {
+    const response = await api.delete(`/api/workspaces/${id}${force ? '?force=true' : ''}`);
     return response.data;
   },
 
@@ -146,8 +158,8 @@ export const workspaceApi = {
   },
 
   // Delete workspace by slug
-  deleteBySlug: async (slug: string) => {
-    const response = await api.delete(`/api/workspaces/slug/${slug}`);
+  deleteBySlug: async (slug: string, force: boolean = false): Promise<DeleteWorkspaceResponse> => {
+    const response = await api.delete(`/api/workspaces/slug/${slug}${force ? '?force=true' : ''}`);
     return response.data;
   },
 

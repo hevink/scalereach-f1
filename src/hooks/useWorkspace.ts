@@ -93,12 +93,23 @@ export function useDeleteWorkspace() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (slug: string) => workspaceApi.deleteBySlug(slug),
-    onSuccess: () => {
+    mutationFn: ({ slug, force = false }: { slug: string; force?: boolean }) => 
+      workspaceApi.deleteBySlug(slug, force),
+    onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ["workspaces"] });
+      if (data.creditsLost && data.creditsLost > 0) {
+        toast.success(`Workspace deleted. ${data.creditsLost} credits were lost.`);
+      } else {
+        toast.success("Workspace deleted successfully");
+      }
     },
-    onError: (error: Error) => {
-      toast.error(error.message || "Failed to delete workspace");
+    onError: (error: any) => {
+      // Check if this is a credits confirmation error
+      if (error.response?.data?.requiresConfirmation) {
+        // Don't show error toast - let the component handle the confirmation dialog
+        return;
+      }
+      toast.error(error.response?.data?.error || error.message || "Failed to delete workspace");
     },
   });
 }

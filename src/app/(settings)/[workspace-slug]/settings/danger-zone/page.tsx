@@ -35,6 +35,7 @@ function DeleteWorkspaceDialog({
 }) {
   const [open, setOpen] = useState(false);
   const [confirmText, setConfirmText] = useState("");
+  const [creditsWarning, setCreditsWarning] = useState<{ credits: number; message: string } | null>(null);
   const deleteWorkspace = useDeleteWorkspace();
 
   const isConfirmed = confirmText === workspace.name;
@@ -43,13 +44,28 @@ function DeleteWorkspaceDialog({
     if (!isConfirmed) return;
 
     try {
-      await deleteWorkspace.mutateAsync(workspace.slug);
-      toast.success("Workspace deleted successfully");
+      // First try without force - this will check for credits
+      await deleteWorkspace.mutateAsync({ slug: workspace.slug, force: !!creditsWarning });
       setOpen(false);
+      setCreditsWarning(null);
       onSuccess();
-    } catch {
-      toast.error("Failed to delete workspace");
+    } catch (error: any) {
+      // Check if this is a credits confirmation error
+      if (error.response?.data?.requiresConfirmation) {
+        setCreditsWarning({
+          credits: error.response.data.credits,
+          message: error.response.data.message,
+        });
+        return;
+      }
+      // Other errors are handled by the hook
     }
+  };
+
+  const handleClose = () => {
+    setOpen(false);
+    setConfirmText("");
+    setCreditsWarning(null);
   };
 
   return (
@@ -58,7 +74,7 @@ function DeleteWorkspaceDialog({
         <IconTrash className="size-4 mr-2" />
         Delete Workspace
       </Button>
-      <Dialog open={open} onOpenChange={setOpen}>
+      <Dialog open={open} onOpenChange={handleClose}>
         <DialogContent>
           <DialogHeader>
             <div className="flex items-center gap-3">
@@ -74,11 +90,22 @@ function DeleteWorkspaceDialog({
             </div>
           </DialogHeader>
           <div className="flex flex-col gap-4 py-4">
-            <div className="rounded-lg border border-destructive/50 bg-destructive/10 p-3">
-              <p className="text-sm text-destructive">
-                All projects, members, and invitations will be permanently removed.
-              </p>
-            </div>
+            {creditsWarning ? (
+              <div className="rounded-lg border border-amber-500/50 bg-amber-500/10 p-3">
+                <p className="text-sm text-amber-600 dark:text-amber-400 font-medium">
+                  ⚠️ This workspace has {creditsWarning.credits} credits that will be permanently lost!
+                </p>
+                <p className="text-sm text-amber-600/80 dark:text-amber-400/80 mt-1">
+                  Credits cannot be recovered or transferred. Click "Delete Workspace" again to confirm.
+                </p>
+              </div>
+            ) : (
+              <div className="rounded-lg border border-destructive/50 bg-destructive/10 p-3">
+                <p className="text-sm text-destructive">
+                  All projects, members, credits, and invitations will be permanently removed.
+                </p>
+              </div>
+            )}
             <div className="flex flex-col gap-2">
               <Label htmlFor="confirm">
                 Type <span className="font-semibold">{workspace.name}</span> to confirm
@@ -92,7 +119,7 @@ function DeleteWorkspaceDialog({
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setOpen(false)}>
+            <Button variant="outline" onClick={handleClose}>
               Cancel
             </Button>
             <Button
@@ -101,7 +128,7 @@ function DeleteWorkspaceDialog({
               disabled={!isConfirmed || deleteWorkspace.isPending}
               loading={deleteWorkspace.isPending}
             >
-              Delete Workspace
+              {creditsWarning ? "Confirm Delete (Lose Credits)" : "Delete Workspace"}
             </Button>
           </DialogFooter>
         </DialogContent>
