@@ -141,10 +141,15 @@ export default function ConfigurePage() {
                     setVideoInfo(null);
                     setErrorMessage(result.error || "Could not fetch video information");
                 }
-            } catch (error) {
+            } catch (error: any) {
                 setValidationState("invalid");
                 setVideoInfo(null);
-                setErrorMessage(error instanceof Error ? error.message : "Failed to validate URL");
+
+                // Handle different error types
+                const errorMsg = error?.response?.data?.error
+                    || error?.message
+                    || "Failed to validate YouTube URL";
+                setErrorMessage(errorMsg);
             }
         }, 500);
 
