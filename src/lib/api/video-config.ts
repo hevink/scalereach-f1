@@ -118,7 +118,7 @@ export const DEFAULT_VIDEO_CONFIG: VideoConfigInput = {
   enableAutoHook: true,
   customPrompt: "",
   topicKeywords: [],
-  captionTemplateId: "karaoke",
+  captionTemplateId: "classic",
   aspectRatio: "9:16",
   enableWatermark: true,
   // Editing Options

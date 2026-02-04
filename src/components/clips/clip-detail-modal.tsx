@@ -448,7 +448,7 @@ export function ClipDetailModal({
                                 >
                                     <IconDownload className="size-4" />
                                     Download
-                                    <kbd className="ml-1 rounded bg-green-700/50 px-1.5 py-0.5 text-[10px] font-medium">
+                                    <kbd className="ml-1 rounded bg-blue-500/50 border-primary px-1.5 py-0.5 text-[10px] font-medium">
                                         d
                                     </kbd>
                                 </Button>

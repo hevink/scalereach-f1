@@ -80,6 +80,10 @@ export interface SubmitVideoWithConfigRequest {
     captionTemplateId?: string;
     aspectRatio?: "9:16" | "16:9" | "1:1";
     enableWatermark?: boolean;
+    // Editing Options
+    enableCaptions?: boolean;
+    enableEmojis?: boolean;
+    enableIntroTitle?: boolean;
   };
 }
 

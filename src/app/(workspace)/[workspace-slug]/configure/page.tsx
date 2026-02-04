@@ -10,10 +10,16 @@ import {
     IconSparkles,
     IconArrowLeft,
     IconUpload,
+    IconSubtask,
+    IconMoodSmile,
+    IconTypography,
+    IconChevronDown,
 } from "@tabler/icons-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Switch } from "@/components/ui/switch";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { cn } from "@/lib/utils";
 import { useValidateYouTubeUrl, useVideo } from "@/hooks/useVideo";
 import { useWorkspaceBySlug } from "@/hooks/useWorkspace";
@@ -106,6 +112,9 @@ export default function ConfigurePage() {
                 clipDurationMax: config.clipDurationMax || 90,
                 captionTemplateId: config.captionTemplateId,
                 aspectRatio: config.aspectRatio,
+                enableCaptions: config.enableCaptions,
+                enableEmojis: config.enableEmojis,
+                enableIntroTitle: config.enableIntroTitle,
             });
             return result;
         },
@@ -134,6 +143,9 @@ export default function ConfigurePage() {
                 clipDurationMax: config.clipDurationMax || 90,
                 captionTemplateId: config.captionTemplateId,
                 aspectRatio: config.aspectRatio,
+                enableCaptions: config.enableCaptions,
+                enableEmojis: config.enableEmojis,
+                enableIntroTitle: config.enableIntroTitle,
             });
             return result;
         },
@@ -377,7 +389,7 @@ export default function ConfigurePage() {
                             <CardContent>
                                 <CaptionTemplateGrid
                                     templates={templates}
-                                    selectedId={config.captionTemplateId ?? "karaoke"}
+                                    selectedId={config.captionTemplateId ?? "classic"}
                                     onSelect={(id) => updateConfig({ captionTemplateId: id })}
                                     disabled={isSubmitting}
                                 />
@@ -399,6 +411,60 @@ export default function ConfigurePage() {
                                     disabled={isSubmitting}
                                 />
                             </CardContent>
+                        </Card>
+
+                        {/* Editing Options */}
+                        <Card>
+                            <Collapsible defaultOpen>
+                                <CardHeader className="cursor-pointer hover:bg-muted/50 transition-colors p-0">
+                                    <CollapsibleTrigger className="flex w-full items-center justify-between p-6">
+                                        <CardTitle>Editing options</CardTitle>
+                                        <IconChevronDown className="size-5 text-muted-foreground transition-transform duration-200 group-data-[state=open]:rotate-180" />
+                                    </CollapsibleTrigger>
+                                </CardHeader>
+                                <CollapsibleContent>
+                                    <CardContent className="space-y-1 pt-0">
+                                        {/* Captions */}
+                                        <div className="flex items-center justify-between py-4 border-t">
+                                            <div className="flex items-center gap-3">
+                                                <IconSubtask className="size-5 text-muted-foreground" />
+                                                <span className="font-medium">Captions</span>
+                                            </div>
+                                            <Switch
+                                                checked={config.enableCaptions ?? true}
+                                                onCheckedChange={(checked) => updateConfig({ enableCaptions: checked })}
+                                                disabled={isSubmitting}
+                                            />
+                                        </div>
+
+                                        {/* Emojis */}
+                                        <div className="flex items-center justify-between py-4 border-t">
+                                            <div className="flex items-center gap-3">
+                                                <IconMoodSmile className="size-5 text-muted-foreground" />
+                                                <span className="font-medium">Emojis</span>
+                                            </div>
+                                            <Switch
+                                                checked={config.enableEmojis ?? true}
+                                                onCheckedChange={(checked) => updateConfig({ enableEmojis: checked })}
+                                                disabled={isSubmitting}
+                                            />
+                                        </div>
+
+                                        {/* Intro Title */}
+                                        <div className="flex items-center justify-between py-4 border-t">
+                                            <div className="flex items-center gap-3">
+                                                <IconTypography className="size-5 text-muted-foreground" />
+                                                <span className="font-medium">Intro title</span>
+                                            </div>
+                                            <Switch
+                                                checked={config.enableIntroTitle ?? true}
+                                                onCheckedChange={(checked) => updateConfig({ enableIntroTitle: checked })}
+                                                disabled={isSubmitting}
+                                            />
+                                        </div>
+                                    </CardContent>
+                                </CollapsibleContent>
+                            </Collapsible>
                         </Card>
                     </>
                 )}

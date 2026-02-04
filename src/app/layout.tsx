@@ -7,6 +7,13 @@ import {
   Anton,
   Bebas_Neue,
   Oswald,
+  Montserrat,
+  Poppins,
+  Lexend,
+  Titan_One,
+  Libre_Baskerville,
+  Lilita_One,
+  Inter,
 } from "next/font/google";
 import "./globals.css";
 import { ThemeProvider } from "next-themes";
@@ -62,6 +69,55 @@ const oswald = Oswald({
   display: "swap",
 });
 
+const montserrat = Montserrat({
+  weight: ["400", "500", "600", "700", "800"],
+  variable: "--font-montserrat",
+  subsets: ["latin"],
+  display: "swap",
+});
+
+const poppins = Poppins({
+  weight: ["400", "500", "600", "700", "800"],
+  variable: "--font-poppins",
+  subsets: ["latin"],
+  display: "swap",
+});
+
+const lexend = Lexend({
+  weight: ["400", "500", "600", "700", "800"],
+  variable: "--font-lexend",
+  subsets: ["latin"],
+  display: "swap",
+});
+
+const titanOne = Titan_One({
+  weight: "400",
+  variable: "--font-titan-one",
+  subsets: ["latin"],
+  display: "swap",
+});
+
+const libreBaskerville = Libre_Baskerville({
+  weight: ["400", "700"],
+  variable: "--font-libre-baskerville",
+  subsets: ["latin"],
+  display: "swap",
+});
+
+const lilitaOne = Lilita_One({
+  weight: "400",
+  variable: "--font-lilita-one",
+  subsets: ["latin"],
+  display: "swap",
+});
+
+const inter = Inter({
+  weight: ["400", "500", "600", "700"],
+  variable: "--font-inter",
+  subsets: ["latin"],
+  display: "swap",
+});
+
 export const metadata: Metadata = constructMetadata();
 
 export default function RootLayout({
@@ -72,7 +128,7 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <body
-        className={`${geistSans.variable} ${geistMono.variable} ${bangers.variable} ${permanentMarker.variable} ${anton.variable} ${bebasNeue.variable} ${oswald.variable} antialiased`}
+        className={`${geistSans.variable} ${geistMono.variable} ${bangers.variable} ${permanentMarker.variable} ${anton.variable} ${bebasNeue.variable} ${oswald.variable} ${montserrat.variable} ${poppins.variable} ${lexend.variable} ${titanOne.variable} ${libreBaskerville.variable} ${lilitaOne.variable} ${inter.variable} antialiased`}
       >
         <QueryProvider>
           <PostHogProvider>
