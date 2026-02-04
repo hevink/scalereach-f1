@@ -10,7 +10,6 @@ import {
     DialogDescription,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
     IconX,
@@ -24,6 +23,12 @@ import {
     IconBrandLinkedin,
     IconBrandTwitter,
     IconBrandFacebook,
+    IconSparkles,
+    IconMoodSmile,
+    IconShare,
+    IconChevronLeft,
+    IconChevronRight,
+    IconDownload,
 } from "@tabler/icons-react";
 import { cn } from "@/lib/utils";
 import { useClip } from "@/hooks/useClips";
@@ -59,6 +64,14 @@ export interface ClipDetailModalProps {
     onClose: () => void;
     /** Callback when the Edit button is clicked */
     onEdit: (clipId: string) => void;
+    /** Callback to navigate to previous clip */
+    onPrevious?: () => void;
+    /** Callback to navigate to next clip */
+    onNext?: () => void;
+    /** Whether there's a previous clip */
+    hasPrevious?: boolean;
+    /** Whether there's a next clip */
+    hasNext?: boolean;
     /** Optional className for the modal content */
     className?: string;
 }
@@ -102,68 +115,27 @@ function getScoreBgColor(score: number): string {
 // ============================================================================
 
 /**
- * ModalHeader - Header section with title and close button
- * 
- * @validates Requirements 3.2
- */
-interface ModalHeaderProps {
-    title: string;
-    onClose: () => void;
-}
-
-function ModalHeader({ title, onClose }: ModalHeaderProps) {
-    return (
-        <DialogHeader className="flex flex-row items-start justify-between gap-4">
-            <div className="flex-1 min-w-0">
-                <DialogTitle
-                    className="text-lg font-semibold leading-tight line-clamp-2"
-                    data-testid="modal-title"
-                >
-                    {title}
-                </DialogTitle>
-            </div>
-            <Button
-                variant="ghost"
-                size="icon-sm"
-                onClick={onClose}
-                className="shrink-0 -mt-1 -mr-2"
-                aria-label="Close modal"
-                data-testid="modal-close-button"
-            >
-                <IconX className="size-4" />
-            </Button>
-        </DialogHeader>
-    );
-}
-
-/**
  * LoadingState - Skeleton loading state for modal content
  */
 function LoadingState() {
     return (
         <div
-            className="flex flex-col gap-4"
+            className="flex flex-col gap-6 p-6"
             role="status"
             aria-label="Loading clip details"
             data-testid="modal-loading"
         >
-            {/* Title skeleton */}
-            <Skeleton className="h-6 w-3/4" />
-
-            {/* Video player skeleton */}
-            <Skeleton className="aspect-video w-full rounded-lg" />
-
-            {/* Metadata skeleton */}
-            <div className="flex gap-2">
-                <Skeleton className="h-6 w-20" />
-                <Skeleton className="h-6 w-16" />
+            <div className="flex items-start justify-between">
+                <Skeleton className="h-7 w-2/3" />
+                <Skeleton className="size-8 rounded-full" />
             </div>
-
-            {/* Description skeleton */}
-            <div className="space-y-2">
-                <Skeleton className="h-4 w-full" />
-                <Skeleton className="h-4 w-5/6" />
-                <Skeleton className="h-4 w-4/6" />
+            <div className="grid grid-cols-1 gap-6 lg:grid-cols-5">
+                <Skeleton className="aspect-[9/16] w-full rounded-xl lg:col-span-2" />
+                <div className="space-y-4 lg:col-span-3">
+                    <Skeleton className="h-20 w-full rounded-xl" />
+                    <Skeleton className="h-32 w-full rounded-xl" />
+                    <Skeleton className="h-24 w-full rounded-xl" />
+                </div>
             </div>
         </div>
     );
@@ -180,127 +152,24 @@ interface ErrorStateProps {
 function ErrorState({ error, onRetry }: ErrorStateProps) {
     return (
         <div
-            className="flex flex-col items-center justify-center gap-4 py-8 text-center"
+            className="flex flex-col items-center justify-center gap-4 py-12 text-center"
             role="alert"
             data-testid="modal-error"
         >
-            <div className="rounded-full bg-destructive/10 p-3">
-                <IconX className="size-6 text-destructive" />
+            <div className="rounded-full bg-destructive/10 p-4">
+                <IconX className="size-8 text-destructive" />
             </div>
-            <div className="space-y-1">
-                <h3 className="font-medium">Failed to load clip</h3>
-                <p className="text-sm text-muted-foreground">
+            <div className="space-y-2">
+                <h3 className="text-lg font-semibold">Failed to load clip</h3>
+                <p className="text-sm text-muted-foreground max-w-sm">
                     {error.message || "An error occurred while loading the clip details."}
                 </p>
             </div>
             {onRetry && (
-                <Button variant="outline" size="sm" onClick={onRetry}>
+                <Button variant="outline" onClick={onRetry}>
                     Try again
                 </Button>
             )}
-        </div>
-    );
-}
-
-/**
- * ClipMetadata - Display clip metadata (duration, score, hooks)
- * 
- * @validates Requirements 3.2, 3.4
- */
-interface ClipMetadataProps {
-    clip: ClipResponse;
-}
-
-function ClipMetadata({ clip }: ClipMetadataProps) {
-    const scoreColorClass = getScoreColor(clip.viralityScore);
-    const scoreBgClass = getScoreBgColor(clip.viralityScore);
-
-    return (
-        <div className="flex flex-wrap items-center gap-2" data-testid="clip-metadata">
-            {/* Viral Score */}
-            <Badge
-                variant="secondary"
-                className={cn("flex items-center gap-1", scoreBgClass, scoreColorClass)}
-                data-testid="clip-viral-score"
-                aria-label={`Virality score: ${clip.viralityScore} out of 100`}
-            >
-                <IconFlame className="size-3" aria-hidden="true" />
-                <span className="font-semibold">{clip.viralityScore}</span>
-                <span className="text-muted-foreground">/100</span>
-            </Badge>
-
-            {/* Duration */}
-            <Badge
-                variant="outline"
-                className="flex items-center gap-1"
-                data-testid="clip-duration"
-                aria-label={`Duration: ${formatDuration(clip.duration)}`}
-            >
-                <IconClock className="size-3" aria-hidden="true" />
-                {formatDuration(clip.duration)}
-            </Badge>
-
-            {/* Hooks */}
-            {clip.hooks.length > 0 && (
-                <div className="flex flex-wrap gap-1" data-testid="clip-hooks">
-                    {clip.hooks.slice(0, 3).map((hook, index) => (
-                        <Badge key={`hook-${index}`} variant="outline" className="text-xs">
-                            {hook}
-                        </Badge>
-                    ))}
-                    {clip.hooks.length > 3 && (
-                        <Badge variant="outline" className="text-xs text-muted-foreground">
-                            +{clip.hooks.length - 3} more
-                        </Badge>
-                    )}
-                </div>
-            )}
-        </div>
-    );
-}
-
-/**
- * ClipDescription - Display clip description/virality reason
- * 
- * @validates Requirements 3.2
- */
-interface ClipDescriptionProps {
-    description: string;
-}
-
-function ClipDescription({ description }: ClipDescriptionProps) {
-    if (!description) return null;
-
-    return (
-        <div className="space-y-1" data-testid="clip-description">
-            <h4 className="text-sm font-medium text-muted-foreground">Description</h4>
-            <p className="text-sm leading-relaxed">{description}</p>
-        </div>
-    );
-}
-
-/**
- * ModalActions - Action buttons (Edit Clip)
- * 
- * @validates Requirements 3.6
- */
-interface ModalActionsProps {
-    clipId: string;
-    onEdit: (clipId: string) => void;
-}
-
-function ModalActions({ clipId, onEdit }: ModalActionsProps) {
-    return (
-        <div className="flex justify-end gap-2 pt-2" data-testid="modal-actions">
-            <Button
-                onClick={() => onEdit(clipId)}
-                className="gap-2"
-                data-testid="edit-clip-button"
-                aria-label="Edit this clip"
-            >
-                <IconEdit className="size-4" aria-hidden="true" />
-                Edit Clip
-            </Button>
         </div>
     );
 }
@@ -311,49 +180,18 @@ function ModalActions({ clipId, onEdit }: ModalActionsProps) {
 
 /**
  * ClipDetailModal - Modal for displaying comprehensive clip details
- * 
- * Shows clip title, description, metadata, viral analysis, viral score,
- * and provides an Edit button to navigate to the editing screen.
- * 
- * Uses Radix UI Dialog for accessibility:
- * - Backdrop click to close
- * - Escape key to close
- * - Focus trap within modal
- * - ARIA attributes for screen readers
- * 
- * Supports URL state sync for deep linking via search params.
- * 
- * @validates Requirements 3.1, 3.2, 3.3, 3.4, 3.6, 3.7
- * 
- * @example
- * // Basic usage
- * <ClipDetailModal
- *   clipId={selectedClipId}
- *   isOpen={isModalOpen}
- *   onClose={() => setIsModalOpen(false)}
- *   onEdit={(clipId) => router.push(`/clips/${clipId}`)}
- * />
- * 
- * @example
- * // With URL state sync
- * const searchParams = useSearchParams();
- * const clipId = searchParams.get('clip');
- * 
- * <ClipDetailModal
- *   clipId={clipId}
- *   isOpen={!!clipId}
- *   onClose={() => router.push(pathname)}
- *   onEdit={(clipId) => router.push(`/clips/${clipId}`)}
- * />
  */
 export function ClipDetailModal({
     clipId,
     isOpen,
     onClose,
     onEdit,
+    onPrevious,
+    onNext,
+    hasPrevious = false,
+    hasNext = false,
     className,
 }: ClipDetailModalProps) {
-    // Fetch clip data when modal is open and clipId is provided
     const {
         data: clip,
         isLoading,
@@ -361,7 +199,6 @@ export function ClipDetailModal({
         refetch,
     } = useClip(clipId ?? "");
 
-    // Handle open state change (for backdrop click and Escape key)
     const handleOpenChange = React.useCallback(
         (open: boolean) => {
             if (!open) {
@@ -371,14 +208,44 @@ export function ClipDetailModal({
         [onClose]
     );
 
-    // Handle edit button click
     const handleEdit = React.useCallback(() => {
         if (clipId) {
             onEdit(clipId);
         }
     }, [clipId, onEdit]);
 
-    // Don't render if no clipId
+    const handleDownload = React.useCallback(() => {
+        if (clip?.storageUrl) {
+            const link = document.createElement('a');
+            link.href = clip.storageUrl;
+            link.download = `${clip.title || 'clip'}.mp4`;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+    }, [clip]);
+
+    // Keyboard navigation
+    React.useEffect(() => {
+        const handleKeyDown = (e: KeyboardEvent) => {
+            if (!isOpen) return;
+
+            if (e.key === 'ArrowLeft' && hasPrevious && onPrevious) {
+                e.preventDefault();
+                onPrevious();
+            } else if (e.key === 'ArrowRight' && hasNext && onNext) {
+                e.preventDefault();
+                onNext();
+            } else if (e.key === 'd' && clip?.storageUrl) {
+                e.preventDefault();
+                handleDownload();
+            }
+        };
+
+        window.addEventListener('keydown', handleKeyDown);
+        return () => window.removeEventListener('keydown', handleKeyDown);
+    }, [isOpen, hasPrevious, hasNext, onPrevious, onNext, clip, handleDownload]);
+
     if (!clipId) {
         return null;
     }
@@ -387,7 +254,7 @@ export function ClipDetailModal({
         <Dialog open={isOpen} onOpenChange={handleOpenChange}>
             <DialogContent
                 className={cn(
-                    "!max-w-6xl sm:!max-w-4xl max-h-[90vh] overflow-y-auto w-full",
+                    "max-w-4xl! w-full max-h-[90vh] overflow-hidden p-0",
                     className
                 )}
                 showCloseButton={false}
@@ -407,111 +274,197 @@ export function ClipDetailModal({
 
                 {/* Content */}
                 {clip && !isLoading && !error && (
-                    <div className="flex flex-col gap-4">
-                        {/* Header with title and close button */}
-                        <ModalHeader title={clip.title} onClose={onClose} />
-
-                        {/* Hidden description for accessibility */}
-                        <DialogDescription className="sr-only" id="clip-modal-description">
-                            Details for clip: {clip.title}. Viral score: {clip.viralityScore} out of 100.
-                        </DialogDescription>
-
-                        {/* Main content: Video left, Info right */}
-                        <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
-                            {/* Left: Video Player */}
-                            <div
-                                className="aspect-video w-full h-full rounded-lg bg-muted flex items-center justify-center"
-                                data-testid="video-player-placeholder"
-                                aria-label="Video player"
+                    <div className="flex flex-col">
+                        {/* Header */}
+                        <div className="flex items-start justify-between gap-4 border-b px-6 py-4">
+                            <div className="min-w-0 flex-1">
+                                <DialogHeader>
+                                    <DialogTitle className="text-xl font-semibold leading-tight">
+                                        {clip.title}
+                                    </DialogTitle>
+                                </DialogHeader>
+                                <DialogDescription className="sr-only" id="clip-modal-description">
+                                    Details for clip: {clip.title}
+                                </DialogDescription>
+                            </div>
+                            <Button
+                                variant="ghost"
+                                size="icon"
+                                onClick={onClose}
+                                className="shrink-0 rounded-full"
+                                aria-label="Close modal"
                             >
+                                <IconX className="size-5" />
+                            </Button>
+                        </div>
+
+                        {/* Main Content */}
+                        <div className="grid grid-cols-1 lg:grid-cols-2 overflow-y-auto max-h-[calc(90vh-200px)]">
+                            {/* Left: Video Player */}
+                            <div className="bg-black flex items-center justify-center p-6">
                                 {clip.storageUrl ? (
                                     <video
                                         src={clip.storageUrl}
                                         poster={clip.thumbnailUrl}
                                         controls
-                                        className="w-full h-full rounded-lg object-contain"
+                                        className="w-full max-h-[60vh] rounded-lg object-contain"
                                         aria-label={`Video: ${clip.title}`}
                                     >
                                         Your browser does not support the video tag.
                                     </video>
                                 ) : (
-                                    <div className="text-center text-muted-foreground">
-                                        <IconLoader2 className="size-8 mx-auto mb-2 animate-spin" />
+                                    <div className="flex flex-col items-center justify-center text-muted-foreground py-20">
+                                        <IconLoader2 className="size-10 animate-spin mb-3" />
                                         <p className="text-sm">Video loading...</p>
                                     </div>
                                 )}
                             </div>
 
-                            {/* Right: Info */}
-                            <div className="flex flex-col gap-4">
-                                {/* Metadata (score, duration, hooks) */}
-                                <ClipMetadata clip={clip} />
+                            {/* Right: Info Panel */}
+                            <div className="flex flex-col gap-5 p-6 overflow-y-auto">
+                                {/* Stats Row */}
+                                <div className="flex flex-wrap items-center gap-3">
+                                    {/* Viral Score */}
+                                    <div className={cn(
+                                        "flex items-center gap-2 rounded-full px-3 py-1.5",
+                                        getScoreBgColor(clip.viralityScore)
+                                    )}>
+                                        <IconFlame className={cn("size-4", getScoreColor(clip.viralityScore))} />
+                                        <span className={cn("font-bold", getScoreColor(clip.viralityScore))}>
+                                            {clip.viralityScore}
+                                        </span>
+                                        <span className="text-muted-foreground text-sm">/100</span>
+                                    </div>
 
-                                {/* Description / Virality Reason */}
-                                <ClipDescription description={clip.viralityReason} />
+                                    {/* Duration */}
+                                    <div className="flex items-center gap-1.5 text-muted-foreground">
+                                        <IconClock className="size-4" />
+                                        <span className="text-sm font-medium">{formatDuration(clip.duration)}</span>
+                                    </div>
+                                </div>
 
-                                {/* Viral Analysis Section */}
-                                {clip.viralityReason && (
-                                    <div
-                                        className="rounded-lg border bg-muted/50 p-4 space-y-2"
-                                        data-testid="viral-analysis-section"
-                                    >
-                                        <h4 className="text-sm font-medium flex items-center gap-2">
-                                            <IconFlame className="size-4 text-orange-500" />
-                                            Why This Clip is Viral
-                                        </h4>
-                                        <p className="text-sm text-muted-foreground leading-relaxed">
-                                            {clip.viralityReason}
-                                        </p>
-
-                                        {/* Emotions */}
-                                        {clip.emotions.length > 0 && (
-                                            <div className="flex flex-wrap gap-1 pt-2">
-                                                <span className="text-xs text-muted-foreground mr-1">Emotions:</span>
-                                                {clip.emotions.map((emotion, index) => (
-                                                    <Badge
-                                                        key={`emotion-${index}`}
-                                                        variant="secondary"
-                                                        className="text-xs"
-                                                    >
-                                                        {emotion}
-                                                    </Badge>
-                                                ))}
-                                            </div>
-                                        )}
+                                {/* Hooks */}
+                                {clip.hooks.length > 0 && (
+                                    <div className="flex flex-wrap gap-2">
+                                        {clip.hooks.map((hook, index) => (
+                                            <span
+                                                key={index}
+                                                className="rounded-full bg-muted px-3 py-1 text-sm"
+                                            >
+                                                {hook}
+                                            </span>
+                                        ))}
                                     </div>
                                 )}
 
-                                {/* Recommended Platforms Section */}
+                                {/* Why This Clip is Viral */}
+                                {clip.viralityReason && (
+                                    <div className="rounded-xl bg-gradient-to-br from-orange-500/10 to-red-500/10 p-4">
+                                        <div className="flex items-center gap-2 mb-2">
+                                            <IconSparkles className="size-4 text-orange-500" />
+                                            <h4 className="font-semibold text-sm">Why This Clip is Viral</h4>
+                                        </div>
+                                        <p className="text-sm text-muted-foreground leading-relaxed">
+                                            {clip.viralityReason}
+                                        </p>
+                                    </div>
+                                )}
+
+                                {/* Emotions */}
+                                {clip.emotions.length > 0 && (
+                                    <div>
+                                        <div className="flex items-center gap-2 mb-2">
+                                            <IconMoodSmile className="size-4 text-muted-foreground" />
+                                            <h4 className="font-medium text-sm text-muted-foreground">Emotions</h4>
+                                        </div>
+                                        <div className="flex flex-wrap gap-2">
+                                            {clip.emotions.map((emotion, index) => (
+                                                <span
+                                                    key={index}
+                                                    className="rounded-full bg-primary/10 px-3 py-1 text-sm text-primary"
+                                                >
+                                                    {emotion}
+                                                </span>
+                                            ))}
+                                        </div>
+                                    </div>
+                                )}
+
+                                {/* Recommended Platforms */}
                                 {clip.recommendedPlatforms && clip.recommendedPlatforms.length > 0 && (
-                                    <div
-                                        className="rounded-lg border bg-muted/50 p-4 space-y-2"
-                                        data-testid="recommended-platforms-section"
-                                    >
-                                        <h4 className="text-sm font-medium">Best Platforms for This Clip</h4>
+                                    <div>
+                                        <div className="flex items-center gap-2 mb-2">
+                                            <IconShare className="size-4 text-muted-foreground" />
+                                            <h4 className="font-medium text-sm text-muted-foreground">Best Platforms</h4>
+                                        </div>
                                         <div className="flex flex-wrap gap-2">
                                             {clip.recommendedPlatforms.map((platform) => {
                                                 const config = PLATFORM_CONFIG[platform];
                                                 if (!config) return null;
                                                 const Icon = config.icon;
                                                 return (
-                                                    <Badge
+                                                    <div
                                                         key={platform}
-                                                        variant="outline"
-                                                        className="flex items-center gap-1.5 px-3 py-1.5"
+                                                        className="flex items-center gap-2 rounded-lg border px-3 py-2"
                                                     >
-                                                        <Icon className={cn("size-4", config.color)} />
-                                                        {config.label}
-                                                    </Badge>
+                                                        <Icon className={cn("size-5", config.color)} />
+                                                        <span className="text-sm font-medium">{config.label}</span>
+                                                    </div>
                                                 );
                                             })}
                                         </div>
                                     </div>
                                 )}
-
-                                {/* Actions */}
-                                <ModalActions clipId={clip.id} onEdit={handleEdit} />
                             </div>
+                        </div>
+
+                        {/* Footer Navigation Bar */}
+                        <div className="flex items-center justify-between gap-3 border-t bg-muted/30 px-4 py-3">
+                            {/* Previous Button */}
+                            <Button
+                                variant="outline"
+                                onClick={onPrevious}
+                                disabled={!hasPrevious}
+                                className="gap-2"
+                            >
+                                <IconChevronLeft className="size-4" />
+                                Previous
+                            </Button>
+
+                            {/* Center Actions */}
+                            <div className="flex items-center gap-2">
+                                <Button
+                                    variant="outline"
+                                    onClick={handleEdit}
+                                    className="gap-2"
+                                >
+                                    <IconEdit className="size-4" />
+                                    Edit
+                                </Button>
+
+                                <Button
+                                    onClick={handleDownload}
+                                    disabled={!clip.storageUrl}
+                                    className="gap-2 bg-green-600 hover:bg-green-700 text-white"
+                                >
+                                    <IconDownload className="size-4" />
+                                    Download
+                                    <kbd className="ml-1 rounded bg-green-700/50 px-1.5 py-0.5 text-[10px] font-medium">
+                                        d
+                                    </kbd>
+                                </Button>
+                            </div>
+
+                            {/* Next Button */}
+                            <Button
+                                variant="outline"
+                                onClick={onNext}
+                                disabled={!hasNext}
+                                className="gap-2"
+                            >
+                                Next
+                                <IconChevronRight className="size-4" />
+                            </Button>
                         </div>
                     </div>
                 )}

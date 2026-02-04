@@ -1,6 +1,6 @@
 "use client";
 
-import { use, useCallback } from "react";
+import { use, useCallback, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import {
     IconArrowLeft,
@@ -11,12 +11,11 @@ import {
     IconClock,
     IconHeartFilled,
     IconScissors,
+    IconPlayerPlayFilled,
 } from "@tabler/icons-react";
 
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Badge } from "@/components/ui/badge";
-import { Card, CardContent } from "@/components/ui/card";
 import { ClipDetailModal, useClipModalUrlState } from "@/components/clips/clip-detail-modal";
 import { useVideo } from "@/hooks/useVideo";
 import { useClipsByVideo } from "@/hooks/useClips";
@@ -222,21 +221,27 @@ interface ClipCardProps {
 }
 
 function ClipCard({ clip, onClick }: ClipCardProps) {
-    const thumbnailUrl = clip.storageUrl || clip.thumbnailUrl;
     const scoreColorClass = getScoreColor(clip.viralityScore);
 
     return (
-        <Card
-            className="group cursor-pointer overflow-hidden transition-all hover:shadow-lg hover:ring-2 hover:ring-primary/20"
+        <div
+            className="group cursor-pointer"
             onClick={onClick}
         >
             {/* Thumbnail */}
-            <div className="relative aspect-video bg-muted">
-                {thumbnailUrl ? (
+            <div className="relative aspect-video overflow-hidden rounded-lg bg-muted">
+                {clip.thumbnailUrl ? (
                     <img
-                        src={thumbnailUrl}
+                        src={clip.thumbnailUrl}
                         alt={clip.title}
-                        className="h-full w-full object-cover transition-transform group-hover:scale-105"
+                        className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
+                    />
+                ) : clip.storageUrl ? (
+                    <video
+                        src={clip.storageUrl}
+                        className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
+                        muted
+                        preload="metadata"
                     />
                 ) : (
                     <div className="flex h-full w-full items-center justify-center">
@@ -244,39 +249,45 @@ function ClipCard({ clip, onClick }: ClipCardProps) {
                     </div>
                 )}
 
-                {/* Duration badge */}
-                <div className="absolute right-2 bottom-2 flex items-center gap-1 rounded bg-black/70 px-1.5 py-0.5 text-white text-xs">
+                {/* Gradient overlay */}
+                <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent opacity-60 transition-opacity group-hover:opacity-80" />
+
+                {/* Play button on hover */}
+                <div className="absolute inset-0 flex items-center justify-center opacity-0 transition-opacity group-hover:opacity-100">
+                    <div className="flex size-11 items-center justify-center rounded-full bg-white/95 shadow-lg">
+                        <IconPlayerPlayFilled className="size-5 text-black" />
+                    </div>
+                </div>
+
+                {/* Viral score - top left */}
+                <div className={cn(
+                    "absolute left-2 top-2 flex items-center gap-1 rounded-md px-1.5 py-0.5 text-xs font-semibold",
+                    scoreColorClass
+                )}>
+                    <IconFlame className="size-3" />
+                    {clip.viralityScore}
+                </div>
+
+                {/* Favorite indicator - top right */}
+                {clip.favorited && (
+                    <IconHeartFilled className="absolute right-2 top-2 size-5 text-red-500 drop-shadow-lg" />
+                )}
+
+                {/* Duration - bottom right */}
+                <div className="absolute right-2 bottom-2 flex items-center gap-1 rounded-md bg-black/80 px-1.5 py-0.5 text-xs font-medium text-white">
                     <IconClock className="size-3" />
                     {formatDuration(clip.duration)}
                 </div>
-
-                {/* Viral score badge */}
-                <Badge
-                    className={cn(
-                        "absolute left-2 top-2 flex items-center gap-1",
-                        scoreColorClass
-                    )}
-                >
-                    <IconFlame className="size-3" />
-                    {clip.viralityScore}
-                </Badge>
-
-                {/* Favorite indicator */}
-                {clip.favorited && (
-                    <div className="absolute right-2 top-2">
-                        <IconHeartFilled className="size-5 text-red-500 drop-shadow-md" />
-                    </div>
-                )}
             </div>
 
             {/* Content */}
-            <CardContent className="p-3">
-                <h3 className="line-clamp-2 font-medium text-sm leading-tight">
+            <div className="mt-2 px-0.5">
+                <h3 className="line-clamp-2 text-sm font-medium leading-snug group-hover:text-primary">
                     {clip.title}
                 </h3>
 
                 {clip.viralityReason && (
-                    <p className="mt-1 line-clamp-2 text-muted-foreground text-xs">
+                    <p className="mt-1 line-clamp-2 text-xs text-muted-foreground">
                         {clip.viralityReason}
                     </p>
                 )}
@@ -284,19 +295,19 @@ function ClipCard({ clip, onClick }: ClipCardProps) {
                 {clip.hooks.length > 0 && (
                     <div className="mt-2 flex flex-wrap gap-1">
                         {clip.hooks.slice(0, 2).map((hook, i) => (
-                            <Badge key={i} variant="outline" className="text-[10px]">
+                            <span key={i} className="rounded-full bg-muted px-2 py-0.5 text-[10px] text-muted-foreground">
                                 {hook}
-                            </Badge>
+                            </span>
                         ))}
                         {clip.hooks.length > 2 && (
-                            <Badge variant="outline" className="text-[10px] text-muted-foreground">
+                            <span className="rounded-full bg-muted px-2 py-0.5 text-[10px] text-muted-foreground">
                                 +{clip.hooks.length - 2}
-                            </Badge>
+                            </span>
                         )}
                     </div>
                 )}
-            </CardContent>
-        </Card>
+            </div>
+        </div>
     );
 }
 
@@ -318,6 +329,15 @@ export default function VideoClipsPage({ params }: VideoClipsPageProps) {
         error: clipsError,
     } = useClipsByVideo(videoId);
 
+    // Navigation helpers
+    const currentClipIndex = useMemo(() => {
+        if (!clips || !selectedClipId) return -1;
+        return clips.findIndex(clip => clip.id === selectedClipId);
+    }, [clips, selectedClipId]);
+
+    const hasPrevious = currentClipIndex > 0;
+    const hasNext = clips ? currentClipIndex < clips.length - 1 : false;
+
     const handleBack = useCallback(() => {
         router.push(`/${slug}`);
     }, [router, slug]);
@@ -335,6 +355,18 @@ export default function VideoClipsPage({ params }: VideoClipsPageProps) {
         },
         [router, slug]
     );
+
+    const handlePrevious = useCallback(() => {
+        if (clips && currentClipIndex > 0) {
+            openModal(clips[currentClipIndex - 1].id);
+        }
+    }, [clips, currentClipIndex, openModal]);
+
+    const handleNext = useCallback(() => {
+        if (clips && currentClipIndex < clips.length - 1) {
+            openModal(clips[currentClipIndex + 1].id);
+        }
+    }, [clips, currentClipIndex, openModal]);
 
     if (videoLoading || clipsLoading) {
         return <VideoClipsLoading />;
@@ -403,6 +435,10 @@ export default function VideoClipsPage({ params }: VideoClipsPageProps) {
                 isOpen={isOpen}
                 onClose={closeModal}
                 onEdit={handleEditClip}
+                onPrevious={handlePrevious}
+                onNext={handleNext}
+                hasPrevious={hasPrevious}
+                hasNext={hasNext}
             />
         </div>
     );

@@ -120,8 +120,12 @@ export const videoApi = {
   },
 
   // Get user's videos (lite version for grid display)
-  getMyVideos: async (workspaceId: string): Promise<VideoLite[]> => {
-    const response = await api.get<VideoLite[]>(`/api/videos/my-videos?workspaceId=${workspaceId}`);
+  getMyVideos: async (workspaceId: string, filter?: string): Promise<VideoLite[]> => {
+    const params = new URLSearchParams({ workspaceId });
+    if (filter) {
+      params.set("filter", filter);
+    }
+    const response = await api.get<VideoLite[]>(`/api/videos/my-videos?${params.toString()}`);
     return response.data;
   },
 

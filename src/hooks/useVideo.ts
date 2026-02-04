@@ -70,10 +70,10 @@ export const videoKeys = {
  * Get user's videos for a workspace
  * Requirements: 30.4
  */
-export function useMyVideos(workspaceId: string, enabled = true) {
+export function useMyVideos(workspaceId: string, enabled = true, filter?: string) {
   return useQuery({
-    queryKey: videoKeys.myVideos(workspaceId),
-    queryFn: () => videoApi.getMyVideos(workspaceId),
+    queryKey: [...videoKeys.myVideos(workspaceId), filter],
+    queryFn: () => videoApi.getMyVideos(workspaceId, filter),
     enabled: enabled && !!workspaceId,
     retry: (failureCount, error) => {
       // Don't retry on auth errors

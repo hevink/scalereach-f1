@@ -125,9 +125,6 @@ export function ClipListItem({
 }: ClipListItemProps) {
     const scoreColorClass = getScoreColor(clip.viralityScore);
 
-    // Use thumbnail URL if available, otherwise fall back to video URL
-    const thumbnailUrl = clip.thumbnailUrl || clip.storageUrl;
-
     return (
         <div
             data-testid="clip-list-item"
@@ -157,11 +154,19 @@ export function ClipListItem({
                 className="relative h-16 w-28 shrink-0 overflow-hidden rounded bg-muted"
                 data-testid="clip-thumbnail"
             >
-                {thumbnailUrl ? (
+                {clip.thumbnailUrl ? (
                     <img
-                        src={thumbnailUrl}
+                        src={clip.thumbnailUrl}
                         alt={`Thumbnail for clip: ${clip.title}`}
                         className="h-full w-full object-cover"
+                    />
+                ) : clip.storageUrl ? (
+                    <video
+                        src={clip.storageUrl}
+                        className="h-full w-full object-cover"
+                        muted
+                        preload="metadata"
+                        aria-label={`Video preview for clip: ${clip.title}`}
                     />
                 ) : (
                     <div

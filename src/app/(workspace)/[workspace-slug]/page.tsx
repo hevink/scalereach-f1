@@ -72,9 +72,10 @@ export default function WorkspacePage({ params }: WorkspacePageProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const uploadToProject = searchParams.get("uploadToProject");
+  const statusFilter = searchParams.get("filter") || undefined;
   const { data: session, isPending: sessionPending } = useSession();
   const { data: workspace, isLoading: workspaceLoading, error } = useWorkspaceBySlug(slug);
-  const { data: videos, isLoading: videosLoading, error: videosError } = useMyVideos(workspace?.id || "", !!session?.user && !!workspace?.id);
+  const { data: videos, isLoading: videosLoading, error: videosError } = useMyVideos(workspace?.id || "", !!session?.user && !!workspace?.id, statusFilter);
 
   const queryClient = useQueryClient();
 
