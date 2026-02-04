@@ -74,6 +74,8 @@ export interface SubmitVideoWithConfigRequest {
     clipDurationMax?: number;
     timeframeStart?: number;
     timeframeEnd?: number | null;
+    // Language Settings
+    language?: string | null; // null or 'auto' = auto-detect
     enableAutoHook?: boolean;
     customPrompt?: string;
     topicKeywords?: string[];

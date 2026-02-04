@@ -1,5 +1,25 @@
 import { api } from "../axios";
 
+// Supported languages for transcription (matches Deepgram)
+export const SUPPORTED_LANGUAGES = {
+  auto: "Auto-detect",
+  en: "English",
+  es: "Spanish",
+  fr: "French",
+  de: "German",
+  it: "Italian",
+  pt: "Portuguese",
+  nl: "Dutch",
+  ja: "Japanese",
+  ko: "Korean",
+  zh: "Chinese",
+  ru: "Russian",
+  ar: "Arabic",
+  hi: "Hindi",
+} as const;
+
+export type SupportedLanguageCode = keyof typeof SUPPORTED_LANGUAGES;
+
 export interface VideoConfigInput {
   skipClipping?: boolean;
   clipModel?: "ClipBasic" | "ClipPro";
@@ -8,6 +28,8 @@ export interface VideoConfigInput {
   clipDurationMax?: number;
   timeframeStart?: number;
   timeframeEnd?: number | null;
+  // Language Settings
+  language?: SupportedLanguageCode | null; // null or 'auto' = auto-detect
   enableAutoHook?: boolean;
   customPrompt?: string;
   topicKeywords?: string[];
@@ -115,6 +137,7 @@ export const DEFAULT_VIDEO_CONFIG: VideoConfigInput = {
   clipDurationMax: 90,
   timeframeStart: 0,
   timeframeEnd: null,
+  language: "auto", // Auto-detect by default
   enableAutoHook: true,
   customPrompt: "",
   topicKeywords: [],

@@ -13,6 +13,7 @@ import {
     IconSubtask,
     IconMoodSmile,
     IconTypography,
+    IconLanguage,
 } from "@tabler/icons-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -29,6 +30,14 @@ import type { VideoInfo } from "@/lib/api/video";
 import { CaptionTemplateGrid } from "@/components/configure/caption-template-grid";
 import { AspectRatioSelector } from "@/components/configure/aspect-ratio-selector";
 import { YouTubeIcon } from "@/components/icons/youtube-icon";
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from "@/components/ui/select";
+import { SUPPORTED_LANGUAGES, type SupportedLanguageCode } from "@/lib/api/video-config";
 
 const YOUTUBE_URL_PATTERNS = [
     /^(https?:\/\/)?(www\.)?youtube\.com\/watch\?v=([a-zA-Z0-9_-]{11})/,
@@ -108,6 +117,7 @@ export default function ConfigurePage() {
                 genre: config.genre,
                 clipDurationMin: config.clipDurationMin || 15,
                 clipDurationMax: config.clipDurationMax || 90,
+                language: config.language,
                 captionTemplateId: config.captionTemplateId,
                 aspectRatio: config.aspectRatio,
                 enableCaptions: config.enableCaptions,
@@ -139,6 +149,7 @@ export default function ConfigurePage() {
                 genre: config.genre,
                 clipDurationMin: config.clipDurationMin || 15,
                 clipDurationMax: config.clipDurationMax || 90,
+                language: config.language,
                 captionTemplateId: config.captionTemplateId,
                 aspectRatio: config.aspectRatio,
                 enableCaptions: config.enableCaptions,
@@ -406,6 +417,35 @@ export default function ConfigurePage() {
                                     onChange={(ratio) => updateConfig({ aspectRatio: ratio })}
                                     disabled={isSubmitting}
                                 />
+                            </div>
+
+                            {/* Language Section */}
+                            <div className="space-y-4 border-t pt-6">
+                                <div>
+                                    <h3 className="font-semibold">Language</h3>
+                                    <p className="text-muted-foreground text-sm">
+                                        Select the spoken language for better transcription accuracy
+                                    </p>
+                                </div>
+                                <div className="flex items-center gap-3">
+                                    <IconLanguage className="size-5 text-muted-foreground" />
+                                    <Select
+                                        value={config.language ?? "auto"}
+                                        onValueChange={(value) => updateConfig({ language: value as SupportedLanguageCode })}
+                                        disabled={isSubmitting}
+                                    >
+                                        <SelectTrigger className="w-full max-w-xs">
+                                            <SelectValue placeholder="Select language" />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            {Object.entries(SUPPORTED_LANGUAGES).map(([code, name]) => (
+                                                <SelectItem key={code} value={code}>
+                                                    {name}
+                                                </SelectItem>
+                                            ))}
+                                        </SelectContent>
+                                    </Select>
+                                </div>
                             </div>
 
                             {/* Editing Options Section */}
