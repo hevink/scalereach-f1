@@ -101,6 +101,37 @@ export interface ClipStatusResponse {
   };
 }
 
+// Helper to transform backend clip response to frontend format
+function transformClipResponse(clip: any): ClipResponse {
+  // Handle score - backend uses 'score', frontend expects 'viralityScore'
+  const viralityScore = typeof clip.score === 'number' ? clip.score : 
+                        typeof clip.viralityScore === 'number' ? clip.viralityScore : 0;
+  
+  return {
+    id: clip.id,
+    videoId: clip.videoId,
+    title: clip.title,
+    startTime: clip.startTime,
+    endTime: clip.endTime,
+    duration: clip.duration,
+    transcript: clip.transcript,
+    viralityScore,
+    viralityReason: clip.viralityReason || clip.reason || "",
+    hooks: clip.hooks || [],
+    emotions: clip.emotions || [],
+    recommendedPlatforms: clip.recommendedPlatforms,
+    thumbnailUrl: clip.thumbnailUrl,
+    storageKey: clip.storageKey,
+    storageUrl: clip.storageUrl || clip.downloadUrl,
+    aspectRatio: clip.aspectRatio,
+    favorited: clip.favorited ?? false,
+    status: clip.status,
+    errorMessage: clip.errorMessage,
+    createdAt: clip.createdAt,
+    updatedAt: clip.updatedAt,
+  };
+}
+
 export const clipsApi = {
   /**
    * Get all clips for a video with optional filtering and sorting
@@ -128,15 +159,15 @@ export const clipsApi = {
     const url = `/api/videos/${videoId}/clips${queryString ? `?${queryString}` : ""}`;
     
     const response = await api.get<ClipsListResponse>(url);
-    return response.data.clips;
+    return response.data.clips.map(transformClipResponse);
   },
 
   /**
    * Get a single clip by ID
    */
   getClipById: async (clipId: string): Promise<ClipResponse> => {
-    const response = await api.get<ClipResponse>(`/api/clips/${clipId}`);
-    return response.data;
+    const response = await api.get(`/api/clips/${clipId}`);
+    return transformClipResponse(response.data);
   },
 
   /**
