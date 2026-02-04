@@ -18,9 +18,10 @@ import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ClipDetailModal, useClipModalUrlState } from "@/components/clips/clip-detail-modal";
 import { useVideo } from "@/hooks/useVideo";
-import { useClipsByVideo } from "@/hooks/useClips";
+import { useClipsByVideo, useToggleFavorite } from "@/hooks/useClips";
 import { cn } from "@/lib/utils";
 import type { ClipResponse } from "@/lib/api/clips";
+import { IconHeart } from "@tabler/icons-react";
 
 interface VideoClipsPageProps {
     params: Promise<{ "workspace-slug": string; id: string }>;
@@ -218,9 +219,10 @@ function NoClips({ videoTitle, videoStatus }: NoClipsProps) {
 interface ClipCardProps {
     clip: ClipResponse;
     onClick: () => void;
+    onFavorite: (e: React.MouseEvent) => void;
 }
 
-function ClipCard({ clip, onClick }: ClipCardProps) {
+function ClipCard({ clip, onClick, onFavorite }: ClipCardProps) {
     const scoreColorClass = getScoreColor(clip.viralityScore);
 
     return (
@@ -268,10 +270,23 @@ function ClipCard({ clip, onClick }: ClipCardProps) {
                     {clip.viralityScore}
                 </div>
 
-                {/* Favorite indicator - top right */}
-                {clip.favorited && (
-                    <IconHeartFilled className="absolute right-2 top-2 size-5 text-red-500 drop-shadow-lg" />
-                )}
+                {/* Favorite button - top right */}
+                <button
+                    onClick={onFavorite}
+                    className={cn(
+                        "absolute right-2 top-2 flex size-8 items-center justify-center rounded-full transition-all",
+                        clip.favorited
+                            ? "bg-red-500 text-white"
+                            : "bg-black/50 text-white opacity-0 group-hover:opacity-100 hover:bg-black/70"
+                    )}
+                    aria-label={clip.favorited ? "Remove from favorites" : "Add to favorites"}
+                >
+                    {clip.favorited ? (
+                        <IconHeartFilled className="size-4" />
+                    ) : (
+                        <IconHeart className="size-4" />
+                    )}
+                </button>
 
                 {/* Duration - bottom right */}
                 <div className="absolute right-2 bottom-2 flex items-center gap-1 rounded-md bg-black/80 px-1.5 py-0.5 text-xs font-medium text-white">
@@ -329,6 +344,8 @@ export default function VideoClipsPage({ params }: VideoClipsPageProps) {
         error: clipsError,
     } = useClipsByVideo(videoId);
 
+    const toggleFavorite = useToggleFavorite();
+
     // Navigation helpers
     const currentClipIndex = useMemo(() => {
         if (!clips || !selectedClipId) return -1;
@@ -354,6 +371,14 @@ export default function VideoClipsPage({ params }: VideoClipsPageProps) {
             router.push(`/${slug}/clips/${clipId}`);
         },
         [router, slug]
+    );
+
+    const handleFavorite = useCallback(
+        (e: React.MouseEvent, clipId: string) => {
+            e.stopPropagation();
+            toggleFavorite.mutate(clipId);
+        },
+        [toggleFavorite]
     );
 
     const handlePrevious = useCallback(() => {
@@ -423,6 +448,7 @@ export default function VideoClipsPage({ params }: VideoClipsPageProps) {
                                 key={clip.id}
                                 clip={clip}
                                 onClick={() => handleClipSelect(clip.id)}
+                                onFavorite={(e) => handleFavorite(e, clip.id)}
                             />
                         ))}
                     </div>
