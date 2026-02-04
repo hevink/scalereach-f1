@@ -1,34 +1,21 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { AuthLayout } from "@/components/authentication/auth-layout";
 import { TwoFactorVerify } from "@/components/authentication/two-factor-verify";
 import { Spinner } from "@/components/ui/spinner";
+import { useSession } from "@/lib/auth-client";
 
 export default function TwoFactorVerifyPage() {
   const router = useRouter();
-  const [isPending, setIsPending] = useState(true);
-  const [user, setUser] = useState<{ id: string; twoFactorEnabled?: boolean } | null>(null);
+  const { data: session, isPending } = useSession();
 
   useEffect(() => {
-    const checkSession = async () => {
-      try {
-        const response = await fetch("/api/auth/session");
-        const data = await response.json();
-        setUser(data.user);
-        if (data.user && !data.user.twoFactorEnabled) {
-          router.replace("/workspaces");
-        }
-      } catch (error) {
-        console.error("Failed to check session:", error);
-        setUser(null);
-      } finally {
-        setIsPending(false);
-      }
-    };
-    checkSession();
-  }, [router]);
+    if (!isPending && session?.user && !session.user.twoFactorEnabled) {
+      router.replace("/workspaces");
+    }
+  }, [isPending, session, router]);
 
   if (isPending) {
     return (
@@ -38,7 +25,7 @@ export default function TwoFactorVerifyPage() {
     );
   }
 
-  if (user && !user.twoFactorEnabled) return null;
+  if (session?.user && !session.user.twoFactorEnabled) return null;
 
   return (
     <AuthLayout title="Two-factor authentication" subtitle="Enter the code from your authenticator app">

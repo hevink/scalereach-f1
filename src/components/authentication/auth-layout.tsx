@@ -6,6 +6,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { Spinner } from "@/components/ui/spinner";
 import { LogoIcon } from "@/components/ui/logo";
+import { useSession } from "@/lib/auth-client";
 
 const PLATFORMS = [
   { name: "TikTok", logo: "/model/tiktok.svg" },
@@ -22,28 +23,14 @@ interface AuthLayoutProps {
 
 export function AuthLayout({ children, title, subtitle }: AuthLayoutProps) {
   const router = useRouter();
-  const [isPending, setIsPending] = useState(true);
-  const [user, setUser] = useState<{ id: string } | null>(null);
+  const { data: session, isPending } = useSession();
   const [currentModelIndex, setCurrentModelIndex] = useState(0);
 
   useEffect(() => {
-    const checkSession = async () => {
-      try {
-        const response = await fetch("/api/auth/session");
-        const data = await response.json();
-        setUser(data.user);
-        if (data.user) {
-          router.replace("/workspaces");
-        }
-      } catch (error) {
-        console.error("Failed to check session:", error);
-        setUser(null);
-      } finally {
-        setIsPending(false);
-      }
-    };
-    checkSession();
-  }, [router]);
+    if (!isPending && session?.user) {
+      router.replace("/workspaces");
+    }
+  }, [isPending, session, router]);
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -60,7 +47,7 @@ export function AuthLayout({ children, title, subtitle }: AuthLayoutProps) {
     );
   }
 
-  if (user) return null;
+  if (session?.user) return null;
 
   const currentPlatform = PLATFORMS[currentModelIndex];
 
