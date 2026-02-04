@@ -86,7 +86,7 @@ export default function WorkspacePage({ params }: WorkspacePageProps) {
   const uppyRef = useRef<Uppy | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const uploadSectionRef = useRef<HTMLDivElement>(null);
-  const videoIdsRef = useRef<Map<string, string>>(new Map());
+  const videoIdsRef = useRef<Map<string, { videoId: string; key: string }>>(new Map());
   const workspaceRef = useRef<typeof workspace>(workspace);
 
   // Keep workspaceRef in sync
@@ -149,7 +149,7 @@ export default function WorkspacePage({ params }: WorkspacePageProps) {
         });
         if (!response.ok) throw new Error("Failed to create upload");
         const data = await response.json();
-        videoIdsRef.current.set(file.id, data.videoId);
+        videoIdsRef.current.set(file.id, { videoId: data.videoId, key: data.key });
         return { uploadId: data.uploadId, key: data.key };
       },
       async signPart(_file, { uploadId, key, partNumber }) {
@@ -163,7 +163,8 @@ export default function WorkspacePage({ params }: WorkspacePageProps) {
         return response.json();
       },
       async completeMultipartUpload(file, { uploadId, key, parts }) {
-        const videoId = videoIdsRef.current.get(file.id);
+        const uploadInfo = videoIdsRef.current.get(file.id);
+        const videoId = uploadInfo?.videoId;
         const response = await fetch(`${API_BASE_URL}/api/uppy/multipart/${uploadId}/complete?key=${encodeURIComponent(key)}`, {
           method: "POST", credentials: "include", headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ parts, videoId }),
@@ -183,7 +184,7 @@ export default function WorkspacePage({ params }: WorkspacePageProps) {
         });
         if (!response.ok) throw new Error("Failed to get upload URL");
         const data = await response.json();
-        videoIdsRef.current.set(file.id, data.videoId);
+        videoIdsRef.current.set(file.id, { videoId: data.videoId, key: data.key });
         const urlResponse = await fetch(`${API_BASE_URL}/api/uppy/presign?key=${encodeURIComponent(data.key)}&contentType=${encodeURIComponent(file.type || "video/mp4")}`, { method: "GET", credentials: "include" });
         if (!urlResponse.ok) throw new Error("Failed to get presigned URL");
         return { method: "PUT" as const, url: (await urlResponse.json()).url, headers: { "Content-Type": file.type || "video/mp4" } };
@@ -199,16 +200,40 @@ export default function WorkspacePage({ params }: WorkspacePageProps) {
       const percentage = progress.bytesTotal ? Math.round((progress.bytesUploaded / progress.bytesTotal) * 100) : 0;
       setFiles((prev) => prev.map((f) => f.id === file.id ? { ...f, progress: percentage, status: "uploading" } : f));
     });
-    uppy.on("upload-success", (file) => {
+    uppy.on("upload-success", async (file) => {
       if (!file) return;
       console.log("[UPPY] Upload success:", file.name);
+      const uploadInfo = videoIdsRef.current.get(file.id);
+      const videoId = uploadInfo?.videoId;
+      const key = uploadInfo?.key;
+
+      // For single-file uploads (non-multipart), we need to call the complete endpoint
+      // to update the video record with the storage key
+      if (videoId && key && file.size && file.size < 100 * 1024 * 1024) {
+        try {
+          await fetch(`${API_BASE_URL}/api/uppy/complete`, {
+            method: "POST",
+            credentials: "include",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ videoId, key }),
+          });
+        } catch (err) {
+          console.error("[UPPY] Failed to complete upload:", err);
+        }
+      }
+
       setFiles((prev) => prev.map((f) => f.id === file.id ? { ...f, progress: 100, status: "complete" } : f));
-      toast.success("Upload complete", { description: `${file.name} is now being processed` });
+      toast.success("Upload complete", { description: "Redirecting to configure your clips..." });
       queryClient.invalidateQueries({ queryKey: videoKeys.all });
+
+      // Redirect to configure page after a short delay
       setTimeout(() => {
         uppy.removeFile(file.id);
         setFiles((prev) => prev.filter((f) => f.id !== file.id));
-      }, 3000);
+        if (videoId) {
+          router.push(`/${slug}/configure?videoId=${videoId}`);
+        }
+      }, 1000);
     });
     uppy.on("upload-error", (file, error) => {
       if (!file) return;
