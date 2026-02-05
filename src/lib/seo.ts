@@ -22,6 +22,11 @@ export function constructMetadata({
   return {
     title,
     description,
+    icons: {
+      icon: "/favicon.svg",
+      shortcut: "/favicon.svg",
+      apple: "/favicon.svg",
+    },
     keywords: [
       "video clip generator",
       "AI video editor",
