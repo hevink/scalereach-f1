@@ -590,18 +590,18 @@ export function CaptionStylePanel({
         <ToggleButtonGroup
           disabled={disabled}
           label="Position"
-          onChange={(position) => updateStyle("position", position)}
+          onChange={(position) => updateStyle("position", position as CaptionPosition)}
           options={POSITION_OPTIONS}
-          value={localStyle.position}
+          value={localStyle.position ?? "bottom"}
         />
 
         {/* Alignment Selector - Requirement 13.6 */}
         <ToggleButtonGroup
           disabled={disabled}
           label="Alignment"
-          onChange={(alignment) => updateStyle("alignment", alignment)}
+          onChange={(alignment) => updateStyle("alignment", alignment as TextAlignment)}
           options={ALIGNMENT_OPTIONS}
-          value={localStyle.alignment}
+          value={localStyle.alignment ?? "center"}
         />
       </div>
 
