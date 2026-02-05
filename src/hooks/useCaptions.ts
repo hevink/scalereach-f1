@@ -176,7 +176,7 @@ export function useUpdateCaptionText() {
         throw new Error("Invalid caption segment ID");
       }
 
-      // Group words into segments (same logic as in the page component)
+      // Group words into segments (same logic as in the page component - max 5 words per line)
       const segments: { startIdx: number; endIdx: number; words: CaptionWord[] }[] = [];
       let currentWords: CaptionWord[] = [];
       let startIdx = 0;
@@ -184,7 +184,8 @@ export function useUpdateCaptionText() {
       for (let i = 0; i < currentData.words.length; i++) {
         currentWords.push(currentData.words[i]);
 
-        if (/[.!?]$/.test(currentData.words[i].word) || currentWords.length >= 10 || i === currentData.words.length - 1) {
+        // Match backend: max 5 words per line, or break on sentence-ending punctuation
+        if (/[.!?]$/.test(currentData.words[i].word) || currentWords.length >= 5 || i === currentData.words.length - 1) {
           segments.push({
             startIdx,
             endIdx: i,

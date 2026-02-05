@@ -459,9 +459,10 @@ export default function ClipEditorPage({ params }: ClipEditorPageProps) {
     const updateCaptionText = useUpdateCaptionText();
     const initiateExport = useInitiateExport();
 
-    // Convert words from API to Caption[] format for use in callbacks
-    // This is computed once when captionData changes
-    const captionsFromApi = useMemo((): Caption[] => {
+    // Convert words from API to Caption[] format for VIDEO OVERLAY
+    // Groups words into segments of max 5 words (matching backend ASS subtitle generation)
+    // This is used for the video preview caption overlay
+    const captionsForVideo = useMemo((): Caption[] => {
         const words = captionData?.words;
         if (!words || !Array.isArray(words) || words.length === 0) {
             return [];
@@ -479,9 +480,46 @@ export default function ClipEditorPage({ params }: ClipEditorPageProps) {
                 highlight: words[i].highlight || false,
             });
 
-            if (/[.!?]$/.test(words[i].word) || currentWords.length >= 10 || i === words.length - 1) {
+            // Match backend: max 5 words per line, or break on sentence-ending punctuation
+            if (/[.!?]$/.test(words[i].word) || currentWords.length >= 5 || i === words.length - 1) {
                 segments.push({
                     id: `caption-${segments.length}`,
+                    text: currentWords.map(w => w.word).join(" "),
+                    startTime: currentWords[0].start,
+                    endTime: currentWords[currentWords.length - 1].end,
+                    words: currentWords,
+                });
+                currentWords = [];
+            }
+        }
+        return segments;
+    }, [captionData?.words]);
+
+    // Convert words from API to Caption[] format for TRANSCRIPT PANEL
+    // Groups words into sentence-based paragraphs for better readability
+    // This is used for the left panel transcript editor
+    const captionsForTranscript = useMemo((): Caption[] => {
+        const words = captionData?.words;
+        if (!words || !Array.isArray(words) || words.length === 0) {
+            return [];
+        }
+
+        const segments: Caption[] = [];
+        let currentWords: CaptionWord[] = [];
+
+        for (let i = 0; i < words.length; i++) {
+            currentWords.push({
+                id: words[i].id || `word-${i}`,
+                word: words[i].word,
+                start: words[i].start,
+                end: words[i].end,
+                highlight: words[i].highlight || false,
+            });
+
+            // Break on sentence-ending punctuation for paragraph grouping
+            if (/[.!?]$/.test(words[i].word) || i === words.length - 1) {
+                segments.push({
+                    id: `paragraph-${segments.length}`,
                     text: currentWords.map(w => w.word).join(" "),
                     startTime: currentWords[0].start,
                     endTime: currentWords[currentWords.length - 1].end,
@@ -616,7 +654,8 @@ export default function ClipEditorPage({ params }: ClipEditorPageProps) {
      */
     const handleCaptionEdit = useCallback((segmentId: string, newText: string) => {
         // Get the current captions (either local state or from server)
-        const currentCaptions = localCaptions ?? captionsFromApi;
+        // Use transcript captions since editing happens in the transcript panel
+        const currentCaptions = localCaptions ?? captionsForVideo;
 
         // Find the original text for undo history
         const originalCaption = currentCaptions.find((caption: Caption) => caption.id === segmentId);
@@ -642,7 +681,7 @@ export default function ClipEditorPage({ params }: ClipEditorPageProps) {
             captionId: segmentId,
             text: newText,
         });
-    }, [localCaptions, captionsFromApi, clipId, updateCaptionText, setCaptionUndoState]);
+    }, [localCaptions, captionsForVideo, clipId, updateCaptionText, setCaptionUndoState]);
 
     /**
      * Handle manual style changes (not from preset selection)
@@ -798,7 +837,7 @@ export default function ClipEditorPage({ params }: ClipEditorPageProps) {
         if (!canUndo) return;
 
         // Get the current captions before undo
-        const currentCaptions = localCaptions ?? captionsFromApi;
+        const currentCaptions = localCaptions ?? captionsForVideo;
 
         // Perform undo - this will update captionUndoState to the previous state
         undoCaptionEdit();
@@ -807,7 +846,7 @@ export default function ClipEditorPage({ params }: ClipEditorPageProps) {
         // We need to apply it to the local captions
         // Note: The state update from undoCaptionEdit is async, so we use the current state
         // The effect below will handle applying the undone state
-    }, [canUndo, localCaptions, captionsFromApi, undoCaptionEdit]);
+    }, [canUndo, localCaptions, captionsForVideo, undoCaptionEdit]);
 
     /**
      * Handle redo action - restores the next caption text state
@@ -827,7 +866,7 @@ export default function ClipEditorPage({ params }: ClipEditorPageProps) {
         const { segmentId, text } = captionUndoState;
 
         // Get the current captions
-        const currentCaptions = localCaptions ?? captionsFromApi;
+        const currentCaptions = localCaptions ?? captionsForVideo;
 
         // Update the caption with the undone/redone text
         const updatedCaptions = currentCaptions.map((caption: Caption) => {
@@ -846,7 +885,7 @@ export default function ClipEditorPage({ params }: ClipEditorPageProps) {
             captionId: segmentId,
             text,
         });
-    }, [captionUndoState, localCaptions, captionsFromApi, clipId, updateCaptionText]);
+    }, [captionUndoState, localCaptions, captionsForVideo, clipId, updateCaptionText]);
 
     /**
      * Global keyboard shortcuts for the editing screen
@@ -974,8 +1013,11 @@ export default function ClipEditorPage({ params }: ClipEditorPageProps) {
     const thumbnailUrl = (video?.metadata?.thumbnail as string) || undefined;
     const videoDuration = video?.duration || clip.duration || 60;
 
-    // Always show caption overlay in editor (captions are rendered via frontend)
-    const captions = localCaptions && localCaptions.length > 0 ? localCaptions : captionsFromApi;
+    // Captions for video overlay (5 words per line, matching backend)
+    const videoCaptions = localCaptions && localCaptions.length > 0 ? localCaptions : captionsForVideo;
+
+    // Captions for transcript panel (sentence-based paragraphs)
+    const transcriptCaptions = captionsForTranscript;
 
     // Credit cost (example: 5 credits per export)
     const creditCost = 5;
@@ -1008,7 +1050,7 @@ export default function ClipEditorPage({ params }: ClipEditorPageProps) {
                         <div className="h-full">
                             {video?.id ? (
                                 <TranscriptParagraphView
-                                    segments={captions.map((c) => ({
+                                    segments={transcriptCaptions.map((c) => ({
                                         id: c.id,
                                         text: c.text,
                                         startTime: c.startTime,
@@ -1048,7 +1090,7 @@ export default function ClipEditorPage({ params }: ClipEditorPageProps) {
                                     src={videoSrc}
                                     startTime={videoStartTime}
                                     endTime={videoEndTime}
-                                    captions={captions}
+                                    captions={videoCaptions}
                                     captionStyle={captionStyle}
                                     onCaptionStyleChange={handleStyleChange}
                                     onTimeUpdate={handleTimeUpdate}
@@ -1089,7 +1131,7 @@ export default function ClipEditorPage({ params }: ClipEditorPageProps) {
                             onSkipForward={handleSkipForward}
                             onSkipBackward={handleSkipBackward}
                             videoSrc={videoSrc}
-                            captions={captions}
+                            captions={videoCaptions}
                             className="w-full"
                         />
                     ),
