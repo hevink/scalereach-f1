@@ -30,11 +30,24 @@ export interface CaptionTemplatePickerProps {
 
 /**
  * Get a preview style object for displaying template preview
+ * Matches the backend ASS rendering for consistent preview
  */
 function getPreviewStyle(style: CaptionStyle): React.CSSProperties {
+    const outlineWidth = style.outlineWidth ?? 3;
+    const scaledOutlineWidth = Math.max(1, outlineWidth * 0.5);
+
+    // Build text shadow to match ASS rendering
+    const textShadow = style.shadow
+        ? `0 0 ${scaledOutlineWidth}px ${style.outlineColor || "#000000"},
+           0 0 ${scaledOutlineWidth * 2}px ${style.outlineColor || "#000000"},
+           1px 1px 2px rgba(0, 0, 0, 0.9)`
+        : `0 0 ${scaledOutlineWidth}px ${style.outlineColor || "#000000"},
+           0 0 ${scaledOutlineWidth * 2}px ${style.outlineColor || "#000000"}`;
+
     return {
         fontFamily: style.fontFamily,
         fontSize: `${Math.min(style.fontSize, 16)}px`, // Cap preview font size
+        fontWeight: 700,
         color: style.textColor,
         backgroundColor: style.backgroundColor
             ? `${style.backgroundColor}${Math.round(style.backgroundOpacity * 2.55)
@@ -42,10 +55,11 @@ function getPreviewStyle(style: CaptionStyle): React.CSSProperties {
                 .padStart(2, "0")}`
             : "transparent",
         textAlign: style.alignment,
-        textShadow: style.shadow ? "1px 1px 2px rgba(0,0,0,0.5)" : "none",
+        textShadow,
         WebkitTextStroke: style.outline
-            ? `1px ${style.outlineColor || "#000000"}`
+            ? `${scaledOutlineWidth}px ${style.outlineColor || "#000000"}`
             : "none",
+        paintOrder: "stroke fill",
     };
 }
 

@@ -148,27 +148,40 @@ export function VideoPreviewWithCaptions({
             {visibleWords.map((word) => {
               const isCurrent = word.id === currentWordId;
               const isPast = word.end < currentTime;
+              const outlineWidth = style.outlineWidth ?? 3;
+              const highlightScale = (style.highlightScale ?? 125) / 100;
+
+              // Build text shadow to match ASS rendering
+              const textShadow = style.shadow
+                ? `0 0 ${outlineWidth}px ${style.outlineColor || "#000000"},
+                   0 0 ${outlineWidth * 2}px ${style.outlineColor || "#000000"},
+                   2px 2px 4px rgba(0, 0, 0, 0.9)`
+                : `0 0 ${outlineWidth}px ${style.outlineColor || "#000000"},
+                   0 0 ${outlineWidth * 2}px ${style.outlineColor || "#000000"}`;
 
               return (
                 <span
                   key={word.id}
-                  className={cn(
-                    "transition-all duration-150 inline-block",
-                    style.shadow && "drop-shadow-lg"
-                  )}
+                  className="transition-all duration-150 inline-block"
                   style={{
                     fontFamily: style.fontFamily || "sans-serif",
                     fontSize: `${style.fontSize || 24}px`,
+                    fontWeight: 700,
                     color:
                       isCurrent && isKaraoke && style.highlightColor
                         ? style.highlightColor
                         : style.textColor || "#FFFFFF",
-                    transform: isKaraoke && isCurrent ? "scale(1.2)" : "scale(1)",
+                    transform: isKaraoke && isCurrent ? `scale(${highlightScale})` : "scale(1)",
                     opacity: isPast ? 0.7 : 1,
                     WebkitTextStroke: style.outline
-                      ? `1px ${style.outlineColor || "#000000"}`
+                      ? `${outlineWidth}px ${style.outlineColor || "#000000"}`
                       : undefined,
-                    textShadow: style.shadow ? "2px 2px 4px rgba(0,0,0,0.8)" : undefined,
+                    paintOrder: "stroke fill",
+                    textShadow,
+                    filter: isCurrent && style.glowEnabled
+                      ? `drop-shadow(0 0 ${style.glowIntensity ?? 2}px ${style.glowColor || style.highlightColor || "#FFD700"})`
+                      : undefined,
+                    textTransform: style.textTransform === "uppercase" ? "uppercase" : "none",
                   }}
                 >
                   {word.word}

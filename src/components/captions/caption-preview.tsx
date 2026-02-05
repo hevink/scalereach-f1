@@ -99,6 +99,7 @@ interface CaptionOverlayProps {
  * CaptionOverlay Component
  *
  * Renders styled captions with animations and highlighting
+ * Matches the backend ASS rendering for consistent preview
  * @validates Requirements 17.1, 17.4, 17.5
  */
 function CaptionOverlay({ caption, style, currentTime }: CaptionOverlayProps) {
@@ -110,7 +111,7 @@ function CaptionOverlay({ caption, style, currentTime }: CaptionOverlayProps) {
     const positionClasses = {
         top: "top-4",
         center: "top-1/2 -translate-y-1/2",
-        bottom: "bottom-4",
+        bottom: "bottom-8",
     };
 
     // Alignment classes
@@ -120,10 +121,14 @@ function CaptionOverlay({ caption, style, currentTime }: CaptionOverlayProps) {
         right: "text-right items-end",
     };
 
-    // Build text shadow style
+    // Build text shadow style - match ASS rendering with stronger shadow
+    const outlineWidth = style.outlineWidth ?? 3;
     const textShadow = style.shadow
-        ? "2px 2px 4px rgba(0, 0, 0, 0.8)"
-        : "none";
+        ? `0 0 ${outlineWidth}px ${style.outlineColor || "#000000"},
+           0 0 ${outlineWidth * 2}px ${style.outlineColor || "#000000"},
+           2px 2px 4px rgba(0, 0, 0, 0.9)`
+        : `0 0 ${outlineWidth}px ${style.outlineColor || "#000000"},
+           0 0 ${outlineWidth * 2}px ${style.outlineColor || "#000000"}`;
 
     // Build background color with opacity
     const backgroundColor = style.backgroundColor
@@ -132,8 +137,12 @@ function CaptionOverlay({ caption, style, currentTime }: CaptionOverlayProps) {
             .padStart(2, "0")}`
         : "transparent";
 
+    // Highlight scale from style or default to 125%
+    const highlightScale = (style.highlightScale ?? 125) / 100;
+
     /**
      * Render words with animation and highlighting
+     * Matches backend ASS rendering
      * @validates Requirements 17.4, 17.5
      */
     const renderWords = () => {
@@ -143,24 +152,41 @@ function CaptionOverlay({ caption, style, currentTime }: CaptionOverlayProps) {
             const shouldHighlight = style.highlightEnabled && isCurrentWord;
 
             let wordClassName = "inline-block mx-0.5 transition-all duration-150";
-            const wordStyle: React.CSSProperties = {};
+            const wordStyle: React.CSSProperties = {
+                textShadow,
+                WebkitTextStroke: style.outline
+                    ? `${outlineWidth}px ${style.outlineColor || "#000000"}`
+                    : undefined,
+                paintOrder: "stroke fill",
+            };
 
             // Apply animation styles - Requirement 17.4
             switch (style.animation) {
                 case "word-by-word":
+                    if (isCurrentWord && style.highlightEnabled) {
+                        wordStyle.color = style.highlightColor || "#FFD700";
+                        wordStyle.transform = `scale(${highlightScale})`;
+                        wordStyle.filter = style.glowEnabled
+                            ? `drop-shadow(0 0 ${style.glowIntensity ?? 2}px ${style.glowColor || style.highlightColor || "#FFD700"})`
+                            : undefined;
+                    }
                     wordClassName += isPastWord || isCurrentWord ? " opacity-100" : " opacity-30";
                     break;
                 case "karaoke":
                     if (isCurrentWord) {
                         wordStyle.color = style.highlightColor || "#FFD700";
-                        wordStyle.transform = "scale(1.1)";
-                    } else if (isPastWord) {
-                        wordStyle.color = style.highlightColor || "#FFD700";
+                        wordStyle.transform = `scale(${highlightScale})`;
+                        wordStyle.filter = style.glowEnabled
+                            ? `drop-shadow(0 0 ${style.glowIntensity ?? 2}px ${style.glowColor || style.highlightColor || "#FFD700"})`
+                            : undefined;
                     }
                     break;
                 case "bounce":
                     if (isCurrentWord) {
                         wordClassName += " animate-bounce";
+                        if (style.highlightEnabled) {
+                            wordStyle.color = style.highlightColor || "#FFD700";
+                        }
                     }
                     break;
                 case "fade":
@@ -170,12 +196,10 @@ function CaptionOverlay({ caption, style, currentTime }: CaptionOverlayProps) {
                     break;
             }
 
-            // Apply highlight color - Requirement 17.5
-            if (shouldHighlight && style.animation !== "karaoke") {
-                wordStyle.backgroundColor = style.highlightColor || "#FFD700";
-                wordStyle.color = "#000000";
-                wordStyle.padding = "0 4px";
-                wordStyle.borderRadius = "2px";
+            // Apply highlight for non-animated highlight
+            if (shouldHighlight && style.animation !== "karaoke" && style.animation !== "word-by-word") {
+                wordStyle.color = style.highlightColor || "#FFD700";
+                wordStyle.transform = `scale(${highlightScale})`;
             }
 
             return (
@@ -204,12 +228,15 @@ function CaptionOverlay({ caption, style, currentTime }: CaptionOverlayProps) {
                 style={{
                     fontFamily: style.fontFamily,
                     fontSize: `${style.fontSize}px`,
+                    fontWeight: 700,
                     color: style.textColor,
                     backgroundColor,
                     textShadow,
                     WebkitTextStroke: style.outline
-                        ? `1px ${style.outlineColor || "#000"}`
+                        ? `${outlineWidth}px ${style.outlineColor || "#000"}`
                         : undefined,
+                    paintOrder: "stroke fill",
+                    textTransform: style.textTransform === "uppercase" ? "uppercase" : "none",
                 }}
             >
                 {style.animation === "none" ? caption.text : renderWords()}
