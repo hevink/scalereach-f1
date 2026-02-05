@@ -356,7 +356,7 @@ export function WorkspaceSettingsSidebar({
                   {!isInputFocused && (
                     <div
                       aria-hidden="true"
-                      className="pointer-events-none absolute top-1/2 right-1 h-[94%] w-20 -translate-y-1/2 bg-linear-to-l from-65% from-background to-transparent"
+                      className="pointer-events-none absolute top-1/2 right-px rounded-lg h-[94%] w-20 -translate-y-1/2 bg-linear-to-l from-65% from-background to-transparent"
                     />
                   )}
                   <div
