@@ -29,6 +29,7 @@ import { AdvancedTimeline } from "@/components/clips/advanced-timeline";
 import { KeyboardShortcutsModal, useKeyboardShortcutsModal } from "@/components/clips/keyboard-shortcuts-modal";
 import { CaptionPanelTabs } from "@/components/captions/caption-panel-tabs";
 import { VideoPlayer, type VideoPlayerRef } from "@/components/video/video-player";
+import { VideoCanvasEditor, type VideoCanvasEditorRef } from "@/components/video/video-canvas-editor";
 import { TranscriptParagraphView } from "@/components/transcript/transcript-paragraph-view";
 import { ExportOptions } from "@/components/export/export-options";
 import { ExportProgress } from "@/components/export/export-progress";
@@ -1519,25 +1520,24 @@ export default function ClipEditorPage({ params }: ClipEditorPageProps) {
                         </div>
                     ),
 
-                    /* Center Panel: Video Player with Caption Overlay */
+                    /* Center Panel: Video Canvas Editor with Caption Overlay */
                     videoPlayer: (
-                        <div className="flex flex-col gap-4">
+                        <div className="flex flex-col gap-4 h-full">
                             <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">
                                 Preview
                             </h2>
                             {videoSrc ? (
-                                <VideoPlayer
-                                    ref={videoPlayerRef}
+                                <VideoCanvasEditor
+                                    ref={videoPlayerRef as React.Ref<VideoCanvasEditorRef>}
                                     src={videoSrc}
-                                    poster={thumbnailUrl}
                                     startTime={clipWithBoundaries.startTime}
                                     endTime={clipWithBoundaries.endTime}
                                     captions={captions}
                                     captionStyle={captionStyle}
                                     onCaptionStyleChange={handleStyleChange}
                                     onTimeUpdate={handleTimeUpdate}
-                                    showFullControls
-                                    className="aspect-video w-full rounded-lg overflow-hidden"
+                                    aspectRatio="9:16"
+                                    className="flex-1 rounded-lg overflow-hidden"
                                 />
                             ) : (
                                 <div className="flex aspect-video w-full items-center justify-center rounded-lg border bg-muted">
