@@ -115,10 +115,10 @@ function CaptionTemplateCard({
 
             {/* Preview image or styled preview */}
             <div className="relative aspect-video w-full overflow-hidden rounded-t-lg bg-muted">
-                {template.previewUrl ? (
+                {template.preview ? (
                     // eslint-disable-next-line @next/next/no-img-element
                     <img
-                        src={template.previewUrl}
+                        src={template.preview}
                         alt={`${template.name} template preview`}
                         className="size-full object-cover"
                     />

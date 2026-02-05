@@ -35,7 +35,7 @@ import { ExportOptions } from "@/components/export/export-options";
 import { ExportProgress } from "@/components/export/export-progress";
 import { useClip, useUpdateClipBoundaries } from "@/hooks/useClips";
 import { useVideo } from "@/hooks/useVideo";
-import { useCaptionStyle, useUpdateCaptionStyle, useUpdateCaptionText } from "@/hooks/useCaptions";
+import { useCaptionStyle, useUpdateCaptionStyle, useUpdateCaptionText, useCaptionTemplates } from "@/hooks/useCaptions";
 import { useInitiateExport } from "@/hooks/useExport";
 import { useCreditBalance } from "@/hooks/useCredits";
 import { useWorkspaceBySlug } from "@/hooks/useWorkspace";
@@ -525,13 +525,33 @@ export default function ClipEditorPage({ params }: ClipEditorPageProps) {
     // Caption style presets hook
     // @validates Requirements 9.2, 9.4, 9.5 - Preset application and last used style persistence
     const {
-        presets,
+        presets: defaultPresets,
         selectedPresetId,
         applyPreset,
         getLastUsedStyle,
         saveLastUsedStyle,
         clearSelectedPreset,
     } = useCaptionStylePresets();
+
+    // Fetch caption templates from API
+    const { data: apiTemplates, isLoading: templatesLoading } = useCaptionTemplates();
+
+    // Convert API templates to preset format and merge with defaults
+    const presets = useMemo(() => {
+        if (!apiTemplates || apiTemplates.length === 0) {
+            return defaultPresets;
+        }
+
+        // Convert API templates to CaptionStylePreset format
+        return apiTemplates.map((template) => ({
+            id: template.id,
+            name: template.name,
+            description: template.description || "",
+            thumbnail: template.preview,
+            style: template.style as CaptionStyle,
+            tags: template.platform ? [template.platform.toLowerCase()] : [],
+        }));
+    }, [apiTemplates, defaultPresets]);
 
     // Track the currently selected preset ID in local state for UI updates
     const [currentPresetId, setCurrentPresetId] = useState<string | undefined>(selectedPresetId);
@@ -565,10 +585,44 @@ export default function ClipEditorPage({ params }: ClipEditorPageProps) {
     const updateCaptionText = useUpdateCaptionText();
     const initiateExport = useInitiateExport();
 
+    // Convert words from API to Caption[] format for use in callbacks
+    // This is computed once when captionData changes
+    const captionsFromApi = useMemo((): Caption[] => {
+        const words = captionData?.words;
+        if (!words || !Array.isArray(words) || words.length === 0) {
+            return [];
+        }
+
+        const segments: Caption[] = [];
+        let currentWords: CaptionWord[] = [];
+
+        for (let i = 0; i < words.length; i++) {
+            currentWords.push({
+                id: words[i].id || `word-${i}`,
+                word: words[i].word,
+                start: words[i].start,
+                end: words[i].end,
+                highlight: words[i].highlight || false,
+            });
+
+            if (/[.!?]$/.test(words[i].word) || currentWords.length >= 10 || i === words.length - 1) {
+                segments.push({
+                    id: `caption-${segments.length}`,
+                    text: currentWords.map(w => w.word).join(" "),
+                    startTime: currentWords[0].start,
+                    endTime: currentWords[currentWords.length - 1].end,
+                    words: currentWords,
+                });
+                currentWords = [];
+            }
+        }
+        return segments;
+    }, [captionData?.words]);
+
     // Initialize caption style from fetched data
     useState(() => {
-        if (captionData?.style?.config) {
-            setCaptionStyle(captionData.style.config);
+        if (captionData?.style) {
+            setCaptionStyle(captionData.style);
         }
     });
 
@@ -584,9 +638,13 @@ export default function ClipEditorPage({ params }: ClipEditorPageProps) {
      * @validates Requirements 9.5 - Save last used caption style as default for new clips
      */
     useEffect(() => {
-        // If we have fetched caption data, use it
-        if (captionData?.style?.config) {
-            setCaptionStyle(captionData.style.config);
+        // If we have fetched caption data with style, use it
+        if (captionData?.style) {
+            setCaptionStyle(captionData.style);
+            // Also set the template ID if available
+            if (captionData.templateId) {
+                setCurrentPresetId(captionData.templateId);
+            }
             return;
         }
 
@@ -594,8 +652,16 @@ export default function ClipEditorPage({ params }: ClipEditorPageProps) {
         const lastUsedStyle = getLastUsedStyle();
         if (lastUsedStyle) {
             setCaptionStyle(lastUsedStyle);
+            return;
         }
-    }, [captionData?.style?.config, getLastUsedStyle]);
+
+        // If no saved style and we have API templates, use the first one
+        if (apiTemplates && apiTemplates.length > 0) {
+            const firstTemplate = apiTemplates[0];
+            setCaptionStyle(firstTemplate.style as CaptionStyle);
+            setCurrentPresetId(firstTemplate.id);
+        }
+    }, [captionData?.style, captionData?.templateId, getLastUsedStyle, apiTemplates]);
 
     // Sync selected preset ID from hook
     useEffect(() => {
@@ -811,10 +877,10 @@ export default function ClipEditorPage({ params }: ClipEditorPageProps) {
      */
     const handleCaptionEdit = useCallback((segmentId: string, newText: string) => {
         // Get the current captions (either local state or from server)
-        const currentCaptions = localCaptions ?? captionData?.captions ?? [];
+        const currentCaptions = localCaptions ?? captionsFromApi;
 
         // Find the original text for undo history
-        const originalCaption = currentCaptions.find((caption) => caption.id === segmentId);
+        const originalCaption = currentCaptions.find((caption: Caption) => caption.id === segmentId);
         const originalText = originalCaption?.text ?? "";
 
         // Track the edit in undo history (store the previous state)
@@ -822,7 +888,7 @@ export default function ClipEditorPage({ params }: ClipEditorPageProps) {
         setCaptionUndoState({ segmentId, text: originalText });
 
         // Find the caption that matches the segment ID and update it optimistically
-        const updatedCaptions = currentCaptions.map((caption) => {
+        const updatedCaptions = currentCaptions.map((caption: Caption) => {
             // Match by ID - the segmentId from TranscriptEditor corresponds to caption ID
             if (caption.id === segmentId) {
                 return {
@@ -906,7 +972,7 @@ export default function ClipEditorPage({ params }: ClipEditorPageProps) {
                 },
             });
         }, 2000); // 2 second debounce for auto-save
-    }, [localCaptions, captionData?.captions, clipId, updateCaptionText, setCaptionUndoState]);
+    }, [localCaptions, captionsFromApi, clipId, updateCaptionText, setCaptionUndoState]);
 
     // Caption style change handler
     /**
@@ -1124,7 +1190,7 @@ export default function ClipEditorPage({ params }: ClipEditorPageProps) {
                     options: {
                         format: options.format as "mp4" | "mov",
                         resolution: options.resolution as "720p" | "1080p" | "4k",
-                        captionStyleId: captionData?.style?.id,
+                        captionStyleId: captionData?.templateId ?? undefined,
                     },
                 },
                 {
@@ -1134,7 +1200,7 @@ export default function ClipEditorPage({ params }: ClipEditorPageProps) {
                 }
             );
         },
-        [clipId, captionData?.style?.id, initiateExport]
+        [clipId, captionData?.templateId, initiateExport]
     );
 
     // Export completion handler
@@ -1203,7 +1269,7 @@ export default function ClipEditorPage({ params }: ClipEditorPageProps) {
         if (!canUndo) return;
 
         // Get the current captions before undo
-        const currentCaptions = localCaptions ?? captionData?.captions ?? [];
+        const currentCaptions = localCaptions ?? captionsFromApi;
 
         // Perform undo - this will update captionUndoState to the previous state
         undoCaptionEdit();
@@ -1212,7 +1278,7 @@ export default function ClipEditorPage({ params }: ClipEditorPageProps) {
         // We need to apply it to the local captions
         // Note: The state update from undoCaptionEdit is async, so we use the current state
         // The effect below will handle applying the undone state
-    }, [canUndo, localCaptions, captionData?.captions, undoCaptionEdit]);
+    }, [canUndo, localCaptions, captionsFromApi, undoCaptionEdit]);
 
     /**
      * Handle redo action - restores the next caption text state
@@ -1240,10 +1306,10 @@ export default function ClipEditorPage({ params }: ClipEditorPageProps) {
         const { segmentId, text } = captionUndoState;
 
         // Get the current captions
-        const currentCaptions = localCaptions ?? captionData?.captions ?? [];
+        const currentCaptions = localCaptions ?? captionsFromApi;
 
         // Update the caption with the undone/redone text
-        const updatedCaptions = currentCaptions.map((caption) => {
+        const updatedCaptions = currentCaptions.map((caption: Caption) => {
             if (caption.id === segmentId) {
                 return {
                     ...caption,
@@ -1307,7 +1373,7 @@ export default function ClipEditorPage({ params }: ClipEditorPageProps) {
                 },
             });
         }, 2000);
-    }, [captionUndoState, localCaptions, captionData?.captions, clipId, updateCaptionText]);
+    }, [captionUndoState, localCaptions, captionsFromApi, clipId, updateCaptionText]);
 
     /**
      * Global keyboard shortcuts for the editing screen
@@ -1416,42 +1482,7 @@ export default function ClipEditorPage({ params }: ClipEditorPageProps) {
 
     // Get captions for preview - use local captions for real-time sync, fallback to server data
     // @validates Requirements 6.3 - Real-time caption edit sync with optimistic UI updates
-    // Convert words to Caption format for VideoPlayer
-    const captions = (() => {
-        if (localCaptions && localCaptions.length > 0) return localCaptions;
-        if (captionData?.captions && captionData.captions.length > 0) return captionData.captions;
-
-        // Convert words array to Caption format if available
-        const words = (captionData as any)?.words;
-        if (words && Array.isArray(words) && words.length > 0) {
-            const segments: Caption[] = [];
-            let currentWords: CaptionWord[] = [];
-
-            for (let i = 0; i < words.length; i++) {
-                currentWords.push({
-                    id: `word-${i}`,
-                    word: words[i].word,
-                    start: words[i].start,
-                    end: words[i].end,
-                    highlight: false,
-                });
-
-                if (/[.!?]$/.test(words[i].word) || currentWords.length >= 10 || i === words.length - 1) {
-                    segments.push({
-                        id: `caption-${segments.length}`,
-                        text: currentWords.map(w => w.word).join(" "),
-                        startTime: currentWords[0].start,
-                        endTime: currentWords[currentWords.length - 1].end,
-                        words: currentWords,
-                    });
-                    currentWords = [];
-                }
-            }
-            return segments;
-        }
-
-        return [];
-    })();
+    const captions = localCaptions && localCaptions.length > 0 ? localCaptions : captionsFromApi;
 
     // Credit cost (example: 5 credits per export)
     const creditCost = 5;
@@ -1504,7 +1535,7 @@ export default function ClipEditorPage({ params }: ClipEditorPageProps) {
                                             confidence: 1,
                                         })),
                                     }))}
-                                    currentTime={currentTime}
+                                    currentTime={currentTime - clipWithBoundaries.startTime}
                                     onWordClick={handleSegmentClick}
                                     onTextEdit={handleCaptionEdit}
                                     highlightCurrent
@@ -1585,7 +1616,7 @@ export default function ClipEditorPage({ params }: ClipEditorPageProps) {
                 open={exportDialogOpen}
                 onOpenChange={setExportDialogOpen}
                 clipId={clipId}
-                captionStyleId={captionData?.style?.id}
+                captionStyleId={captionData?.templateId ?? undefined}
                 creditCost={creditCost}
                 userCredits={userCredits}
                 activeExportId={activeExportId}

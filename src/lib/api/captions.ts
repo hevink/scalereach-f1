@@ -26,8 +26,14 @@ export interface CaptionStyle {
 export interface CaptionTemplate {
   id: string;
   name: string;
+  description: string;
+  platform: string;
   style: CaptionStyle;
-  previewUrl: string;
+  preview: string;
+  previewThumbnail?: string;
+  isNew?: boolean;
+  createdAt: string;
+  updatedAt: string;
 }
 
 export interface CaptionWord {
@@ -93,8 +99,8 @@ export const captionsApi = {
    * Get all available caption templates
    */
   getCaptionTemplates: async (): Promise<CaptionTemplate[]> => {
-    const response = await api.get<CaptionTemplate[]>("/api/caption-templates");
-    return response.data;
+    const response = await api.get<{ success: boolean; data: { templates: CaptionTemplate[]; total: number } }>("/api/caption-templates");
+    return response.data.data.templates;
   },
 
   /**

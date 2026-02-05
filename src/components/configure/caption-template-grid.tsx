@@ -140,7 +140,7 @@ function TemplateCard({ template, isSelected, onSelect, disabled }: TemplateCard
                 <img
                     alt="Preview"
                     className="w-full h-full object-cover absolute inset-0 opacity-50 pointer-events-none"
-                    src="https://storage.googleapis.com/gatling-assets/avatars/avatar-xrhz4qmdqhrma0cnbdet2nr2k4-1740994616650.png"
+                    src="https://images.pexels.com/photos/2310713/pexels-photo-2310713.jpeg"
                 />
 
                 {/* Background gradient overlay */}

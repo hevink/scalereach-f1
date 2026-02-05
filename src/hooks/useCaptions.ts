@@ -5,6 +5,7 @@ import {
   type CaptionsResponse,
   type CaptionStyle,
   type Caption,
+  type ClipCaptionsResponse,
   type UpdateCaptionStyleRequest,
   type UpdateCaptionTextRequest,
 } from "@/lib/api/captions";
@@ -36,7 +37,7 @@ export function useCaptionTemplates() {
 export function useCaptionStyle(clipId: string) {
   return useQuery({
     queryKey: captionKeys.byClip(clipId),
-    queryFn: () => captionsApi.getCaptionsByClip(clipId),
+    queryFn: () => captionsApi.getClipCaptions(clipId),
     enabled: !!clipId,
   });
 }
@@ -52,33 +53,32 @@ export function useUpdateCaptionStyle() {
     mutationFn: ({
       clipId,
       style,
+      templateId,
     }: {
       clipId: string;
       style: Partial<CaptionStyle>;
-    }) => captionsApi.updateCaptionStyle(clipId, style as CaptionStyle),
-    onMutate: async ({ clipId, style }) => {
+      templateId?: string;
+    }) => captionsApi.updateCaptionStyle(clipId, style as CaptionStyle, templateId),
+    onMutate: async ({ clipId, style, templateId }) => {
       // Cancel any outgoing refetches to avoid overwriting optimistic update
       await queryClient.cancelQueries({ queryKey: captionKeys.byClip(clipId) });
 
       // Snapshot the previous value
-      const previousCaptions = queryClient.getQueryData<CaptionsResponse>(
+      const previousCaptions = queryClient.getQueryData<ClipCaptionsResponse>(
         captionKeys.byClip(clipId)
       );
 
       // Optimistically update the caption style
       if (previousCaptions) {
-        queryClient.setQueryData<CaptionsResponse>(captionKeys.byClip(clipId), {
+        queryClient.setQueryData<ClipCaptionsResponse>(captionKeys.byClip(clipId), {
           ...previousCaptions,
           style: previousCaptions.style
             ? {
                 ...previousCaptions.style,
-                config: {
-                  ...previousCaptions.style.config,
-                  ...style,
-                },
-                updatedAt: new Date().toISOString(),
+                ...style,
               }
-            : null,
+            : (style as CaptionStyle),
+          templateId: templateId ?? previousCaptions.templateId,
         });
       }
 

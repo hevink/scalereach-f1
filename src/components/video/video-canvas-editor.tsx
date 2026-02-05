@@ -7,9 +7,10 @@ import React, {
     useImperativeHandle,
     useRef,
     useState,
+    useMemo,
 } from "react";
 import { cn } from "@/lib/utils";
-import type { Caption, CaptionStyle } from "@/lib/api/captions";
+import type { Caption, CaptionStyle, CaptionWord } from "@/lib/api/captions";
 
 // ============================================================================
 // Types
@@ -294,10 +295,11 @@ export const VideoCanvasEditor = forwardRef<VideoCanvasEditorRef, VideoCanvasEdi
             setLayers([fillLayer]);
         }, [canvasSize]);
 
-        // Add caption layer when caption is active
+        // Add caption layer when caption is active - use relative time since captions have relative timing
         useEffect(() => {
+            const relativeTime = currentTime - startTime;
             const currentCaption = captions.find(
-                (c) => currentTime >= c.startTime && currentTime <= c.endTime
+                (c) => relativeTime >= c.startTime && relativeTime <= c.endTime
             );
 
             if (currentCaption) {
@@ -319,7 +321,7 @@ export const VideoCanvasEditor = forwardRef<VideoCanvasEditorRef, VideoCanvasEdi
                     ];
                 });
             }
-        }, [currentTime, captions, canvasSize]);
+        }, [currentTime, startTime, captions, canvasSize]);
 
         // Measure container
         useEffect(() => {
@@ -441,10 +443,50 @@ export const VideoCanvasEditor = forwardRef<VideoCanvasEditorRef, VideoCanvasEdi
             setSelectedLayerId(null);
         }, []);
 
-        // Get current caption
+        // Get current caption - use relative time (currentTime - startTime) since captions have relative timing
+        const relativeTime = currentTime - startTime;
         const currentCaption = captions.find(
-            (c) => currentTime >= c.startTime && currentTime <= c.endTime
+            (c) => relativeTime >= c.startTime && relativeTime <= c.endTime
         );
+
+        // Find the currently highlighted word within the caption
+        const currentWordIndex = useMemo(() => {
+            if (!currentCaption?.words) return -1;
+            return currentCaption.words.findIndex(
+                (w) => relativeTime >= w.start && relativeTime <= w.end
+            );
+        }, [currentCaption, relativeTime]);
+
+        // Render caption text with word-by-word highlighting
+        const renderCaptionText = useCallback(() => {
+            if (!currentCaption) return null;
+
+            // If no words array or highlight not enabled, show plain text
+            if (!currentCaption.words?.length || !captionStyle?.highlightEnabled) {
+                return <span>{currentCaption.text}</span>;
+            }
+
+            // Render each word with highlighting for the current word
+            return currentCaption.words.map((word, index) => {
+                const isHighlighted = index === currentWordIndex;
+                return (
+                    <span
+                        key={word.id || index}
+                        style={{
+                            color: isHighlighted
+                                ? (captionStyle?.highlightColor || "#FFFF00")
+                                : (captionStyle?.textColor || "#FFFFFF"),
+                            transform: isHighlighted ? "scale(1.2)" : "scale(1)",
+                            display: "inline-block",
+                            transition: "transform 0.1s ease-out, color 0.1s ease-out",
+                            marginRight: `${4 * containerScale}px`,
+                        }}
+                    >
+                        {word.word}
+                    </span>
+                );
+            });
+        }, [currentCaption, currentWordIndex, captionStyle, containerScale]);
 
         return (
             <div
@@ -495,7 +537,7 @@ export const VideoCanvasEditor = forwardRef<VideoCanvasEditorRef, VideoCanvasEdi
                             height: displaySize.height,
                         }}
                     >
-                        {layers.map((layer) => (
+                        {layers.filter(l => l.type !== "caption").map((layer) => (
                             <MoveableLayer
                                 key={layer.id}
                                 layer={{
@@ -510,23 +552,51 @@ export const VideoCanvasEditor = forwardRef<VideoCanvasEditorRef, VideoCanvasEdi
                                 onMove={(x, y) => handleLayerMove(layer.id, x / containerScale, y / containerScale)}
                                 onResize={(w, h) => handleLayerResize(layer.id, w / containerScale, h / containerScale)}
                                 containerScale={containerScale}
-                            >
-                                {layer.type === "caption" && currentCaption && (
-                                    <div
-                                        className="w-full h-full flex items-center justify-center text-center"
-                                        style={{
-                                            fontFamily: captionStyle?.fontFamily || "Inter",
-                                            fontSize: `${(captionStyle?.fontSize || 24) * containerScale}px`,
-                                            color: captionStyle?.textColor || "#FFFFFF",
-                                            textShadow: captionStyle?.shadow ? "2px 2px 4px rgba(0,0,0,0.8)" : "none",
-                                        }}
-                                    >
-                                        {currentCaption.text}
-                                    </div>
-                                )}
-                            </MoveableLayer>
+                            />
                         ))}
                     </div>
+
+                    {/* Caption overlay - always visible when there's a caption */}
+                    {currentCaption && (
+                        <div
+                            className="absolute left-0 right-0 flex justify-center pointer-events-none z-20"
+                            style={{
+                                bottom: captionStyle?.position === "top"
+                                    ? "auto"
+                                    : captionStyle?.position === "center"
+                                        ? "50%"
+                                        : `${displaySize.height * 0.1}px`,
+                                top: captionStyle?.position === "top"
+                                    ? `${displaySize.height * 0.1}px`
+                                    : "auto",
+                                transform: captionStyle?.position === "center" ? "translateY(50%)" : "none",
+                            }}
+                        >
+                            <div
+                                className="text-center max-w-[90%] flex flex-wrap justify-center items-center gap-1"
+                                style={{
+                                    fontFamily: captionStyle?.fontFamily || "Inter",
+                                    fontSize: `${(captionStyle?.fontSize || 24) * containerScale}px`,
+                                    fontWeight: "bold",
+                                    color: captionStyle?.textColor || "#FFFFFF",
+                                    textShadow: captionStyle?.shadow
+                                        ? "2px 2px 0 #000, -2px -2px 0 #000, 2px -2px 0 #000, -2px 2px 0 #000, 0 2px 0 #000, 0 -2px 0 #000, 2px 0 0 #000, -2px 0 0 #000"
+                                        : "none",
+                                    WebkitTextStroke: captionStyle?.outline
+                                        ? `${Math.max(1, Math.round(containerScale * 2))}px ${captionStyle?.outlineColor || "#000000"}`
+                                        : "none",
+                                    backgroundColor: captionStyle?.backgroundColor && (captionStyle?.backgroundOpacity ?? 0) > 0
+                                        ? `${captionStyle.backgroundColor}${Math.round(((captionStyle.backgroundOpacity ?? 0) / 100) * 255).toString(16).padStart(2, "0")}`
+                                        : "transparent",
+                                    borderRadius: "4px",
+                                    padding: `${4 * containerScale}px ${12 * containerScale}px`,
+                                    lineHeight: 1.3,
+                                }}
+                            >
+                                {renderCaptionText()}
+                            </div>
+                        </div>
+                    )}
 
                     {/* Transform overlay */}
                     <div
