@@ -72,7 +72,7 @@ function removeUploadState(uploadId: string) {
   }
 }
 
-export function useUpload(projectId?: string) {
+export function useUpload(workspaceId: string, projectId?: string) {
   const queryClient = useQueryClient();
   const [uploads, setUploads] = useState<Map<string, UploadProgress>>(new Map());
   const uploadStates = useRef<Map<string, UploadState>>(new Map());
@@ -212,6 +212,7 @@ export function useUpload(projectId?: string) {
           file.name,
           file.size,
           file.type || "video/mp4",
+          workspaceId,
           projectId
         );
 
@@ -337,7 +338,7 @@ export function useUpload(projectId?: string) {
         });
 
         // Invalidate video queries
-        queryClient.invalidateQueries({ queryKey: videoKeys.myVideos() });
+        queryClient.invalidateQueries({ queryKey: videoKeys.all });
 
         return { uploadId, videoId: state.videoId };
       } catch (error) {
@@ -438,7 +439,7 @@ export function useUpload(projectId?: string) {
       });
 
       // Invalidate video queries
-      queryClient.invalidateQueries({ queryKey: videoKeys.myVideos() });
+      queryClient.invalidateQueries({ queryKey: videoKeys.all });
     },
     [queryClient]
   );

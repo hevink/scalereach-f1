@@ -6,6 +6,7 @@ import AwsS3 from "@uppy/aws-s3";
 import { useQueryClient } from "@tanstack/react-query";
 import { videoKeys } from "@/hooks/useVideo";
 import { toast } from "sonner";
+import { analytics } from "@/lib/analytics";
 import {
     IconUpload,
     IconX,
@@ -22,6 +23,7 @@ const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3001";
 
 interface UppyUploadProps {
     projectId?: string;
+    workspaceId: string;
     onUploadSuccess?: (videoId: string) => void;
 }
 
@@ -42,7 +44,7 @@ function formatFileSize(bytes: number): string {
     return `${parseFloat((bytes / Math.pow(k, i)).toFixed(1))} ${sizes[i]}`;
 }
 
-export function UppyUpload({ projectId, onUploadSuccess }: UppyUploadProps) {
+export function UppyUpload({ projectId, workspaceId, onUploadSuccess }: UppyUploadProps) {
     const [files, setFiles] = useState<FileState[]>([]);
     const [isDragging, setIsDragging] = useState(false);
     const uppyRef = useRef<Uppy | null>(null);
@@ -82,7 +84,7 @@ export function UppyUpload({ projectId, onUploadSuccess }: UppyUploadProps) {
                     body: JSON.stringify({
                         filename: file.name,
                         type: file.type,
-                        metadata: { projectId },
+                        metadata: { projectId, workspaceId },
                     }),
                 });
 
@@ -145,7 +147,7 @@ export function UppyUpload({ projectId, onUploadSuccess }: UppyUploadProps) {
                     body: JSON.stringify({
                         filename: file.name,
                         type: file.type,
-                        metadata: { projectId },
+                        metadata: { projectId, workspaceId },
                     }),
                 });
 
@@ -215,8 +217,15 @@ export function UppyUpload({ projectId, onUploadSuccess }: UppyUploadProps) {
                 description: `${file.name} is now being processed`,
             });
 
-            if (videoId) onUploadSuccess?.(videoId);
-            queryClient.invalidateQueries({ queryKey: videoKeys.myVideos() });
+            // Track video upload
+            if (videoId) {
+                analytics.videoUploaded({
+                    videoId,
+                    source: "upload",
+                });
+                onUploadSuccess?.(videoId);
+            }
+            queryClient.invalidateQueries({ queryKey: videoKeys.all });
 
             // Remove completed file after delay
             setTimeout(() => {

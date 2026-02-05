@@ -1,4 +1,5 @@
 import { api } from "../axios";
+import type { CaptionStyle } from "./captions";
 
 export interface Workspace {
   id: string;
@@ -6,8 +7,10 @@ export interface Workspace {
   slug: string;
   description: string | null;
   logo?: string | null;
+  plan?: "free" | "pro" | "agency";
   ownerId?: string;
   role: "owner" | "admin" | "member";
+  defaultCaptionStyle?: CaptionStyle | null;
   createdAt: string;
   updatedAt: string;
 }
@@ -57,6 +60,18 @@ export interface InvitationDetails {
   };
 }
 
+export interface DeleteWorkspaceResponse {
+  message: string;
+  creditsLost?: number;
+}
+
+export interface DeleteWorkspaceError {
+  error: string;
+  message?: string;
+  credits?: number;
+  requiresConfirmation?: boolean;
+}
+
 export const workspaceApi = {
   // Get all workspaces for current user
   getAll: async () => {
@@ -95,8 +110,8 @@ export const workspaceApi = {
   },
 
   // Delete workspace
-  delete: async (id: string) => {
-    const response = await api.delete(`/api/workspaces/${id}`);
+  delete: async (id: string, force: boolean = false): Promise<DeleteWorkspaceResponse> => {
+    const response = await api.delete(`/api/workspaces/${id}${force ? '?force=true' : ''}`);
     return response.data;
   },
 
@@ -143,8 +158,8 @@ export const workspaceApi = {
   },
 
   // Delete workspace by slug
-  deleteBySlug: async (slug: string) => {
-    const response = await api.delete(`/api/workspaces/slug/${slug}`);
+  deleteBySlug: async (slug: string, force: boolean = false): Promise<DeleteWorkspaceResponse> => {
+    const response = await api.delete(`/api/workspaces/slug/${slug}${force ? '?force=true' : ''}`);
     return response.data;
   },
 

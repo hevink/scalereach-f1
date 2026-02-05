@@ -23,3 +23,19 @@ export const authClient = createAuthClient({
 });
 
 export const { signIn, signOut, signUp, useSession } = authClient;
+
+// Extended user type with custom fields from backend
+export interface ExtendedUser {
+  id: string;
+  name: string;
+  email: string;
+  emailVerified: boolean;
+  image?: string | null;
+  username?: string | null;
+  displayUsername?: string | null;
+  twoFactorEnabled?: boolean | null;
+  createdAt: Date;
+  updatedAt: Date;
+  isOnboarded: boolean;
+  preferences: Record<string, unknown>;
+}

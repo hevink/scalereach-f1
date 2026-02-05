@@ -1,81 +1,242 @@
 "use client";
 
 import {
-  IconBug,
-  IconHome,
-  IconHomeFilled,
-  IconInbox,
+  // IconHome,
+  // IconHomeFilled,
+  IconVideo,
+  IconVideoFilled,
+  // IconFolder,
+  // IconFolderFilled,
+  IconScissors,
+  IconDownload,
+  IconPalette,
+  IconPaletteFilled,
+  IconTextCaption,
+  IconStar,
+  IconStarFilled,
+  IconClock,
+  IconCoins,
 } from "@tabler/icons-react";
-import { usePathname, useRouter } from "next/navigation";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import {
   SidebarGroup,
   SidebarGroupContent,
+  SidebarGroupLabel,
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
+  SidebarMenuBadge,
 } from "@/components/ui/sidebar";
+import { useMyVideos } from "@/hooks/useVideo";
 
 interface NavMainProps {
   currentSlug: string;
+  workspaceId?: string;
 }
 
-export function NavMain({ currentSlug }: NavMainProps) {
+export function NavMain({ currentSlug, workspaceId }: NavMainProps) {
   const pathname = usePathname();
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const { data: videos } = useMyVideos(workspaceId || "", !!workspaceId);
 
-  const menuItems = [
+  // Count videos by status
+  const processingCount = videos?.filter(
+    (v) => v.status === "downloading" || v.status === "uploading" || v.status === "transcribing" || v.status === "analyzing"
+  ).length || 0;
+
+  const mainItems = [
     {
-      title: "Home",
+      title: "Videos",
       url: `/${currentSlug}`,
-      icon: IconHome,
-      iconFilled: IconHomeFilled,
+      icon: IconVideo,
+      iconFilled: IconVideoFilled,
+      exact: true,
+      badge: videos?.length,
+    },
+    // TEMPORARILY COMMENTED - Projects
+    // {
+    //   title: "Projects",
+    //   url: `/${currentSlug}?tab=projects`,
+    //   icon: IconFolder,
+    //   iconFilled: IconFolderFilled,
+    //   matchPath: (p: string) => p.includes("/projects") || p.includes("tab=projects"),
+    // },
+  ];
+
+  const libraryItems = [
+    {
+      title: "All Clips",
+      url: `/${currentSlug}/clips`,
+      icon: IconScissors,
+      iconFilled: IconScissors,
+      matchPath: (p: string) => p.includes("/clips") && !searchParams.get("favorites"),
     },
     {
-      title: "Inbox",
-      url: `/${currentSlug}/inbox`,
-      icon: IconInbox,
-      iconFilled: IconInbox,
+      title: "Favorites",
+      url: `/${currentSlug}/clips?favorites=true`,
+      icon: IconStar,
+      iconFilled: IconStarFilled,
+      matchPath: () => searchParams.get("favorites") === "true",
     },
     {
-      title: "My Issues",
-      url: `/${currentSlug}/issues`,
-      icon: IconBug,
-      iconFilled: IconBug,
+      title: "Exports",
+      url: `/${currentSlug}/exports`,
+      icon: IconDownload,
+      iconFilled: IconDownload,
     },
   ];
 
-  const isActive = (url: string) => {
-    return pathname === url;
+  const toolsItems = [
+    {
+      title: "Brand Kit",
+      url: `/${currentSlug}/settings/brand-kit`,
+      icon: IconPalette,
+      iconFilled: IconPaletteFilled,
+    },
+    {
+      title: "Caption Templates",
+      url: `/${currentSlug}/settings/captions`,
+      icon: IconTextCaption,
+      iconFilled: IconTextCaption,
+    },
+    {
+      title: "Credit Usage",
+      url: `/${currentSlug}/credits`,
+      icon: IconCoins,
+      iconFilled: IconCoins,
+    },
+  ];
+
+  const isActive = (item: { url: string; exact?: boolean; matchPath?: (p: string) => boolean }) => {
+    if (item.matchPath) {
+      return item.matchPath(pathname);
+    }
+    if (item.exact) {
+      return pathname === item.url;
+    }
+    return pathname.startsWith(item.url);
   };
 
   return (
-    <SidebarGroup>
-      <SidebarGroupContent>
-        <SidebarMenu>
-          {menuItems.map((item) => {
-            const active = isActive(item.url);
-            const IconComponent = active ? item.iconFilled : item.icon;
-            return (
-              <SidebarMenuItem key={item.title}>
+    <>
+      {/* Main Navigation */}
+      <SidebarGroup>
+        <SidebarGroupContent>
+          <SidebarMenu>
+            {mainItems.map((item) => {
+              const active = isActive(item);
+              const IconComponent = active ? item.iconFilled : item.icon;
+              return (
+                <SidebarMenuItem key={item.title}>
+                  <SidebarMenuButton
+                    isActive={active}
+                    onClick={() => router.push(item.url)}
+                    tooltip={item.title}
+                  >
+                    <IconComponent
+                      className={
+                        active
+                          ? "fill-current text-muted-foreground contrast-200"
+                          : ""
+                      }
+                    />
+                    <span className="font-[490] text-[13px]">{item.title}</span>
+                  </SidebarMenuButton>
+                  {item.badge !== undefined && item.badge > 0 && (
+                    <SidebarMenuBadge>{item.badge}</SidebarMenuBadge>
+                  )}
+                </SidebarMenuItem>
+              );
+            })}
+          </SidebarMenu>
+        </SidebarGroupContent>
+      </SidebarGroup>
+
+      {/* Processing Queue - Show only when there are processing videos */}
+      {processingCount > 0 && (
+        <SidebarGroup>
+          <SidebarGroupLabel>Processing</SidebarGroupLabel>
+          <SidebarGroupContent>
+            <SidebarMenu>
+              <SidebarMenuItem>
                 <SidebarMenuButton
-                  isActive={active}
-                  onClick={() => router.push(item.url)}
-                  tooltip={item.title}
+                  onClick={() => router.push(`/${currentSlug}?filter=processing`)}
+                  tooltip="Processing Queue"
                 >
-                  <IconComponent
-                    className={
-                      active
-                        ? "fill-current text-muted-foreground contrast-200"
-                        : ""
-                    }
-                  />
-                  <span className="font-[490] text-[13px]">{item.title}</span>
+                  <IconClock className="animate-pulse text-amber-500" />
+                  <span className="font-[490] text-[13px]">In Progress</span>
                 </SidebarMenuButton>
+                <SidebarMenuBadge className="bg-amber-500/10 text-amber-600">
+                  {processingCount}
+                </SidebarMenuBadge>
               </SidebarMenuItem>
-            );
-          })}
-        </SidebarMenu>
-      </SidebarGroupContent>
-    </SidebarGroup>
+            </SidebarMenu>
+          </SidebarGroupContent>
+        </SidebarGroup>
+      )}
+
+      {/* Library */}
+      <SidebarGroup>
+        <SidebarGroupLabel>Library</SidebarGroupLabel>
+        <SidebarGroupContent>
+          <SidebarMenu>
+            {libraryItems.map((item) => {
+              const active = isActive(item);
+              const IconComponent = active ? item.iconFilled : item.icon;
+              return (
+                <SidebarMenuItem key={item.title}>
+                  <SidebarMenuButton
+                    isActive={active}
+                    onClick={() => router.push(item.url)}
+                    tooltip={item.title}
+                  >
+                    <IconComponent
+                      className={
+                        active
+                          ? "fill-current text-muted-foreground contrast-200"
+                          : ""
+                      }
+                    />
+                    <span className="font-[490] text-[13px]">{item.title}</span>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              );
+            })}
+          </SidebarMenu>
+        </SidebarGroupContent>
+      </SidebarGroup>
+
+      {/* Tools */}
+      <SidebarGroup>
+        <SidebarGroupLabel>Tools</SidebarGroupLabel>
+        <SidebarGroupContent>
+          <SidebarMenu>
+            {toolsItems.map((item) => {
+              const active = isActive(item);
+              const IconComponent = active ? item.iconFilled : item.icon;
+              return (
+                <SidebarMenuItem key={item.title}>
+                  <SidebarMenuButton
+                    isActive={active}
+                    onClick={() => router.push(item.url)}
+                    tooltip={item.title}
+                  >
+                    <IconComponent
+                      className={
+                        active
+                          ? "fill-current text-muted-foreground contrast-200"
+                          : ""
+                      }
+                    />
+                    <span className="font-[490] text-[13px]">{item.title}</span>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              );
+            })}
+          </SidebarMenu>
+        </SidebarGroupContent>
+      </SidebarGroup>
+    </>
   );
 }

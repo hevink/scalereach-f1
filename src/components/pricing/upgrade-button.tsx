@@ -1,14 +1,11 @@
 "use client";
 
 import { IconSparkles } from "@tabler/icons-react";
-import { toast } from "sonner";
+import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
-import { PricingDialog } from "./pricing-dialog";
-import { useCreateCheckout } from "@/hooks/useCredits";
 
 interface UpgradeButtonProps {
-    workspaceId?: string;
-    currentPlan?: string;
+    workspaceSlug?: string;
     variant?: "default" | "outline" | "ghost" | "secondary";
     size?: "default" | "sm" | "lg" | "icon";
     className?: string;
@@ -17,44 +14,30 @@ interface UpgradeButtonProps {
 }
 
 export function UpgradeButton({
-    workspaceId,
-    currentPlan = "free",
+    workspaceSlug,
     variant = "outline",
     size = "sm",
     className,
     showIcon = true,
     children,
 }: UpgradeButtonProps) {
-    const createCheckout = useCreateCheckout();
+    const router = useRouter();
 
-    const handleSelectPlan = async (planName: string, productId: string, isYearly: boolean) => {
-        if (!workspaceId) {
-            toast.error("Please select a workspace first");
-            return;
-        }
-
-        try {
-            // This will redirect to Polar checkout
-            await createCheckout.mutateAsync({
-                workspaceId,
-                packageId: productId,
-            });
-        } catch (error) {
-            // Error is handled by the hook
+    const handleClick = () => {
+        if (workspaceSlug) {
+            router.push(`/${workspaceSlug}/pricing`);
         }
     };
 
     return (
-        <PricingDialog
-            currentPlan={currentPlan}
-            workspaceId={workspaceId}
-            onSelectPlan={handleSelectPlan}
-            trigger={
-                <Button variant={variant} size={size} className={className}>
-                    {showIcon && <IconSparkles className="size-4 mr-2" />}
-                    {children || "Upgrade"}
-                </Button>
-            }
-        />
+        <Button
+            variant={variant}
+            size={size}
+            className={className}
+            onClick={handleClick}
+        >
+            {showIcon && <IconSparkles className="size-4 mr-2" />}
+            {children || "Upgrade"}
+        </Button>
     );
 }

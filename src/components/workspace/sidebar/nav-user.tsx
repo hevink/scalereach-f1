@@ -90,7 +90,11 @@ export function NavUser() {
               >
                 <Avatar className="h-8 w-8 rounded-lg">
                   {user.image && (
-                    <AvatarImage alt={user.name || "User"} src={user.image} />
+                    <AvatarImage
+                      alt={user.name || "User"}
+                      referrerPolicy="no-referrer"
+                      src={user.image}
+                    />
                   )}
                   <AvatarFallback className="rounded-lg">
                     {initials}

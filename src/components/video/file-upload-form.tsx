@@ -161,13 +161,14 @@ function UploadItem({ upload, onPause, onResume, onCancel, onClear, onSelectFile
 
 interface FileUploadFormProps {
     projectId?: string;
+    workspaceId: string;
     onSuccess?: (videoId: string) => void;
 }
 
-export function FileUploadForm({ projectId, onSuccess }: FileUploadFormProps) {
+export function FileUploadForm({ projectId, workspaceId, onSuccess }: FileUploadFormProps) {
     const [isDragging, setIsDragging] = useState(false);
     const fileInputRef = useRef<HTMLInputElement>(null);
-    const { uploads, startUpload, pauseUpload, resumeUpload, cancelUpload, clearUpload } = useUpload(projectId);
+    const { uploads, startUpload, pauseUpload, resumeUpload, cancelUpload, clearUpload } = useUpload(workspaceId, projectId);
 
     const validateFile = useCallback((file: File): string | null => {
         if (!ALLOWED_TYPES.includes(file.type)) {
@@ -268,8 +269,8 @@ export function FileUploadForm({ projectId, onSuccess }: FileUploadFormProps) {
                 {/* Drop Zone */}
                 <div
                     className={`relative rounded-lg border-2 border-dashed p-8 text-center transition-colors ${isDragging
-                            ? "border-primary bg-primary/5"
-                            : "border-muted-foreground/25 hover:border-muted-foreground/50"
+                        ? "border-primary bg-primary/5"
+                        : "border-muted-foreground/25 hover:border-muted-foreground/50"
                         }`}
                     onDragOver={handleDragOver}
                     onDragLeave={handleDragLeave}

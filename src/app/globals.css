@@ -3,6 +3,61 @@
 
 @custom-variant dark (&:is(.dark *));
 
+/* 
+ * Custom Viral Fonts (Requirement 8.1)
+ * These fonts require custom font files to be added to /public/fonts/
+ * Currently using system font fallbacks until custom files are provided
+ * 
+ * To add custom fonts:
+ * 1. Add font files (woff2, woff) to /public/fonts/
+ * 2. Uncomment and update the @font-face declarations below
+ */
+
+/* @font-face {
+  font-family: 'Moji Pop';
+  src: url('/fonts/moji-pop.woff2') format('woff2'),
+       url('/fonts/moji-pop.woff') format('woff');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Line';
+  src: url('/fonts/line.woff2') format('woff2'),
+       url('/fonts/line.woff') format('woff');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Brishti';
+  src: url('/fonts/brishti.woff2') format('woff2'),
+       url('/fonts/brishti.woff') format('woff');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Deep';
+  src: url('/fonts/deep.woff2') format('woff2'),
+       url('/fonts/deep.woff') format('woff');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Depo B';
+  src: url('/fonts/depo-b.woff2') format('woff2'),
+       url('/fonts/depo-b.woff') format('woff');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+} */
+
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
@@ -152,4 +207,117 @@
 
 .root {
   isolation: isolate;
+}
+
+
+/* Caption Animation Keyframes */
+@keyframes word-appear {
+  0% {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes karaoke-highlight {
+  0% {
+    color: oklch(0.708 0 0);
+  }
+
+  50% {
+    color: oklch(0.828 0.189 84.429);
+  }
+
+  100% {
+    color: white;
+  }
+}
+
+@keyframes bounce-in {
+  0% {
+    opacity: 0;
+    transform: scale(0.3) translateY(-20px);
+  }
+
+  50% {
+    transform: scale(1.1) translateY(0);
+  }
+
+  70% {
+    transform: scale(0.9);
+  }
+
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes fade-in {
+  0% {
+    opacity: 0;
+  }
+
+  100% {
+    opacity: 1;
+  }
+}
+
+@layer utilities {
+  .animate-word-appear {
+    animation: word-appear 0.4s ease-out forwards;
+  }
+
+  .animate-karaoke-highlight {
+    animation: karaoke-highlight 0.6s ease-in-out forwards;
+  }
+
+  .animate-bounce-in {
+    animation: bounce-in 0.5s cubic-bezier(0.68, -0.55, 0.265, 1.55) forwards;
+  }
+
+  .animate-fade-in {
+    animation: fade-in 0.5s ease-out forwards;
+  }
+
+  /* Corner bevel/notch effect utilities */
+  .corner-bevel {
+    corner-top-left-shape: bevel;
+    corner-top-right-shape: bevel;
+  }
+
+  .corner-t-notch {
+    corner-top-left-shape: notch;
+    corner-top-right-shape: notch;
+  }
+
+  /* Custom spacing for hero section */
+  .pt-15 {
+    padding-top: 3.75rem;
+    /* 60px */
+  }
+
+  .h-15 {
+    height: 3.75rem;
+    /* 60px */
+  }
+
+  .top-15 {
+    top: 3.75rem;
+  }
+
+  /* Custom max-widths for corner notch effect */
+  /* max-w-6xl = 72rem = 1152px */
+  /* The inner notch lines create the 2-line effect on each side */
+  .max-w-316 {
+    max-width: calc(72rem - 3.5rem);
+  }
+
+  .max-w-332 {
+    max-width: 72rem;
+  }
 }

@@ -1,36 +1,23 @@
 "use client";
 
+import { useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
-import { AuthHeader } from "@/components/authentication/auth-header";
+import Link from "next/link";
+import { useSession } from "@/lib/auth-client";
+import { AuthLayout } from "@/components/authentication/auth-layout";
 import { AuthNavigation } from "@/components/authentication/auth-navigation";
 import { SignUpForm } from "@/components/authentication/signup/signup-form";
 import { Spinner } from "@/components/ui/spinner";
 
 export default function SignUpPage() {
   const router = useRouter();
-  const [isPending, setIsPending] = useState(true);
-  const [user, setUser] = useState<{ id: string } | null>(null);
+  const { data: session, isPending } = useSession();
 
   useEffect(() => {
-    const checkSession = async () => {
-      try {
-        const response = await fetch("/api/auth/session");
-        const data = await response.json();
-        setUser(data.user);
-        if (data.user) {
-          router.replace("/home");
-        }
-      } catch (error) {
-        console.error("Failed to check session:", error);
-        setUser(null);
-      } finally {
-        setIsPending(false);
-      }
-    };
-
-    checkSession();
-  }, [router]);
+    if (!isPending && session?.user) {
+      router.replace("/workspaces");
+    }
+  }, [session, isPending, router]);
 
   if (isPending) {
     return (
@@ -40,17 +27,28 @@ export default function SignUpPage() {
     );
   }
 
-  if (user) {
-    return null;
+  if (session?.user) {
+    return (
+      <div className="flex min-h-screen items-center justify-center">
+        <Spinner />
+      </div>
+    );
   }
 
   return (
-    <div className="flex min-h-screen items-center justify-center">
-      <div className="flex w-full max-w-sm flex-col gap-6 p-4">
-        <AuthHeader />
-        <SignUpForm />
-        <AuthNavigation />
-      </div>
-    </div>
+    <AuthLayout title="Create your account" subtitle="Get started with ScaleReach for free">
+      <SignUpForm />
+      <AuthNavigation />
+      <p className="text-xs text-zinc-500 text-center">
+        By creating an account, you agree to our{" "}
+        <Link href="/terms" className="text-zinc-400 hover:text-zinc-900 dark:hover:text-white underline">
+          Terms of Service
+        </Link>{" "}
+        and{" "}
+        <Link href="/privacy" className="text-zinc-400 hover:text-zinc-900 dark:hover:text-white underline">
+          Privacy Policy
+        </Link>
+      </p>
+    </AuthLayout>
   );
 }

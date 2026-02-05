@@ -1,1 +1,0 @@
-CREATE INDEX "idx_user_username" ON "user" USING btree ("username");

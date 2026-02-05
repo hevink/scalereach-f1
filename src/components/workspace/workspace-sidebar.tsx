@@ -11,7 +11,7 @@ import { NavFooter } from "./sidebar/nav-footer";
 import { NavMain } from "./sidebar/nav-main";
 import { NavUser } from "./sidebar/nav-user";
 import { WorkspaceSwitcher } from "./sidebar/workspace-switcher";
-import { useWorkspaces } from "@/hooks/useWorkspace";
+import { useWorkspaces, useWorkspaceBySlug } from "@/hooks/useWorkspace";
 import { useQueryClient } from "@tanstack/react-query";
 import { useCallback } from "react";
 
@@ -21,6 +21,7 @@ interface WorkspaceSidebarProps {
 
 export function WorkspaceSidebar({ currentSlug }: WorkspaceSidebarProps) {
   const { data: workspaces = [], isLoading } = useWorkspaces();
+  const { data: currentWorkspace } = useWorkspaceBySlug(currentSlug);
   const queryClient = useQueryClient();
 
   const handleWorkspaceCreated = useCallback(
@@ -41,7 +42,7 @@ export function WorkspaceSidebar({ currentSlug }: WorkspaceSidebarProps) {
         />
       </SidebarHeader>
       <SidebarContent>
-        <NavMain currentSlug={currentSlug} />
+        <NavMain currentSlug={currentSlug} workspaceId={currentWorkspace?.id} />
       </SidebarContent>
       <SidebarFooter>
         <NavFooter currentSlug={currentSlug} />

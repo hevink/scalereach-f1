@@ -15,6 +15,7 @@ import { Label } from "@/components/ui/label";
 import { authClient } from "@/lib/auth-client";
 import { getAuthErrorMessage } from "@/lib/auth-errors";
 import { userApi } from "@/lib/api/user";
+import { analytics } from "@/lib/analytics";
 
 const signupSchema = z
   .object({
@@ -236,6 +237,12 @@ export function SignUpForm() {
       }
 
       // If there's a redirect (e.g., from invite), go there; otherwise go to onboarding
+      analytics.signUp("email");
+      analytics.identify(result.data?.user?.id || data.email, {
+        email: data.email,
+        name: data.name,
+        username: data.username,
+      });
       if (redirect) {
         router.push(redirect);
       } else {
@@ -383,17 +390,9 @@ export function SignUpForm() {
                     {!checkingUsername &&
                       username &&
                       username.trim().length >= 3 &&
-                      usernameAvailable !== null && (
-                        <FieldDescription
-                          className={
-                            usernameAvailable
-                              ? "text-green-600 dark:text-green-400"
-                              : "text-destructive"
-                          }
-                        >
-                          {usernameAvailable
-                            ? "Username is available"
-                            : "Username is not available"}
+                      usernameAvailable === true && (
+                        <FieldDescription className="text-green-600 dark:text-green-400">
+                          Username is available
                         </FieldDescription>
                       )}
                     {fieldState.invalid && (

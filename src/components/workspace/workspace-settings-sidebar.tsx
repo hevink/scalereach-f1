@@ -3,6 +3,7 @@
 import {
   IconAlertTriangle,
   IconAlertTriangleFilled,
+  IconBrush,
   IconCreditCard,
   IconCreditCardFilled,
   IconPalette,
@@ -10,6 +11,7 @@ import {
   IconSearch,
   IconSettings,
   IconSettingsFilled,
+  IconTypography,
   IconUsers,
 } from "@tabler/icons-react";
 import { usePathname, useRouter } from "next/navigation";
@@ -120,6 +122,32 @@ export function WorkspaceSettingsSidebar({
         type: "card",
       },
       {
+        title: "Brand Kit",
+        url: `${baseUrl}/brand-kit`,
+        category: "Brand Kit",
+        type: "category",
+      },
+      {
+        title: "Brand Assets",
+        description: "Manage logos, colors, and fonts for video exports.",
+        url: `${baseUrl}/brand-kit`,
+        category: "Brand Kit",
+        type: "card",
+      },
+      {
+        title: "Captions",
+        url: `${baseUrl}/captions`,
+        category: "Captions",
+        type: "category",
+      },
+      {
+        title: "Caption Styles",
+        description: "Configure default caption styles and presets for videos.",
+        url: `${baseUrl}/captions`,
+        category: "Captions",
+        type: "card",
+      },
+      {
         title: "Members",
         url: `${baseUrl}/members`,
         category: "Members",
@@ -175,6 +203,18 @@ export function WorkspaceSettingsSidebar({
         url: `${baseUrl}/customization`,
         icon: IconPalette,
         iconFilled: IconPaletteFilled,
+      },
+      {
+        title: "Brand Kit",
+        url: `${baseUrl}/brand-kit`,
+        icon: IconBrush,
+        iconFilled: IconBrush,
+      },
+      {
+        title: "Captions",
+        url: `${baseUrl}/captions`,
+        icon: IconTypography,
+        iconFilled: IconTypography,
       },
       {
         title: "Members",

@@ -1,59 +1,35 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
-import { AuthHeader } from "@/components/authentication/auth-header";
+import { useEffect } from "react";
+import { AuthLayout } from "@/components/authentication/auth-layout";
 import { TwoFactorVerify } from "@/components/authentication/two-factor-verify";
 import { Spinner } from "@/components/ui/spinner";
+import { useSession } from "@/lib/auth-client";
 
 export default function TwoFactorVerifyPage() {
   const router = useRouter();
-  const [isPending, setIsPending] = useState(true);
-  const [user, setUser] = useState<{
-    id: string;
-    twoFactorEnabled?: boolean;
-  } | null>(null);
+  const { data: session, isPending } = useSession();
 
   useEffect(() => {
-    const checkSession = async () => {
-      try {
-        const response = await fetch("/api/auth/session");
-        const data = await response.json();
-        setUser(data.user);
-        // If user is authenticated and doesn't have 2FA enabled, redirect to home
-        if (data.user && !data.user.twoFactorEnabled) {
-          router.replace("/home");
-        }
-      } catch (error) {
-        console.error("Failed to check session:", error);
-        setUser(null);
-      } finally {
-        setIsPending(false);
-      }
-    };
-
-    checkSession();
-  }, [router]);
+    if (!isPending && session?.user && !session.user.twoFactorEnabled) {
+      router.replace("/workspaces");
+    }
+  }, [isPending, session, router]);
 
   if (isPending) {
     return (
-      <div className="flex min-h-screen items-center justify-center">
+      <div className="flex min-h-screen items-center justify-center bg-white dark:bg-zinc-950">
         <Spinner />
       </div>
     );
   }
 
-  // If user is already authenticated without 2FA, don't render (will redirect)
-  if (user && !user.twoFactorEnabled) {
-    return null;
-  }
+  if (session?.user && !session.user.twoFactorEnabled) return null;
 
   return (
-    <div className="flex min-h-screen items-center justify-center">
-      <div className="flex w-full max-w-sm flex-col gap-6 p-4">
-        <AuthHeader />
-        <TwoFactorVerify />
-      </div>
-    </div>
+    <AuthLayout title="Two-factor authentication" subtitle="Enter the code from your authenticator app">
+      <TwoFactorVerify />
+    </AuthLayout>
   );
 }

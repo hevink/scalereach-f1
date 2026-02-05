@@ -7,6 +7,13 @@ export function useCreditBalance(workspaceId: string | undefined) {
     queryKey: ["credits", "balance", workspaceId],
     queryFn: () => creditsApi.getBalance(workspaceId!),
     enabled: !!workspaceId,
+    retry: (failureCount, error) => {
+      // Don't retry on auth errors
+      if ((error as any)?.status === 401 || (error as any)?.status === 403) {
+        return false;
+      }
+      return failureCount < 3;
+    },
   });
 }
 

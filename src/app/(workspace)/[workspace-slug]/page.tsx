@@ -1,33 +1,37 @@
 "use client";
 
 import { use, useEffect, useState, useRef, useCallback } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
+// import { motion, AnimatePresence } from "framer-motion";
 import { useSession } from "@/lib/auth-client";
 import { useWorkspaceBySlug } from "@/hooks/useWorkspace";
-import { useMyVideos, useValidateYouTubeUrl, useSubmitYouTubeUrl, videoKeys } from "@/hooks/useVideo";
+import { useMyVideos, useSubmitYouTubeUrl, useDeleteVideo, videoKeys } from "@/hooks/useVideo";
 import { Spinner } from "@/components/ui/spinner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import {
-  IconBrandYoutube,
   IconUpload,
   IconLoader2,
   IconCheck,
   IconX,
   IconFile,
   IconAlertCircle,
-  IconDots,
-  IconClock,
+  IconVideo,
+  // IconFolder,
 } from "@tabler/icons-react";
+import { YouTubeIcon } from "@/components/icons/youtube-icon";
 import { Progress } from "@/components/ui/progress";
 import Uppy from "@uppy/core";
 import AwsS3 from "@uppy/aws-s3";
 import { useQueryClient } from "@tanstack/react-query";
-import type { VideoInfo } from "@/lib/api/video";
+import { VideoGrid } from "@/components/video/video-grid";
+
+// Import integrated components
+// import { ProjectList } from "@/components/project/project-list";
+import { CreditBalance } from "@/components/project/credit-balance";
+// import { useWorkspaceShortcuts } from "@/components/workspace/workspace-shortcuts-provider";
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3001";
 
@@ -50,12 +54,6 @@ function formatFileSize(bytes: number): string {
   return `${parseFloat((bytes / Math.pow(k, i)).toFixed(1))} ${sizes[i]}`;
 }
 
-function formatDuration(seconds: number): string {
-  const mins = Math.floor(seconds / 60);
-  const secs = Math.floor(seconds % 60);
-  return `${mins}:${secs.toString().padStart(2, "0")}`;
-}
-
 interface FileState {
   id: string;
   name: string;
@@ -72,22 +70,47 @@ interface WorkspacePageProps {
 export default function WorkspacePage({ params }: WorkspacePageProps) {
   const { "workspace-slug": slug } = use(params);
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const uploadToProject = searchParams.get("uploadToProject");
+  const statusFilter = searchParams.get("filter") || undefined;
   const { data: session, isPending: sessionPending } = useSession();
   const { data: workspace, isLoading: workspaceLoading, error } = useWorkspaceBySlug(slug);
-  const { data: videos, isLoading: videosLoading } = useMyVideos();
+  const { data: videos, isLoading: videosLoading, error: videosError } = useMyVideos(workspace?.id || "", !!session?.user && !!workspace?.id, statusFilter);
+
   const queryClient = useQueryClient();
 
   const [url, setUrl] = useState("");
-  const [validationState, setValidationState] = useState<"idle" | "validating" | "valid" | "invalid">("idle");
-  const [videoInfo, setVideoInfo] = useState<VideoInfo | null>(null);
+  const [isValidUrl, setIsValidUrl] = useState(false);
   const [files, setFiles] = useState<FileState[]>([]);
   const [uppyReady, setUppyReady] = useState(false);
+  // const [activeTab, setActiveTab] = useState<"videos" | "projects">("videos");
   const uppyRef = useRef<Uppy | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
-  const videoIdsRef = useRef<Map<string, string>>(new Map());
+  const uploadSectionRef = useRef<HTMLDivElement>(null);
+  const videoIdsRef = useRef<Map<string, { videoId: string; key: string }>>(new Map());
+  const workspaceRef = useRef<typeof workspace>(workspace);
 
-  const validateMutation = useValidateYouTubeUrl();
+  // Keep workspaceRef in sync
+  useEffect(() => {
+    workspaceRef.current = workspace;
+  }, [workspace]);
+
+  // Scroll to upload section when coming from project page
+  useEffect(() => {
+    if (uploadToProject && uploadSectionRef.current && !workspaceLoading) {
+      uploadSectionRef.current.scrollIntoView({ behavior: "smooth", block: "center" });
+      // Focus the input after scrolling
+      setTimeout(() => {
+        inputRef.current?.focus();
+      }, 500);
+    }
+  }, [uploadToProject, workspaceLoading]);
+
+  // Use workspace shortcuts context for create project dialog
+  // const { openCreateProjectDialog } = useWorkspaceShortcuts();
+
   const submitMutation = useSubmitYouTubeUrl();
+  const deleteMutation = useDeleteVideo();
 
   useEffect(() => {
     if (sessionPending || workspaceLoading) return;
@@ -95,19 +118,10 @@ export default function WorkspacePage({ params }: WorkspacePageProps) {
     if (error || !workspace) { router.replace("/"); return; }
   }, [session, workspace, error, sessionPending, workspaceLoading, router]);
 
+  // Client-side only YouTube URL validation
   useEffect(() => {
     const trimmedUrl = url.trim();
-    if (!trimmedUrl) { setValidationState("idle"); setVideoInfo(null); return; }
-    if (!isValidYouTubeUrl(trimmedUrl)) { setValidationState("invalid"); setVideoInfo(null); return; }
-    const timeoutId = setTimeout(async () => {
-      setValidationState("validating");
-      try {
-        const result = await validateMutation.mutateAsync(trimmedUrl);
-        if (result.valid && result.videoInfo) { setValidationState("valid"); setVideoInfo(result.videoInfo); }
-        else { setValidationState("invalid"); setVideoInfo(null); }
-      } catch { setValidationState("invalid"); setVideoInfo(null); }
-    }, 500);
-    return () => clearTimeout(timeoutId);
+    setIsValidUrl(trimmedUrl ? isValidYouTubeUrl(trimmedUrl) : false);
   }, [url]);
 
   // Initialize Uppy on mount
@@ -128,13 +142,15 @@ export default function WorkspacePage({ params }: WorkspacePageProps) {
       shouldUseMultipart: (file) => (file.size ?? 0) > 100 * 1024 * 1024,
       limit: 4,
       async createMultipartUpload(file) {
+        const workspaceId = workspaceRef.current?.id;
+        if (!workspaceId) throw new Error("Workspace not found");
         const response = await fetch(`${API_BASE_URL}/api/uppy/multipart`, {
           method: "POST", credentials: "include", headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ filename: file.name, type: file.type, metadata: {} }),
+          body: JSON.stringify({ filename: file.name, type: file.type, metadata: { workspaceId } }),
         });
         if (!response.ok) throw new Error("Failed to create upload");
         const data = await response.json();
-        videoIdsRef.current.set(file.id, data.videoId);
+        videoIdsRef.current.set(file.id, { videoId: data.videoId, key: data.key });
         return { uploadId: data.uploadId, key: data.key };
       },
       async signPart(_file, { uploadId, key, partNumber }) {
@@ -148,7 +164,8 @@ export default function WorkspacePage({ params }: WorkspacePageProps) {
         return response.json();
       },
       async completeMultipartUpload(file, { uploadId, key, parts }) {
-        const videoId = videoIdsRef.current.get(file.id);
+        const uploadInfo = videoIdsRef.current.get(file.id);
+        const videoId = uploadInfo?.videoId;
         const response = await fetch(`${API_BASE_URL}/api/uppy/multipart/${uploadId}/complete?key=${encodeURIComponent(key)}`, {
           method: "POST", credentials: "include", headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ parts, videoId }),
@@ -160,13 +177,15 @@ export default function WorkspacePage({ params }: WorkspacePageProps) {
         await fetch(`${API_BASE_URL}/api/uppy/multipart/${uploadId}?key=${encodeURIComponent(key)}`, { method: "DELETE", credentials: "include" });
       },
       async getUploadParameters(file) {
+        const workspaceId = workspaceRef.current?.id;
+        if (!workspaceId) throw new Error("Workspace not found");
         const response = await fetch(`${API_BASE_URL}/api/uppy/multipart`, {
           method: "POST", credentials: "include", headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ filename: file.name, type: file.type, metadata: {} }),
+          body: JSON.stringify({ filename: file.name, type: file.type, metadata: { workspaceId } }),
         });
         if (!response.ok) throw new Error("Failed to get upload URL");
         const data = await response.json();
-        videoIdsRef.current.set(file.id, data.videoId);
+        videoIdsRef.current.set(file.id, { videoId: data.videoId, key: data.key });
         const urlResponse = await fetch(`${API_BASE_URL}/api/uppy/presign?key=${encodeURIComponent(data.key)}&contentType=${encodeURIComponent(file.type || "video/mp4")}`, { method: "GET", credentials: "include" });
         if (!urlResponse.ok) throw new Error("Failed to get presigned URL");
         return { method: "PUT" as const, url: (await urlResponse.json()).url, headers: { "Content-Type": file.type || "video/mp4" } };
@@ -182,16 +201,40 @@ export default function WorkspacePage({ params }: WorkspacePageProps) {
       const percentage = progress.bytesTotal ? Math.round((progress.bytesUploaded / progress.bytesTotal) * 100) : 0;
       setFiles((prev) => prev.map((f) => f.id === file.id ? { ...f, progress: percentage, status: "uploading" } : f));
     });
-    uppy.on("upload-success", (file) => {
+    uppy.on("upload-success", async (file) => {
       if (!file) return;
       console.log("[UPPY] Upload success:", file.name);
+      const uploadInfo = videoIdsRef.current.get(file.id);
+      const videoId = uploadInfo?.videoId;
+      const key = uploadInfo?.key;
+
+      // For single-file uploads (non-multipart), we need to call the complete endpoint
+      // to update the video record with the storage key
+      if (videoId && key && file.size && file.size < 100 * 1024 * 1024) {
+        try {
+          await fetch(`${API_BASE_URL}/api/uppy/complete`, {
+            method: "POST",
+            credentials: "include",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ videoId, key }),
+          });
+        } catch (err) {
+          console.error("[UPPY] Failed to complete upload:", err);
+        }
+      }
+
       setFiles((prev) => prev.map((f) => f.id === file.id ? { ...f, progress: 100, status: "complete" } : f));
-      toast.success("Upload complete", { description: `${file.name} is now being processed` });
-      queryClient.invalidateQueries({ queryKey: videoKeys.myVideos() });
+      toast.success("Upload complete", { description: "Redirecting to configure your clips..." });
+      queryClient.invalidateQueries({ queryKey: videoKeys.all });
+
+      // Redirect to configure page after a short delay
       setTimeout(() => {
         uppy.removeFile(file.id);
         setFiles((prev) => prev.filter((f) => f.id !== file.id));
-      }, 3000);
+        if (videoId) {
+          router.push(`/${slug}/configure?videoId=${videoId}`);
+        }
+      }, 1000);
     });
     uppy.on("upload-error", (file, error) => {
       if (!file) return;
@@ -234,66 +277,80 @@ export default function WorkspacePage({ params }: WorkspacePageProps) {
   }, []);
 
   const handleSubmitYouTube = useCallback(async () => {
-    if (validationState !== "valid" || !url.trim()) return;
-    try {
-      await submitMutation.mutateAsync({ youtubeUrl: url.trim() });
-      toast.success("Video submitted", { description: videoInfo?.title || "Processing started" });
-      setUrl(""); setValidationState("idle"); setVideoInfo(null);
-    } catch { toast.error("Failed to submit video"); }
-  }, [validationState, url, videoInfo, submitMutation]);
+    if (!isValidUrl || !url.trim()) return;
+    // Redirect to configure page with URL as query param
+    router.push(`/${slug}/configure?url=${encodeURIComponent(url.trim())}`);
+  }, [isValidUrl, url, slug, router]);
+
+  // Project navigation handlers - TEMPORARILY COMMENTED
+  // const handleProjectSelect = useCallback((projectId: string) => {
+  //   router.push(`/${slug}/projects/${projectId}`);
+  // }, [router, slug]);
+
+  // const handleCreateProject = useCallback(() => {
+  //   openCreateProjectDialog();
+  // }, [openCreateProjectDialog]);
 
   if (sessionPending || workspaceLoading) return <div className="flex min-h-[50vh] items-center justify-center"><Spinner /></div>;
   if (!workspace) return null;
 
   return (
     <div className="flex flex-col items-center">
-      {/* Hero Section */}
-      <div className="w-full max-w-2xl pt-8 pb-12 px-4">
-        <h1 className="text-4xl font-bold text-center mb-8">{workspace.name}</h1>
+      {/* Hero Section with Upload UI - Responsive padding */}
+      {/* @validates Requirement 31.3 - Mobile-friendly experience */}
+      <div className="w-full max-w-2xl pt-4 sm:pt-8 pb-8 sm:pb-12 px-4">
+        {/* Header with workspace name and credit balance - Responsive layout */}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4 mb-6 sm:mb-8">
+          <h1 className="text-2xl sm:text-4xl font-bold">{workspace.name}</h1>
+          {/* Credit Balance Display - Requirement 27.1 */}
+          <CreditBalance workspaceId={workspace.id} workspaceSlug={slug} variant="compact" showWarning />
+        </div>
 
-        {/* Upload Card */}
-        <div className="bg-card border rounded-2xl p-6 space-y-4">
-          {/* YouTube URL Input */}
+        {/* Upload Card - Enhanced Upload UI (Requirements 1.1, 2.1) */}
+        <div ref={uploadSectionRef} className={cn(
+          "bg-card rounded-2xl p-4 sm:p-6 space-y-3 sm:space-y-4 transition-all",
+          uploadToProject ? "ring-2 ring-primary" : "border"
+        )}>
+          {/* Show project context when uploading to a specific project */}
+          {uploadToProject && (
+            <div className="flex items-center justify-between text-sm text-muted-foreground bg-muted/50 rounded-lg px-3 py-2">
+              <span>Adding video to project</span>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => router.replace(`/${slug}`)}
+                className="h-auto py-1 px-2 text-xs"
+              >
+                Cancel
+              </Button>
+            </div>
+          )}
+          {/* YouTube URL Input - Requirement 1.1 */}
           <div className="relative">
-            <div className="pointer-events-none absolute inset-y-0 left-4 flex items-center">
-              <IconBrandYoutube className="size-5 text-muted-foreground" />
+            <div className="pointer-events-none absolute inset-y-0 left-3 sm:left-4 flex items-center">
+              <YouTubeIcon className="size-4 sm:size-5" />
             </div>
             <Input
               type="url"
               placeholder="Drop a YouTube link"
               value={url}
               onChange={(e) => setUrl(e.target.value)}
-              onKeyDown={(e) => e.key === "Enter" && validationState === "valid" && handleSubmitYouTube()}
+              onKeyDown={(e) => e.key === "Enter" && isValidUrl && handleSubmitYouTube()}
               className={cn(
-                "h-12 pl-12 pr-12 bg-muted/50 border-0 text-base",
-                validationState === "valid" && "ring-1 ring-green-500",
-                validationState === "invalid" && url && "ring-1 ring-red-500"
+                "h-10 sm:h-12 pl-10 sm:pl-12 pr-10 sm:pr-12 bg-muted/50 border-0 text-sm sm:text-base",
+                url && isValidUrl && "ring-1 ring-green-500",
+                url && !isValidUrl && "ring-1 ring-red-500"
               )}
               disabled={submitMutation.isPending}
             />
-            <div className="absolute inset-y-0 right-4 flex items-center">
-              {validationState === "validating" && <IconLoader2 className="size-4 animate-spin text-muted-foreground" />}
-              {validationState === "valid" && <IconCheck className="size-4 text-green-500" />}
-              {validationState === "invalid" && url && <IconX className="size-4 text-red-500" />}
+            <div className="absolute inset-y-0 right-3 sm:right-4 flex items-center">
+              {url && isValidUrl && <IconCheck className="size-4 text-green-500" />}
+              {url && !isValidUrl && <IconX className="size-4 text-red-500" />}
             </div>
           </div>
 
-          {/* Video Preview */}
-          {videoInfo && validationState === "valid" && (
-            <div className="flex items-center gap-3 p-3 bg-muted/50 rounded-lg">
-              <img src={videoInfo.thumbnail} alt="" className="h-14 w-24 rounded object-cover" />
-              <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium truncate">{videoInfo.title}</p>
-                <p className="text-xs text-muted-foreground">{videoInfo.channelName} • {formatDuration(videoInfo.duration)}</p>
-              </div>
-              <Button variant="ghost" size="icon" className="shrink-0" onClick={() => { setUrl(""); setVideoInfo(null); setValidationState("idle"); }}>
-                <IconX className="size-4" />
-              </Button>
-            </div>
-          )}
-
-          {/* Upload Button - Opens file picker directly */}
-          <div className="flex items-center gap-4">
+          {/* File Upload Button - Requirement 2.1 */}
+          <div className="flex flex-wrap items-center gap-3 sm:gap-4">
             <input
               ref={inputRef}
               type="file"
@@ -301,7 +358,7 @@ export default function WorkspacePage({ params }: WorkspacePageProps) {
               multiple
               onChange={(e) => {
                 handleFileSelect(e.target.files);
-                e.target.value = ""; // Reset so same file can be selected again
+                e.target.value = "";
               }}
               className="hidden"
             />
@@ -312,7 +369,7 @@ export default function WorkspacePage({ params }: WorkspacePageProps) {
               }}
               disabled={!uppyReady}
               className={cn(
-                "flex items-center gap-2 text-sm transition-colors",
+                "flex items-center gap-2 text-xs sm:text-sm transition-colors",
                 uppyReady ? "text-muted-foreground hover:text-foreground" : "text-muted-foreground/50 cursor-not-allowed"
               )}
             >
@@ -329,24 +386,24 @@ export default function WorkspacePage({ params }: WorkspacePageProps) {
                 <div
                   key={file.id}
                   className={cn(
-                    "flex items-center gap-3 p-3 rounded-lg border",
+                    "flex items-center gap-2 sm:gap-3 p-2 sm:p-3 rounded-lg border",
                     file.status === "complete" && "border-green-500/30 bg-green-500/5",
                     file.status === "error" && "border-red-500/30 bg-red-500/5",
                     (file.status === "pending" || file.status === "uploading") && "border-border bg-muted/30"
                   )}
                 >
                   <div className={cn(
-                    "flex size-10 shrink-0 items-center justify-center rounded-lg",
+                    "flex size-8 sm:size-10 shrink-0 items-center justify-center rounded-lg",
                     file.status === "complete" ? "bg-green-500/10 text-green-500" :
                       file.status === "error" ? "bg-red-500/10 text-red-500" :
                         "bg-muted text-muted-foreground"
                   )}>
-                    {file.status === "complete" ? <IconCheck className="size-5" /> :
-                      file.status === "error" ? <IconAlertCircle className="size-5" /> :
-                        <IconFile className="size-5" />}
+                    {file.status === "complete" ? <IconCheck className="size-4 sm:size-5" /> :
+                      file.status === "error" ? <IconAlertCircle className="size-4 sm:size-5" /> :
+                        <IconFile className="size-4 sm:size-5" />}
                   </div>
                   <div className="min-w-0 flex-1">
-                    <p className="truncate text-sm font-medium">{file.name}</p>
+                    <p className="truncate text-xs sm:text-sm font-medium">{file.name}</p>
                     <div className="flex items-center gap-2">
                       <span className="text-xs text-muted-foreground">{formatFileSize(file.size)}</span>
                       {file.status === "uploading" && <span className="text-xs text-primary font-medium">{file.progress}%</span>}
@@ -358,7 +415,7 @@ export default function WorkspacePage({ params }: WorkspacePageProps) {
                     )}
                   </div>
                   {file.status !== "complete" && (
-                    <Button variant="ghost" size="icon" className="size-8 shrink-0" onClick={() => removeFile(file.id)}>
+                    <Button variant="ghost" size="icon" className="size-7 sm:size-8 shrink-0" onClick={() => removeFile(file.id)}>
                       <IconX className="size-4" />
                     </Button>
                   )}
@@ -369,81 +426,115 @@ export default function WorkspacePage({ params }: WorkspacePageProps) {
 
           {/* Submit Button */}
           <Button
-            className="w-full h-12 text-base font-medium"
+            className="w-full h-10 sm:h-12 text-sm sm:text-base font-medium"
             onClick={handleSubmitYouTube}
-            disabled={validationState !== "valid" || submitMutation.isPending}
+            disabled={!isValidUrl || submitMutation.isPending}
           >
             {submitMutation.isPending ? <><IconLoader2 className="mr-2 size-4 animate-spin" />Processing...</> : "Get clips in 1 click"}
           </Button>
         </div>
       </div>
 
-      {/* Projects Section */}
+      {/* Content Section - Videos Only (Projects temporarily disabled) */}
       <div className="w-full border-t">
         <div className="max-w-6xl mx-auto px-4 py-4">
-          <div className="flex items-center justify-between mb-6">
-            <Tabs defaultValue="all">
-              <TabsList className="bg-transparent p-0 h-auto gap-4">
-                <TabsTrigger value="all" className="data-[state=active]:bg-transparent data-[state=active]:shadow-none px-0 text-muted-foreground data-[state=active]:text-foreground">
-                  All projects ({videos?.length || 0})
-                </TabsTrigger>
-                <TabsTrigger value="saved" className="data-[state=active]:bg-transparent data-[state=active]:shadow-none px-0 text-muted-foreground data-[state=active]:text-foreground">
-                  Saved projects (0)
-                </TabsTrigger>
-              </TabsList>
-            </Tabs>
-            <div className="flex items-center gap-4 text-sm text-muted-foreground">
-              <span>0 GB / 0 GB</span>
-              <Badge variant="secondary" className="gap-1"><span className="size-1.5 rounded-full bg-green-500" />Auto-save</Badge>
-            </div>
+          {/* Videos Header */}
+          <div className="flex items-center gap-2 mb-4">
+            <IconVideo className="size-5" />
+            <h2 className="text-lg font-semibold">Videos ({videos?.length || 0})</h2>
           </div>
 
-          {/* Video Grid */}
-          {videosLoading ? (
-            <div className="flex justify-center py-12"><Spinner /></div>
-          ) : videos && videos.length > 0 ? (
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
-              {videos.map((video) => (
-                <div key={video.id} className="group relative">
-                  <div className="aspect-video bg-muted rounded-lg overflow-hidden relative">
-                    {video.sourceType === "youtube" && video.sourceUrl ? (
-                      <img src={`https://img.youtube.com/vi/${video.sourceUrl.match(/[a-zA-Z0-9_-]{11}/)?.[0]}/mqdefault.jpg`} alt={video.title || ""} className="w-full h-full object-cover" />
-                    ) : (
-                      <div className="w-full h-full flex items-center justify-center">
-                        <IconFile className="size-8 text-muted-foreground" />
-                      </div>
-                    )}
-                    <div className="absolute top-2 right-2">
-                      {(video.status === "downloading" || video.status === "uploading" || video.status === "transcribing" || video.status === "analyzing") ? (
-                        <Badge variant="secondary" className="text-xs gap-1"><IconLoader2 className="size-3 animate-spin" />Processing</Badge>
-                      ) : video.status === "failed" ? (
-                        <Badge variant="destructive" className="text-xs">Failed</Badge>
-                      ) : null}
-                    </div>
-                    {video.duration && (
-                      <div className="absolute bottom-2 left-2 bg-black/70 text-white text-xs px-1.5 py-0.5 rounded">{formatDuration(video.duration)}</div>
-                    )}
-                    <div className="absolute bottom-2 right-2 bg-black/70 text-white text-xs px-1.5 py-0.5 rounded flex items-center gap-1">
-                      <IconClock className="size-3" />7 days
-                    </div>
-                  </div>
-                  <div className="mt-2 flex items-start justify-between gap-2">
-                    <div className="min-w-0">
-                      <p className="text-sm font-medium truncate">{video.title}</p>
-                      <p className="text-xs text-muted-foreground capitalize">{video.sourceType}</p>
-                    </div>
-                    <Button variant="ghost" size="icon" className="size-6 shrink-0 opacity-0 group-hover:opacity-100 transition-opacity">
-                      <IconDots className="size-4" />
-                    </Button>
-                  </div>
-                </div>
-              ))}
+          {/* Videos Content */}
+          {videosError ? (
+            <div className="text-center py-8 sm:py-12 text-muted-foreground">
+              <IconAlertCircle className="size-10 sm:size-12 mx-auto mb-3 sm:mb-4 text-red-500 opacity-50" />
+              <p className="font-medium text-sm sm:text-base text-red-500">Failed to load videos</p>
+              <p className="text-xs sm:text-sm">{(videosError as Error)?.message || "Please try again"}</p>
             </div>
           ) : (
-            <div className="text-center py-12 text-muted-foreground">
-              <p>No projects yet. Upload a video to get started!</p>
-            </div>
+            <VideoGrid
+              videos={videos || []}
+              onVideoClick={(videoId) => router.push(`/${slug}/videos/${videoId}/clips`)}
+              onDeleteVideo={(videoId) => deleteMutation.mutate(videoId)}
+              isLoading={videosLoading || sessionPending}
+            />
           )}
+
+          {/* TEMPORARILY COMMENTED - Tabs for Videos and Projects
+          <div className="w-full">
+            <div className="relative inline-flex gap-1 rounded-lg bg-muted p-1">
+              {[
+                { value: "videos" as const, label: `Videos (${videos?.length || 0})`, icon: IconVideo },
+                { value: "projects" as const, label: "Projects", icon: IconFolder },
+              ].map((tab) => (
+                <button
+                  key={tab.value}
+                  onClick={() => setActiveTab(tab.value)}
+                  className={cn(
+                    "relative z-10 flex items-center gap-1.5 rounded-md px-3 py-1.5 text-sm font-medium transition-colors",
+                    activeTab === tab.value
+                      ? "text-foreground"
+                      : "text-muted-foreground hover:text-foreground"
+                  )}
+                >
+                  {activeTab === tab.value && (
+                    <motion.div
+                      layoutId="activeTabBg"
+                      className="absolute inset-0 rounded-md bg-background shadow-sm"
+                      transition={{ type: "spring", stiffness: 500, damping: 30 }}
+                    />
+                  )}
+                  <motion.div
+                    className="relative z-10"
+                    animate={{ scale: activeTab === tab.value ? 1.05 : 1 }}
+                    transition={{ type: "spring", stiffness: 300, damping: 20 }}
+                  >
+                    <tab.icon className="size-4" />
+                  </motion.div>
+                  <span className="relative z-10">{tab.label}</span>
+                </button>
+              ))}
+            </div>
+
+            <AnimatePresence mode="wait">
+              <motion.div
+                key={activeTab}
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -10 }}
+                transition={{ duration: 0.2, ease: "easeOut" }}
+                className="mt-4"
+              >
+                {activeTab === "videos" && (
+                  <>
+                    {videosError ? (
+                      <div className="text-center py-8 sm:py-12 text-muted-foreground">
+                        <IconAlertCircle className="size-10 sm:size-12 mx-auto mb-3 sm:mb-4 text-red-500 opacity-50" />
+                        <p className="font-medium text-sm sm:text-base text-red-500">Failed to load videos</p>
+                        <p className="text-xs sm:text-sm">{(videosError as Error)?.message || "Please try again"}</p>
+                      </div>
+                    ) : (
+                      <VideoGrid
+                        videos={videos || []}
+                        onVideoClick={(videoId) => router.push(`/${slug}/videos/${videoId}/clips`)}
+                        onDeleteVideo={(videoId) => deleteMutation.mutate(videoId)}
+                        isLoading={videosLoading || sessionPending}
+                      />
+                    )}
+                  </>
+                )}
+
+                {activeTab === "projects" && (
+                  <ProjectList
+                    workspaceId={workspace.id}
+                    onProjectSelect={handleProjectSelect}
+                    onCreateProject={handleCreateProject}
+                  />
+                )}
+              </motion.div>
+            </AnimatePresence>
+          </div>
+          */}
         </div>
       </div>
     </div>

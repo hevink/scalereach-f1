@@ -1,22 +1,36 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import { toast } from "sonner";
 import { Spinner } from "@/components/ui/spinner";
 import { authClient } from "@/lib/auth-client";
+import { analytics } from "@/lib/analytics";
 
 export default function LogoutPage() {
   const router = useRouter();
+  const hasLoggedOut = useRef(false);
 
   useEffect(() => {
+    if (hasLoggedOut.current) return;
+    hasLoggedOut.current = true;
+
     const logout = async () => {
       try {
-        await authClient.signOut();
-        router.push("/login");
-        router.refresh();
-      } catch (_error) {
+        analytics.logout();
+        const result = await authClient.signOut({
+          fetchOptions: {
+            onError: (ctx) => {
+              console.error("[LOGOUT] Error:", ctx.error);
+            },
+          },
+        });
+        console.log("[LOGOUT] Result:", result);
+      } catch (error) {
+        console.error("[LOGOUT] Exception:", error);
         toast.error("Error during logout");
+      } finally {
+        // Always redirect to login, even if signOut fails
         router.push("/login");
         router.refresh();
       }

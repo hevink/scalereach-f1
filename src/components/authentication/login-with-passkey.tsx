@@ -8,6 +8,7 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { authClient } from "@/lib/auth-client";
 import { getAuthErrorMessage } from "@/lib/auth-errors";
+import { analytics } from "@/lib/analytics";
 
 interface LoginWithPasskeyProps {
   variant?: ComponentProps<typeof Button>["variant"];
@@ -118,7 +119,11 @@ export function LoginWithPasskey({
       }
 
       toast.success("Signed in successfully");
-      router.push("/home");
+      analytics.login("passkey");
+      if (result.data?.user?.id) {
+        analytics.identify(result.data.user.id);
+      }
+      router.push("/workspaces");
       router.refresh();
     } catch (error) {
       setIsLoading(false);

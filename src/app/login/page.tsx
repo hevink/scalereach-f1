@@ -1,36 +1,22 @@
 "use client";
 
+import { useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
-import { AuthHeader } from "@/components/authentication/auth-header";
+import { useSession } from "@/lib/auth-client";
+import { AuthLayout } from "@/components/authentication/auth-layout";
 import { AuthNavigation } from "@/components/authentication/auth-navigation";
 import { LoginForm } from "@/components/authentication/login/login-form";
 import { Spinner } from "@/components/ui/spinner";
 
 export default function LoginPage() {
   const router = useRouter();
-  const [isPending, setIsPending] = useState(true);
-  const [user, setUser] = useState<{ id: string } | null>(null);
+  const { data: session, isPending } = useSession();
 
   useEffect(() => {
-    const checkSession = async () => {
-      try {
-        const response = await fetch("/api/auth/session");
-        const data = await response.json();
-        setUser(data.user);
-        if (data.user) {
-          router.replace("/home");
-        }
-      } catch (error) {
-        console.error("Failed to check session:", error);
-        setUser(null);
-      } finally {
-        setIsPending(false);
-      }
-    };
-
-    checkSession();
-  }, [router]);
+    if (!isPending && session?.user) {
+      router.replace("/workspaces");
+    }
+  }, [session, isPending, router]);
 
   if (isPending) {
     return (
@@ -40,17 +26,18 @@ export default function LoginPage() {
     );
   }
 
-  if (user) {
-    return null;
+  if (session?.user) {
+    return (
+      <div className="flex min-h-screen items-center justify-center">
+        <Spinner />
+      </div>
+    );
   }
 
   return (
-    <div className="flex min-h-screen items-center justify-center">
-      <div className="flex w-full max-w-sm flex-col gap-6 p-4">
-        <AuthHeader />
-        <LoginForm />
-        <AuthNavigation />
-      </div>
-    </div>
+    <AuthLayout title="Welcome back" subtitle="Sign in to your account to continue">
+      <LoginForm />
+      <AuthNavigation />
+    </AuthLayout>
   );
 }

@@ -49,7 +49,11 @@ export function UserProfileSection() {
       <div className="flex items-center gap-2 px-2 py-1.5">
         <Avatar size="sm">
           {user.image && (
-            <AvatarImage alt={user.name || "User"} src={user.image} />
+            <AvatarImage
+              alt={user.name || "User"}
+              referrerPolicy="no-referrer"
+              src={user.image}
+            />
           )}
           <AvatarFallback>{initials}</AvatarFallback>
         </Avatar>

@@ -2,6 +2,7 @@
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { IconEye, IconEyeOff } from "@tabler/icons-react";
+import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import { Controller, useForm } from "react-hook-form";
@@ -14,6 +15,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { authClient } from "@/lib/auth-client";
 import { getAuthErrorMessage } from "@/lib/auth-errors";
+import { analytics } from "@/lib/analytics";
 import { LoginWithGoogle } from "../login-with-google";
 import { LoginWithPasskey } from "../login-with-passkey";
 
@@ -125,8 +127,14 @@ export function LoginForm() {
         return;
       }
 
-      // If there's a redirect (e.g., from invite), go there; otherwise go to home
-      router.push(redirect || "/home");
+      // If there's a redirect (e.g., from invite), go there; otherwise go to workspaces
+      analytics.login("email");
+      if (result.data?.user?.id) {
+        analytics.identify(result.data.user.id, {
+          email: isEmailFormat ? identifier : undefined,
+        });
+      }
+      router.push(redirect || "/workspaces");
       router.refresh();
     } catch (error) {
       const errorMessage = getAuthErrorMessage(
@@ -208,15 +216,12 @@ export function LoginForm() {
           </div>
         )}
       />
-      <Controller
-        control={form.control}
-        name="rememberMe"
-        render={({ field, fieldState }) => (
-          <div className="flex flex-col gap-2">
-            <Label
-              className="flex items-center gap-2 font-normal"
-              htmlFor={field.name}
-            >
+      <div className="flex items-center justify-between">
+        <Controller
+          control={form.control}
+          name="rememberMe"
+          render={({ field, fieldState }) => (
+            <Label className="flex items-center gap-2 font-normal" htmlFor={field.name}>
               <Checkbox
                 aria-invalid={fieldState.invalid}
                 checked={field.value}
@@ -227,9 +232,12 @@ export function LoginForm() {
               />
               Remember me
             </Label>
-          </div>
-        )}
-      />
+          )}
+        />
+        <Link href="/forgot-password" className="text-sm text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white">
+          Forgot password?
+        </Link>
+      </div>
       <div className="flex flex-col gap-1">
         <Button
           disabled={isLoading}

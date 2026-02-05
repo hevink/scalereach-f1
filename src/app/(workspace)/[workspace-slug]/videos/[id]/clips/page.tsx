@@ -1,0 +1,492 @@
+"use client";
+
+import { use, useCallback, useMemo } from "react";
+import { useRouter } from "next/navigation";
+import {
+    IconArrowLeft,
+    IconAlertCircle,
+    IconVideo,
+    IconLoader2,
+    IconFlame,
+    IconClock,
+    IconHeartFilled,
+    IconScissors,
+    IconPlayerPlayFilled,
+} from "@tabler/icons-react";
+
+import { Button } from "@/components/ui/button";
+import { Skeleton } from "@/components/ui/skeleton";
+import { ClipDetailModal, useClipModalUrlState } from "@/components/clips/clip-detail-modal";
+import { useVideo } from "@/hooks/useVideo";
+import { useClipsByVideo, useToggleFavorite } from "@/hooks/useClips";
+import { cn } from "@/lib/utils";
+import type { ClipResponse } from "@/lib/api/clips";
+import { IconHeart } from "@tabler/icons-react";
+
+interface VideoClipsPageProps {
+    params: Promise<{ "workspace-slug": string; id: string }>;
+}
+
+function formatDuration(seconds: number): string {
+    const mins = Math.floor(seconds / 60);
+    const secs = Math.floor(seconds % 60);
+    return `${mins}:${secs.toString().padStart(2, "0")}`;
+}
+
+function getScoreColor(score: number): string {
+    if (score >= 70) return "bg-green-500/10 text-green-600 dark:text-green-400";
+    if (score >= 40) return "bg-yellow-500/10 text-yellow-600 dark:text-yellow-400";
+    return "bg-red-500/10 text-red-600 dark:text-red-400";
+}
+
+function VideoClipsLoading() {
+    return (
+        <div className="flex h-full flex-col">
+            <div className="flex items-center gap-4 border-b px-4 py-3">
+                <Skeleton className="h-9 w-9 rounded-md" />
+                <div className="flex flex-col gap-1">
+                    <Skeleton className="h-6 w-48" />
+                    <Skeleton className="h-4 w-32" />
+                </div>
+            </div>
+            <div className="grid gap-4 p-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+                {Array.from({ length: 8 }).map((_, i) => (
+                    <Skeleton key={i} className="aspect-video rounded-lg" />
+                ))}
+            </div>
+        </div>
+    );
+}
+
+interface VideoClipsErrorProps {
+    error: Error | null;
+    onBack: () => void;
+}
+
+function VideoClipsError({ error, onBack }: VideoClipsErrorProps) {
+    return (
+        <div className="flex h-full flex-col items-center justify-center gap-4 p-8">
+            <div className="flex size-16 items-center justify-center rounded-full bg-destructive/10">
+                <IconAlertCircle className="size-8 text-destructive" />
+            </div>
+            <div className="text-center">
+                <h2 className="text-lg font-semibold">Failed to load clips</h2>
+                <p className="mt-1 text-sm text-muted-foreground">
+                    {error?.message || "An error occurred while loading the clips."}
+                </p>
+            </div>
+            <Button onClick={onBack} variant="outline">
+                <IconArrowLeft className="mr-2 size-4" />
+                Go Back
+            </Button>
+        </div>
+    );
+}
+
+interface VideoNotFoundProps {
+    onBack: () => void;
+}
+
+function VideoNotFound({ onBack }: VideoNotFoundProps) {
+    return (
+        <div className="flex h-full flex-col items-center justify-center gap-4 p-8">
+            <div className="flex size-16 items-center justify-center rounded-full bg-muted">
+                <IconVideo className="size-8 text-muted-foreground" />
+            </div>
+            <div className="text-center">
+                <h2 className="text-lg font-semibold">Video not found</h2>
+                <p className="mt-1 text-sm text-muted-foreground">
+                    The video you&apos;re looking for doesn&apos;t exist or has been deleted.
+                </p>
+            </div>
+            <Button onClick={onBack} variant="outline">
+                <IconArrowLeft className="mr-2 size-4" />
+                Go Back
+            </Button>
+        </div>
+    );
+}
+
+interface NoClipsProps {
+    videoTitle: string;
+    videoStatus: string;
+}
+
+function NoClips({ videoTitle, videoStatus }: NoClipsProps) {
+    // Processing states
+    if (videoStatus === "downloading") {
+        return (
+            <div className="flex flex-col items-center justify-center gap-4 rounded-lg border bg-muted/30 p-8">
+                <IconLoader2 className="size-8 animate-spin text-primary" />
+                <div className="text-center">
+                    <h3 className="font-medium">Downloading Video</h3>
+                    <p className="mt-1 text-sm text-muted-foreground">
+                        Downloading &quot;{videoTitle}&quot; from YouTube...
+                    </p>
+                </div>
+            </div>
+        );
+    }
+
+    if (videoStatus === "uploading") {
+        return (
+            <div className="flex flex-col items-center justify-center gap-4 rounded-lg border bg-muted/30 p-8">
+                <IconLoader2 className="size-8 animate-spin text-primary" />
+                <div className="text-center">
+                    <h3 className="font-medium">Uploading Video</h3>
+                    <p className="mt-1 text-sm text-muted-foreground">
+                        Uploading video to storage...
+                    </p>
+                </div>
+            </div>
+        );
+    }
+
+    if (videoStatus === "transcribing") {
+        return (
+            <div className="flex flex-col items-center justify-center gap-4 rounded-lg border bg-muted/30 p-8">
+                <IconLoader2 className="size-8 animate-spin text-primary" />
+                <div className="text-center">
+                    <h3 className="font-medium">Transcribing Audio</h3>
+                    <p className="mt-1 text-sm text-muted-foreground">
+                        Converting speech to text for &quot;{videoTitle}&quot;...
+                    </p>
+                </div>
+            </div>
+        );
+    }
+
+    if (videoStatus === "analyzing" || videoStatus === "processing") {
+        return (
+            <div className="flex flex-col items-center justify-center gap-4 rounded-lg border bg-muted/30 p-8">
+                <IconLoader2 className="size-8 animate-spin text-primary" />
+                <div className="text-center">
+                    <h3 className="font-medium">Detecting Viral Clips</h3>
+                    <p className="mt-1 text-sm text-muted-foreground">
+                        AI is analyzing &quot;{videoTitle}&quot; for viral moments. This may take a few minutes.
+                    </p>
+                </div>
+            </div>
+        );
+    }
+
+    // Error state
+    if (videoStatus === "failed" || videoStatus === "error") {
+        return (
+            <div className="flex flex-col items-center justify-center gap-4 rounded-lg border border-destructive/30 bg-destructive/5 p-8">
+                <div className="flex size-12 items-center justify-center rounded-full bg-destructive/10">
+                    <IconAlertCircle className="size-6 text-destructive" />
+                </div>
+                <div className="text-center max-w-md">
+                    <h3 className="font-medium text-destructive">Something went wrong</h3>
+                    <p className="mt-2 text-sm text-muted-foreground">
+                        We couldn&apos;t process this video. Please try again or use a different video.
+                    </p>
+                </div>
+            </div>
+        );
+    }
+
+    // Pending state (not started yet)
+    if (videoStatus === "pending") {
+        return (
+            <div className="flex flex-col items-center justify-center gap-4 rounded-lg border bg-muted/30 p-8">
+                <IconClock className="size-8 text-muted-foreground" />
+                <div className="text-center">
+                    <h3 className="font-medium">Queued for Processing</h3>
+                    <p className="mt-1 text-sm text-muted-foreground">
+                        &quot;{videoTitle}&quot; is waiting in the queue. Processing will start soon.
+                    </p>
+                </div>
+            </div>
+        );
+    }
+
+    // Completed but no clips (shouldn't happen normally)
+    return (
+        <div className="flex flex-col items-center justify-center gap-4 rounded-lg border bg-muted/30 p-8">
+            <IconVideo className="size-8 text-muted-foreground" />
+            <div className="text-center">
+                <h3 className="font-medium">No Clips Found</h3>
+                <p className="mt-1 text-sm text-muted-foreground">
+                    No viral clips were detected in this video. Try a video with more engaging content.
+                </p>
+            </div>
+        </div>
+    );
+}
+
+interface ClipCardProps {
+    clip: ClipResponse;
+    onClick: () => void;
+    onFavorite: (e: React.MouseEvent) => void;
+}
+
+function isClipGenerating(clip: ClipResponse): boolean {
+    return clip.status === "generating" || clip.status === "detected";
+}
+
+function ClipCard({ clip, onClick, onFavorite }: ClipCardProps) {
+    const scoreColorClass = getScoreColor(clip.viralityScore);
+    const isGenerating = isClipGenerating(clip);
+
+    return (
+        <div
+            className={cn("group cursor-pointer", isGenerating && "opacity-80")}
+            onClick={onClick}
+        >
+            {/* Thumbnail */}
+            <div className="relative aspect-video overflow-hidden rounded-lg bg-muted">
+                {isGenerating ? (
+                    <div className="flex h-full w-full flex-col items-center justify-center gap-2">
+                        <IconLoader2 className="size-8 animate-spin text-primary" />
+                        <span className="text-xs text-muted-foreground">Generating clip...</span>
+                    </div>
+                ) : clip.thumbnailUrl ? (
+                    <img
+                        src={clip.thumbnailUrl}
+                        alt={clip.title}
+                        className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
+                    />
+                ) : clip.storageUrl ? (
+                    <video
+                        src={clip.storageUrl}
+                        className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
+                        muted
+                        preload="metadata"
+                    />
+                ) : (
+                    <div className="flex h-full w-full items-center justify-center">
+                        <IconScissors className="size-12 text-muted-foreground/30" />
+                    </div>
+                )}
+
+                {/* Gradient overlay - hide when generating */}
+                {!isGenerating && (
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent opacity-60 transition-opacity group-hover:opacity-80" />
+                )}
+
+                {/* Play button on hover - hide when generating */}
+                {!isGenerating && (
+                    <div className="absolute inset-0 flex items-center justify-center opacity-0 transition-opacity group-hover:opacity-100">
+                        <div className="flex size-11 items-center justify-center rounded-full bg-white/95 shadow-lg">
+                            <IconPlayerPlayFilled className="size-5 text-black" />
+                        </div>
+                    </div>
+                )}
+
+                {/* Viral score - top left */}
+                <div className={cn(
+                    "absolute left-2 top-2 flex items-center gap-1 rounded-md px-1.5 py-0.5 text-xs font-semibold",
+                    scoreColorClass
+                )}>
+                    <IconFlame className="size-3" />
+                    {clip.viralityScore}
+                </div>
+
+                {/* Favorite button - top right (hide when generating) */}
+                {!isGenerating && (
+                    <button
+                        onClick={onFavorite}
+                        className={cn(
+                            "absolute right-2 top-2 flex size-8 items-center justify-center rounded-full transition-all",
+                            clip.favorited
+                                ? "bg-red-500 text-white"
+                                : "bg-black/50 text-white opacity-0 group-hover:opacity-100 hover:bg-black/70"
+                        )}
+                        aria-label={clip.favorited ? "Remove from favorites" : "Add to favorites"}
+                    >
+                        {clip.favorited ? (
+                            <IconHeartFilled className="size-4" />
+                        ) : (
+                            <IconHeart className="size-4" />
+                        )}
+                    </button>
+                )}
+
+                {/* Duration - bottom right */}
+                <div className="absolute right-2 bottom-2 flex items-center gap-1 rounded-md bg-black/80 px-1.5 py-0.5 text-xs font-medium text-white">
+                    <IconClock className="size-3" />
+                    {formatDuration(clip.duration)}
+                </div>
+            </div>
+
+            {/* Content */}
+            <div className="mt-2 px-0.5">
+                <h3 className="line-clamp-2 text-sm font-medium leading-snug group-hover:text-primary">
+                    {clip.title}
+                </h3>
+
+                {isGenerating ? (
+                    <p className="mt-1 flex items-center gap-1 text-xs text-muted-foreground">
+                        <IconLoader2 className="size-3 animate-spin" />
+                        Processing...
+                    </p>
+                ) : clip.viralityReason ? (
+                    <p className="mt-1 line-clamp-2 text-xs text-muted-foreground">
+                        {clip.viralityReason}
+                    </p>
+                ) : null}
+
+                {clip.hooks.length > 0 && (
+                    <div className="mt-2 flex flex-wrap gap-1">
+                        {clip.hooks.slice(0, 2).map((hook, i) => (
+                            <span key={i} className="rounded-full bg-muted px-2 py-0.5 text-[10px] text-muted-foreground">
+                                {hook}
+                            </span>
+                        ))}
+                        {clip.hooks.length > 2 && (
+                            <span className="rounded-full bg-muted px-2 py-0.5 text-[10px] text-muted-foreground">
+                                +{clip.hooks.length - 2}
+                            </span>
+                        )}
+                    </div>
+                )}
+            </div>
+        </div>
+    );
+}
+
+export default function VideoClipsPage({ params }: VideoClipsPageProps) {
+    const { "workspace-slug": slug, id: videoId } = use(params);
+    const router = useRouter();
+
+    const { selectedClipId, isOpen, openModal, closeModal } = useClipModalUrlState();
+
+    const {
+        data: video,
+        isLoading: videoLoading,
+        error: videoError,
+    } = useVideo(videoId);
+
+    const {
+        data: clips,
+        isLoading: clipsLoading,
+        error: clipsError,
+    } = useClipsByVideo(videoId);
+
+    const toggleFavorite = useToggleFavorite();
+
+    // Navigation helpers
+    const currentClipIndex = useMemo(() => {
+        if (!clips || !selectedClipId) return -1;
+        return clips.findIndex(clip => clip.id === selectedClipId);
+    }, [clips, selectedClipId]);
+
+    const hasPrevious = currentClipIndex > 0;
+    const hasNext = clips ? currentClipIndex < clips.length - 1 : false;
+
+    const handleBack = useCallback(() => {
+        router.push(`/${slug}`);
+    }, [router, slug]);
+
+    const handleClipSelect = useCallback(
+        (clipId: string) => {
+            openModal(clipId);
+        },
+        [openModal]
+    );
+
+    const handleEditClip = useCallback(
+        (clipId: string) => {
+            router.push(`/${slug}/clips/${clipId}`);
+        },
+        [router, slug]
+    );
+
+    const handleFavorite = useCallback(
+        (e: React.MouseEvent, clipId: string) => {
+            e.stopPropagation();
+            toggleFavorite.mutate(clipId);
+        },
+        [toggleFavorite]
+    );
+
+    const handlePrevious = useCallback(() => {
+        if (clips && currentClipIndex > 0) {
+            openModal(clips[currentClipIndex - 1].id);
+        }
+    }, [clips, currentClipIndex, openModal]);
+
+    const handleNext = useCallback(() => {
+        if (clips && currentClipIndex < clips.length - 1) {
+            openModal(clips[currentClipIndex + 1].id);
+        }
+    }, [clips, currentClipIndex, openModal]);
+
+    if (videoLoading || clipsLoading) {
+        return <VideoClipsLoading />;
+    }
+
+    if (videoError || clipsError) {
+        return (
+            <VideoClipsError
+                error={(videoError || clipsError) as Error}
+                onBack={handleBack}
+            />
+        );
+    }
+
+    if (!video) {
+        return <VideoNotFound onBack={handleBack} />;
+    }
+
+    return (
+        <div className="flex h-full flex-col">
+            {/* Header */}
+            <div className="flex items-center gap-4 border-b px-4 py-3">
+                <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={handleBack}
+                    aria-label="Go back"
+                >
+                    <IconArrowLeft className="size-5" />
+                </Button>
+                {typeof video.metadata?.thumbnail === 'string' && (
+                    <img
+                        src={video.metadata.thumbnail}
+                        alt={video.title || "Video thumbnail"}
+                        className="h-12 w-20 rounded object-cover"
+                    />
+                )}
+                <h1 className="min-w-0 flex-1 truncate text-lg font-semibold">
+                    {video.title || "Untitled Video"}
+                </h1>
+            </div>
+
+            {/* Clips Grid */}
+            <div className="flex-1 overflow-auto p-4">
+                {!clips || clips.length === 0 ? (
+                    <NoClips
+                        videoTitle={video.title || "this video"}
+                        videoStatus={video.status}
+                    />
+                ) : (
+                    <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+                        {clips.map((clip) => (
+                            <ClipCard
+                                key={clip.id}
+                                clip={clip}
+                                onClick={() => handleClipSelect(clip.id)}
+                                onFavorite={(e) => handleFavorite(e, clip.id)}
+                            />
+                        ))}
+                    </div>
+                )}
+            </div>
+
+            {/* Clip Detail Modal */}
+            <ClipDetailModal
+                clipId={selectedClipId}
+                isOpen={isOpen}
+                onClose={closeModal}
+                onEdit={handleEditClip}
+                onPrevious={handlePrevious}
+                onNext={handleNext}
+                hasPrevious={hasPrevious}
+                hasNext={hasNext}
+            />
+        </div>
+    );
+}

@@ -25,7 +25,9 @@ export interface CreditPackage {
   name: string;
   credits: number;
   priceInCents: number;
-  polarProductId: string;
+  dodoProductId: string;
+  isSubscription: number;
+  billingPeriod: string | null;
   isActive: number;
   createdAt: string;
 }
@@ -33,6 +35,7 @@ export interface CreditPackage {
 export interface CheckoutResponse {
   checkoutId: string;
   checkoutUrl: string;
+  type: "payment" | "subscription";
 }
 
 export const creditsApi = {
@@ -61,12 +64,17 @@ export const creditsApi = {
     return response.data;
   },
 
-  // Create checkout session
-  createCheckout: async (workspaceId: string, packageId: string) => {
+  // Create checkout session for one-time payment or subscription
+  createCheckout: async (
+    workspaceId: string,
+    productId: string,
+    options?: { isSubscription?: boolean; successUrl?: string; cancelUrl?: string }
+  ) => {
     const response = await api.post<CheckoutResponse>(`/api/credits/workspaces/${workspaceId}/checkout`, {
-      packageId,
-      successUrl: `${window.location.origin}/credits/success?checkout_id={CHECKOUT_ID}`,
-      cancelUrl: `${window.location.origin}/credits`,
+      productId,
+      isSubscription: options?.isSubscription || false,
+      successUrl: options?.successUrl || `${window.location.origin}/checkout/success?workspace=${workspaceId}`,
+      cancelUrl: options?.cancelUrl || `${window.location.origin}/checkout/cancel?workspace=${workspaceId}`,
     });
     return response.data;
   },
@@ -74,6 +82,14 @@ export const creditsApi = {
   // Get customer portal URL
   getCustomerPortal: async (workspaceId: string) => {
     const response = await api.get<{ portalUrl: string }>(`/api/credits/workspaces/${workspaceId}/portal`);
+    return response.data;
+  },
+
+  // Cancel subscription
+  cancelSubscription: async (workspaceId: string, subscriptionId: string) => {
+    const response = await api.delete<{ success: boolean; message: string }>(
+      `/api/credits/workspaces/${workspaceId}/subscriptions/${subscriptionId}`
+    );
     return response.data;
   },
 

@@ -7,8 +7,19 @@ export interface User {
   username?: string;
   image?: string;
   isOnboarded: boolean;
+  role?: string;
+  primaryPlatforms?: string[];
   createdAt: string;
   updatedAt: string;
+}
+
+export interface UpdateUserData {
+  name?: string;
+  email?: string;
+  username?: string;
+  isOnboarded?: boolean;
+  role?: string;
+  primaryPlatforms?: string[];
 }
 
 export const userApi = {
@@ -20,6 +31,12 @@ export const userApi = {
 
   // Update current user
   updateMe: async (data: Partial<User>) => {
+    const response = await api.put<User>("/api/users/me", data);
+    return response.data;
+  },
+
+  // Update current user (alias for updateMe with typed data)
+  updateCurrentUser: async (data: UpdateUserData) => {
     const response = await api.put<User>("/api/users/me", data);
     return response.data;
   },

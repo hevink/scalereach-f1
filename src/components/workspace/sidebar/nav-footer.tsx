@@ -6,15 +6,20 @@ import {
   IconSettings,
   IconSettingsFilled,
   IconSparkles,
+  IconCoins,
+  IconKeyboard,
 } from "@tabler/icons-react";
 import { usePathname, useRouter } from "next/navigation";
 import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
+  SidebarMenuBadge,
 } from "@/components/ui/sidebar";
-import { PricingDialog } from "@/components/pricing/pricing-dialog";
 import { useWorkspaceBySlug } from "@/hooks/useWorkspace";
+import { useCreditBalance } from "@/hooks/useCredits";
+import { cn } from "@/lib/utils";
+import { useWorkspaceShortcuts } from "@/components/workspace/workspace-shortcuts-provider";
 
 interface NavFooterProps {
   currentSlug: string;
@@ -24,10 +29,15 @@ export function NavFooter({ currentSlug }: NavFooterProps) {
   const pathname = usePathname();
   const router = useRouter();
   const { data: workspace } = useWorkspaceBySlug(currentSlug);
+  const { data: credits } = useCreditBalance(workspace?.id);
+  const { openShortcutsHelp } = useWorkspaceShortcuts();
 
   const settingsUrl = `/${currentSlug}/settings`;
   const isSettingsActive =
     pathname === settingsUrl || pathname.startsWith(`${settingsUrl}/`);
+
+  const creditBalance = credits?.balance ?? 0;
+  const isLowCredits = creditBalance < 10;
 
   const footerItems = [
     {
@@ -36,40 +46,66 @@ export function NavFooter({ currentSlug }: NavFooterProps) {
       onClick: () => {
         router.push(settingsUrl);
       },
+      isActive: isSettingsActive,
+    },
+    {
+      title: "Shortcuts",
+      icon: IconKeyboard,
+      onClick: () => {
+        openShortcutsHelp();
+      },
     },
     {
       title: "Get Help",
       icon: IconHelp,
       onClick: () => {
-        // No action needed
+        // TODO: Open help center
       },
     },
     {
-      title: "Report",
+      title: "Report Issue",
       icon: IconAlertTriangle,
       onClick: () => {
-        // No action needed
+        // TODO: Open issue reporter
       },
     },
   ];
 
   return (
     <SidebarMenu>
-      {/* Upgrade Button */}
+      {/* Credits Display */}
       <SidebarMenuItem>
-        <PricingDialog
-          workspaceId={workspace?.id}
-          currentPlan="free"
-          trigger={
-            <SidebarMenuButton
-              tooltip="Upgrade Plan"
-              className="bg-linear-to-r from-primary/10 to-primary/5 hover:from-primary/20 hover:to-primary/10 border border-primary/20"
-            >
-              <IconSparkles className="text-primary" />
-              <span className="font-[490] text-[13px] text-primary">Upgrade</span>
-            </SidebarMenuButton>
-          }
-        />
+        <SidebarMenuButton
+          tooltip={`${creditBalance} credits remaining`}
+          onClick={() => router.push(`/${currentSlug}/settings/billing`)}
+          className={cn(
+            isLowCredits && "text-amber-600 dark:text-amber-500"
+          )}
+        >
+          <IconCoins className={cn(isLowCredits && "text-amber-500")} />
+          <span className="font-[490] text-[13px]">Credits</span>
+        </SidebarMenuButton>
+        <SidebarMenuBadge
+          className={cn(
+            isLowCredits
+              ? "bg-amber-500/10 text-amber-600 dark:text-amber-500"
+              : "bg-primary/10 text-primary"
+          )}
+        >
+          {creditBalance}
+        </SidebarMenuBadge>
+      </SidebarMenuItem>
+
+      {/* Upgrade Button - Links to pricing page */}
+      <SidebarMenuItem>
+        <SidebarMenuButton
+          tooltip="Upgrade Plan"
+          onClick={() => router.push(`/${currentSlug}/pricing`)}
+          className="bg-linear-to-r from-primary/10 to-primary/5 hover:from-primary/20 hover:to-primary/10 border border-primary/20"
+        >
+          <IconSparkles className="text-primary" />
+          <span className="font-[490] text-[13px] text-primary">Upgrade</span>
+        </SidebarMenuButton>
       </SidebarMenuItem>
 
       {footerItems.map((item) => {
@@ -77,13 +113,13 @@ export function NavFooter({ currentSlug }: NavFooterProps) {
         return (
           <SidebarMenuItem key={item.title}>
             <SidebarMenuButton
-              isActive={item.title === "Settings" ? isSettingsActive : false}
+              isActive={item.isActive}
               onClick={item.onClick}
               tooltip={item.title}
             >
               <IconComponent
                 className={
-                  item.title === "Settings" && isSettingsActive
+                  item.isActive
                     ? "fill-current text-muted-foreground contrast-200"
                     : ""
                 }
