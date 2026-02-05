@@ -54,47 +54,18 @@ function findCurrentWordInfo(
     segments: TranscriptSegment[],
     currentTime: number
 ): { segmentIndex: number; wordIndex: number } | null {
+    // Search through all segments and words to find the one being spoken
     for (let segIdx = 0; segIdx < segments.length; segIdx++) {
         const segment = segments[segIdx];
-        if (currentTime >= segment.startTime && currentTime <= segment.endTime) {
-            for (let wordIdx = 0; wordIdx < segment.words.length; wordIdx++) {
-                const word = segment.words[wordIdx];
-                if (currentTime >= word.start && currentTime <= word.end) {
-                    return { segmentIndex: segIdx, wordIndex: wordIdx };
-                }
+        for (let wordIdx = 0; wordIdx < segment.words.length; wordIdx++) {
+            const word = segment.words[wordIdx];
+            // Check if current time falls within this word's timing
+            if (currentTime >= word.start && currentTime <= word.end) {
+                return { segmentIndex: segIdx, wordIndex: wordIdx };
             }
         }
     }
     return null;
-}
-
-// ============================================================================
-// Word Component
-// ============================================================================
-
-interface WordSpanProps {
-    word: TranscriptWord;
-    isCurrentWord: boolean;
-    onClick: () => void;
-    highlightCurrent: boolean;
-    segmentId: string;
-}
-
-function WordSpan({ word, isCurrentWord, onClick, highlightCurrent, segmentId }: WordSpanProps) {
-    return (
-        <span
-            onClick={onClick}
-            data-segment-id={segmentId}
-            data-word={word.word}
-            className={cn(
-                "cursor-pointer transition-all duration-150 hover:bg-primary/20 rounded px-0.5",
-                highlightCurrent && isCurrentWord && "bg-primary/30 text-primary font-semibold scale-105"
-            )}
-            title={`${formatTimestamp(word.start)} - ${formatTimestamp(word.end)}`}
-        >
-            {word.word}
-        </span>
-    );
 }
 
 // ============================================================================
@@ -378,13 +349,29 @@ export function TranscriptParagraphView({
         [onWordClick]
     );
 
-    // Auto-scroll to current word
+    // Auto-scroll to current word with smooth animation
     useEffect(() => {
         if (highlightCurrent && currentWordRef.current) {
-            currentWordRef.current.scrollIntoView({
-                behavior: "smooth",
-                block: "center",
-            });
+            // Smooth scroll to keep current word in view
+            const element = currentWordRef.current;
+            const container = containerRef.current;
+
+            if (container) {
+                const elementRect = element.getBoundingClientRect();
+                const containerRect = container.getBoundingClientRect();
+
+                // Check if element is not fully visible
+                if (
+                    elementRect.top < containerRect.top ||
+                    elementRect.bottom > containerRect.bottom
+                ) {
+                    element.scrollIntoView({
+                        behavior: "smooth",
+                        block: "center",
+                        inline: "nearest",
+                    });
+                }
+            }
         }
     }, [currentWordInfo, highlightCurrent]);
 
@@ -408,52 +395,71 @@ export function TranscriptParagraphView({
     }
 
     return (
-        <div className={cn("flex flex-col gap-3", className)}>
-            {/* Header */}
-            <div className="flex items-center gap-2">
-                <IconClock className="size-4 text-muted-foreground" />
-                <span className="font-medium text-sm">Transcript</span>
-            </div>
-
+        <div className={cn("flex flex-col h-full bg-black", className)}>
             {/* Content */}
-            <ScrollArea className="h-[400px] rounded-lg border bg-card p-4">
-                <div
-                    ref={containerRef}
-                    onMouseUp={handleMouseUp}
-                    className="text-sm leading-relaxed text-foreground/90 select-text"
-                >
-                    {segments.map((segment, segIdx) => (
-                        <span key={segment.id} data-segment-id={segment.id}>
-                            {segment.words.map((word, wordIdx) => {
-                                const isCurrentWord =
-                                    currentWordInfo?.segmentIndex === segIdx &&
-                                    currentWordInfo?.wordIndex === wordIdx;
+            <ScrollArea className="flex-1">
+                <div className="mt-4 mx-6 pb-8" style={{ minHeight: "calc(-177px + 100vh)" }}>
+                    {/* Transcript Content */}
+                    <div className="relative">
+                        <div
+                            ref={containerRef}
+                            onMouseUp={handleMouseUp}
+                            className="space-y-4"
+                        >
+                            {segments.map((segment, segIdx) => {
                                 return (
-                                    <span
-                                        key={`${segment.id}-${wordIdx}`}
-                                        ref={isCurrentWord ? currentWordRef : undefined}
-                                    >
-                                        <WordSpan
-                                            word={word}
-                                            isCurrentWord={isCurrentWord}
-                                            onClick={() => handleWordClick(word)}
-                                            highlightCurrent={highlightCurrent}
-                                            segmentId={segment.id}
-                                        />
-                                        {wordIdx < segment.words.length - 1 && " "}
-                                    </span>
+                                    <div key={segment.id}>
+                                        {/* Paragraph */}
+                                        <p className="text-[#FAFAFA] leading-relaxed text-sm">
+                                            {segment.words.map((word, wordIdx) => {
+                                                const isCurrentWord =
+                                                    currentWordInfo?.segmentIndex === segIdx &&
+                                                    currentWordInfo?.wordIndex === wordIdx;
+                                                return (
+                                                    <span
+                                                        key={`${segment.id}-${wordIdx}`}
+                                                        ref={isCurrentWord ? currentWordRef : undefined}
+                                                        onClick={() => handleWordClick(word)}
+                                                        data-segment-id={segment.id}
+                                                        data-word-id={`word-${segIdx}-${wordIdx}`}
+                                                        className="cursor-pointer relative inline-block"
+                                                        title={`${formatTimestamp(word.start)} - ${formatTimestamp(word.end)}`}
+                                                    >
+                                                        {/* Highlight background */}
+                                                        {highlightCurrent && isCurrentWord && (
+                                                            <div
+                                                                className="bg-secondary"
+                                                                style={{
+                                                                    borderRadius: "4px",
+                                                                    position: "absolute",
+                                                                    top: "-4px",
+                                                                    left: "0px",
+                                                                    width: "100%",
+                                                                    height: "calc(100% + 8px)",
+                                                                }}
+                                                            />
+                                                        )}
+                                                        <span className={cn(
+                                                            "relative z-10 transition-colors duration-200",
+                                                            !isCurrentWord && "hover:text-gray-300"
+                                                        )}>
+                                                            {word.word}
+                                                        </span>
+                                                    </span>
+                                                );
+                                            }).reduce((prev, curr) => (
+                                                <>
+                                                    {prev} {curr}
+                                                </>
+                                            ))}
+                                        </p>
+                                    </div>
                                 );
                             })}
-                            {segIdx < segments.length - 1 && " "}
-                        </span>
-                    ))}
+                        </div>
+                    </div>
                 </div>
             </ScrollArea>
-
-            {/* Help text */}
-            <p className="text-xs text-muted-foreground">
-                Select text to edit, or click any word to seek to that position.
-            </p>
 
             {/* Selection Toolbar - shows Edit button when text is selected */}
             {selection && !isEditing && (

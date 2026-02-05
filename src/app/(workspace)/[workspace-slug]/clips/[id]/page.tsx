@@ -41,7 +41,7 @@ import { useWorkspaceBySlug } from "@/hooks/useWorkspace";
 import { savePageScrollPosition } from "@/hooks/useScrollPosition";
 import { useCaptionStylePresets } from "@/hooks/useCaptionStylePresets";
 import { useKeyboardShortcuts, type KeyboardShortcut } from "@/hooks/useKeyboardShortcuts";
-import type { CaptionStyle, Caption } from "@/lib/api/captions";
+import type { CaptionStyle, Caption, CaptionWord } from "@/lib/api/captions";
 import type { ExportOptions as ExportOptionsType } from "@/lib/api/export";
 import {
     Dialog,
@@ -1424,13 +1424,14 @@ export default function ClipEditorPage({ params }: ClipEditorPageProps) {
         const words = (captionData as any)?.words;
         if (words && Array.isArray(words) && words.length > 0) {
             const segments: Caption[] = [];
-            let currentWords: any[] = [];
+            let currentWords: CaptionWord[] = [];
 
             for (let i = 0; i < words.length; i++) {
                 currentWords.push({
+                    id: `word-${i}`,
                     word: words[i].word,
-                    startTime: words[i].start,
-                    endTime: words[i].end,
+                    start: words[i].start,
+                    end: words[i].end,
                     highlight: false,
                 });
 
@@ -1438,8 +1439,8 @@ export default function ClipEditorPage({ params }: ClipEditorPageProps) {
                     segments.push({
                         id: `caption-${segments.length}`,
                         text: currentWords.map(w => w.word).join(" "),
-                        startTime: currentWords[0].startTime,
-                        endTime: currentWords[currentWords.length - 1].endTime,
+                        startTime: currentWords[0].start,
+                        endTime: currentWords[currentWords.length - 1].end,
                         words: currentWords,
                     });
                     currentWords = [];
