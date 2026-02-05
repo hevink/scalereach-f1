@@ -469,6 +469,9 @@ export const VideoCanvasEditor = forwardRef<VideoCanvasEditorRef, VideoCanvasEdi
             // Render each word with highlighting for the current word
             return currentCaption.words.map((word, index) => {
                 const isHighlighted = index === currentWordIndex;
+                // Add extra margin when highlighted to account for scale(1.2)
+                const baseMargin = 4 * containerScale;
+                const highlightedMargin = 8 * containerScale;
                 return (
                     <span
                         key={word.id || index}
@@ -478,8 +481,9 @@ export const VideoCanvasEditor = forwardRef<VideoCanvasEditorRef, VideoCanvasEdi
                                 : (captionStyle?.textColor || "#FFFFFF"),
                             transform: isHighlighted ? "scale(1.2)" : "scale(1)",
                             display: "inline-block",
-                            transition: "transform 0.1s ease-out, color 0.1s ease-out",
-                            marginRight: `${4 * containerScale}px`,
+                            transition: "transform 0.1s ease-out, color 0.1s ease-out, margin 0.1s ease-out",
+                            marginLeft: isHighlighted ? `${highlightedMargin}px` : "0px",
+                            marginRight: isHighlighted ? `${highlightedMargin}px` : `${baseMargin}px`,
                         }}
                     >
                         {word.word}
