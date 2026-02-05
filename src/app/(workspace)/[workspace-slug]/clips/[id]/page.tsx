@@ -10,7 +10,6 @@ import {
     IconScissors,
     IconDownload,
     IconLoader,
-    IconCheck,
 } from "@tabler/icons-react";
 
 import { Button } from "@/components/ui/button";
@@ -28,7 +27,6 @@ import { EditingLayout } from "@/components/clips/editing-layout";
 import { AdvancedTimeline } from "@/components/clips/advanced-timeline";
 import { KeyboardShortcutsModal, useKeyboardShortcutsModal } from "@/components/clips/keyboard-shortcuts-modal";
 import { CaptionPanelTabs } from "@/components/captions/caption-panel-tabs";
-import { VideoPlayer, type VideoPlayerRef } from "@/components/video/video-player";
 import { VideoCanvasEditor, type VideoCanvasEditorRef } from "@/components/video/video-canvas-editor";
 import { TranscriptParagraphView } from "@/components/transcript/transcript-paragraph-view";
 import { ExportOptions } from "@/components/export/export-options";
@@ -51,87 +49,6 @@ import {
     DialogHeader,
     DialogTitle,
 } from "@/components/ui/dialog";
-import {
-    AlertDialog,
-    AlertDialogAction,
-    AlertDialogCancel,
-    AlertDialogContent,
-    AlertDialogDescription,
-    AlertDialogFooter,
-    AlertDialogHeader,
-    AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
-import { toast } from "sonner";
-
-// ============================================================================
-// Auto-Save Retry Configuration
-// ============================================================================
-
-/**
- * Maximum number of retry attempts for auto-save operations
- * @validates Requirements 15.5 - Retry up to 3 times
- */
-const AUTO_SAVE_MAX_RETRIES = 3;
-
-/**
- * Base delay in milliseconds for exponential backoff (1s, 2s, 4s)
- * @validates Requirements 15.5 - Retry with exponential backoff
- */
-const AUTO_SAVE_BASE_DELAY_MS = 1000;
-
-/**
- * Helper function to perform auto-save with retry logic
- * Implements exponential backoff: 1s, 2s, 4s delays between retries
- * @validates Requirements 15.5 - Retry failed saves up to 3 times
- */
-async function performAutoSaveWithRetry<T>(
-    saveFn: () => Promise<T>,
-    retryCountRef: React.MutableRefObject<number>,
-    options: {
-        onSuccess: () => void;
-        onMaxRetriesExceeded: () => void;
-        saveType: "caption text" | "caption style";
-    }
-): Promise<void> {
-    const { onSuccess, onMaxRetriesExceeded, saveType } = options;
-
-    try {
-        await saveFn();
-        // Reset retry counter on success
-        retryCountRef.current = 0;
-        onSuccess();
-    } catch (error) {
-        retryCountRef.current += 1;
-        const attemptNumber = retryCountRef.current;
-
-        // Log retry attempt
-        // @validates Requirements 15.5 - Log retry attempts
-        console.warn(
-            `Auto-save ${saveType} failed (attempt ${attemptNumber}/${AUTO_SAVE_MAX_RETRIES}):`,
-            error
-        );
-
-        if (attemptNumber < AUTO_SAVE_MAX_RETRIES) {
-            // Calculate exponential backoff delay: 1s, 2s, 4s
-            const delay = AUTO_SAVE_BASE_DELAY_MS * Math.pow(2, attemptNumber - 1);
-            console.log(`Retrying auto-save ${saveType} in ${delay}ms...`);
-
-            // Schedule retry with exponential backoff
-            setTimeout(async () => {
-                await performAutoSaveWithRetry(saveFn, retryCountRef, options);
-            }, delay);
-        } else {
-            // Max retries exceeded
-            // @validates Requirements 15.5 - Show error notification after max retries
-            console.error(
-                `Auto-save ${saveType} failed after ${AUTO_SAVE_MAX_RETRIES} attempts`
-            );
-            // Reset retry counter for next save attempt
-            retryCountRef.current = 0;
-            onMaxRetriesExceeded();
-        }
-    }
-}
 
 // ============================================================================
 // Types
@@ -263,7 +180,6 @@ interface EditorHeaderProps {
     title: string;
     onBack: () => void;
     isSaving: boolean;
-    showSavedIndicator: boolean;
     onExportClick: () => void;
     hasActiveExport: boolean;
     workspaceSlug: string;
@@ -273,16 +189,11 @@ interface EditorHeaderProps {
 
 /**
  * EditorHeader - Header component with back button, breadcrumbs, and export button
- * 
- * @validates Requirements 12.3 - Back button to return to clips page
- * @validates Requirements 12.4 - Breadcrumb navigation showing current location
- * @validates Requirements 15.3 - Display "Saved" indicator when auto-save completes
  */
 function EditorHeader({
     title,
     onBack,
     isSaving,
-    showSavedIndicator,
     onExportClick,
     hasActiveExport,
     workspaceSlug,
@@ -339,18 +250,10 @@ function EditorHeader({
                         {title || "Untitled Clip"}
                     </h1>
                     {/* Save status indicator */}
-                    {/* @validates Requirements 13.2 - Show saving indicator during save operations */}
-                    {/* @validates Requirements 15.3 - Display "Saved" indicator when auto-save completes */}
                     {isSaving && (
                         <Badge variant="secondary" className="gap-1">
                             <IconLoader className="size-3 animate-spin" />
                             Saving...
-                        </Badge>
-                    )}
-                    {!isSaving && showSavedIndicator && (
-                        <Badge variant="secondary" className="gap-1 bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400">
-                            <IconCheck className="size-3" />
-                            Saved
                         </Badge>
                     )}
                 </div>
@@ -467,7 +370,7 @@ export default function ClipEditorPage({ params }: ClipEditorPageProps) {
     const { open: shortcutsModalOpen, setOpen: setShortcutsModalOpen } = useKeyboardShortcutsModal();
 
     // Refs
-    const videoPlayerRef = useRef<VideoPlayerRef>(null);
+    const videoPlayerRef = useRef<VideoCanvasEditorRef>(null);
 
     // State
     const [captionStyle, setCaptionStyle] = useState<CaptionStyle>(DEFAULT_CAPTION_STYLE);
@@ -477,14 +380,9 @@ export default function ClipEditorPage({ params }: ClipEditorPageProps) {
     const [exportDialogOpen, setExportDialogOpen] = useState(false);
     const [clipBoundaries, setClipBoundaries] = useState<{ start: number; end: number } | null>(null);
     // Local captions state for optimistic UI updates during real-time editing
-    // @validates Requirements 6.3 - Real-time caption edit sync
     const [localCaptions, setLocalCaptions] = useState<Caption[] | null>(null);
 
     // Undo/redo state management for caption text edits
-    // @validates Requirements 19.1 - Maintain undo history for caption text edits
-    // @validates Requirements 19.2 - Undo last caption edit with Ctrl+Z
-    // @validates Requirements 19.3 - Redo last undone edit with Ctrl+Shift+Z
-    // @validates Requirements 19.4 - Support up to 50 undo/redo operations
     const {
         state: captionUndoState,
         setState: setCaptionUndoState,
@@ -497,30 +395,6 @@ export default function ClipEditorPage({ params }: ClipEditorPageProps) {
         initialState: null,
         maxHistory: 50,
     });
-
-    // Auto-save state for caption text edits
-    // @validates Requirements 15.1 - Auto-save caption text after 2 seconds of inactivity
-    // @validates Requirements 15.3 - Display "Saved" indicator when auto-save completes
-    const [captionsDirty, setCaptionsDirty] = useState(false);
-    const [showSavedIndicator, setShowSavedIndicator] = useState(false);
-    const autoSaveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
-    const savedIndicatorTimeoutRef = useRef<NodeJS.Timeout | null>(null);
-
-    // Auto-save state for caption style changes
-    // @validates Requirements 15.2 - Auto-save caption style after 2 seconds of inactivity
-    // @validates Requirements 15.3 - Display "Saved" indicator when auto-save completes
-    const [styleDirty, setStyleDirty] = useState(false);
-    const styleAutoSaveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
-
-    // Auto-save retry state
-    // @validates Requirements 15.5 - Retry failed saves up to 3 times
-    const captionTextRetryCountRef = useRef<number>(0);
-    const captionStyleRetryCountRef = useRef<number>(0);
-
-    // Unsaved changes warning dialog state
-    // @validates Requirements 15.4 - Display "Unsaved changes" warning on navigation attempt
-    const [showUnsavedChangesDialog, setShowUnsavedChangesDialog] = useState(false);
-    const pendingNavigationRef = useRef<(() => void) | null>(null);
 
     // Caption style presets hook
     // @validates Requirements 9.2, 9.4, 9.5 - Preset application and last used style persistence
@@ -669,26 +543,7 @@ export default function ClipEditorPage({ params }: ClipEditorPageProps) {
     }, [selectedPresetId]);
 
     /**
-     * Cleanup auto-save timeouts on component unmount
-     * Prevents memory leaks and stale timeout callbacks
-     */
-    useEffect(() => {
-        return () => {
-            if (autoSaveTimeoutRef.current) {
-                clearTimeout(autoSaveTimeoutRef.current);
-            }
-            if (savedIndicatorTimeoutRef.current) {
-                clearTimeout(savedIndicatorTimeoutRef.current);
-            }
-            if (styleAutoSaveTimeoutRef.current) {
-                clearTimeout(styleAutoSaveTimeoutRef.current);
-            }
-        };
-    }, []);
-
-    /**
      * Clear undo history when navigating away from the editing screen
-     * @validates Requirements 19.5 - Clear undo history when navigating away
      */
     useEffect(() => {
         return () => {
@@ -696,133 +551,19 @@ export default function ClipEditorPage({ params }: ClipEditorPageProps) {
         };
     }, [clearCaptionHistory]);
 
-    /**
-     * Browser beforeunload event handler for unsaved changes warning
-     * Shows browser's native confirmation dialog when user tries to close/refresh with unsaved changes
-     * @validates Requirements 15.4 - Display "Unsaved changes" warning on navigation attempt
-     */
-    useEffect(() => {
-        const handleBeforeUnload = (event: BeforeUnloadEvent) => {
-            if (captionsDirty || styleDirty) {
-                // Standard way to trigger the browser's confirmation dialog
-                event.preventDefault();
-                // For older browsers
-                event.returnValue = "";
-                return "";
-            }
-        };
-
-        window.addEventListener("beforeunload", handleBeforeUnload);
-
-        return () => {
-            window.removeEventListener("beforeunload", handleBeforeUnload);
-        };
-    }, [captionsDirty, styleDirty]);
-
     // Navigation handlers
     /**
      * Handle back navigation with scroll position preservation
-     * Shows unsaved changes warning if there are pending changes
-     * @validates Requirements 12.2 - Preserve user's position when navigating back
-     * @validates Requirements 12.3 - Back button to return to clips page
-     * @validates Requirements 12.5 - Update browser URL on navigation
-     * @validates Requirements 15.4 - Display "Unsaved changes" warning on navigation attempt
      */
     const handleBack = useCallback(() => {
-        // Check for unsaved changes before navigating
-        if (captionsDirty || styleDirty) {
-            // Store the navigation action to execute after user confirms
-            pendingNavigationRef.current = () => {
-                // Save scroll position for the video clips page before navigating
-                if (clip?.videoId) {
-                    savePageScrollPosition(`video_clips_${clip.videoId}`);
-                    router.push(`/${slug}/videos/${clip.videoId}/clips`);
-                } else {
-                    router.push(`/${slug}`);
-                }
-            };
-            // Show the unsaved changes dialog
-            setShowUnsavedChangesDialog(true);
-            return;
-        }
-
-        // No unsaved changes, navigate directly
         // Save scroll position for the video clips page before navigating
         if (clip?.videoId) {
-            // Save scroll position with video ID as key so it can be restored
             savePageScrollPosition(`video_clips_${clip.videoId}`);
             router.push(`/${slug}/videos/${clip.videoId}/clips`);
         } else {
             router.push(`/${slug}`);
         }
-    }, [router, slug, clip?.videoId, captionsDirty, styleDirty]);
-
-    /**
-     * Handle save and navigate - saves all pending changes then navigates
-     * @validates Requirements 15.4 - Provide save option in unsaved changes warning
-     */
-    const handleSaveAndNavigate = useCallback(() => {
-        // Save caption style if there are changes
-        if (captionStyle) {
-            updateCaptionStyle.mutate({
-                clipId,
-                style: captionStyle,
-            });
-        }
-
-        // Save clip boundaries if there are changes
-        if (clipBoundaries) {
-            updateClipBoundaries.mutate({
-                clipId,
-                boundaries: {
-                    startTime: clipBoundaries.start,
-                    endTime: clipBoundaries.end,
-                },
-            });
-        }
-
-        // Clear dirty states
-        setCaptionsDirty(false);
-        setStyleDirty(false);
-
-        // Close the dialog
-        setShowUnsavedChangesDialog(false);
-
-        // Execute the pending navigation
-        if (pendingNavigationRef.current) {
-            pendingNavigationRef.current();
-            pendingNavigationRef.current = null;
-        }
-    }, [clipId, captionStyle, clipBoundaries, updateCaptionStyle, updateClipBoundaries]);
-
-    /**
-     * Handle discard and navigate - discards changes and navigates
-     * @validates Requirements 15.4 - Provide discard option in unsaved changes warning
-     */
-    const handleDiscardAndNavigate = useCallback(() => {
-        // Clear dirty states without saving
-        setCaptionsDirty(false);
-        setStyleDirty(false);
-
-        // Close the dialog
-        setShowUnsavedChangesDialog(false);
-
-        // Execute the pending navigation
-        if (pendingNavigationRef.current) {
-            pendingNavigationRef.current();
-            pendingNavigationRef.current = null;
-        }
-    }, []);
-
-    /**
-     * Handle cancel navigation - stays on the page
-     * @validates Requirements 15.4 - Provide cancel option in unsaved changes warning
-     */
-    const handleCancelNavigation = useCallback(() => {
-        // Close the dialog and clear pending navigation
-        setShowUnsavedChangesDialog(false);
-        pendingNavigationRef.current = null;
-    }, []);
+    }, [router, slug, clip?.videoId]);
 
     // Video time update handler
     const handleTimeUpdate = useCallback((time: number) => {
@@ -867,13 +608,7 @@ export default function ClipEditorPage({ params }: ClipEditorPageProps) {
 
     /**
      * Handle caption edit for real-time sync with video overlay
-     * Updates local captions state optimistically for immediate UI feedback
-     * Triggers auto-save after 2 seconds of inactivity with retry logic
-     * Tracks edit in undo history for undo/redo functionality
-     * @validates Requirements 6.3 - Real-time caption edit sync
-     * @validates Requirements 15.1 - Auto-save caption text after 2 seconds of inactivity
-     * @validates Requirements 15.5 - Retry failed saves up to 3 times
-     * @validates Requirements 19.1 - Maintain undo history for caption text edits
+     * Updates local captions state optimistically and saves immediately
      */
     const handleCaptionEdit = useCallback((segmentId: string, newText: string) => {
         // Get the current captions (either local state or from server)
@@ -883,106 +618,31 @@ export default function ClipEditorPage({ params }: ClipEditorPageProps) {
         const originalCaption = currentCaptions.find((caption: Caption) => caption.id === segmentId);
         const originalText = originalCaption?.text ?? "";
 
-        // Track the edit in undo history (store the previous state)
-        // @validates Requirements 19.1 - Maintain undo history for caption text edits
+        // Track the edit in undo history
         setCaptionUndoState({ segmentId, text: originalText });
 
         // Find the caption that matches the segment ID and update it optimistically
         const updatedCaptions = currentCaptions.map((caption: Caption) => {
-            // Match by ID - the segmentId from TranscriptEditor corresponds to caption ID
             if (caption.id === segmentId) {
-                return {
-                    ...caption,
-                    text: newText,
-                };
+                return { ...caption, text: newText };
             }
             return caption;
         });
 
-        // Update local state for immediate UI feedback (optimistic update)
+        // Update local state for immediate UI feedback
         setLocalCaptions(updatedCaptions);
 
-        // Mark captions as dirty (unsaved changes)
-        setCaptionsDirty(true);
-
-        // Hide the "Saved" indicator when new edits are made
-        setShowSavedIndicator(false);
-        if (savedIndicatorTimeoutRef.current) {
-            clearTimeout(savedIndicatorTimeoutRef.current);
-            savedIndicatorTimeoutRef.current = null;
-        }
-
-        // Clear any existing auto-save timeout
-        if (autoSaveTimeoutRef.current) {
-            clearTimeout(autoSaveTimeoutRef.current);
-        }
-
-        // Reset retry counter when user makes a new edit
-        captionTextRetryCountRef.current = 0;
-
-        /**
-         * Debounced auto-save after 2 seconds of inactivity with retry logic
-         * @validates Requirements 15.1 - Auto-save caption text after 2 seconds of inactivity
-         * @validates Requirements 15.5 - Retry failed saves up to 3 times
-         */
-        autoSaveTimeoutRef.current = setTimeout(() => {
-            // Create a promise-based save function for retry logic
-            const saveFn = () =>
-                new Promise<void>((resolve, reject) => {
-                    updateCaptionText.mutate(
-                        {
-                            clipId,
-                            captionId: segmentId,
-                            text: newText,
-                        },
-                        {
-                            onSuccess: () => resolve(),
-                            onError: (error) => reject(error),
-                        }
-                    );
-                });
-
-            // Perform auto-save with retry logic
-            performAutoSaveWithRetry(saveFn, captionTextRetryCountRef, {
-                saveType: "caption text",
-                onSuccess: () => {
-                    // Mark captions as clean (saved)
-                    setCaptionsDirty(false);
-
-                    /**
-                     * Show "Saved" indicator for 3 seconds after successful save
-                     * @validates Requirements 15.3 - Display "Saved" indicator when auto-save completes
-                     */
-                    setShowSavedIndicator(true);
-
-                    // Hide the "Saved" indicator after 3 seconds
-                    savedIndicatorTimeoutRef.current = setTimeout(() => {
-                        setShowSavedIndicator(false);
-                    }, 3000);
-                },
-                onMaxRetriesExceeded: () => {
-                    /**
-                     * Show error notification after max retries
-                     * @validates Requirements 15.5 - Show error notification after max retries
-                     */
-                    toast.error("Failed to save caption changes", {
-                        description: "Please check your connection and try again.",
-                    });
-                    // Keep captions marked as dirty so user knows changes aren't saved
-                },
-            });
-        }, 2000); // 2 second debounce for auto-save
+        // Save immediately
+        updateCaptionText.mutate({
+            clipId,
+            captionId: segmentId,
+            text: newText,
+        });
     }, [localCaptions, captionsFromApi, clipId, updateCaptionText, setCaptionUndoState]);
 
-    // Caption style change handler
     /**
      * Handle manual style changes (not from preset selection)
-     * Clears the selected preset when user manually edits style
-     * Uses debounced auto-save after 2 seconds of inactivity with retry logic
-     * @validates Requirements 9.4 - Allow editing after preset application
-     * @validates Requirements 15.2 - Auto-save caption style after 2 seconds of inactivity
-     * @validates Requirements 15.3 - Display "Saved" indicator when auto-save completes
-     * @validates Requirements 15.5 - Retry failed saves up to 3 times
+     * Saves immediately to the server
      */
     const handleStyleChange = useCallback(
         (newStyle: CaptionStyle | Partial<CaptionStyle>) => {
@@ -993,96 +653,24 @@ export default function ClipEditorPage({ params }: ClipEditorPageProps) {
             setCaptionStyle(mergedStyle);
 
             // Clear the selected preset since user is manually editing
-            // @validates Requirements 9.4 - Allow users to modify preset styles after application
             clearSelectedPreset();
             setCurrentPresetId(undefined);
 
             // Save the style as last used (without preset association)
-            // @validates Requirements 9.5 - Save last used caption style as default
             saveLastUsedStyle(mergedStyle);
 
-            // Mark style as dirty (unsaved changes)
-            setStyleDirty(true);
-
-            // Hide the "Saved" indicator when new edits are made
-            setShowSavedIndicator(false);
-            if (savedIndicatorTimeoutRef.current) {
-                clearTimeout(savedIndicatorTimeoutRef.current);
-                savedIndicatorTimeoutRef.current = null;
-            }
-
-            // Clear any existing auto-save timeout
-            if (styleAutoSaveTimeoutRef.current) {
-                clearTimeout(styleAutoSaveTimeoutRef.current);
-            }
-
-            // Reset retry counter when user makes a new edit
-            captionStyleRetryCountRef.current = 0;
-
-            /**
-             * Debounced auto-save after 2 seconds of inactivity with retry logic
-             * @validates Requirements 15.2 - Auto-save caption style after 2 seconds of inactivity
-             * @validates Requirements 15.5 - Retry failed saves up to 3 times
-             */
-            styleAutoSaveTimeoutRef.current = setTimeout(() => {
-                // Create a promise-based save function for retry logic
-                const saveFn = () =>
-                    new Promise<void>((resolve, reject) => {
-                        updateCaptionStyle.mutate(
-                            {
-                                clipId,
-                                style: mergedStyle,
-                            },
-                            {
-                                onSuccess: () => resolve(),
-                                onError: (error) => reject(error),
-                            }
-                        );
-                    });
-
-                // Perform auto-save with retry logic
-                performAutoSaveWithRetry(saveFn, captionStyleRetryCountRef, {
-                    saveType: "caption style",
-                    onSuccess: () => {
-                        // Mark style as clean (saved)
-                        setStyleDirty(false);
-
-                        /**
-                         * Show "Saved" indicator for 3 seconds after successful save
-                         * @validates Requirements 15.3 - Display "Saved" indicator when auto-save completes
-                         */
-                        setShowSavedIndicator(true);
-
-                        // Hide the "Saved" indicator after 3 seconds
-                        savedIndicatorTimeoutRef.current = setTimeout(() => {
-                            setShowSavedIndicator(false);
-                        }, 3000);
-                    },
-                    onMaxRetriesExceeded: () => {
-                        /**
-                         * Show error notification after max retries
-                         * @validates Requirements 15.5 - Show error notification after max retries
-                         */
-                        toast.error("Failed to save caption style", {
-                            description: "Please check your connection and try again.",
-                        });
-                        // Keep style marked as dirty so user knows changes aren't saved
-                    },
-                });
-            }, 2000); // 2 second debounce for auto-save
+            // Save immediately to server
+            updateCaptionStyle.mutate({
+                clipId,
+                style: mergedStyle,
+            });
         },
-        [clipId, updateCaptionStyle, clearSelectedPreset, saveLastUsedStyle]
+        [clipId, captionStyle, updateCaptionStyle, clearSelectedPreset, saveLastUsedStyle]
     );
 
     /**
      * Handle preset selection
-     * Applies all style properties from the selected preset
-     * Uses debounced auto-save after 2 seconds of inactivity with retry logic
-     * @validates Requirements 9.2 - Apply all style properties from selected preset
-     * @validates Requirements 9.5 - Save last used caption style as default
-     * @validates Requirements 15.2 - Auto-save caption style after 2 seconds of inactivity
-     * @validates Requirements 15.3 - Display "Saved" indicator when auto-save completes
-     * @validates Requirements 15.5 - Retry failed saves up to 3 times
+     * Applies all style properties from the selected preset and saves immediately
      */
     const handlePresetSelect = useCallback(
         (presetId: string, presetStyle: CaptionStyle) => {
@@ -1093,75 +681,12 @@ export default function ClipEditorPage({ params }: ClipEditorPageProps) {
             // Use the hook's applyPreset to handle localStorage persistence
             applyPreset(presetId);
 
-            // Mark style as dirty (unsaved changes)
-            setStyleDirty(true);
-
-            // Hide the "Saved" indicator when new edits are made
-            setShowSavedIndicator(false);
-            if (savedIndicatorTimeoutRef.current) {
-                clearTimeout(savedIndicatorTimeoutRef.current);
-                savedIndicatorTimeoutRef.current = null;
-            }
-
-            // Clear any existing auto-save timeout
-            if (styleAutoSaveTimeoutRef.current) {
-                clearTimeout(styleAutoSaveTimeoutRef.current);
-            }
-
-            // Reset retry counter when user makes a new selection
-            captionStyleRetryCountRef.current = 0;
-
-            /**
-             * Debounced auto-save after 2 seconds of inactivity with retry logic
-             * @validates Requirements 15.2 - Auto-save caption style after 2 seconds of inactivity
-             * @validates Requirements 15.5 - Retry failed saves up to 3 times
-             */
-            styleAutoSaveTimeoutRef.current = setTimeout(() => {
-                // Create a promise-based save function for retry logic
-                const saveFn = () =>
-                    new Promise<void>((resolve, reject) => {
-                        updateCaptionStyle.mutate(
-                            {
-                                clipId,
-                                style: presetStyle,
-                            },
-                            {
-                                onSuccess: () => resolve(),
-                                onError: (error) => reject(error),
-                            }
-                        );
-                    });
-
-                // Perform auto-save with retry logic
-                performAutoSaveWithRetry(saveFn, captionStyleRetryCountRef, {
-                    saveType: "caption style",
-                    onSuccess: () => {
-                        // Mark style as clean (saved)
-                        setStyleDirty(false);
-
-                        /**
-                         * Show "Saved" indicator for 3 seconds after successful save
-                         * @validates Requirements 15.3 - Display "Saved" indicator when auto-save completes
-                         */
-                        setShowSavedIndicator(true);
-
-                        // Hide the "Saved" indicator after 3 seconds
-                        savedIndicatorTimeoutRef.current = setTimeout(() => {
-                            setShowSavedIndicator(false);
-                        }, 3000);
-                    },
-                    onMaxRetriesExceeded: () => {
-                        /**
-                         * Show error notification after max retries
-                         * @validates Requirements 15.5 - Show error notification after max retries
-                         */
-                        toast.error("Failed to save caption style", {
-                            description: "Please check your connection and try again.",
-                        });
-                        // Keep style marked as dirty so user knows changes aren't saved
-                    },
-                });
-            }, 2000); // 2 second debounce for auto-save
+            // Save immediately to server
+            updateCaptionStyle.mutate({
+                clipId,
+                style: presetStyle,
+                templateId: presetId,
+            });
         },
         [clipId, updateCaptionStyle, applyPreset]
     );
@@ -1282,23 +807,15 @@ export default function ClipEditorPage({ params }: ClipEditorPageProps) {
 
     /**
      * Handle redo action - restores the next caption text state
-     * Updates local captions and triggers auto-save for the restored text
-     * @validates Requirements 19.3 - Redo last undone edit with Ctrl+Shift+Z
      */
     const handleRedo = useCallback(() => {
         if (!canRedo) return;
-
-        // Perform redo - this will update captionUndoState to the next state
         redoCaptionEdit();
-
-        // The effect below will handle applying the redone state
     }, [canRedo, redoCaptionEdit]);
 
     /**
      * Effect to apply undo/redo state changes to local captions
-     * When captionUndoState changes (from undo/redo), update the local captions
-     * @validates Requirements 19.2 - Update UI after undo
-     * @validates Requirements 19.3 - Update UI after redo
+     * When captionUndoState changes (from undo/redo), update the local captions and save
      */
     useEffect(() => {
         if (captionUndoState === null) return;
@@ -1311,10 +828,7 @@ export default function ClipEditorPage({ params }: ClipEditorPageProps) {
         // Update the caption with the undone/redone text
         const updatedCaptions = currentCaptions.map((caption: Caption) => {
             if (caption.id === segmentId) {
-                return {
-                    ...caption,
-                    text,
-                };
+                return { ...caption, text };
             }
             return caption;
         });
@@ -1322,57 +836,12 @@ export default function ClipEditorPage({ params }: ClipEditorPageProps) {
         // Update local state
         setLocalCaptions(updatedCaptions);
 
-        // Mark captions as dirty (unsaved changes)
-        setCaptionsDirty(true);
-
-        // Hide the "Saved" indicator
-        setShowSavedIndicator(false);
-        if (savedIndicatorTimeoutRef.current) {
-            clearTimeout(savedIndicatorTimeoutRef.current);
-            savedIndicatorTimeoutRef.current = null;
-        }
-
-        // Clear any existing auto-save timeout
-        if (autoSaveTimeoutRef.current) {
-            clearTimeout(autoSaveTimeoutRef.current);
-        }
-
-        // Reset retry counter
-        captionTextRetryCountRef.current = 0;
-
-        // Trigger auto-save after 2 seconds
-        autoSaveTimeoutRef.current = setTimeout(() => {
-            const saveFn = () =>
-                new Promise<void>((resolve, reject) => {
-                    updateCaptionText.mutate(
-                        {
-                            clipId,
-                            captionId: segmentId,
-                            text,
-                        },
-                        {
-                            onSuccess: () => resolve(),
-                            onError: (error) => reject(error),
-                        }
-                    );
-                });
-
-            performAutoSaveWithRetry(saveFn, captionTextRetryCountRef, {
-                saveType: "caption text",
-                onSuccess: () => {
-                    setCaptionsDirty(false);
-                    setShowSavedIndicator(true);
-                    savedIndicatorTimeoutRef.current = setTimeout(() => {
-                        setShowSavedIndicator(false);
-                    }, 3000);
-                },
-                onMaxRetriesExceeded: () => {
-                    toast.error("Failed to save caption changes", {
-                        description: "Please check your connection and try again.",
-                    });
-                },
-            });
-        }, 2000);
+        // Save immediately
+        updateCaptionText.mutate({
+            clipId,
+            captionId: segmentId,
+            text,
+        });
     }, [captionUndoState, localCaptions, captionsFromApi, clipId, updateCaptionText]);
 
     /**
@@ -1508,7 +977,6 @@ export default function ClipEditorPage({ params }: ClipEditorPageProps) {
                         title={clip.title || "Untitled Clip"}
                         onBack={handleBack}
                         isSaving={isSaving}
-                        showSavedIndicator={showSavedIndicator}
                         onExportClick={() => setExportDialogOpen(true)}
                         hasActiveExport={!!activeExportId}
                         workspaceSlug={slug}
@@ -1625,33 +1093,6 @@ export default function ClipEditorPage({ params }: ClipEditorPageProps) {
                 onExportError={handleExportError}
                 isExporting={initiateExport.isPending}
             />
-
-            {/* Unsaved Changes Warning Dialog */}
-            {/* @validates Requirements 15.4 - Display "Unsaved changes" warning on navigation attempt */}
-            <AlertDialog open={showUnsavedChangesDialog} onOpenChange={setShowUnsavedChangesDialog}>
-                <AlertDialogContent>
-                    <AlertDialogHeader>
-                        <AlertDialogTitle>Unsaved Changes</AlertDialogTitle>
-                        <AlertDialogDescription>
-                            You have unsaved changes. Would you like to save them before leaving?
-                        </AlertDialogDescription>
-                    </AlertDialogHeader>
-                    <AlertDialogFooter>
-                        <AlertDialogCancel onClick={handleCancelNavigation}>
-                            Cancel
-                        </AlertDialogCancel>
-                        <Button
-                            variant="outline"
-                            onClick={handleDiscardAndNavigate}
-                        >
-                            Discard
-                        </Button>
-                        <AlertDialogAction onClick={handleSaveAndNavigate}>
-                            Save
-                        </AlertDialogAction>
-                    </AlertDialogFooter>
-                </AlertDialogContent>
-            </AlertDialog>
 
             {/* Keyboard Shortcuts Modal */}
             <KeyboardShortcutsModal
