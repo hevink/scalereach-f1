@@ -406,9 +406,10 @@ export const VideoCanvasEditor = forwardRef<VideoCanvasEditorRef, VideoCanvasEdi
                 setCurrentTime(time);
                 onTimeUpdate?.(time);
 
+                // Loop video when it reaches the end
                 if (endTime && time >= endTime) {
-                    videoRef.current.pause();
                     videoRef.current.currentTime = startTime;
+                    videoRef.current.play();
                 }
             }
         }, [endTime, startTime, onTimeUpdate]);
