@@ -25,7 +25,7 @@ import {
     BreadcrumbSeparator,
 } from "@/components/ui/breadcrumb";
 import { EditingLayout } from "@/components/clips/editing-layout";
-import { ClipTimeline } from "@/components/clips/clip-timeline";
+import { AdvancedTimeline } from "@/components/clips/advanced-timeline";
 import { KeyboardShortcutsModal, useKeyboardShortcutsModal } from "@/components/clips/keyboard-shortcuts-modal";
 import { CaptionPanelTabs } from "@/components/captions/caption-panel-tabs";
 import { VideoPlayer, type VideoPlayerRef } from "@/components/video/video-player";
@@ -1563,7 +1563,7 @@ export default function ClipEditorPage({ params }: ClipEditorPageProps) {
 
                     /* Bottom Panel: Timeline Editor */
                     timeline: (
-                        <ClipTimeline
+                        <AdvancedTimeline
                             clipStartTime={clipWithBoundaries.startTime}
                             clipEndTime={clipWithBoundaries.endTime}
                             currentTime={currentTime - clipWithBoundaries.startTime}
