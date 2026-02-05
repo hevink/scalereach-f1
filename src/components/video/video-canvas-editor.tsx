@@ -570,47 +570,58 @@ export const VideoCanvasEditor = forwardRef<VideoCanvasEditorRef, VideoCanvasEdi
                     </div>
 
                     {/* Caption overlay - always visible when there's a caption */}
-                    {currentCaption && (
-                        <div
-                            className="absolute left-0 right-0 flex justify-center pointer-events-none z-20"
-                            style={{
-                                bottom: captionStyle?.position === "top"
-                                    ? "auto"
-                                    : captionStyle?.position === "center"
-                                        ? "50%"
-                                        : `${displaySize.height * 0.1}px`,
-                                top: captionStyle?.position === "top"
-                                    ? `${displaySize.height * 0.1}px`
-                                    : "auto",
-                                transform: captionStyle?.position === "center" ? "translateY(50%)" : "none",
-                            }}
-                        >
+                    {currentCaption && (() => {
+                        // Calculate position from x/y or fallback to legacy position
+                        const xPos = captionStyle?.x ?? 50; // Default center horizontally
+                        const yPos = captionStyle?.y ?? 85; // Default near bottom (85%)
+
+                        // Convert legacy position to y if x/y not set
+                        let finalY = yPos;
+                        if (captionStyle?.y === undefined && captionStyle?.position) {
+                            switch (captionStyle.position) {
+                                case "top": finalY = 10; break;
+                                case "center": finalY = 50; break;
+                                case "bottom": finalY = 85; break;
+                            }
+                        }
+
+                        return (
                             <div
-                                className="text-center max-w-[90%] flex flex-wrap justify-center items-center gap-1"
+                                className="absolute pointer-events-none z-20"
                                 style={{
-                                    fontFamily: captionStyle?.fontFamily || "Inter",
-                                    fontSize: `${(captionStyle?.fontSize || 24) * containerScale}px`,
-                                    fontWeight: "bold",
-                                    color: captionStyle?.textColor || "#FFFFFF",
-                                    textShadow: captionStyle?.shadow
-                                        ? "2px 2px 0 #000, -2px -2px 0 #000, 2px -2px 0 #000, -2px 2px 0 #000, 0 2px 0 #000, 0 -2px 0 #000, 2px 0 0 #000, -2px 0 0 #000"
-                                        : "none",
-                                    WebkitTextStroke: captionStyle?.outline
-                                        ? `${Math.max(2, Math.round(containerScale * 3))}px ${captionStyle?.outlineColor || "#000000"}`
-                                        : "none",
-                                    paintOrder: "stroke fill",
-                                    backgroundColor: captionStyle?.backgroundColor && (captionStyle?.backgroundOpacity ?? 0) > 0
-                                        ? `${captionStyle.backgroundColor}${Math.round(((captionStyle.backgroundOpacity ?? 0) / 100) * 255).toString(16).padStart(2, "0")}`
-                                        : "transparent",
-                                    borderRadius: "4px",
-                                    padding: `${4 * containerScale}px ${12 * containerScale}px`,
-                                    lineHeight: 1.3,
+                                    left: `${xPos}%`,
+                                    top: `${finalY}%`,
+                                    transform: "translate(-50%, -50%)",
+                                    maxWidth: "90%",
                                 }}
                             >
-                                {renderCaptionText()}
+                                <div
+                                    className="text-center flex flex-wrap justify-center items-center gap-1"
+                                    style={{
+                                        fontFamily: captionStyle?.fontFamily || "Inter",
+                                        fontSize: `${(captionStyle?.fontSize || 24) * containerScale}px`,
+                                        fontWeight: "bold",
+                                        color: captionStyle?.textColor || "#FFFFFF",
+                                        textShadow: captionStyle?.shadow
+                                            ? "2px 2px 0 #000, -2px -2px 0 #000, 2px -2px 0 #000, -2px 2px 0 #000, 0 2px 0 #000, 0 -2px 0 #000, 2px 0 0 #000, -2px 0 0 #000"
+                                            : "none",
+                                        WebkitTextStroke: captionStyle?.outline
+                                            ? `${Math.max(2, Math.round(containerScale * 3))}px ${captionStyle?.outlineColor || "#000000"}`
+                                            : "none",
+                                        paintOrder: "stroke fill",
+                                        backgroundColor: captionStyle?.backgroundColor && (captionStyle?.backgroundOpacity ?? 0) > 0
+                                            ? `${captionStyle.backgroundColor}${Math.round(((captionStyle.backgroundOpacity ?? 0) / 100) * 255).toString(16).padStart(2, "0")}`
+                                            : "transparent",
+                                        borderRadius: "4px",
+                                        padding: `${4 * containerScale}px ${12 * containerScale}px`,
+                                        lineHeight: 1.3,
+                                    }}
+                                >
+                                    {renderCaptionText()}
+                                </div>
                             </div>
-                        </div>
-                    )}
+                        );
+                    })()}
 
                     {/* Transform overlay */}
                     <div

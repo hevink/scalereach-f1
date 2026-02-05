@@ -15,6 +15,7 @@ import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
 import { Button } from "@/components/ui/button";
+import { Slider } from "@/components/ui/slider";
 import {
     Select,
     SelectContent,
@@ -27,7 +28,7 @@ import {
     CollapsibleContent,
     CollapsibleTrigger,
 } from "@/components/ui/collapsible";
-import type { CaptionStyle, CaptionPosition } from "@/lib/api/captions";
+import type { CaptionStyle } from "@/lib/api/captions";
 import type { CaptionStylePreset } from "./caption-style-presets";
 
 // ============================================================================
@@ -96,7 +97,7 @@ const DEFAULT_PRESETS: CaptionStylePreset[] = [
             textColor: "#FFFFFF",
             backgroundColor: "#000000",
             backgroundOpacity: 0,
-            position: "bottom",
+            x: 50, y: 85,
             alignment: "center",
             animation: "karaoke",
             highlightColor: "#00FF00",
@@ -117,7 +118,7 @@ const DEFAULT_PRESETS: CaptionStylePreset[] = [
             textColor: "#FFFFFF",
             backgroundColor: "#000000",
             backgroundOpacity: 0,
-            position: "bottom",
+            x: 50, y: 85,
             alignment: "center",
             animation: "none",
             highlightColor: "#00FF00",
@@ -138,7 +139,7 @@ const DEFAULT_PRESETS: CaptionStylePreset[] = [
             textColor: "#FFFFFF",
             backgroundColor: "#333333",
             backgroundOpacity: 80,
-            position: "bottom",
+            x: 50, y: 85,
             alignment: "center",
             animation: "fade",
             highlightColor: "#FFD700",
@@ -159,7 +160,7 @@ const DEFAULT_PRESETS: CaptionStylePreset[] = [
             textColor: "#00FF00",
             backgroundColor: "#000000",
             backgroundOpacity: 0,
-            position: "bottom",
+            x: 50, y: 85,
             alignment: "center",
             animation: "word-by-word",
             highlightColor: "#FFFFFF",
@@ -180,7 +181,7 @@ const DEFAULT_PRESETS: CaptionStylePreset[] = [
             textColor: "#00BFFF",
             backgroundColor: "#000000",
             backgroundOpacity: 0,
-            position: "center",
+            x: 50, y: 50,
             alignment: "center",
             animation: "bounce",
             highlightColor: "#FFFFFF",
@@ -201,7 +202,7 @@ const DEFAULT_PRESETS: CaptionStylePreset[] = [
             textColor: "#FF6B6B",
             backgroundColor: "#FFFFFF",
             backgroundOpacity: 90,
-            position: "bottom",
+            x: 50, y: 85,
             alignment: "center",
             animation: "none",
             highlightColor: "#FF0000",
@@ -222,7 +223,7 @@ const DEFAULT_PRESETS: CaptionStylePreset[] = [
             textColor: "#FFFFFF",
             backgroundColor: "#6B5B95",
             backgroundOpacity: 85,
-            position: "bottom",
+            x: 50, y: 85,
             alignment: "center",
             animation: "karaoke",
             highlightColor: "#FFD700",
@@ -243,7 +244,7 @@ const DEFAULT_PRESETS: CaptionStylePreset[] = [
             textColor: "#FFFFFF",
             backgroundColor: "#000000",
             backgroundOpacity: 0,
-            position: "bottom",
+            x: 50, y: 85,
             alignment: "center",
             animation: "fade",
             highlightColor: "#FF00FF",
@@ -264,7 +265,7 @@ const DEFAULT_PRESETS: CaptionStylePreset[] = [
             textColor: "#00FF00",
             backgroundColor: "#000000",
             backgroundOpacity: 70,
-            position: "bottom",
+            x: 50, y: 85,
             alignment: "center",
             animation: "bounce",
             highlightColor: "#FFFF00",
@@ -544,15 +545,52 @@ interface EffectsTabProps {
 function EffectsTab({ style, onChange, disabled }: EffectsTabProps) {
     return (
         <div className="flex flex-col gap-4">
-            {/* Position */}
+            {/* Position X */}
             <div className="flex flex-col gap-2">
-                <Label className="text-sm text-zinc-400">Position</Label>
+                <Label className="text-sm text-zinc-400">Horizontal Position (X)</Label>
+                <div className="flex items-center gap-3">
+                    <span className="text-xs text-zinc-500 w-8">Left</span>
+                    <Slider
+                        value={[style.x ?? 50]}
+                        min={0}
+                        max={100}
+                        step={1}
+                        onValueChange={(v) => onChange({ x: v[0] })}
+                        className="flex-1"
+                        disabled={disabled}
+                    />
+                    <span className="text-xs text-zinc-500 w-8">Right</span>
+                    <span className="text-xs text-zinc-400 w-8">{style.x ?? 50}%</span>
+                </div>
+            </div>
+
+            {/* Position Y */}
+            <div className="flex flex-col gap-2">
+                <Label className="text-sm text-zinc-400">Vertical Position (Y)</Label>
+                <div className="flex items-center gap-3">
+                    <span className="text-xs text-zinc-500 w-8">Top</span>
+                    <Slider
+                        value={[style.y ?? 85]}
+                        min={0}
+                        max={100}
+                        step={1}
+                        onValueChange={(v) => onChange({ y: v[0] })}
+                        className="flex-1"
+                        disabled={disabled}
+                    />
+                    <span className="text-xs text-zinc-500 w-8">Bottom</span>
+                    <span className="text-xs text-zinc-400 w-8">{style.y ?? 85}%</span>
+                </div>
+            </div>
+
+            {/* Quick Position Presets */}
+            <div className="flex flex-col gap-2">
+                <Label className="text-sm text-zinc-400">Quick Positions</Label>
                 <div className="flex gap-1">
                     {[
-                        { value: undefined, label: "Auto" },
-                        { value: "top" as CaptionPosition, label: "Top" },
-                        { value: "center" as CaptionPosition, label: "Middle" },
-                        { value: "bottom" as CaptionPosition, label: "Bottom" },
+                        { x: 50, y: 15, label: "Top" },
+                        { x: 50, y: 50, label: "Middle" },
+                        { x: 50, y: 85, label: "Bottom" },
                     ].map((pos) => (
                         <Button
                             key={pos.label}
@@ -560,9 +598,10 @@ function EffectsTab({ style, onChange, disabled }: EffectsTabProps) {
                             size="sm"
                             className={cn(
                                 "flex-1 bg-zinc-800 border-zinc-700 text-zinc-400 hover:bg-zinc-700 hover:text-white",
-                                style.position === pos.value && "bg-zinc-700 text-white border-zinc-600"
+                                style.x === pos.x && style.y === pos.y && "bg-zinc-700 text-white border-zinc-600"
                             )}
-                            onClick={() => onChange({ position: pos.value || "bottom" })}
+                            onClick={() => onChange({ x: pos.x, y: pos.y })}
+                            disabled={disabled}
                         >
                             {pos.label}
                         </Button>
