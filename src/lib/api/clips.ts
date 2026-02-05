@@ -28,6 +28,9 @@ export interface ClipResponse {
   thumbnailUrl?: string;
   storageKey: string | null;
   storageUrl: string | null;
+  // Raw clip without captions (for editing)
+  rawStorageKey?: string | null;
+  rawStorageUrl?: string | null;
   aspectRatio: AspectRatio | null;
   favorited: boolean;
   status: ClipStatus;
@@ -123,6 +126,8 @@ function transformClipResponse(clip: any): ClipResponse {
     thumbnailUrl: clip.thumbnailUrl,
     storageKey: clip.storageKey,
     storageUrl: clip.storageUrl || clip.downloadUrl,
+    rawStorageKey: clip.rawStorageKey,
+    rawStorageUrl: clip.rawStorageUrl,
     aspectRatio: clip.aspectRatio,
     favorited: clip.favorited ?? false,
     status: clip.status,

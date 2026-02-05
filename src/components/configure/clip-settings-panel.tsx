@@ -53,18 +53,22 @@ export function ClipSettingsPanel({
         <div className="space-y-6">
             {/* Clip Model */}
             <div className="space-y-2">
-                <Label>Clip Model</Label>
+                <Label id="clip-model-label">Clip Model</Label>
                 <Select
                     value={config.clipModel}
                     onValueChange={(value) => value && onChange({ clipModel: value as "ClipBasic" | "ClipPro" })}
                     disabled={disabled}
                 >
-                    <SelectTrigger>
+                    <SelectTrigger aria-labelledby="clip-model-label">
                         <SelectValue placeholder="Select model" />
                     </SelectTrigger>
                     <SelectContent>
                         {CLIP_MODELS.map((model) => (
-                            <SelectItem key={model.value} value={model.value}>
+                            <SelectItem
+                                key={model.value}
+                                value={model.value}
+                                aria-label={`${model.label} - ${model.description}`}
+                            >
                                 <div className="flex flex-col">
                                     <span>{model.label}</span>
                                     <span className="text-muted-foreground text-xs">{model.description}</span>
@@ -77,13 +81,13 @@ export function ClipSettingsPanel({
 
             {/* Genre */}
             <div className="space-y-2">
-                <Label>Genre</Label>
+                <Label id="genre-label">Genre</Label>
                 <Select
                     value={config.genre}
                     onValueChange={(value) => value && onChange({ genre: value as VideoConfigInput["genre"] })}
                     disabled={disabled}
                 >
-                    <SelectTrigger>
+                    <SelectTrigger aria-labelledby="genre-label">
                         <SelectValue placeholder="Select genre" />
                     </SelectTrigger>
                     <SelectContent>
@@ -98,13 +102,13 @@ export function ClipSettingsPanel({
 
             {/* Clip Duration */}
             <div className="space-y-2">
-                <Label>Clip Length</Label>
+                <Label id="clip-length-label">Clip Length</Label>
                 <Select
                     value={currentDuration}
                     onValueChange={(value) => value && handleDurationChange(value)}
                     disabled={disabled}
                 >
-                    <SelectTrigger>
+                    <SelectTrigger aria-labelledby="clip-length-label">
                         <SelectValue placeholder="Select duration" />
                     </SelectTrigger>
                     <SelectContent>
@@ -120,30 +124,36 @@ export function ClipSettingsPanel({
             {/* Auto Hook */}
             <div className="flex items-center justify-between">
                 <div className="space-y-0.5">
-                    <Label>Auto Hook</Label>
-                    <p className="text-muted-foreground text-xs">
+                    <Label id="auto-hook-label">Auto Hook</Label>
+                    <p id="auto-hook-description" className="text-muted-foreground text-xs">
                         Automatically find attention-grabbing moments
                     </p>
                 </div>
                 <Switch
+                    id="auto-hook-switch"
                     checked={config.enableAutoHook}
                     onCheckedChange={(checked) => onChange({ enableAutoHook: checked })}
                     disabled={disabled}
+                    aria-labelledby="auto-hook-label"
+                    aria-describedby="auto-hook-description"
                 />
             </div>
 
             {/* Custom Prompt */}
             <div className="space-y-2">
-                <Label>Custom Prompt (Optional)</Label>
+                <Label id="custom-prompt-label">Custom Prompt (Optional)</Label>
                 <Textarea
+                    id="custom-prompt-input"
                     placeholder="Find moments where they discuss..."
                     value={config.customPrompt || ""}
                     onChange={(e) => onChange({ customPrompt: e.target.value })}
                     disabled={disabled}
                     rows={3}
                     className="resize-none"
+                    aria-labelledby="custom-prompt-label"
+                    aria-describedby="custom-prompt-description"
                 />
-                <p className="text-muted-foreground text-xs">
+                <p id="custom-prompt-description" className="text-muted-foreground text-xs">
                     Describe specific moments or topics you want to find
                 </p>
             </div>

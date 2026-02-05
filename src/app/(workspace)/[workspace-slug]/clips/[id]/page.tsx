@@ -943,14 +943,16 @@ export default function ClipEditorPage({ params }: ClipEditorPageProps) {
         return <ClipNotFound onBack={handleBack} />;
     }
 
-    // Get video source URL and thumbnail
-    // Use clip's storageUrl if available (generated clip), otherwise fall back to original video
-    const videoSrc = clip.storageUrl || video?.storageUrl || video?.sourceUrl || "";
+    // Get video source URL for editing
+    // ALWAYS use rawStorageUrl (clip without captions) for the editor
+    // This allows frontend overlay to show captions without duplicates
+    // Falls back to original video if rawStorageUrl not available
+    const videoSrc = clip.rawStorageUrl || video?.storageUrl || video?.sourceUrl || "";
+
     const thumbnailUrl = (video?.metadata?.thumbnail as string) || undefined;
     const videoDuration = video?.duration || clip.duration || 60;
 
-    // Get captions for preview - use local captions for real-time sync, fallback to server data
-    // @validates Requirements 6.3 - Real-time caption edit sync with optimistic UI updates
+    // Always show caption overlay in editor (captions are rendered via frontend)
     const captions = localCaptions && localCaptions.length > 0 ? localCaptions : captionsFromApi;
 
     // Credit cost (example: 5 credits per export)

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback, useEffect } from "react";
+import { useState, useCallback, useEffect, useRef } from "react";
 import { useRouter, useParams, useSearchParams } from "next/navigation";
 import {
     IconCheck,
@@ -14,7 +14,9 @@ import {
     IconMoodSmile,
     IconTypography,
     IconLanguage,
+    IconRefresh,
 } from "@tabler/icons-react";
+import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -88,6 +90,7 @@ export default function ConfigurePage() {
     const [videoInfo, setVideoInfo] = useState<VideoInfo | null>(null);
     const [errorMessage, setErrorMessage] = useState<string | null>(null);
     const [config, setConfig] = useState<VideoConfigInput>(DEFAULT_VIDEO_CONFIG);
+    const initialConfigRef = useRef<VideoConfigInput>(DEFAULT_VIDEO_CONFIG);
 
     const validateMutation = useValidateYouTubeUrl();
 
@@ -98,12 +101,36 @@ export default function ConfigurePage() {
         }
     }, [mode, uploadedVideo]);
 
-    // Fetch caption templates
-    const { data: templates = [] } = useQuery({
+    // Fetch caption templates with retry
+    const {
+        data: templates = [],
+        isLoading: templatesLoading,
+        isError: templatesError,
+        refetch: refetchTemplates,
+        isRefetching: templatesRefetching,
+    } = useQuery({
         queryKey: ["caption-templates"],
         queryFn: videoConfigApi.getCaptionTemplates,
         staleTime: 1000 * 60 * 10,
+        retry: 2,
+        retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 10000),
     });
+
+    // Track unsaved changes
+    const hasUnsavedChanges = JSON.stringify(config) !== JSON.stringify(initialConfigRef.current);
+
+    // Warn user about unsaved changes when navigating away
+    useEffect(() => {
+        const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+            if (hasUnsavedChanges && validationState === "valid") {
+                e.preventDefault();
+                e.returnValue = "";
+            }
+        };
+
+        window.addEventListener("beforeunload", handleBeforeUnload);
+        return () => window.removeEventListener("beforeunload", handleBeforeUnload);
+    }, [hasUnsavedChanges, validationState]);
 
     // Submit mutation for YouTube URLs - creates video + starts processing
     const submitYouTubeMutation = useMutation({
@@ -330,6 +357,9 @@ export default function ConfigurePage() {
                                     placeholder="https://youtube.com/watch?v=..."
                                     value={url}
                                     onChange={(e) => setUrl(e.target.value)}
+                                    aria-label="YouTube video URL"
+                                    aria-invalid={validationState === "invalid"}
+                                    aria-describedby={errorMessage ? "youtube-url-error" : undefined}
                                     className={cn(
                                         "pr-10",
                                         validationState === "valid" && "border-green-500 focus-visible:ring-green-500",
@@ -339,17 +369,33 @@ export default function ConfigurePage() {
                                 />
                                 <div className="absolute right-3 top-1/2 -translate-y-1/2">
                                     {validationState === "validating" && (
-                                        <IconLoader2 className="size-4 animate-spin text-muted-foreground" />
+                                        <IconLoader2 className="size-4 animate-spin text-muted-foreground" aria-label="Validating URL" />
                                     )}
-                                    {validationState === "valid" && <IconCheck className="size-4 text-green-500" />}
-                                    {validationState === "invalid" && <IconX className="size-4 text-red-500" />}
+                                    {validationState === "valid" && <IconCheck className="size-4 text-green-500" aria-label="Valid URL" />}
+                                    {validationState === "invalid" && <IconX className="size-4 text-red-500" aria-label="Invalid URL" />}
                                 </div>
                             </div>
                             {errorMessage && validationState === "invalid" && (
-                                <p className="flex items-center gap-1 text-red-500 text-sm">
-                                    <IconAlertCircle className="size-4" />
-                                    {errorMessage}
-                                </p>
+                                <div
+                                    id="youtube-url-error"
+                                    role="alert"
+                                    aria-live="assertive"
+                                    className="flex items-center gap-2 rounded-lg border border-red-200 bg-red-50 p-3 text-red-700 dark:border-red-800 dark:bg-red-950/50 dark:text-red-400"
+                                >
+                                    <IconAlertCircle className="size-4 shrink-0" aria-hidden="true" />
+                                    <span className="text-sm flex-1">{errorMessage}</span>
+                                    {errorMessage.toLowerCase().includes("network") || errorMessage.toLowerCase().includes("fetch") ? (
+                                        <Button
+                                            variant="ghost"
+                                            size="sm"
+                                            className="h-7 px-2 text-red-700 hover:text-red-800 hover:bg-red-100 dark:text-red-400 dark:hover:text-red-300 dark:hover:bg-red-900/50"
+                                            onClick={() => setUrl(url + " ")}
+                                        >
+                                            <IconRefresh className="size-3 mr-1" aria-hidden="true" />
+                                            Retry
+                                        </Button>
+                                    ) : null}
+                                </div>
                             )}
 
                             {/* Video Preview */}
@@ -373,8 +419,9 @@ export default function ConfigurePage() {
                                                 size="icon"
                                                 className="size-8 shrink-0"
                                                 onClick={handleClear}
+                                                aria-label="Clear YouTube URL"
                                             >
-                                                <IconX className="size-4" />
+                                                <IconX className="size-4" aria-hidden="true" />
                                             </Button>
                                         </div>
                                     </div>
@@ -385,24 +432,62 @@ export default function ConfigurePage() {
                 )}
 
                 {/* Configuration Options - Show when valid (for both modes) */}
-                {validationState === "valid" && (mode === "upload" ? uploadedVideo : true) && (
-                    <Card>
-                        <CardContent className="space-y-8 pt-6">
-                            {/* Caption Style Section */}
-                            <div className="space-y-4">
-                                <div>
-                                    <h3 className="font-semibold">Caption Style</h3>
-                                    <p className="text-muted-foreground text-sm">
-                                        Choose how captions appear on your clips
-                                    </p>
-                                </div>
-                                <CaptionTemplateGrid
-                                    templates={templates}
-                                    selectedId={config.captionTemplateId ?? "classic"}
-                                    onSelect={(id) => updateConfig({ captionTemplateId: id })}
-                                    disabled={isSubmitting}
-                                />
-                            </div>
+                <AnimatePresence mode="wait">
+                    {validationState === "valid" && (mode === "upload" ? uploadedVideo : true) && (
+                        <motion.div
+                            initial={{ opacity: 0, y: 20 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            exit={{ opacity: 0, y: -10 }}
+                            transition={{ duration: 0.3, ease: "easeOut" }}
+                        >
+                            <Card>
+                                <CardContent className="space-y-8 pt-6">
+                                    {/* Caption Style Section */}
+                                    <div className="space-y-4">
+                                        <div>
+                                            <h3 className="font-semibold">Caption Style</h3>
+                                            <p className="text-muted-foreground text-sm">
+                                                Choose how captions appear on your clips
+                                            </p>
+                                        </div>
+                                        {templatesError ? (
+                                            <div
+                                                role="alert"
+                                                className="flex flex-col items-center justify-center gap-3 rounded-lg border border-dashed p-6"
+                                            >
+                                                <IconAlertCircle className="size-8 text-muted-foreground" aria-hidden="true" />
+                                                <p className="text-muted-foreground text-sm text-center">
+                                                    Failed to load caption templates
+                                                </p>
+                                                <Button
+                                                    variant="outline"
+                                                    size="sm"
+                                                    onClick={() => refetchTemplates()}
+                                                    disabled={templatesRefetching}
+                                                >
+                                                    {templatesRefetching ? (
+                                                        <>
+                                                            <IconLoader2 className="size-4 mr-2 animate-spin" aria-hidden="true" />
+                                                            Retrying...
+                                                        </>
+                                                    ) : (
+                                                        <>
+                                                            <IconRefresh className="size-4 mr-2" aria-hidden="true" />
+                                                            Retry
+                                                        </>
+                                                    )}
+                                                </Button>
+                                            </div>
+                                        ) : (
+                                            <CaptionTemplateGrid
+                                                templates={templates}
+                                                selectedId={config.captionTemplateId ?? "classic"}
+                                                onSelect={(id) => updateConfig({ captionTemplateId: id })}
+                                                disabled={isSubmitting}
+                                                isLoading={templatesLoading}
+                                            />
+                                        )}
+                                    </div>
 
                             {/* Aspect Ratio Section */}
                             <div className="space-y-4 border-t pt-6">
@@ -496,7 +581,9 @@ export default function ConfigurePage() {
                             </div>
                         </CardContent>
                     </Card>
+                </motion.div>
                 )}
+                </AnimatePresence>
 
                 {/* Get Clips Button */}
                 <Button
@@ -508,15 +595,16 @@ export default function ConfigurePage() {
                     }
                     className="w-full gap-2"
                     size="lg"
+                    aria-busy={isSubmitting}
                 >
                     {isSubmitting ? (
                         <>
-                            <IconLoader2 className="size-5 animate-spin" />
-                            Starting...
+                            <IconLoader2 className="size-5 animate-spin" aria-hidden="true" />
+                            Processing...
                         </>
                     ) : (
                         <>
-                            <IconSparkles className="size-5" />
+                            <IconSparkles className="size-5" aria-hidden="true" />
                             Get Clips
                         </>
                     )}

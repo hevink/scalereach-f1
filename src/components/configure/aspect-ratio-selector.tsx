@@ -40,13 +40,13 @@ export function AspectRatioSelector({
 
     return (
         <div className="space-y-2">
-            <Label>Aspect Ratio</Label>
+            <Label id="aspect-ratio-label">Aspect Ratio</Label>
             <Select value={value} onValueChange={(val) => val && onChange(val)} disabled={disabled}>
-                <SelectTrigger>
+                <SelectTrigger aria-labelledby="aspect-ratio-label">
                     <SelectValue>
                         {selected && (
                             <div className="flex items-center gap-2">
-                                <selected.icon className="size-4" />
+                                <selected.icon className="size-4" aria-hidden="true" />
                                 <span>{selected.label}</span>
                             </div>
                         )}
@@ -54,9 +54,13 @@ export function AspectRatioSelector({
                 </SelectTrigger>
                 <SelectContent>
                     {ASPECT_RATIOS.map((ratio) => (
-                        <SelectItem key={ratio.value} value={ratio.value}>
+                        <SelectItem
+                            key={ratio.value}
+                            value={ratio.value}
+                            aria-label={`${ratio.label} - ${ratio.description}`}
+                        >
                             <div className="flex items-center gap-2">
-                                <ratio.icon className="size-4" />
+                                <ratio.icon className="size-4" aria-hidden="true" />
                                 <div className="flex flex-col">
                                     <span>{ratio.label}</span>
                                     <span className="text-muted-foreground text-xs">{ratio.description}</span>
