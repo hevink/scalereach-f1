@@ -257,7 +257,7 @@ export function AdminPaymentsTable({ dateRange }: AdminPaymentsTableProps) {
                                 className="pl-9"
                             />
                         </div>
-                        <Select value={typeFilter} onValueChange={setTypeFilter}>
+                        <Select value={typeFilter} onValueChange={(value) => setTypeFilter(value ?? "all")}>
                             <SelectTrigger className="w-[140px]">
                                 <SelectValue placeholder="Type" />
                             </SelectTrigger>

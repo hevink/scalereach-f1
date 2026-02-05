@@ -218,8 +218,8 @@ function CaptionOverlay({ caption, style, currentTime }: CaptionOverlayProps) {
         <div
             className={cn(
                 "absolute left-0 right-0 px-4 pointer-events-none z-10 flex flex-col",
-                positionClasses[style.position],
-                alignmentClasses[style.alignment]
+                positionClasses[style.position ?? "bottom"],
+                alignmentClasses[style.alignment ?? "center"]
             )}
             data-testid="caption-overlay"
         >
