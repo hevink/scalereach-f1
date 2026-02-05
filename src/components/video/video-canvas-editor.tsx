@@ -457,6 +457,75 @@ export const VideoCanvasEditor = forwardRef<VideoCanvasEditorRef, VideoCanvasEdi
             );
         }, [currentCaption, relativeTime]);
 
+        // Calculate animation progress for the current word (0 to 1)
+        const wordAnimationProgress = useMemo(() => {
+            if (!currentCaption?.words || currentWordIndex === -1) return 0;
+            const word = currentCaption.words[currentWordIndex];
+            const wordDuration = word.end - word.start;
+            if (wordDuration <= 0) return 1;
+            return Math.min(1, (relativeTime - word.start) / wordDuration);
+        }, [currentCaption, currentWordIndex, relativeTime]);
+
+        // Get animation styles based on animation type
+        const getWordAnimationStyle = useCallback((isHighlighted: boolean, animationType?: string): React.CSSProperties => {
+            if (!isHighlighted) {
+                return {
+                    transform: "scale(1) translateY(0)",
+                    opacity: 1,
+                };
+            }
+
+            const progress = wordAnimationProgress;
+
+            switch (animationType) {
+                case "bounce": {
+                    // Bounce effect: scale up then settle
+                    const bounceScale = progress < 0.3
+                        ? 1 + (0.35 * (progress / 0.3)) // Scale up to 1.35
+                        : 1.35 - (0.15 * ((progress - 0.3) / 0.7)); // Settle to 1.2
+                    const bounceY = progress < 0.3
+                        ? -8 * (progress / 0.3) // Move up
+                        : -8 + (8 * ((progress - 0.3) / 0.7)); // Settle back
+                    return {
+                        transform: `scale(${bounceScale}) translateY(${bounceY}px)`,
+                        opacity: 1,
+                    };
+                }
+                case "karaoke": {
+                    // Karaoke: smooth scale with glow
+                    const karaokeScale = 1.15 + (0.1 * Math.sin(progress * Math.PI));
+                    return {
+                        transform: `scale(${karaokeScale})`,
+                        opacity: 1,
+                    };
+                }
+                case "word-by-word": {
+                    // Word by word: pop in effect
+                    const popScale = progress < 0.2
+                        ? 0.8 + (0.5 * (progress / 0.2)) // Pop to 1.3
+                        : 1.3 - (0.1 * ((progress - 0.2) / 0.8)); // Settle to 1.2
+                    return {
+                        transform: `scale(${popScale})`,
+                        opacity: 1,
+                    };
+                }
+                case "fade": {
+                    // Fade: subtle scale with opacity
+                    return {
+                        transform: "scale(1.1)",
+                        opacity: 1,
+                    };
+                }
+                default: {
+                    // Default: simple scale
+                    return {
+                        transform: "scale(1.2)",
+                        opacity: 1,
+                    };
+                }
+            }
+        }, [wordAnimationProgress]);
+
         // Render caption text with word-by-word highlighting
         const renderCaptionText = useCallback(() => {
             if (!currentCaption) return null;
@@ -466,31 +535,46 @@ export const VideoCanvasEditor = forwardRef<VideoCanvasEditorRef, VideoCanvasEdi
                 return <span>{currentCaption.text}</span>;
             }
 
+            const animationType = captionStyle?.animation;
+            const highlightColor = captionStyle?.highlightColor || "#FFFF00";
+            const textColor = captionStyle?.textColor || "#FFFFFF";
+            const outlineColor = captionStyle?.outlineColor || "#000000";
+            const scaledOutlineWidth = Math.max(2, Math.round(containerScale * 3));
+
             // Render each word with highlighting for the current word
             return currentCaption.words.map((word, index) => {
                 const isHighlighted = index === currentWordIndex;
-                // Add extra margin when highlighted to account for scale(1.2)
-                const baseMargin = 4 * containerScale;
-                const highlightedMargin = 8 * containerScale;
+                const animationStyle = getWordAnimationStyle(isHighlighted, animationType);
+
+                // Calculate glow effect for highlighted word
+                const glowShadow = isHighlighted
+                    ? `0 0 ${10 * containerScale}px ${highlightColor}, 0 0 ${20 * containerScale}px ${highlightColor}40`
+                    : "none";
+
                 return (
                     <span
                         key={word.id || index}
+                        className="caption-word"
                         style={{
-                            color: isHighlighted
-                                ? (captionStyle?.highlightColor || "#FFFF00")
-                                : (captionStyle?.textColor || "#FFFFFF"),
-                            transform: isHighlighted ? "scale(1.2)" : "scale(1)",
+                            color: isHighlighted ? highlightColor : textColor,
+                            ...animationStyle,
                             display: "inline-block",
-                            transition: "transform 0.1s ease-out, color 0.1s ease-out, margin 0.1s ease-out",
-                            marginLeft: isHighlighted ? `${highlightedMargin}px` : "0px",
-                            marginRight: isHighlighted ? `${highlightedMargin}px` : `${baseMargin}px`,
+                            transition: animationType === "bounce"
+                                ? "none" // No transition for bounce to make it snappy
+                                : "transform 0.15s cubic-bezier(0.34, 1.56, 0.64, 1), color 0.1s ease-out",
+                            marginRight: `${6 * containerScale}px`,
+                            textShadow: isHighlighted ? glowShadow : "none",
+                            WebkitTextStroke: `${scaledOutlineWidth}px ${outlineColor}`,
+                            paintOrder: "stroke fill",
+                            position: "relative",
+                            zIndex: isHighlighted ? 10 : 1,
                         }}
                     >
                         {word.word}
                     </span>
                 );
             });
-        }, [currentCaption, currentWordIndex, captionStyle, containerScale]);
+        }, [currentCaption, currentWordIndex, captionStyle, containerScale, getWordAnimationStyle]);
 
         return (
             <div
@@ -569,32 +653,50 @@ export const VideoCanvasEditor = forwardRef<VideoCanvasEditorRef, VideoCanvasEdi
                                     ? "auto"
                                     : captionStyle?.position === "center"
                                         ? "50%"
-                                        : `${displaySize.height * 0.1}px`,
+                                        : `${displaySize.height * 0.08}px`,
                                 top: captionStyle?.position === "top"
-                                    ? `${displaySize.height * 0.1}px`
+                                    ? `${displaySize.height * 0.08}px`
                                     : "auto",
                                 transform: captionStyle?.position === "center" ? "translateY(50%)" : "none",
                             }}
                         >
                             <div
-                                className="text-center max-w-[90%] flex flex-wrap justify-center items-center gap-1"
+                                className="text-center max-w-[95%] flex flex-wrap justify-center items-center"
                                 style={{
-                                    fontFamily: captionStyle?.fontFamily || "Inter",
-                                    fontSize: `${(captionStyle?.fontSize || 24) * containerScale}px`,
-                                    fontWeight: "bold",
+                                    fontFamily: `"${captionStyle?.fontFamily || "Inter"}", sans-serif`,
+                                    fontSize: `${(captionStyle?.fontSize || 32) * containerScale}px`,
+                                    fontWeight: 900,
+                                    letterSpacing: "-0.02em",
                                     color: captionStyle?.textColor || "#FFFFFF",
                                     textShadow: captionStyle?.shadow
-                                        ? "2px 2px 0 #000, -2px -2px 0 #000, 2px -2px 0 #000, -2px 2px 0 #000, 0 2px 0 #000, 0 -2px 0 #000, 2px 0 0 #000, -2px 0 0 #000"
-                                        : "none",
+                                        ? `
+                                            3px 3px 0 ${captionStyle?.outlineColor || "#000"},
+                                            -3px -3px 0 ${captionStyle?.outlineColor || "#000"},
+                                            3px -3px 0 ${captionStyle?.outlineColor || "#000"},
+                                            -3px 3px 0 ${captionStyle?.outlineColor || "#000"},
+                                            0 3px 0 ${captionStyle?.outlineColor || "#000"},
+                                            0 -3px 0 ${captionStyle?.outlineColor || "#000"},
+                                            3px 0 0 ${captionStyle?.outlineColor || "#000"},
+                                            -3px 0 0 ${captionStyle?.outlineColor || "#000"},
+                                            4px 4px 8px rgba(0,0,0,0.5)
+                                        `
+                                        : `
+                                            2px 2px 0 ${captionStyle?.outlineColor || "#000"},
+                                            -2px -2px 0 ${captionStyle?.outlineColor || "#000"},
+                                            2px -2px 0 ${captionStyle?.outlineColor || "#000"},
+                                            -2px 2px 0 ${captionStyle?.outlineColor || "#000"}
+                                        `,
                                     WebkitTextStroke: captionStyle?.outline
-                                        ? `${Math.max(1, Math.round(containerScale * 2))}px ${captionStyle?.outlineColor || "#000000"}`
+                                        ? `${Math.max(2, Math.round(containerScale * 3))}px ${captionStyle?.outlineColor || "#000000"}`
                                         : "none",
+                                    paintOrder: "stroke fill",
                                     backgroundColor: captionStyle?.backgroundColor && (captionStyle?.backgroundOpacity ?? 0) > 0
                                         ? `${captionStyle.backgroundColor}${Math.round(((captionStyle.backgroundOpacity ?? 0) / 100) * 255).toString(16).padStart(2, "0")}`
                                         : "transparent",
-                                    borderRadius: "4px",
-                                    padding: `${4 * containerScale}px ${12 * containerScale}px`,
-                                    lineHeight: 1.3,
+                                    borderRadius: `${6 * containerScale}px`,
+                                    padding: `${6 * containerScale}px ${16 * containerScale}px`,
+                                    lineHeight: 1.4,
+                                    textTransform: "uppercase",
                                 }}
                             >
                                 {renderCaptionText()}
