@@ -170,7 +170,7 @@ export function AdminUsersTable() {
                                 className="pl-9"
                             />
                         </div>
-                        <Select value={roleFilter} onValueChange={setRoleFilter}>
+                        <Select value={roleFilter} onValueChange={(value) => setRoleFilter(value ?? "all")}>
                             <SelectTrigger className="w-[130px]">
                                 <SelectValue placeholder="Role" />
                             </SelectTrigger>
@@ -180,7 +180,7 @@ export function AdminUsersTable() {
                                 <SelectItem value="user">User</SelectItem>
                             </SelectContent>
                         </Select>
-                        <Select value={statusFilter} onValueChange={setStatusFilter}>
+                        <Select value={statusFilter} onValueChange={(value) => setStatusFilter(value ?? "all")}>
                             <SelectTrigger className="w-[150px]">
                                 <SelectValue placeholder="Status" />
                             </SelectTrigger>

@@ -114,7 +114,7 @@ export function AdminWorkspacesTable() {
                             className="pl-9"
                         />
                     </div>
-                    <Select value={planFilter} onValueChange={setPlanFilter}>
+                    <Select value={planFilter} onValueChange={(value) => setPlanFilter(value ?? "all")}>
                         <SelectTrigger className="w-[140px]">
                             <SelectValue placeholder="Plan" />
                         </SelectTrigger>

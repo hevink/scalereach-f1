@@ -555,7 +555,7 @@ function EffectsTab({ style, onChange, disabled }: EffectsTabProps) {
                         min={0}
                         max={100}
                         step={1}
-                        onValueChange={(v) => onChange({ x: v[0] })}
+                        onValueChange={(v) => onChange({ x: Array.isArray(v) ? v[0] : v })}
                         className="flex-1"
                         disabled={disabled}
                     />
@@ -574,7 +574,7 @@ function EffectsTab({ style, onChange, disabled }: EffectsTabProps) {
                         min={0}
                         max={100}
                         step={1}
-                        onValueChange={(v) => onChange({ y: v[0] })}
+                        onValueChange={(v) => onChange({ y: Array.isArray(v) ? v[0] : v })}
                         className="flex-1"
                         disabled={disabled}
                     />

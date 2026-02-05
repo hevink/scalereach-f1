@@ -244,8 +244,8 @@ const CaptionOverlay = React.memo(function CaptionOverlay({ caption, style, curr
         <div
             className={cn(
                 "absolute left-0 right-0 px-4 pointer-events-none z-10 transition-opacity duration-200",
-                positionClasses[mergedStyle.position],
-                alignmentClasses[mergedStyle.alignment]
+                positionClasses[mergedStyle.position ?? "bottom"],
+                alignmentClasses[mergedStyle.alignment ?? "center"]
             )}
             data-testid="caption-overlay"
         >
@@ -361,7 +361,7 @@ export const VideoPlayer = forwardRef<VideoPlayerRef, VideoPlayerProps>(
         const [showControls, setShowControls] = useState(true);
         const [isLoading, setIsLoading] = useState(true);
         const [isHovering, setIsHovering] = useState(false);
-        
+
         // Editable caption mode
         const isEditableCaption = !!onCaptionStyleChange;
         const [isDraggingProgress, setIsDraggingProgress] = useState(false);
