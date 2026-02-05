@@ -15,6 +15,7 @@ import {
   IconStar,
   IconStarFilled,
   IconClock,
+  IconCoins,
 } from "@tabler/icons-react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import {
@@ -98,6 +99,12 @@ export function NavMain({ currentSlug, workspaceId }: NavMainProps) {
       url: `/${currentSlug}/settings/captions`,
       icon: IconTextCaption,
       iconFilled: IconTextCaption,
+    },
+    {
+      title: "Credit Usage",
+      url: `/${currentSlug}/credits`,
+      icon: IconCoins,
+      iconFilled: IconCoins,
     },
   ];
 
