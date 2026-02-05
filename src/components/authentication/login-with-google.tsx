@@ -24,9 +24,15 @@ export function LoginWithGoogle({
   const handleGoogleSignIn = async () => {
     setIsLoading(true);
     try {
+      // Check for last used workspace for callback
+      const lastUsedWorkspace = localStorage.getItem("lastUsedWorkspace");
+      const callbackURL = lastUsedWorkspace
+        ? `${FRONTEND_URL}/${lastUsedWorkspace}`
+        : `${FRONTEND_URL}/workspaces`;
+
       const result = await authClient.signIn.social({
         provider: "google",
-        callbackURL: `${FRONTEND_URL}/`,
+        callbackURL,
       });
 
       if (result.error) {

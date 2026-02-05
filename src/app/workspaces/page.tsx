@@ -1,8 +1,9 @@
 "use client";
 
-import { IconArrowRight, IconBuilding } from "@tabler/icons-react";
+import { IconArrowRight, IconBuilding, IconClock } from "@tabler/icons-react";
 import { useRouter } from "next/navigation";
-import { type ReactNode, useEffect } from "react";
+import { type ReactNode, useEffect, useState } from "react";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -54,8 +55,15 @@ export default function WorkspacesPage() {
   const { data: session, isPending: isSessionPending } =
     authClient.useSession();
   const { data: workspaces = [], isLoading } = useWorkspaces();
+  const [lastUsedSlug, setLastUsedSlug] = useState<string | null>(null);
 
   const user = session?.user as ExtendedUser | undefined;
+
+  useEffect(() => {
+    // Get last used workspace from localStorage
+    const lastUsed = localStorage.getItem("lastUsedWorkspace");
+    setLastUsedSlug(lastUsed);
+  }, []);
 
   useEffect(() => {
     if (isSessionPending) {
@@ -74,6 +82,8 @@ export default function WorkspacesPage() {
   }, [user, isSessionPending, router]);
 
   const handleWorkspaceSelect = (slug: string) => {
+    // Save as last used workspace
+    localStorage.setItem("lastUsedWorkspace", slug);
     router.push(`/${slug}`);
   };
 
@@ -120,6 +130,7 @@ export default function WorkspacesPage() {
     workspaceContent = workspaces.map((workspace, idx) => {
       const isFirst = idx === 0;
       const isLast = idx === workspaces.length - 1;
+      const isLastUsed = workspace.slug === lastUsedSlug;
       return (
         <Card
           className={[
@@ -139,9 +150,17 @@ export default function WorkspacesPage() {
                 <IconBuilding className="size-4 text-primary" />
               </div>
               <div className="flex flex-1 flex-col gap-1">
-                <CardTitle className="font-[490] text-sm">
-                  {workspace.name}
-                </CardTitle>
+                <div className="flex items-center gap-2">
+                  <CardTitle className="font-[490] text-sm">
+                    {workspace.name}
+                  </CardTitle>
+                  {isLastUsed && (
+                    <Badge variant="secondary" className="text-xs px-1.5 py-0">
+                      <IconClock className="size-3 mr-1" />
+                      Last used
+                    </Badge>
+                  )}
+                </div>
               </div>
             </div>
           </CardHeader>

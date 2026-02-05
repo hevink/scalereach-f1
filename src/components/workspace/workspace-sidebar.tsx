@@ -32,7 +32,7 @@ export function WorkspaceSidebar({ currentSlug }: WorkspaceSidebarProps) {
   );
 
   return (
-    <Sidebar collapsible="icon" variant="sidebar">
+    <Sidebar collapsible="icon" variant="inset">
       <SidebarHeader>
         <WorkspaceSwitcher
           currentSlug={currentSlug}

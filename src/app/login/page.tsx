@@ -14,7 +14,13 @@ export default function LoginPage() {
 
   useEffect(() => {
     if (!isPending && session?.user) {
-      router.replace("/workspaces");
+      // Check for last used workspace
+      const lastUsedWorkspace = localStorage.getItem("lastUsedWorkspace");
+      if (lastUsedWorkspace) {
+        router.replace(`/${lastUsedWorkspace}`);
+      } else {
+        router.replace("/workspaces");
+      }
     }
   }, [session, isPending, router]);
 

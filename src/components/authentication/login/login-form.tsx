@@ -127,14 +127,20 @@ export function LoginForm() {
         return;
       }
 
-      // If there's a redirect (e.g., from invite), go there; otherwise go to workspaces
+      // If there's a redirect (e.g., from invite), go there; otherwise check last used workspace
       analytics.login("email");
       if (result.data?.user?.id) {
         analytics.identify(result.data.user.id, {
           email: isEmailFormat ? identifier : undefined,
         });
       }
-      router.push(redirect || "/workspaces");
+
+      if (redirect) {
+        router.push(redirect);
+      } else {
+        const lastUsedWorkspace = localStorage.getItem("lastUsedWorkspace");
+        router.push(lastUsedWorkspace ? `/${lastUsedWorkspace}` : "/workspaces");
+      }
       router.refresh();
     } catch (error) {
       const errorMessage = getAuthErrorMessage(
