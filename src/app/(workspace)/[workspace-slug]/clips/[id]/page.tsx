@@ -585,19 +585,23 @@ export default function ClipEditorPage({ params }: ClipEditorPageProps) {
     // Skip forward handler (5 seconds)
     const handleSkipForward = useCallback(() => {
         if (videoPlayerRef.current) {
-            const newTime = Math.min(
-                currentTime + 5,
-                (clipBoundaries?.end ?? clip?.endTime ?? 0) - (clipBoundaries?.start ?? clip?.startTime ?? 0)
-            );
-            videoPlayerRef.current.seek(newTime + (clipBoundaries?.start ?? clip?.startTime ?? 0));
+            const clipDur = (clipBoundaries?.end ?? clip?.endTime ?? 0) - (clipBoundaries?.start ?? clip?.startTime ?? 0);
+            const isRawClip = !!clip?.rawStorageUrl;
+            const newTime = Math.min(currentTime + 5, clipDur);
+            // When using raw clip, video starts at 0, so seek directly
+            // When using full video, add the clip start time
+            videoPlayerRef.current.seek(isRawClip ? newTime : newTime + (clipBoundaries?.start ?? clip?.startTime ?? 0));
         }
     }, [currentTime, clipBoundaries, clip]);
 
     // Skip backward handler (5 seconds)
     const handleSkipBackward = useCallback(() => {
         if (videoPlayerRef.current) {
+            const isRawClip = !!clip?.rawStorageUrl;
             const newTime = Math.max(0, currentTime - 5);
-            videoPlayerRef.current.seek(newTime + (clipBoundaries?.start ?? clip?.startTime ?? 0));
+            // When using raw clip, video starts at 0, so seek directly
+            // When using full video, add the clip start time
+            videoPlayerRef.current.seek(isRawClip ? newTime : newTime + (clipBoundaries?.start ?? clip?.startTime ?? 0));
         }
     }, [currentTime, clipBoundaries, clip]);
 
@@ -943,11 +947,29 @@ export default function ClipEditorPage({ params }: ClipEditorPageProps) {
         return <ClipNotFound onBack={handleBack} />;
     }
 
+    // Create the clip object for TimelineEditor with current boundaries
+    const clipWithBoundaries = {
+        ...clip,
+        startTime: clipBoundaries?.start ?? clip.startTime,
+        endTime: clipBoundaries?.end ?? clip.endTime,
+    };
+
     // Get video source URL for editing
-    // ALWAYS use rawStorageUrl (clip without captions) for the editor
-    // This allows frontend overlay to show captions without duplicates
-    // Falls back to original video if rawStorageUrl not available
+    // Priority:
+    // 1. rawStorageUrl (clip without captions) - best for editing
+    // 2. Original video with clip time range - fallback for old clips
+    // Note: We DON'T use clip.storageUrl because it has captions baked in
     const videoSrc = clip.rawStorageUrl || video?.storageUrl || video?.sourceUrl || "";
+
+    // Determine if we're using the raw clip or the full video
+    // If using full video, we need to constrain playback to clip boundaries
+    const isUsingRawClip = !!clip.rawStorageUrl;
+
+    // When using raw clip, video starts at 0 (it's already trimmed)
+    // When using full video, we need to use the clip's original boundaries
+    const videoStartTime = isUsingRawClip ? 0 : clipWithBoundaries.startTime;
+    const videoEndTime = isUsingRawClip ? (clipWithBoundaries.endTime - clipWithBoundaries.startTime) : clipWithBoundaries.endTime;
+    const clipDuration = clipWithBoundaries.endTime - clipWithBoundaries.startTime;
 
     const thumbnailUrl = (video?.metadata?.thumbnail as string) || undefined;
     const videoDuration = video?.duration || clip.duration || 60;
@@ -962,13 +984,6 @@ export default function ClipEditorPage({ params }: ClipEditorPageProps) {
     // Determine if saving is in progress (includes caption text auto-save)
     // @validates Requirements 13.2 - Show saving indicator during save operations
     const isSaving = updateCaptionStyle.isPending || updateClipBoundaries.isPending || updateCaptionText.isPending;
-
-    // Create the clip object for TimelineEditor with current boundaries
-    const clipWithBoundaries = {
-        ...clip,
-        startTime: clipBoundaries?.start ?? clip.startTime,
-        endTime: clipBoundaries?.end ?? clip.endTime,
-    };
 
     return (
         <>
@@ -1005,7 +1020,7 @@ export default function ClipEditorPage({ params }: ClipEditorPageProps) {
                                             confidence: 1,
                                         })),
                                     }))}
-                                    currentTime={currentTime - clipWithBoundaries.startTime}
+                                    currentTime={currentTime}
                                     onWordClick={handleSegmentClick}
                                     onTextEdit={handleCaptionEdit}
                                     highlightCurrent
@@ -1031,8 +1046,8 @@ export default function ClipEditorPage({ params }: ClipEditorPageProps) {
                                 <VideoCanvasEditor
                                     ref={videoPlayerRef as React.Ref<VideoCanvasEditorRef>}
                                     src={videoSrc}
-                                    startTime={clipWithBoundaries.startTime}
-                                    endTime={clipWithBoundaries.endTime}
+                                    startTime={videoStartTime}
+                                    endTime={videoEndTime}
                                     captions={captions}
                                     captionStyle={captionStyle}
                                     onCaptionStyleChange={handleStyleChange}
@@ -1065,11 +1080,11 @@ export default function ClipEditorPage({ params }: ClipEditorPageProps) {
                     /* Bottom Panel: Timeline Editor */
                     timeline: (
                         <AdvancedTimeline
-                            clipStartTime={clipWithBoundaries.startTime}
-                            clipEndTime={clipWithBoundaries.endTime}
-                            currentTime={currentTime - clipWithBoundaries.startTime}
+                            clipStartTime={videoStartTime}
+                            clipEndTime={videoEndTime}
+                            currentTime={currentTime}
                             isPlaying={isPlaying}
-                            onSeek={(time) => videoPlayerRef.current?.seek(time + clipWithBoundaries.startTime)}
+                            onSeek={(time) => videoPlayerRef.current?.seek(time + videoStartTime)}
                             onPlayPause={handlePlayPause}
                             onSkipForward={handleSkipForward}
                             onSkipBackward={handleSkipBackward}

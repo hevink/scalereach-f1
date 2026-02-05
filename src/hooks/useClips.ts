@@ -16,7 +16,16 @@ export const clipKeys = {
 };
 
 /**
+ * Check if any clips are still being generated
+ */
+function hasGeneratingClips(clips: ClipResponse[] | undefined): boolean {
+  if (!clips) return false;
+  return clips.some(clip => clip.status === "generating" || clip.status === "detected");
+}
+
+/**
  * Get clips for a video with optional filtering and sorting
+ * Automatically polls every 5 seconds when clips are still generating
  * Requirements: 6.1, 7.4
  */
 export function useClipsByVideo(videoId: string, filters?: Partial<ClipFilters>) {
@@ -26,6 +35,11 @@ export function useClipsByVideo(videoId: string, filters?: Partial<ClipFilters>)
     enabled: !!videoId,
     retry: 3,
     retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000),
+    // Poll every 5 seconds when there are clips still generating
+    refetchInterval: (query) => {
+      return hasGeneratingClips(query.state.data) ? 5000 : false;
+    },
+    refetchIntervalInBackground: false,
   });
 }
 

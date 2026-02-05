@@ -95,11 +95,19 @@ interface ClipItemProps {
 }
 
 /**
+ * Check if a clip is still being generated/processed
+ */
+function isClipGenerating(clip: ClipResponse): boolean {
+    return clip.status === "generating" || clip.status === "detected";
+}
+
+/**
  * ClipItem - Individual clip card component
- * 
+ *
  * Displays clip thumbnail, title, duration, and virality score
  * Supports favorite toggle and delete actions
- * 
+ * Shows loading state when clip is still being generated
+ *
  * @validates Requirements 6.2, 6.3, 6.4, 6.5, 9.1
  */
 function ClipItem({
@@ -113,6 +121,7 @@ function ClipItem({
     viewMode,
 }: ClipItemProps) {
     const scoreColorClass = getScoreColor(clip.viralityScore);
+    const isGenerating = isClipGenerating(clip);
 
     // Generate placeholder thumbnail if none exists
     const thumbnailUrl = clip.storageUrl || clip.thumbnailUrl;
@@ -122,7 +131,8 @@ function ClipItem({
             <div
                 className={cn(
                     "group relative flex cursor-pointer flex-col overflow-hidden rounded-lg border bg-card transition-all hover:border-primary/50 hover:shadow-md",
-                    isSelected && "border-primary ring-2 ring-primary/20"
+                    isSelected && "border-primary ring-2 ring-primary/20",
+                    isGenerating && "opacity-80"
                 )}
                 onClick={onSelect}
                 role="button"
@@ -134,11 +144,16 @@ function ClipItem({
                     }
                 }}
                 aria-selected={isSelected}
-                aria-label={`Clip: ${clip.title}`}
+                aria-label={`Clip: ${clip.title}${isGenerating ? " (generating)" : ""}`}
             >
                 {/* Thumbnail */}
                 <div className="relative aspect-video w-full overflow-hidden bg-muted">
-                    {thumbnailUrl ? (
+                    {isGenerating ? (
+                        <div className="flex h-full w-full flex-col items-center justify-center gap-2 bg-muted">
+                            <IconLoader2 className="size-8 animate-spin text-primary" aria-hidden="true" />
+                            <span className="text-muted-foreground text-xs">Generating clip...</span>
+                        </div>
+                    ) : thumbnailUrl ? (
                         <img
                             src={thumbnailUrl}
                             alt={`Thumbnail for clip: ${clip.title}`}
@@ -200,45 +215,47 @@ function ClipItem({
                     )}
                 </div>
 
-                {/* Actions - visible on hover */}
-                <div className="absolute top-2 right-2 flex gap-1 opacity-0 transition-opacity group-hover:opacity-100">
-                    <Button
-                        variant="secondary"
-                        size="icon"
-                        className="size-7 bg-background/80 backdrop-blur-sm"
-                        onClick={(e) => {
-                            e.stopPropagation();
-                            onFavorite();
-                        }}
-                        disabled={isFavoriting}
-                        aria-label={clip.favorited ? "Remove from favorites" : "Add to favorites"}
-                    >
-                        {isFavoriting ? (
-                            <IconLoader2 className="size-4 animate-spin" />
-                        ) : clip.favorited ? (
-                            <IconHeartFilled className="size-4 text-red-500" />
-                        ) : (
-                            <IconHeart className="size-4" />
-                        )}
-                    </Button>
-                    <Button
-                        variant="secondary"
-                        size="icon"
-                        className="size-7 bg-background/80 backdrop-blur-sm hover:bg-destructive hover:text-destructive-foreground"
-                        onClick={(e) => {
-                            e.stopPropagation();
-                            onDelete();
-                        }}
-                        disabled={isDeleting}
-                        aria-label="Delete clip"
-                    >
-                        {isDeleting ? (
-                            <IconLoader2 className="size-4 animate-spin" />
-                        ) : (
-                            <IconTrash className="size-4" />
-                        )}
-                    </Button>
-                </div>
+                {/* Actions - visible on hover (hidden when generating) */}
+                {!isGenerating && (
+                    <div className="absolute top-2 right-2 flex gap-1 opacity-0 transition-opacity group-hover:opacity-100">
+                        <Button
+                            variant="secondary"
+                            size="icon"
+                            className="size-7 bg-background/80 backdrop-blur-sm"
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                onFavorite();
+                            }}
+                            disabled={isFavoriting}
+                            aria-label={clip.favorited ? "Remove from favorites" : "Add to favorites"}
+                        >
+                            {isFavoriting ? (
+                                <IconLoader2 className="size-4 animate-spin" />
+                            ) : clip.favorited ? (
+                                <IconHeartFilled className="size-4 text-red-500" />
+                            ) : (
+                                <IconHeart className="size-4" />
+                            )}
+                        </Button>
+                        <Button
+                            variant="secondary"
+                            size="icon"
+                            className="size-7 bg-background/80 backdrop-blur-sm hover:bg-destructive hover:text-destructive-foreground"
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                onDelete();
+                            }}
+                            disabled={isDeleting}
+                            aria-label="Delete clip"
+                        >
+                            {isDeleting ? (
+                                <IconLoader2 className="size-4 animate-spin" />
+                            ) : (
+                                <IconTrash className="size-4" />
+                            )}
+                        </Button>
+                    </div>
+                )}
             </div>
         );
     }
@@ -248,7 +265,8 @@ function ClipItem({
         <div
             className={cn(
                 "group flex cursor-pointer items-center gap-4 rounded-lg border bg-card p-3 transition-all hover:border-primary/50 hover:shadow-sm",
-                isSelected && "border-primary ring-2 ring-primary/20"
+                isSelected && "border-primary ring-2 ring-primary/20",
+                isGenerating && "opacity-80"
             )}
             onClick={onSelect}
             role="button"
@@ -260,11 +278,15 @@ function ClipItem({
                 }
             }}
             aria-selected={isSelected}
-            aria-label={`Clip: ${clip.title}`}
+            aria-label={`Clip: ${clip.title}${isGenerating ? " (generating)" : ""}`}
         >
             {/* Thumbnail */}
             <div className="relative h-16 w-28 shrink-0 overflow-hidden rounded bg-muted">
-                {thumbnailUrl ? (
+                {isGenerating ? (
+                    <div className="flex h-full w-full items-center justify-center bg-muted">
+                        <IconLoader2 className="size-5 animate-spin text-primary" aria-hidden="true" />
+                    </div>
+                ) : thumbnailUrl ? (
                     <img
                         src={thumbnailUrl}
                         alt={`Thumbnail for clip: ${clip.title}`}
@@ -284,9 +306,16 @@ function ClipItem({
             {/* Info */}
             <div className="flex flex-1 flex-col gap-1 overflow-hidden">
                 <h4 className="truncate font-medium text-sm">{clip.title}</h4>
-                <p className="line-clamp-1 text-muted-foreground text-xs">
-                    {clip.viralityReason}
-                </p>
+                {isGenerating ? (
+                    <p className="flex items-center gap-1 text-muted-foreground text-xs">
+                        <IconLoader2 className="size-3 animate-spin" />
+                        Generating clip...
+                    </p>
+                ) : (
+                    <p className="line-clamp-1 text-muted-foreground text-xs">
+                        {clip.viralityReason}
+                    </p>
+                )}
                 {/* Hooks preview */}
                 {clip.hooks.length > 0 && (
                     <div className="flex flex-wrap gap-1">
@@ -316,45 +345,47 @@ function ClipItem({
                 </span>
             )}
 
-            {/* Actions */}
-            <div className="flex shrink-0 gap-1">
-                <Button
-                    variant="ghost"
-                    size="icon"
-                    className="size-8"
-                    onClick={(e) => {
-                        e.stopPropagation();
-                        onFavorite();
-                    }}
-                    disabled={isFavoriting}
-                    aria-label={clip.favorited ? "Remove from favorites" : "Add to favorites"}
-                >
-                    {isFavoriting ? (
-                        <IconLoader2 className="size-4 animate-spin" />
-                    ) : clip.favorited ? (
-                        <IconHeartFilled className="size-4 text-red-500" />
-                    ) : (
-                        <IconHeart className="size-4" />
-                    )}
-                </Button>
-                <Button
-                    variant="ghost"
-                    size="icon"
-                    className="size-8 text-muted-foreground hover:text-destructive"
-                    onClick={(e) => {
-                        e.stopPropagation();
-                        onDelete();
-                    }}
-                    disabled={isDeleting}
-                    aria-label="Delete clip"
-                >
-                    {isDeleting ? (
-                        <IconLoader2 className="size-4 animate-spin" />
-                    ) : (
-                        <IconTrash className="size-4" />
-                    )}
-                </Button>
-            </div>
+            {/* Actions (hidden when generating) */}
+            {!isGenerating && (
+                <div className="flex shrink-0 gap-1">
+                    <Button
+                        variant="ghost"
+                        size="icon"
+                        className="size-8"
+                        onClick={(e) => {
+                            e.stopPropagation();
+                            onFavorite();
+                        }}
+                        disabled={isFavoriting}
+                        aria-label={clip.favorited ? "Remove from favorites" : "Add to favorites"}
+                    >
+                        {isFavoriting ? (
+                            <IconLoader2 className="size-4 animate-spin" />
+                        ) : clip.favorited ? (
+                            <IconHeartFilled className="size-4 text-red-500" />
+                        ) : (
+                            <IconHeart className="size-4" />
+                        )}
+                    </Button>
+                    <Button
+                        variant="ghost"
+                        size="icon"
+                        className="size-8 text-muted-foreground hover:text-destructive"
+                        onClick={(e) => {
+                            e.stopPropagation();
+                            onDelete();
+                        }}
+                        disabled={isDeleting}
+                        aria-label="Delete clip"
+                    >
+                        {isDeleting ? (
+                            <IconLoader2 className="size-4 animate-spin" />
+                        ) : (
+                            <IconTrash className="size-4" />
+                        )}
+                    </Button>
+                </div>
+            )}
         </div>
     );
 }

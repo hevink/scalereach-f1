@@ -222,17 +222,27 @@ interface ClipCardProps {
     onFavorite: (e: React.MouseEvent) => void;
 }
 
+function isClipGenerating(clip: ClipResponse): boolean {
+    return clip.status === "generating" || clip.status === "detected";
+}
+
 function ClipCard({ clip, onClick, onFavorite }: ClipCardProps) {
     const scoreColorClass = getScoreColor(clip.viralityScore);
+    const isGenerating = isClipGenerating(clip);
 
     return (
         <div
-            className="group cursor-pointer"
+            className={cn("group cursor-pointer", isGenerating && "opacity-80")}
             onClick={onClick}
         >
             {/* Thumbnail */}
             <div className="relative aspect-video overflow-hidden rounded-lg bg-muted">
-                {clip.thumbnailUrl ? (
+                {isGenerating ? (
+                    <div className="flex h-full w-full flex-col items-center justify-center gap-2">
+                        <IconLoader2 className="size-8 animate-spin text-primary" />
+                        <span className="text-xs text-muted-foreground">Generating clip...</span>
+                    </div>
+                ) : clip.thumbnailUrl ? (
                     <img
                         src={clip.thumbnailUrl}
                         alt={clip.title}
@@ -251,15 +261,19 @@ function ClipCard({ clip, onClick, onFavorite }: ClipCardProps) {
                     </div>
                 )}
 
-                {/* Gradient overlay */}
-                <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent opacity-60 transition-opacity group-hover:opacity-80" />
+                {/* Gradient overlay - hide when generating */}
+                {!isGenerating && (
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent opacity-60 transition-opacity group-hover:opacity-80" />
+                )}
 
-                {/* Play button on hover */}
-                <div className="absolute inset-0 flex items-center justify-center opacity-0 transition-opacity group-hover:opacity-100">
-                    <div className="flex size-11 items-center justify-center rounded-full bg-white/95 shadow-lg">
-                        <IconPlayerPlayFilled className="size-5 text-black" />
+                {/* Play button on hover - hide when generating */}
+                {!isGenerating && (
+                    <div className="absolute inset-0 flex items-center justify-center opacity-0 transition-opacity group-hover:opacity-100">
+                        <div className="flex size-11 items-center justify-center rounded-full bg-white/95 shadow-lg">
+                            <IconPlayerPlayFilled className="size-5 text-black" />
+                        </div>
                     </div>
-                </div>
+                )}
 
                 {/* Viral score - top left */}
                 <div className={cn(
@@ -270,23 +284,25 @@ function ClipCard({ clip, onClick, onFavorite }: ClipCardProps) {
                     {clip.viralityScore}
                 </div>
 
-                {/* Favorite button - top right */}
-                <button
-                    onClick={onFavorite}
-                    className={cn(
-                        "absolute right-2 top-2 flex size-8 items-center justify-center rounded-full transition-all",
-                        clip.favorited
-                            ? "bg-red-500 text-white"
-                            : "bg-black/50 text-white opacity-0 group-hover:opacity-100 hover:bg-black/70"
-                    )}
-                    aria-label={clip.favorited ? "Remove from favorites" : "Add to favorites"}
-                >
-                    {clip.favorited ? (
-                        <IconHeartFilled className="size-4" />
-                    ) : (
-                        <IconHeart className="size-4" />
-                    )}
-                </button>
+                {/* Favorite button - top right (hide when generating) */}
+                {!isGenerating && (
+                    <button
+                        onClick={onFavorite}
+                        className={cn(
+                            "absolute right-2 top-2 flex size-8 items-center justify-center rounded-full transition-all",
+                            clip.favorited
+                                ? "bg-red-500 text-white"
+                                : "bg-black/50 text-white opacity-0 group-hover:opacity-100 hover:bg-black/70"
+                        )}
+                        aria-label={clip.favorited ? "Remove from favorites" : "Add to favorites"}
+                    >
+                        {clip.favorited ? (
+                            <IconHeartFilled className="size-4" />
+                        ) : (
+                            <IconHeart className="size-4" />
+                        )}
+                    </button>
+                )}
 
                 {/* Duration - bottom right */}
                 <div className="absolute right-2 bottom-2 flex items-center gap-1 rounded-md bg-black/80 px-1.5 py-0.5 text-xs font-medium text-white">
@@ -301,11 +317,16 @@ function ClipCard({ clip, onClick, onFavorite }: ClipCardProps) {
                     {clip.title}
                 </h3>
 
-                {clip.viralityReason && (
+                {isGenerating ? (
+                    <p className="mt-1 flex items-center gap-1 text-xs text-muted-foreground">
+                        <IconLoader2 className="size-3 animate-spin" />
+                        Processing...
+                    </p>
+                ) : clip.viralityReason ? (
                     <p className="mt-1 line-clamp-2 text-xs text-muted-foreground">
                         {clip.viralityReason}
                     </p>
-                )}
+                ) : null}
 
                 {clip.hooks.length > 0 && (
                     <div className="mt-2 flex flex-wrap gap-1">
