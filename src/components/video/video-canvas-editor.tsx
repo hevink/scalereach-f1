@@ -10,7 +10,7 @@ import React, {
     useMemo,
 } from "react";
 import { cn } from "@/lib/utils";
-import type { Caption, CaptionStyle, CaptionWord } from "@/lib/api/captions";
+import type { Caption, CaptionStyle } from "@/lib/api/captions";
 
 // ============================================================================
 // Types
@@ -215,6 +215,268 @@ function MoveableLayer({
                         transformOrigin: "0 0",
                     }}
                 />
+            </div>
+        </div>
+    );
+}
+
+// ============================================================================
+// Draggable Caption Component
+// ============================================================================
+
+interface DraggableCaptionProps {
+    captionStyle?: CaptionStyle;
+    containerScale: number;
+    displaySize: { width: number; height: number };
+    onPositionChange?: (style: Partial<CaptionStyle>) => void;
+    children: React.ReactNode;
+}
+
+function DraggableCaption({
+    captionStyle,
+    containerScale,
+    displaySize,
+    onPositionChange,
+    children,
+}: DraggableCaptionProps) {
+    const containerRef = useRef<HTMLDivElement>(null);
+    const [dragState, setDragState] = useState<{
+        type: "move" | "font" | "width" | null;
+        startX: number;
+        startY: number;
+        startValue: { x: number; y: number; fontSize: number; maxWidth: number };
+    } | null>(null);
+
+    const [isHovering, setIsHovering] = useState(false);
+    const [localValues, setLocalValues] = useState<{
+        x?: number;
+        y?: number;
+        fontSize?: number;
+        maxWidth?: number;
+    }>({});
+
+    // Calculate values from style or fallback
+    const xPos = localValues.x ?? captionStyle?.x ?? 50;
+    const yPos = localValues.y ?? captionStyle?.y ?? 85;
+    const fontSize = localValues.fontSize ?? captionStyle?.fontSize ?? 24;
+    const maxWidth = localValues.maxWidth ?? captionStyle?.maxWidth ?? 90;
+
+    // Convert legacy position to y if x/y not set
+    let finalY = yPos;
+    if (localValues.y === undefined && captionStyle?.y === undefined && captionStyle?.position) {
+        switch (captionStyle.position) {
+            case "top": finalY = 10; break;
+            case "center": finalY = 50; break;
+            case "bottom": finalY = 85; break;
+        }
+    }
+
+    // Start drag handlers
+    const startDrag = useCallback((type: "move" | "font" | "width", e: React.MouseEvent) => {
+        e.preventDefault();
+        e.stopPropagation();
+        setDragState({
+            type,
+            startX: e.clientX,
+            startY: e.clientY,
+            startValue: {
+                x: xPos,
+                y: finalY,
+                fontSize,
+                maxWidth,
+            },
+        });
+    }, [xPos, finalY, fontSize, maxWidth]);
+
+    // Handle mouse move and up
+    useEffect(() => {
+        if (!dragState) return;
+
+        const handleMouseMove = (e: MouseEvent) => {
+            const dx = e.clientX - dragState.startX;
+            const dy = e.clientY - dragState.startY;
+
+            if (dragState.type === "move") {
+                const deltaXPercent = (dx / displaySize.width) * 100;
+                const deltaYPercent = (dy / displaySize.height) * 100;
+                const newX = Math.max(5, Math.min(95, dragState.startValue.x + deltaXPercent));
+                const newY = Math.max(5, Math.min(95, dragState.startValue.y + deltaYPercent));
+                setLocalValues(prev => ({ ...prev, x: newX, y: newY }));
+            } else if (dragState.type === "font") {
+                const delta = (dx - dy) / 4;
+                const newFontSize = Math.max(12, Math.min(72, dragState.startValue.fontSize + delta));
+                setLocalValues(prev => ({ ...prev, fontSize: Math.round(newFontSize) }));
+            } else if (dragState.type === "width") {
+                const deltaPercent = (dx / displaySize.width) * 200;
+                const newWidth = Math.max(20, Math.min(100, dragState.startValue.maxWidth + deltaPercent));
+                setLocalValues(prev => ({ ...prev, maxWidth: Math.round(newWidth) }));
+            }
+        };
+
+        const handleMouseUp = () => {
+            // Commit changes
+            if (onPositionChange) {
+                if (dragState.type === "move" && localValues.x !== undefined && localValues.y !== undefined) {
+                    onPositionChange({ x: Math.round(localValues.x), y: Math.round(localValues.y) });
+                } else if (dragState.type === "font" && localValues.fontSize !== undefined) {
+                    onPositionChange({ fontSize: localValues.fontSize });
+                } else if (dragState.type === "width" && localValues.maxWidth !== undefined) {
+                    onPositionChange({ maxWidth: localValues.maxWidth });
+                }
+            }
+            setDragState(null);
+            setLocalValues({});
+        };
+
+        document.addEventListener("mousemove", handleMouseMove);
+        document.addEventListener("mouseup", handleMouseUp);
+
+        return () => {
+            document.removeEventListener("mousemove", handleMouseMove);
+            document.removeEventListener("mouseup", handleMouseUp);
+        };
+    }, [dragState, displaySize, localValues, onPositionChange]);
+
+    const isActive = isHovering || dragState !== null;
+    const isDragging = dragState?.type === "move";
+    const isResizingFont = dragState?.type === "font";
+    const isResizingWidth = dragState?.type === "width";
+
+    return (
+        <div
+            ref={containerRef}
+            className="absolute z-20 select-none"
+            style={{
+                left: `${xPos}%`,
+                top: `${finalY}%`,
+                transform: "translate(-50%, -50%)",
+                width: `${maxWidth}%`,
+                cursor: isDragging ? "grabbing" : isResizingFont ? "nwse-resize" : isResizingWidth ? "ew-resize" : "grab",
+            }}
+            onMouseDown={(e) => startDrag("move", e)}
+            onMouseEnter={() => setIsHovering(true)}
+            onMouseLeave={() => setIsHovering(false)}
+        >
+            {/* Selection indicator */}
+            {isActive && (
+                <div
+                    className="absolute -inset-2 rounded-lg border-2 border-primary/60 bg-primary/5 pointer-events-none"
+                    style={{ boxShadow: "0 0 0 1px rgba(0,0,0,0.1), 0 4px 12px rgba(0,0,0,0.15)" }}
+                />
+            )}
+
+            {/* Font size resize handles - corners */}
+            {isActive && (
+                <>
+                    <div
+                        className="absolute -bottom-3 -right-3 w-6 h-6 bg-primary rounded-full border-2 border-white shadow-lg cursor-nwse-resize flex items-center justify-center hover:scale-110 transition-transform z-30"
+                        onMouseDown={(e) => startDrag("font", e)}
+                        title="Drag to resize font"
+                    >
+                        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="3" strokeLinecap="round">
+                            <path d="M15 3h6v6" />
+                            <path d="M9 21H3v-6" />
+                        </svg>
+                    </div>
+                    <div
+                        className="absolute -top-3 -left-3 w-6 h-6 bg-primary rounded-full border-2 border-white shadow-lg cursor-nwse-resize flex items-center justify-center hover:scale-110 transition-transform z-30"
+                        onMouseDown={(e) => startDrag("font", e)}
+                        title="Drag to resize font"
+                    >
+                        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="3" strokeLinecap="round">
+                            <path d="M15 3h6v6" />
+                            <path d="M9 21H3v-6" />
+                        </svg>
+                    </div>
+                </>
+            )}
+
+            {/* Width resize handles - sides */}
+            {isActive && (
+                <>
+                    <div
+                        className="absolute top-1/2 -right-4 -translate-y-1/2 w-5 h-10 bg-blue-500 rounded-full border-2 border-white shadow-lg cursor-ew-resize flex items-center justify-center hover:scale-110 transition-transform z-30"
+                        onMouseDown={(e) => startDrag("width", e)}
+                        title="Drag to resize width"
+                    >
+                        <svg width="8" height="12" viewBox="0 0 8 12" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round">
+                            <path d="M2 1v10" />
+                            <path d="M6 1v10" />
+                        </svg>
+                    </div>
+                    <div
+                        className="absolute top-1/2 -left-4 -translate-y-1/2 w-5 h-10 bg-blue-500 rounded-full border-2 border-white shadow-lg cursor-ew-resize flex items-center justify-center hover:scale-110 transition-transform z-30"
+                        onMouseDown={(e) => startDrag("width", e)}
+                        title="Drag to resize width"
+                    >
+                        <svg width="8" height="12" viewBox="0 0 8 12" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round">
+                            <path d="M2 1v10" />
+                            <path d="M6 1v10" />
+                        </svg>
+                    </div>
+                </>
+            )}
+
+            {/* Action indicator badge */}
+            {isActive && (
+                <div className="absolute -top-8 left-1/2 -translate-x-1/2 bg-primary text-primary-foreground text-xs px-2 py-1 rounded-md shadow-lg flex items-center gap-1 whitespace-nowrap pointer-events-none z-40">
+                    {isResizingFont ? (
+                        <>
+                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+                                <path d="M15 3h6v6" />
+                                <path d="M9 21H3v-6" />
+                            </svg>
+                            Font: {fontSize}px
+                        </>
+                    ) : isResizingWidth ? (
+                        <>
+                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+                                <path d="M21 12H3" />
+                                <path d="M15 6l6 6-6 6" />
+                                <path d="M9 6l-6 6 6 6" />
+                            </svg>
+                            Width: {maxWidth}%
+                        </>
+                    ) : (
+                        <>
+                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                <path d="M5 9l-3 3 3 3" />
+                                <path d="M9 5l3-3 3 3" />
+                                <path d="M15 19l-3 3-3-3" />
+                                <path d="M19 9l3 3-3 3" />
+                                <line x1="2" y1="12" x2="22" y2="12" />
+                                <line x1="12" y1="2" x2="12" y2="22" />
+                            </svg>
+                            Drag to move
+                        </>
+                    )}
+                </div>
+            )}
+
+            {/* Caption content */}
+            <div
+                className="text-center flex flex-wrap justify-center items-center gap-1 pointer-events-none"
+                style={{
+                    fontFamily: captionStyle?.fontFamily || "Inter",
+                    fontSize: `${fontSize * containerScale}px`,
+                    fontWeight: "bold",
+                    color: captionStyle?.textColor || "#FFFFFF",
+                    textShadow: captionStyle?.shadow
+                        ? "2px 2px 0 #000, -2px -2px 0 #000, 2px -2px 0 #000, -2px 2px 0 #000, 0 2px 0 #000, 0 -2px 0 #000, 2px 0 0 #000, -2px 0 0 #000"
+                        : "none",
+                    WebkitTextStroke: captionStyle?.outline
+                        ? `${Math.max(2, Math.round(containerScale * 3))}px ${captionStyle?.outlineColor || "#000000"}`
+                        : "none",
+                    paintOrder: "stroke fill",
+                    backgroundColor: captionStyle?.backgroundColor && (captionStyle?.backgroundOpacity ?? 0) > 0
+                        ? `${captionStyle.backgroundColor}${Math.round(((captionStyle.backgroundOpacity ?? 0) / 100) * 255).toString(16).padStart(2, "0")}`
+                        : "transparent",
+                    borderRadius: "4px",
+                    padding: `${4 * containerScale}px ${12 * containerScale}px`,
+                    lineHeight: 1.3,
+                }}
+            >
+                {children}
             </div>
         </div>
     );
@@ -569,59 +831,17 @@ export const VideoCanvasEditor = forwardRef<VideoCanvasEditorRef, VideoCanvasEdi
                         ))}
                     </div>
 
-                    {/* Caption overlay - always visible when there's a caption */}
-                    {currentCaption && (() => {
-                        // Calculate position from x/y or fallback to legacy position
-                        const xPos = captionStyle?.x ?? 50; // Default center horizontally
-                        const yPos = captionStyle?.y ?? 85; // Default near bottom (85%)
-
-                        // Convert legacy position to y if x/y not set
-                        let finalY = yPos;
-                        if (captionStyle?.y === undefined && captionStyle?.position) {
-                            switch (captionStyle.position) {
-                                case "top": finalY = 10; break;
-                                case "center": finalY = 50; break;
-                                case "bottom": finalY = 85; break;
-                            }
-                        }
-
-                        return (
-                            <div
-                                className="absolute pointer-events-none z-20"
-                                style={{
-                                    left: `${xPos}%`,
-                                    top: `${finalY}%`,
-                                    transform: "translate(-50%, -50%)",
-                                    maxWidth: "90%",
-                                }}
-                            >
-                                <div
-                                    className="text-center flex flex-wrap justify-center items-center gap-1"
-                                    style={{
-                                        fontFamily: captionStyle?.fontFamily || "Inter",
-                                        fontSize: `${(captionStyle?.fontSize || 24) * containerScale}px`,
-                                        fontWeight: "bold",
-                                        color: captionStyle?.textColor || "#FFFFFF",
-                                        textShadow: captionStyle?.shadow
-                                            ? "2px 2px 0 #000, -2px -2px 0 #000, 2px -2px 0 #000, -2px 2px 0 #000, 0 2px 0 #000, 0 -2px 0 #000, 2px 0 0 #000, -2px 0 0 #000"
-                                            : "none",
-                                        WebkitTextStroke: captionStyle?.outline
-                                            ? `${Math.max(2, Math.round(containerScale * 3))}px ${captionStyle?.outlineColor || "#000000"}`
-                                            : "none",
-                                        paintOrder: "stroke fill",
-                                        backgroundColor: captionStyle?.backgroundColor && (captionStyle?.backgroundOpacity ?? 0) > 0
-                                            ? `${captionStyle.backgroundColor}${Math.round(((captionStyle.backgroundOpacity ?? 0) / 100) * 255).toString(16).padStart(2, "0")}`
-                                            : "transparent",
-                                        borderRadius: "4px",
-                                        padding: `${4 * containerScale}px ${12 * containerScale}px`,
-                                        lineHeight: 1.3,
-                                    }}
-                                >
-                                    {renderCaptionText()}
-                                </div>
-                            </div>
-                        );
-                    })()}
+                    {/* Caption overlay - draggable when there's a caption */}
+                    {currentCaption && (
+                        <DraggableCaption
+                            captionStyle={captionStyle}
+                            containerScale={containerScale}
+                            displaySize={displaySize}
+                            onPositionChange={onCaptionStyleChange}
+                        >
+                            {renderCaptionText()}
+                        </DraggableCaption>
+                    )}
 
                     {/* Transform overlay */}
                     <div
