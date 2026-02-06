@@ -24,6 +24,7 @@ import { Switch } from "@/components/ui/switch";
 import { cn } from "@/lib/utils";
 import { useValidateYouTubeUrl, useVideo } from "@/hooks/useVideo";
 import { useWorkspaceBySlug } from "@/hooks/useWorkspace";
+import { usePlanLimits } from "@/hooks/usePlanLimits";
 import { videoApi } from "@/lib/api/video";
 import { videoConfigApi, DEFAULT_VIDEO_CONFIG, type VideoConfigInput } from "@/lib/api/video-config";
 import { toast } from "sonner";
@@ -32,6 +33,7 @@ import type { VideoInfo } from "@/lib/api/video";
 import { CaptionTemplateGrid } from "@/components/configure/caption-template-grid";
 import { AspectRatioSelector } from "@/components/configure/aspect-ratio-selector";
 import { YouTubeIcon } from "@/components/icons/youtube-icon";
+import { UploadLimitErrorModal } from "@/components/upload/upload-limit-error-modal";
 import {
     Select,
     SelectContent,
@@ -91,6 +93,19 @@ export default function ConfigurePage() {
     const [errorMessage, setErrorMessage] = useState<string | null>(null);
     const [config, setConfig] = useState<VideoConfigInput>(DEFAULT_VIDEO_CONFIG);
     const initialConfigRef = useRef<VideoConfigInput>(DEFAULT_VIDEO_CONFIG);
+
+    // Error modal state for plan limit errors
+    const [showLimitError, setShowLimitError] = useState(false);
+    const [limitErrorDetails, setLimitErrorDetails] = useState<{
+        errorType: "fileSize" | "duration";
+        currentLimit: string;
+        attemptedValue: string;
+        currentPlan: string;
+        recommendedPlan?: string;
+    } | null>(null);
+
+    // Get plan limits for this workspace
+    const planLimits = usePlanLimits(workspaceSlug);
 
     const validateMutation = useValidateYouTubeUrl();
 
@@ -160,10 +175,22 @@ export default function ConfigurePage() {
             });
             router.push(`/${workspaceSlug}/videos/${result.video.id}/clips`);
         },
-        onError: (error: Error) => {
-            toast.error("Failed to process video", {
-                description: error.message,
-            });
+        onError: (error: any) => {
+            // Check if it's a plan limit error
+            if (error.response?.data?.upgradeRequired && error.response?.data?.reason === "VIDEO_TOO_LONG") {
+                setLimitErrorDetails({
+                    errorType: "duration",
+                    currentLimit: error.response.data.currentLimit || planLimits.maxDurationFormatted,
+                    attemptedValue: error.response.data.attemptedValue || "Unknown",
+                    currentPlan: planLimits.planName,
+                    recommendedPlan: error.response.data.recommendedPlan,
+                });
+                setShowLimitError(true);
+            } else {
+                toast.error("Failed to process video", {
+                    description: error.message || error.response?.data?.error || "An error occurred",
+                });
+            }
         },
     });
 
@@ -275,341 +302,360 @@ export default function ConfigurePage() {
     }, []);
 
     return (
-        <div className="container mx-auto max-w-3xl px-4 py-8">
-            {/* Back button */}
-            <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => router.push(`/${workspaceSlug}`)}
-                className="mb-6"
-            >
-                <IconArrowLeft className="mr-2 size-4" />
-                Back
-            </Button>
+        <>
+            {/* Upload Limit Error Modal */}
+            {limitErrorDetails && (
+                <UploadLimitErrorModal
+                    isOpen={showLimitError}
+                    onClose={() => {
+                        setShowLimitError(false);
+                        setLimitErrorDetails(null);
+                    }}
+                    errorType={limitErrorDetails.errorType}
+                    currentLimit={limitErrorDetails.currentLimit}
+                    attemptedValue={limitErrorDetails.attemptedValue}
+                    currentPlan={limitErrorDetails.currentPlan}
+                    recommendedPlan={limitErrorDetails.recommendedPlan}
+                    workspaceSlug={workspaceSlug}
+                />
+            )}
 
-            {/* Header */}
-            <div className="mb-8 text-center">
-                <div className={cn(
-                    "mx-auto mb-3 flex size-14 items-center justify-center rounded-full",
-                    mode === "upload" ? "bg-primary/10" : "bg-red-500/10"
-                )}>
-                    {mode === "upload" ? (
-                        <IconUpload className="size-7 text-primary" />
-                    ) : (
-                        <YouTubeIcon className="size-7" />
-                    )}
+            <div className="container mx-auto max-w-3xl px-4 py-8">
+                {/* Back button */}
+                <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => router.push(`/${workspaceSlug}`)}
+                    className="mb-6"
+                >
+                    <IconArrowLeft className="mr-2 size-4" />
+                    Back
+                </Button>
+
+                {/* Header */}
+                <div className="mb-8 text-center">
+                    <div className={cn(
+                        "mx-auto mb-3 flex size-14 items-center justify-center rounded-full",
+                        mode === "upload" ? "bg-primary/10" : "bg-red-500/10"
+                    )}>
+                        {mode === "upload" ? (
+                            <IconUpload className="size-7 text-primary" />
+                        ) : (
+                            <YouTubeIcon className="size-7" />
+                        )}
+                    </div>
+                    <h1 className="font-bold text-2xl">Get Viral Clips</h1>
+                    <p className="mt-1 text-muted-foreground">
+                        {mode === "upload"
+                            ? "Configure your clip settings for the uploaded video"
+                            : "Paste a YouTube URL and configure your clip settings"
+                        }
+                    </p>
                 </div>
-                <h1 className="font-bold text-2xl">Get Viral Clips</h1>
-                <p className="mt-1 text-muted-foreground">
-                    {mode === "upload"
-                        ? "Configure your clip settings for the uploaded video"
-                        : "Paste a YouTube URL and configure your clip settings"
-                    }
-                </p>
-            </div>
 
-            <div className="space-y-6">
-                {/* Video Info Card - Different for upload vs YouTube */}
-                {mode === "upload" ? (
-                    /* Uploaded Video Info Card */
-                    <Card>
-                        <CardHeader>
-                            <CardTitle>Uploaded Video</CardTitle>
-                        </CardHeader>
-                        <CardContent>
-                            {uploadedVideoLoading ? (
-                                <div className="flex items-center justify-center py-8">
-                                    <IconLoader2 className="size-6 animate-spin text-muted-foreground" />
-                                </div>
-                            ) : uploadedVideo ? (
-                                <div className="flex items-center gap-4 rounded-lg border p-4">
-                                    <div className="flex size-12 shrink-0 items-center justify-center rounded-lg bg-primary/10">
-                                        <IconUpload className="size-6 text-primary" />
+                <div className="space-y-6">
+                    {/* Video Info Card - Different for upload vs YouTube */}
+                    {mode === "upload" ? (
+                        /* Uploaded Video Info Card */
+                        <Card>
+                            <CardHeader>
+                                <CardTitle>Uploaded Video</CardTitle>
+                            </CardHeader>
+                            <CardContent>
+                                {uploadedVideoLoading ? (
+                                    <div className="flex items-center justify-center py-8">
+                                        <IconLoader2 className="size-6 animate-spin text-muted-foreground" />
                                     </div>
-                                    <div className="min-w-0 flex-1">
-                                        <h4 className="font-medium text-sm truncate">
-                                            {uploadedVideo.title || "Uploaded Video"}
-                                        </h4>
-                                        <p className="mt-1 text-muted-foreground text-xs">
-                                            {uploadedVideo.duration ? formatDuration(uploadedVideo.duration) : "Processing..."}
-                                        </p>
-                                    </div>
-                                    <IconCheck className="size-5 text-green-500 shrink-0" />
-                                </div>
-                            ) : (
-                                <div className="flex items-center gap-2 text-red-500">
-                                    <IconAlertCircle className="size-4" />
-                                    <span className="text-sm">Video not found</span>
-                                </div>
-                            )}
-                        </CardContent>
-                    </Card>
-                ) : (
-                    /* YouTube URL Input Card */
-                    <Card>
-                        <CardHeader>
-                            <CardTitle>YouTube URL</CardTitle>
-                        </CardHeader>
-                        <CardContent className="space-y-4">
-                            <div className="relative">
-                                <Input
-                                    type="url"
-                                    placeholder="https://youtube.com/watch?v=..."
-                                    value={url}
-                                    onChange={(e) => setUrl(e.target.value)}
-                                    aria-label="YouTube video URL"
-                                    aria-invalid={validationState === "invalid"}
-                                    aria-describedby={errorMessage ? "youtube-url-error" : undefined}
-                                    className={cn(
-                                        "pr-10",
-                                        validationState === "valid" && "border-green-500 focus-visible:ring-green-500",
-                                        validationState === "invalid" && "border-red-500 focus-visible:ring-red-500"
-                                    )}
-                                    disabled={isSubmitting}
-                                />
-                                <div className="absolute right-3 top-1/2 -translate-y-1/2">
-                                    {validationState === "validating" && (
-                                        <IconLoader2 className="size-4 animate-spin text-muted-foreground" aria-label="Validating URL" />
-                                    )}
-                                    {validationState === "valid" && <IconCheck className="size-4 text-green-500" aria-label="Valid URL" />}
-                                    {validationState === "invalid" && <IconX className="size-4 text-red-500" aria-label="Invalid URL" />}
-                                </div>
-                            </div>
-                            {errorMessage && validationState === "invalid" && (
-                                <div
-                                    id="youtube-url-error"
-                                    role="alert"
-                                    aria-live="assertive"
-                                    className="flex items-center gap-2 rounded-lg border border-red-200 bg-red-50 p-3 text-red-700 dark:border-red-800 dark:bg-red-950/50 dark:text-red-400"
-                                >
-                                    <IconAlertCircle className="size-4 shrink-0" aria-hidden="true" />
-                                    <span className="text-sm flex-1">{errorMessage}</span>
-                                    {errorMessage.toLowerCase().includes("network") || errorMessage.toLowerCase().includes("fetch") ? (
-                                        <Button
-                                            variant="ghost"
-                                            size="sm"
-                                            className="h-7 px-2 text-red-700 hover:text-red-800 hover:bg-red-100 dark:text-red-400 dark:hover:text-red-300 dark:hover:bg-red-900/50"
-                                            onClick={() => setUrl(url + " ")}
-                                        >
-                                            <IconRefresh className="size-3 mr-1" aria-hidden="true" />
-                                            Retry
-                                        </Button>
-                                    ) : null}
-                                </div>
-                            )}
-
-                            {/* Video Preview */}
-                            {videoInfo && validationState === "valid" && (
-                                <div className="overflow-hidden rounded-lg border">
-                                    <img
-                                        src={videoInfo.thumbnail}
-                                        alt={videoInfo.title}
-                                        className="aspect-video w-full object-cover"
-                                    />
-                                    <div className="p-3">
-                                        <div className="flex items-start justify-between gap-2">
-                                            <div className="min-w-0 flex-1">
-                                                <h4 className="font-medium text-sm line-clamp-2">{videoInfo.title}</h4>
-                                                <p className="mt-1 text-muted-foreground text-xs">
-                                                    {videoInfo.channelName} • {formatDuration(videoInfo.duration)}
-                                                </p>
-                                            </div>
-                                            <Button
-                                                variant="ghost"
-                                                size="icon"
-                                                className="size-8 shrink-0"
-                                                onClick={handleClear}
-                                                aria-label="Clear YouTube URL"
-                                            >
-                                                <IconX className="size-4" aria-hidden="true" />
-                                            </Button>
+                                ) : uploadedVideo ? (
+                                    <div className="flex items-center gap-4 rounded-lg border p-4">
+                                        <div className="flex size-12 shrink-0 items-center justify-center rounded-lg bg-primary/10">
+                                            <IconUpload className="size-6 text-primary" />
                                         </div>
-                                    </div>
-                                </div>
-                            )}
-                        </CardContent>
-                    </Card>
-                )}
-
-                {/* Configuration Options - Show when valid (for both modes) */}
-                <AnimatePresence mode="wait">
-                    {validationState === "valid" && (mode === "upload" ? uploadedVideo : true) && (
-                        <motion.div
-                            initial={{ opacity: 0, y: 20 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            exit={{ opacity: 0, y: -10 }}
-                            transition={{ duration: 0.3, ease: "easeOut" }}
-                        >
-                            <Card>
-                                <CardContent className="space-y-8 pt-6">
-                                    {/* Caption Style Section */}
-                                    <div className="space-y-4">
-                                        <div>
-                                            <h3 className="font-semibold">Caption Style</h3>
-                                            <p className="text-muted-foreground text-sm">
-                                                Choose how captions appear on your clips
+                                        <div className="min-w-0 flex-1">
+                                            <h4 className="font-medium text-sm truncate">
+                                                {uploadedVideo.title || "Uploaded Video"}
+                                            </h4>
+                                            <p className="mt-1 text-muted-foreground text-xs">
+                                                {uploadedVideo.duration ? formatDuration(uploadedVideo.duration) : "Processing..."}
                                             </p>
                                         </div>
-                                        {templatesError ? (
-                                            <div
-                                                role="alert"
-                                                className="flex flex-col items-center justify-center gap-3 rounded-lg border border-dashed p-6"
+                                        <IconCheck className="size-5 text-green-500 shrink-0" />
+                                    </div>
+                                ) : (
+                                    <div className="flex items-center gap-2 text-red-500">
+                                        <IconAlertCircle className="size-4" />
+                                        <span className="text-sm">Video not found</span>
+                                    </div>
+                                )}
+                            </CardContent>
+                        </Card>
+                    ) : (
+                        /* YouTube URL Input Card */
+                        <Card>
+                            <CardHeader>
+                                <CardTitle>YouTube URL</CardTitle>
+                            </CardHeader>
+                            <CardContent className="space-y-4">
+                                <div className="relative">
+                                    <Input
+                                        type="url"
+                                        placeholder="https://youtube.com/watch?v=..."
+                                        value={url}
+                                        onChange={(e) => setUrl(e.target.value)}
+                                        aria-label="YouTube video URL"
+                                        aria-invalid={validationState === "invalid"}
+                                        aria-describedby={errorMessage ? "youtube-url-error" : undefined}
+                                        className={cn(
+                                            "pr-10",
+                                            validationState === "valid" && "border-green-500 focus-visible:ring-green-500",
+                                            validationState === "invalid" && "border-red-500 focus-visible:ring-red-500"
+                                        )}
+                                        disabled={isSubmitting}
+                                    />
+                                    <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                                        {validationState === "validating" && (
+                                            <IconLoader2 className="size-4 animate-spin text-muted-foreground" aria-label="Validating URL" />
+                                        )}
+                                        {validationState === "valid" && <IconCheck className="size-4 text-green-500" aria-label="Valid URL" />}
+                                        {validationState === "invalid" && <IconX className="size-4 text-red-500" aria-label="Invalid URL" />}
+                                    </div>
+                                </div>
+                                {errorMessage && validationState === "invalid" && (
+                                    <div
+                                        id="youtube-url-error"
+                                        role="alert"
+                                        aria-live="assertive"
+                                        className="flex items-center gap-2 rounded-lg border border-red-200 bg-red-50 p-3 text-red-700 dark:border-red-800 dark:bg-red-950/50 dark:text-red-400"
+                                    >
+                                        <IconAlertCircle className="size-4 shrink-0" aria-hidden="true" />
+                                        <span className="text-sm flex-1">{errorMessage}</span>
+                                        {errorMessage.toLowerCase().includes("network") || errorMessage.toLowerCase().includes("fetch") ? (
+                                            <Button
+                                                variant="ghost"
+                                                size="sm"
+                                                className="h-7 px-2 text-red-700 hover:text-red-800 hover:bg-red-100 dark:text-red-400 dark:hover:text-red-300 dark:hover:bg-red-900/50"
+                                                onClick={() => setUrl(url + " ")}
                                             >
-                                                <IconAlertCircle className="size-8 text-muted-foreground" aria-hidden="true" />
-                                                <p className="text-muted-foreground text-sm text-center">
-                                                    Failed to load caption templates
-                                                </p>
+                                                <IconRefresh className="size-3 mr-1" aria-hidden="true" />
+                                                Retry
+                                            </Button>
+                                        ) : null}
+                                    </div>
+                                )}
+
+                                {/* Video Preview */}
+                                {videoInfo && validationState === "valid" && (
+                                    <div className="overflow-hidden rounded-lg border">
+                                        <img
+                                            src={videoInfo.thumbnail}
+                                            alt={videoInfo.title}
+                                            className="aspect-video w-full object-cover"
+                                        />
+                                        <div className="p-3">
+                                            <div className="flex items-start justify-between gap-2">
+                                                <div className="min-w-0 flex-1">
+                                                    <h4 className="font-medium text-sm line-clamp-2">{videoInfo.title}</h4>
+                                                    <p className="mt-1 text-muted-foreground text-xs">
+                                                        {videoInfo.channelName} • {formatDuration(videoInfo.duration)}
+                                                    </p>
+                                                </div>
                                                 <Button
-                                                    variant="outline"
-                                                    size="sm"
-                                                    onClick={() => refetchTemplates()}
-                                                    disabled={templatesRefetching}
+                                                    variant="ghost"
+                                                    size="icon"
+                                                    className="size-8 shrink-0"
+                                                    onClick={handleClear}
+                                                    aria-label="Clear YouTube URL"
                                                 >
-                                                    {templatesRefetching ? (
-                                                        <>
-                                                            <IconLoader2 className="size-4 mr-2 animate-spin" aria-hidden="true" />
-                                                            Retrying...
-                                                        </>
-                                                    ) : (
-                                                        <>
-                                                            <IconRefresh className="size-4 mr-2" aria-hidden="true" />
-                                                            Retry
-                                                        </>
-                                                    )}
+                                                    <IconX className="size-4" aria-hidden="true" />
                                                 </Button>
                                             </div>
-                                        ) : (
-                                            <CaptionTemplateGrid
-                                                templates={templates}
-                                                selectedId={config.captionTemplateId ?? "classic"}
-                                                onSelect={(id) => updateConfig({ captionTemplateId: id })}
-                                                disabled={isSubmitting}
-                                                isLoading={templatesLoading}
-                                            />
-                                        )}
-                                    </div>
-
-                            {/* Aspect Ratio Section */}
-                            <div className="space-y-4 border-t pt-6">
-                                <div>
-                                    <h3 className="font-semibold">Aspect Ratio</h3>
-                                    <p className="text-muted-foreground text-sm">
-                                        Choose the output format for your clips
-                                    </p>
-                                </div>
-                                <AspectRatioSelector
-                                    value={config.aspectRatio ?? "9:16"}
-                                    onChange={(ratio) => updateConfig({ aspectRatio: ratio })}
-                                    disabled={isSubmitting}
-                                />
-                            </div>
-
-                            {/* Language Section */}
-                            <div className="space-y-4 border-t pt-6">
-                                <div>
-                                    <h3 className="font-semibold">Language</h3>
-                                    <p className="text-muted-foreground text-sm">
-                                        Select the spoken language for better transcription accuracy
-                                    </p>
-                                </div>
-                                <div className="flex items-center gap-3">
-                                    <IconLanguage className="size-5 text-muted-foreground" />
-                                    <Select
-                                        value={config.language ?? "auto"}
-                                        onValueChange={(value) => updateConfig({ language: value as SupportedLanguageCode })}
-                                        disabled={isSubmitting}
-                                    >
-                                        <SelectTrigger className="w-full max-w-xs">
-                                            <SelectValue placeholder="Select language" />
-                                        </SelectTrigger>
-                                        <SelectContent>
-                                            {Object.entries(SUPPORTED_LANGUAGES).map(([code, name]) => (
-                                                <SelectItem key={code} value={code}>
-                                                    {name}
-                                                </SelectItem>
-                                            ))}
-                                        </SelectContent>
-                                    </Select>
-                                </div>
-                            </div>
-
-                            {/* Editing Options Section */}
-                            <div className="space-y-4 border-t pt-6">
-                                <div>
-                                    <h3 className="font-semibold">Editing Options</h3>
-                                </div>
-                                <div className="space-y-1">
-                                    {/* Captions */}
-                                    <div className="flex items-center justify-between py-3">
-                                        <div className="flex items-center gap-3">
-                                            <IconSubtask className="size-5 text-muted-foreground" />
-                                            <span className="font-medium">Captions</span>
                                         </div>
-                                        <Switch
-                                            checked={config.enableCaptions ?? true}
-                                            onCheckedChange={(checked) => updateConfig({ enableCaptions: checked })}
-                                            disabled={isSubmitting}
-                                        />
                                     </div>
-
-                                    {/* Emojis */}
-                                    <div className="flex items-center justify-between py-3">
-                                        <div className="flex items-center gap-3">
-                                            <IconMoodSmile className="size-5 text-muted-foreground" />
-                                            <span className="font-medium">Emojis</span>
-                                        </div>
-                                        <Switch
-                                            checked={config.enableEmojis ?? true}
-                                            onCheckedChange={(checked) => updateConfig({ enableEmojis: checked })}
-                                            disabled={isSubmitting}
-                                        />
-                                    </div>
-
-                                    {/* Intro Title */}
-                                    <div className="flex items-center justify-between py-3">
-                                        <div className="flex items-center gap-3">
-                                            <IconTypography className="size-5 text-muted-foreground" />
-                                            <span className="font-medium">Intro title</span>
-                                        </div>
-                                        <Switch
-                                            checked={config.enableIntroTitle ?? true}
-                                            onCheckedChange={(checked) => updateConfig({ enableIntroTitle: checked })}
-                                            disabled={isSubmitting}
-                                        />
-                                    </div>
-                                </div>
-                            </div>
-                        </CardContent>
-                    </Card>
-                </motion.div>
-                )}
-                </AnimatePresence>
-
-                {/* Get Clips Button */}
-                <Button
-                    onClick={handleGetClips}
-                    disabled={
-                        validationState !== "valid" ||
-                        isSubmitting ||
-                        (mode === "upload" && !uploadedVideo)
-                    }
-                    className="w-full gap-2"
-                    size="lg"
-                    aria-busy={isSubmitting}
-                >
-                    {isSubmitting ? (
-                        <>
-                            <IconLoader2 className="size-5 animate-spin" aria-hidden="true" />
-                            Processing...
-                        </>
-                    ) : (
-                        <>
-                            <IconSparkles className="size-5" aria-hidden="true" />
-                            Get Clips
-                        </>
+                                )}
+                            </CardContent>
+                        </Card>
                     )}
-                </Button>
+
+                    {/* Configuration Options - Show when valid (for both modes) */}
+                    <AnimatePresence mode="wait">
+                        {validationState === "valid" && (mode === "upload" ? uploadedVideo : true) && (
+                            <motion.div
+                                initial={{ opacity: 0, y: 20 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                exit={{ opacity: 0, y: -10 }}
+                                transition={{ duration: 0.3, ease: "easeOut" }}
+                            >
+                                <Card>
+                                    <CardContent className="space-y-8 pt-6">
+                                        {/* Caption Style Section */}
+                                        <div className="space-y-4">
+                                            <div>
+                                                <h3 className="font-semibold">Caption Style</h3>
+                                                <p className="text-muted-foreground text-sm">
+                                                    Choose how captions appear on your clips
+                                                </p>
+                                            </div>
+                                            {templatesError ? (
+                                                <div
+                                                    role="alert"
+                                                    className="flex flex-col items-center justify-center gap-3 rounded-lg border border-dashed p-6"
+                                                >
+                                                    <IconAlertCircle className="size-8 text-muted-foreground" aria-hidden="true" />
+                                                    <p className="text-muted-foreground text-sm text-center">
+                                                        Failed to load caption templates
+                                                    </p>
+                                                    <Button
+                                                        variant="outline"
+                                                        size="sm"
+                                                        onClick={() => refetchTemplates()}
+                                                        disabled={templatesRefetching}
+                                                    >
+                                                        {templatesRefetching ? (
+                                                            <>
+                                                                <IconLoader2 className="size-4 mr-2 animate-spin" aria-hidden="true" />
+                                                                Retrying...
+                                                            </>
+                                                        ) : (
+                                                            <>
+                                                                <IconRefresh className="size-4 mr-2" aria-hidden="true" />
+                                                                Retry
+                                                            </>
+                                                        )}
+                                                    </Button>
+                                                </div>
+                                            ) : (
+                                                <CaptionTemplateGrid
+                                                    templates={templates}
+                                                    selectedId={config.captionTemplateId ?? "classic"}
+                                                    onSelect={(id) => updateConfig({ captionTemplateId: id })}
+                                                    disabled={isSubmitting}
+                                                    isLoading={templatesLoading}
+                                                />
+                                            )}
+                                        </div>
+
+                                        {/* Aspect Ratio Section */}
+                                        <div className="space-y-4 border-t pt-6">
+                                            <div>
+                                                <h3 className="font-semibold">Aspect Ratio</h3>
+                                                <p className="text-muted-foreground text-sm">
+                                                    Choose the output format for your clips
+                                                </p>
+                                            </div>
+                                            <AspectRatioSelector
+                                                value={config.aspectRatio ?? "9:16"}
+                                                onChange={(ratio) => updateConfig({ aspectRatio: ratio })}
+                                                disabled={isSubmitting}
+                                            />
+                                        </div>
+
+                                        {/* Language Section */}
+                                        <div className="space-y-4 border-t pt-6">
+                                            <div>
+                                                <h3 className="font-semibold">Language</h3>
+                                                <p className="text-muted-foreground text-sm">
+                                                    Select the spoken language for better transcription accuracy
+                                                </p>
+                                            </div>
+                                            <div className="flex items-center gap-3">
+                                                <IconLanguage className="size-5 text-muted-foreground" />
+                                                <Select
+                                                    value={config.language ?? "auto"}
+                                                    onValueChange={(value) => updateConfig({ language: value as SupportedLanguageCode })}
+                                                    disabled={isSubmitting}
+                                                >
+                                                    <SelectTrigger className="w-full max-w-xs">
+                                                        <SelectValue placeholder="Select language" />
+                                                    </SelectTrigger>
+                                                    <SelectContent>
+                                                        {Object.entries(SUPPORTED_LANGUAGES).map(([code, name]) => (
+                                                            <SelectItem key={code} value={code}>
+                                                                {name}
+                                                            </SelectItem>
+                                                        ))}
+                                                    </SelectContent>
+                                                </Select>
+                                            </div>
+                                        </div>
+
+                                        {/* Editing Options Section */}
+                                        <div className="space-y-4 border-t pt-6">
+                                            <div>
+                                                <h3 className="font-semibold">Editing Options</h3>
+                                            </div>
+                                            <div className="space-y-1">
+                                                {/* Captions */}
+                                                <div className="flex items-center justify-between py-3">
+                                                    <div className="flex items-center gap-3">
+                                                        <IconSubtask className="size-5 text-muted-foreground" />
+                                                        <span className="font-medium">Captions</span>
+                                                    </div>
+                                                    <Switch
+                                                        checked={config.enableCaptions ?? true}
+                                                        onCheckedChange={(checked) => updateConfig({ enableCaptions: checked })}
+                                                        disabled={isSubmitting}
+                                                    />
+                                                </div>
+
+                                                {/* Emojis */}
+                                                <div className="flex items-center justify-between py-3">
+                                                    <div className="flex items-center gap-3">
+                                                        <IconMoodSmile className="size-5 text-muted-foreground" />
+                                                        <span className="font-medium">Emojis</span>
+                                                    </div>
+                                                    <Switch
+                                                        checked={config.enableEmojis ?? true}
+                                                        onCheckedChange={(checked) => updateConfig({ enableEmojis: checked })}
+                                                        disabled={isSubmitting}
+                                                    />
+                                                </div>
+
+                                                {/* Intro Title */}
+                                                <div className="flex items-center justify-between py-3">
+                                                    <div className="flex items-center gap-3">
+                                                        <IconTypography className="size-5 text-muted-foreground" />
+                                                        <span className="font-medium">Intro title</span>
+                                                    </div>
+                                                    <Switch
+                                                        checked={config.enableIntroTitle ?? true}
+                                                        onCheckedChange={(checked) => updateConfig({ enableIntroTitle: checked })}
+                                                        disabled={isSubmitting}
+                                                    />
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </CardContent>
+                                </Card>
+                            </motion.div>
+                        )}
+                    </AnimatePresence>
+
+                    {/* Get Clips Button */}
+                    <Button
+                        onClick={handleGetClips}
+                        disabled={
+                            validationState !== "valid" ||
+                            isSubmitting ||
+                            (mode === "upload" && !uploadedVideo)
+                        }
+                        className="w-full gap-2"
+                        size="lg"
+                        aria-busy={isSubmitting}
+                    >
+                        {isSubmitting ? (
+                            <>
+                                <IconLoader2 className="size-5 animate-spin" aria-hidden="true" />
+                                Processing...
+                            </>
+                        ) : (
+                            <>
+                                <IconSparkles className="size-5" aria-hidden="true" />
+                                Get Clips
+                            </>
+                        )}
+                    </Button>
+                </div>
             </div>
-        </div>
+        </>
     );
 }

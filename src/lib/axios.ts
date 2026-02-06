@@ -42,11 +42,13 @@ api.interceptors.response.use(
       code?: string;
       details?: Record<string, string>;
       retryable?: boolean;
+      response?: typeof error.response; // Preserve original response
     };
 
     // Attach additional error information
     enhancedError.status = error.response?.status;
     enhancedError.details = error.response?.data?.details;
+    enhancedError.response = error.response; // Preserve full response for error handling
 
     // Determine if error is retryable
     const retryableStatuses = [408, 429, 500, 502, 503, 504];

@@ -141,9 +141,11 @@ export function VideoCard({
                 data-testid="video-card"
                 className={cn(
                     "group relative cursor-pointer",
-                    "transition-transform duration-200 ease-out",
-                    "hover:scale-[1.02] hover:z-10",
-                    "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 rounded-lg",
+                    "grid grid-cols-[80px_1fr_140px_140px_100px_100px] gap-6 items-center",
+                    "px-6 py-5 bg-card",
+                    "transition-all duration-150 ease-out",
+                    "hover:bg-accent/30",
+                    "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset",
                     className
                 )}
                 onClick={onClick}
@@ -157,65 +159,69 @@ export function VideoCard({
                 tabIndex={0}
                 aria-label={`View clips for ${video.title?.trim() || "Untitled Video"}`}
             >
-                {/* Video thumbnail with aspect ratio preservation */}
-                <div className="aspect-video bg-muted rounded-lg overflow-hidden relative shadow-sm group-hover:shadow-md transition-shadow">
+                {/* Thumbnail column */}
+                <div className="shrink-0 w-20 h-20 rounded-lg overflow-hidden bg-muted relative shadow-sm">
                     {thumbnailUrl ? (
                         <img
                             src={thumbnailUrl}
                             alt={video.title || "Video thumbnail"}
-                            className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+                            className="w-full h-full object-cover"
                             loading="lazy"
                         />
                     ) : (
                         <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-muted to-muted/50">
-                            <IconFile className="size-6 sm:size-8 text-muted-foreground opacity-50" />
+                            <IconFile className="size-7 text-muted-foreground opacity-40" />
                         </div>
                     )}
-
-                    {/* Processing status badge */}
-                    <div className="absolute top-1.5 sm:top-2 right-1.5 sm:right-2">
-                        {getStatusBadge()}
-                    </div>
-
-                    {/* Duration overlay */}
-                    {video.duration && (
-                        <div className="absolute bottom-1.5 sm:bottom-2 left-1.5 sm:left-2 bg-black/70 text-white text-xs px-1 sm:px-1.5 py-0.5 rounded backdrop-blur-sm">
-                            {formatDuration(video.duration)}
-                        </div>
-                    )}
-
-                    {/* Expiry indicator (7 days) */}
-                    <div className="absolute bottom-1.5 sm:bottom-2 right-1.5 sm:right-2 bg-black/70 text-white text-xs px-1 sm:px-1.5 py-0.5 rounded flex items-center gap-1 backdrop-blur-sm">
-                        <IconClock className="size-3" />
-                        7 days
-                    </div>
-
-                    {/* Hover overlay effect */}
-                    <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors duration-200" />
                 </div>
 
-                {/* Video metadata */}
-                <div className="mt-1.5 sm:mt-2 flex items-start justify-between gap-2">
-                    <div className="min-w-0 flex-1">
-                        <p className="text-xs sm:text-sm font-medium truncate group-hover:text-primary transition-colors">
-                            {video.title?.trim() || "Untitled Video"}
-                        </p>
-                        <p className="text-xs text-muted-foreground capitalize">
-                            {video.sourceType}
-                        </p>
+                {/* Description column */}
+                <div className="min-w-0">
+                    <p className="font-semibold text-sm truncate mb-1.5 group-hover:text-primary transition-colors">
+                        {video.title?.trim() || "Untitled Video"}
+                    </p>
+                    <div className="flex items-center gap-2.5 text-xs text-muted-foreground">
+                        <span className="flex items-center gap-1">
+                            <span className="font-medium">Created:</span>
+                            <span>{new Date(video.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</span>
+                        </span>
+                        <span className="text-muted-foreground/40">•</span>
+                        <span className="flex items-center gap-1">
+                            <span className="font-medium">Expires:</span>
+                            <span>{new Date(new Date(video.createdAt).getTime() + 14 * 24 * 60 * 60 * 1000).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</span>
+                        </span>
                     </div>
+                </div>
 
-                    {/* Menu button with dropdown */}
+                {/* Source column */}
+                <div className="hidden sm:flex items-center justify-center">
+                    <div className="flex items-center gap-2 px-3 py-1.5 rounded-md bg-muted/50 text-xs font-medium">
+                        <IconFile className="size-3.5" />
+                        <span>{video.sourceType === 'youtube' ? 'YouTube' : 'Local file'}</span>
+                    </div>
+                </div>
+
+                {/* Video type column */}
+                <div className="hidden md:flex items-center justify-center text-xs font-medium">
+                    Viral Clips
+                </div>
+
+                {/* Ratio column */}
+                <div className="hidden lg:flex items-center justify-center text-xs font-medium">
+                    9:16
+                </div>
+
+                {/* Actions column */}
+                <div className="flex items-center justify-end gap-2">
+                    {/* Status badge */}
+                    {getStatusBadge()}
+
                     <DropdownMenu>
-                        <DropdownMenuTrigger>
+                        <DropdownMenuTrigger asChild>
                             <Button
                                 variant="ghost"
                                 size="icon"
-                                className={cn(
-                                    "size-6 shrink-0 transition-opacity",
-                                    "opacity-0 group-hover:opacity-100",
-                                    "focus:opacity-100"
-                                )}
+                                className="size-8 shrink-0"
                                 onClick={(e) => e.stopPropagation()}
                                 aria-label="Video options"
                             >
@@ -274,6 +280,16 @@ export function VideoCard({
                             )}
                         </DropdownMenuContent>
                     </DropdownMenu>
+
+                    <Button
+                        variant="ghost"
+                        size="icon"
+                        className="size-8 shrink-0"
+                        onClick={onClick}
+                        aria-label="View clips"
+                    >
+                        <IconExternalLink className="size-4" />
+                    </Button>
                 </div>
             </div>
 

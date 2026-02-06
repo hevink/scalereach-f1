@@ -13,6 +13,7 @@ import { Spinner } from "@/components/ui/spinner";
 import { WorkspaceSidebar } from "@/components/workspace/workspace-sidebar";
 import { WorkspaceTracker } from "@/components/workspace/workspace-tracker";
 import { WorkspaceShortcutsProvider } from "@/components/workspace/workspace-shortcuts-provider";
+import { PlanBadge } from "@/components/workspace/plan-badge";
 
 interface WorkspaceLayoutContentProps {
     children: React.ReactNode;
@@ -74,6 +75,12 @@ export function WorkspaceLayoutContent({
                 <SidebarInset>
                     <header className="flex h-16 shrink-0 items-center gap-2 border-b px-4">
                         <SidebarTrigger />
+                        <div className="ml-auto">
+                            <PlanBadge
+                                plan={workspace.plan as "free" | "starter" | "pro"}
+                                workspaceSlug={slug}
+                            />
+                        </div>
                     </header>
                     <main className="flex-1">
                         {children}
