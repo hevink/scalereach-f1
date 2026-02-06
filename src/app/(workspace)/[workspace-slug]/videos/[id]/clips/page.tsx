@@ -1,27 +1,38 @@
 "use client";
 
-import { use, useCallback, useMemo } from "react";
+import { use, useCallback, useState } from "react";
 import { useRouter } from "next/navigation";
 import {
     IconArrowLeft,
     IconAlertCircle,
     IconVideo,
     IconLoader2,
-    IconFlame,
     IconClock,
     IconHeartFilled,
-    IconScissors,
-    IconPlayerPlayFilled,
+    IconHeart,
+    IconDownload,
+    IconEdit,
+    IconShare2,
+    IconSparkles,
+    IconRefresh,
+    IconFile,
+    IconLanguage,
+    IconAspectRatio,
+    IconFlame,
+    IconCalendar,
+    IconMaximize,
+    IconVolume,
+    IconDotsVertical,
 } from "@tabler/icons-react";
 
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { ClipDetailModal, useClipModalUrlState } from "@/components/clips/clip-detail-modal";
+import { Badge } from "@/components/ui/badge";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useVideo } from "@/hooks/useVideo";
 import { useClipsByVideo, useToggleFavorite } from "@/hooks/useClips";
 import { cn } from "@/lib/utils";
 import type { ClipResponse } from "@/lib/api/clips";
-import { IconHeart } from "@tabler/icons-react";
 
 interface VideoClipsPageProps {
     params: Promise<{ "workspace-slug": string; id: string }>;
@@ -33,25 +44,35 @@ function formatDuration(seconds: number): string {
     return `${mins}:${secs.toString().padStart(2, "0")}`;
 }
 
-function getScoreColor(score: number): string {
-    if (score >= 70) return "bg-green-500/10 text-green-600 dark:text-green-400";
-    if (score >= 40) return "bg-yellow-500/10 text-yellow-600 dark:text-yellow-400";
-    return "bg-red-500/10 text-red-600 dark:text-red-400";
+function formatDate(dateString: string): string {
+    const date = new Date(dateString);
+    return date.toLocaleDateString("en-US", { month: "short", day: "numeric" });
 }
 
 function VideoClipsLoading() {
     return (
-        <div className="flex h-full flex-col">
-            <div className="flex items-center gap-4 border-b px-4 py-3">
-                <Skeleton className="h-9 w-9 rounded-md" />
-                <div className="flex flex-col gap-1">
-                    <Skeleton className="h-6 w-48" />
-                    <Skeleton className="h-4 w-32" />
+        <div className="flex h-full flex-col bg-background">
+            <div className="border-b px-6 py-4">
+                <Skeleton className="h-7 w-96 mb-2" />
+                <Skeleton className="h-4 w-24 mb-3" />
+                <div className="flex gap-2">
+                    <Skeleton className="h-6 w-20 rounded-full" />
+                    <Skeleton className="h-6 w-20 rounded-full" />
+                    <Skeleton className="h-6 w-16 rounded-full" />
                 </div>
             </div>
-            <div className="grid gap-4 p-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-                {Array.from({ length: 8 }).map((_, i) => (
-                    <Skeleton key={i} className="aspect-video rounded-lg" />
+            <div className="flex-1 overflow-auto p-6 space-y-6">
+                {Array.from({ length: 3 }).map((_, i) => (
+                    <div key={i} className="rounded-xl border bg-card p-4">
+                        <Skeleton className="h-6 w-64 mb-4" />
+                        <div className="flex gap-4">
+                            <Skeleton className="w-80 aspect-video rounded-lg" />
+                            <div className="flex-1 space-y-3">
+                                <Skeleton className="h-8 w-48" />
+                                <Skeleton className="h-20 w-full" />
+                            </div>
+                        </div>
+                    </div>
                 ))}
             </div>
         </div>
@@ -113,7 +134,6 @@ interface NoClipsProps {
 }
 
 function NoClips({ videoTitle, videoStatus }: NoClipsProps) {
-    // Processing states
     if (videoStatus === "downloading") {
         return (
             <div className="flex flex-col items-center justify-center gap-4 rounded-lg border bg-muted/30 p-8">
@@ -170,7 +190,6 @@ function NoClips({ videoTitle, videoStatus }: NoClipsProps) {
         );
     }
 
-    // Error state
     if (videoStatus === "failed" || videoStatus === "error") {
         return (
             <div className="flex flex-col items-center justify-center gap-4 rounded-lg border border-destructive/30 bg-destructive/5 p-8">
@@ -187,7 +206,6 @@ function NoClips({ videoTitle, videoStatus }: NoClipsProps) {
         );
     }
 
-    // Pending state (not started yet)
     if (videoStatus === "pending") {
         return (
             <div className="flex flex-col items-center justify-center gap-4 rounded-lg border bg-muted/30 p-8">
@@ -202,7 +220,6 @@ function NoClips({ videoTitle, videoStatus }: NoClipsProps) {
         );
     }
 
-    // Completed but no clips (shouldn't happen normally)
     return (
         <div className="flex flex-col items-center justify-center gap-4 rounded-lg border bg-muted/30 p-8">
             <IconVideo className="size-8 text-muted-foreground" />
@@ -218,130 +235,159 @@ function NoClips({ videoTitle, videoStatus }: NoClipsProps) {
 
 interface ClipCardProps {
     clip: ClipResponse;
-    onClick: () => void;
-    onFavorite: (e: React.MouseEvent) => void;
+    index: number;
+    onEdit: (clipId: string) => void;
+    onFavorite: (e: React.MouseEvent, clipId: string) => void;
+    onDownload: (clip: ClipResponse) => void;
+    onShare: (clip: ClipResponse) => void;
 }
 
-function isClipGenerating(clip: ClipResponse): boolean {
-    return clip.status === "generating" || clip.status === "detected";
-}
-
-function ClipCard({ clip, onClick, onFavorite }: ClipCardProps) {
-    const scoreColorClass = getScoreColor(clip.viralityScore);
-    const isGenerating = isClipGenerating(clip);
+function ClipCard({ clip, index, onEdit, onFavorite, onDownload, onShare }: ClipCardProps) {
+    const [activeTab, setActiveTab] = useState<"transcript" | "description">("transcript");
+    const isGenerating = clip.status === "generating" || clip.status === "detected";
 
     return (
-        <div
-            className={cn("group cursor-pointer", isGenerating && "opacity-80")}
-            onClick={onClick}
-        >
-            {/* Thumbnail */}
-            <div className="relative aspect-video overflow-hidden rounded-lg bg-muted">
-                {isGenerating ? (
-                    <div className="flex h-full w-full flex-col items-center justify-center gap-2">
-                        <IconLoader2 className="size-8 animate-spin text-primary" />
-                        <span className="text-xs text-muted-foreground">Generating clip...</span>
-                    </div>
-                ) : clip.thumbnailUrl ? (
-                    <img
-                        src={clip.thumbnailUrl}
-                        alt={clip.title}
-                        className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
-                    />
-                ) : clip.storageUrl ? (
-                    <video
-                        src={clip.storageUrl}
-                        className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
-                        muted
-                        preload="metadata"
-                    />
-                ) : (
-                    <div className="flex h-full w-full items-center justify-center">
-                        <IconScissors className="size-12 text-muted-foreground/30" />
-                    </div>
-                )}
-
-                {/* Gradient overlay - hide when generating */}
-                {!isGenerating && (
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent opacity-60 transition-opacity group-hover:opacity-80" />
-                )}
-
-                {/* Play button on hover - hide when generating */}
-                {!isGenerating && (
-                    <div className="absolute inset-0 flex items-center justify-center opacity-0 transition-opacity group-hover:opacity-100">
-                        <div className="flex size-11 items-center justify-center rounded-full bg-white/95 shadow-lg">
-                            <IconPlayerPlayFilled className="size-5 text-black" />
-                        </div>
-                    </div>
-                )}
-
-                {/* Viral score - top left */}
-                <div className={cn(
-                    "absolute left-2 top-2 flex items-center gap-1 rounded-md px-1.5 py-0.5 text-xs font-semibold",
-                    scoreColorClass
-                )}>
-                    <IconFlame className="size-3" />
-                    {clip.viralityScore}
-                </div>
-
-                {/* Favorite button - top right (hide when generating) */}
-                {!isGenerating && (
-                    <button
-                        onClick={onFavorite}
-                        className={cn(
-                            "absolute right-2 top-2 flex size-8 items-center justify-center rounded-full transition-all",
-                            clip.favorited
-                                ? "bg-red-500 text-white"
-                                : "bg-black/50 text-white opacity-0 group-hover:opacity-100 hover:bg-black/70"
-                        )}
-                        aria-label={clip.favorited ? "Remove from favorites" : "Add to favorites"}
-                    >
-                        {clip.favorited ? (
-                            <IconHeartFilled className="size-4" />
-                        ) : (
-                            <IconHeart className="size-4" />
-                        )}
-                    </button>
-                )}
-
-                {/* Duration - bottom right */}
-                <div className="absolute right-2 bottom-2 flex items-center gap-1 rounded-md bg-black/80 px-1.5 py-0.5 text-xs font-medium text-white">
-                    <IconClock className="size-3" />
-                    {formatDuration(clip.duration)}
-                </div>
+        <div className="rounded-xl border bg-card overflow-hidden">
+            {/* Clip Title */}
+            <div className="px-5 py-3 border-b bg-muted/30">
+                <h3 className="font-semibold text-base">
+                    <span className="text-muted-foreground">#{index + 1}</span>{" "}
+                    {clip.title}
+                </h3>
             </div>
 
             {/* Content */}
-            <div className="mt-2 px-0.5">
-                <h3 className="line-clamp-2 text-sm font-medium leading-snug group-hover:text-primary">
-                    {clip.title}
-                </h3>
-
-                {isGenerating ? (
-                    <p className="mt-1 flex items-center gap-1 text-xs text-muted-foreground">
-                        <IconLoader2 className="size-3 animate-spin" />
-                        Processing...
-                    </p>
-                ) : clip.viralityReason ? (
-                    <p className="mt-1 line-clamp-2 text-xs text-muted-foreground">
-                        {clip.viralityReason}
-                    </p>
-                ) : null}
-
-                {clip.hooks.length > 0 && (
-                    <div className="mt-2 flex flex-wrap gap-1">
-                        {clip.hooks.slice(0, 2).map((hook, i) => (
-                            <span key={i} className="rounded-full bg-muted px-2 py-0.5 text-[10px] text-muted-foreground">
-                                {hook}
-                            </span>
-                        ))}
-                        {clip.hooks.length > 2 && (
-                            <span className="rounded-full bg-muted px-2 py-0.5 text-[10px] text-muted-foreground">
-                                +{clip.hooks.length - 2}
-                            </span>
-                        )}
+            <div className="p-4">
+                <div className="flex flex-col lg:flex-row gap-4 lg:items-start">
+                    {/* Video Preview */}
+                    <div className="shrink-0">
+                        <div className="relative w-full lg:w-[230px] h-[400px] rounded-lg overflow-hidden bg-black">
+                            {isGenerating ? (
+                                <div className="flex h-full w-full flex-col items-center justify-center gap-2">
+                                    <IconLoader2 className="size-8 animate-spin text-primary" />
+                                    <span className="text-xs text-muted-foreground">Generating clip...</span>
+                                </div>
+                            ) : clip.storageUrl ? (
+                                <video
+                                    src={clip.storageUrl}
+                                    poster={clip.thumbnailUrl}
+                                    className="h-full w-full object-cover"
+                                    controls
+                                />
+                            ) : clip.thumbnailUrl ? (
+                                <img
+                                    src={clip.thumbnailUrl}
+                                    alt={clip.title}
+                                    className="h-full w-full object-cover"
+                                />
+                            ) : (
+                                <div className="flex h-full w-full items-center justify-center">
+                                    <IconVideo className="size-12 text-muted-foreground/30" />
+                                </div>
+                            )}
+                        </div>
                     </div>
-                )}
+
+                    {/* Tabs Section */}
+                    <div className="h-full">
+                        <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as "transcript" | "description")}>
+                            <TabsList className="mb-3">
+                                <TabsTrigger value="transcript" className="gap-1.5">
+                                    <span className="size-2 rounded-full bg-green-500" />
+                                    Transcript
+                                </TabsTrigger>
+                                <TabsTrigger value="description" className="gap-1.5">
+                                    <span className="size-2 rounded-full bg-muted-foreground" />
+                                    Auto-Description
+                                </TabsTrigger>
+                            </TabsList>
+
+                            <TabsContent value="transcript" className="mt-0">
+                                <p className="text-sm text-muted-foreground leading-relaxed">
+                                    {clip.transcript || "No transcript available."}
+                                </p>
+                            </TabsContent>
+
+                            <TabsContent value="description" className="mt-0">
+                                <p className="text-sm text-muted-foreground leading-relaxed">
+                                    {clip.viralityReason || "No auto-description available."}
+                                </p>
+                                {clip.hooks.length > 0 && (
+                                    <div className="mt-3 flex flex-wrap gap-1.5">
+                                        {clip.hooks.map((hook, i) => (
+                                            <Badge key={i} variant="secondary" className="text-xs">
+                                                {hook}
+                                            </Badge>
+                                        ))}
+                                    </div>
+                                )}
+                            </TabsContent>
+                        </Tabs>
+                    </div>
+                </div>
+
+                {/* Action Buttons */}
+                <div className="flex items-center justify-between mt-4 pt-4 border-t">
+                    <div className="flex items-center gap-2">
+                        <Button
+                            size="sm"
+                            className="gap-2"
+                            onClick={() => onDownload(clip)}
+                            disabled={!clip.storageUrl || isGenerating}
+                        >
+                            <IconDownload className="size-4" />
+                            Download
+                        </Button>
+
+                        <Button
+                            size="sm"
+                            variant="outline"
+                            className="gap-2"
+                            disabled={isGenerating}
+                        >
+                            <IconSparkles className="size-4" />
+                            Remove watermark
+                        </Button>
+
+                        <Button
+                            size="sm"
+                            variant="outline"
+                            className="gap-2"
+                            onClick={() => onEdit(clip.id)}
+                            disabled={isGenerating}
+                        >
+                            <IconEdit className="size-4" />
+                            Edit
+                        </Button>
+                    </div>
+
+                    <div className="flex items-center gap-2">
+                        <Button
+                            size="icon"
+                            variant="ghost"
+                            className={cn(
+                                "size-9",
+                                clip.favorited && "text-red-500 hover:text-red-600"
+                            )}
+                            onClick={(e) => onFavorite(e, clip.id)}
+                        >
+                            {clip.favorited ? (
+                                <IconHeartFilled className="size-5" />
+                            ) : (
+                                <IconHeart className="size-5" />
+                            )}
+                        </Button>
+
+                        <Button
+                            size="icon"
+                            variant="ghost"
+                            className="size-9"
+                            onClick={() => onShare(clip)}
+                        >
+                            <IconShare2 className="size-5" />
+                        </Button>
+                    </div>
+                </div>
             </div>
         </div>
     );
@@ -350,8 +396,6 @@ function ClipCard({ clip, onClick, onFavorite }: ClipCardProps) {
 export default function VideoClipsPage({ params }: VideoClipsPageProps) {
     const { "workspace-slug": slug, id: videoId } = use(params);
     const router = useRouter();
-
-    const { selectedClipId, isOpen, openModal, closeModal } = useClipModalUrlState();
 
     const {
         data: video,
@@ -363,29 +407,14 @@ export default function VideoClipsPage({ params }: VideoClipsPageProps) {
         data: clips,
         isLoading: clipsLoading,
         error: clipsError,
+        refetch: refetchClips,
     } = useClipsByVideo(videoId);
 
     const toggleFavorite = useToggleFavorite();
 
-    // Navigation helpers
-    const currentClipIndex = useMemo(() => {
-        if (!clips || !selectedClipId) return -1;
-        return clips.findIndex(clip => clip.id === selectedClipId);
-    }, [clips, selectedClipId]);
-
-    const hasPrevious = currentClipIndex > 0;
-    const hasNext = clips ? currentClipIndex < clips.length - 1 : false;
-
     const handleBack = useCallback(() => {
         router.push(`/${slug}`);
     }, [router, slug]);
-
-    const handleClipSelect = useCallback(
-        (clipId: string) => {
-            openModal(clipId);
-        },
-        [openModal]
-    );
 
     const handleEditClip = useCallback(
         (clipId: string) => {
@@ -402,17 +431,32 @@ export default function VideoClipsPage({ params }: VideoClipsPageProps) {
         [toggleFavorite]
     );
 
-    const handlePrevious = useCallback(() => {
-        if (clips && currentClipIndex > 0) {
-            openModal(clips[currentClipIndex - 1].id);
+    const handleDownload = useCallback((clip: ClipResponse) => {
+        if (clip.storageUrl) {
+            const link = document.createElement("a");
+            link.href = clip.storageUrl;
+            link.download = `${clip.title || "clip"}.mp4`;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
         }
-    }, [clips, currentClipIndex, openModal]);
+    }, []);
 
-    const handleNext = useCallback(() => {
-        if (clips && currentClipIndex < clips.length - 1) {
-            openModal(clips[currentClipIndex + 1].id);
+    const handleShare = useCallback((clip: ClipResponse) => {
+        if (navigator.share && clip.storageUrl) {
+            navigator.share({
+                title: clip.title,
+                url: clip.storageUrl,
+            });
+        } else {
+            // Fallback: copy to clipboard
+            navigator.clipboard.writeText(clip.storageUrl || "");
         }
-    }, [clips, currentClipIndex, openModal]);
+    }, []);
+
+    const handleRegenerate = useCallback(() => {
+        refetchClips();
+    }, [refetchClips]);
 
     if (videoLoading || clipsLoading) {
         return <VideoClipsLoading />;
@@ -431,62 +475,92 @@ export default function VideoClipsPage({ params }: VideoClipsPageProps) {
         return <VideoNotFound onBack={handleBack} />;
     }
 
+    // Derive metadata for tags
+    const sourceType = video.sourceType === "youtube" ? "YouTube" : "Local file";
+    const aspectRatio = "9:16"; // Default, could come from video config
+    const language = "English"; // Could come from video metadata
+
     return (
-        <div className="flex h-full flex-col">
+        <div className="flex h-full flex-col bg-background">
             {/* Header */}
-            <div className="flex items-center gap-4 border-b px-4 py-3">
-                <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={handleBack}
-                    aria-label="Go back"
-                >
-                    <IconArrowLeft className="size-5" />
-                </Button>
-                {typeof video.metadata?.thumbnail === 'string' && (
-                    <img
-                        src={video.metadata.thumbnail}
-                        alt={video.title || "Video thumbnail"}
-                        className="h-12 w-20 rounded object-cover"
-                    />
-                )}
-                <h1 className="min-w-0 flex-1 truncate text-lg font-semibold">
-                    {video.title || "Untitled Video"}
-                </h1>
+            <div className="border-b px-6 py-4">
+                <div className="flex items-start justify-between">
+                    <div className="flex items-start gap-3">
+                        <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={handleBack}
+                            className="mt-0.5"
+                            aria-label="Go back"
+                        >
+                            <IconArrowLeft className="size-5" />
+                        </Button>
+                        <div>
+                            <h1 className="text-xl font-semibold">
+                                {video.title || "Untitled Video"}
+                            </h1>
+                            <p className="text-sm text-muted-foreground mt-0.5">
+                                {formatDate(video.createdAt)}
+                            </p>
+                        </div>
+                    </div>
+
+                    {/* <Button variant="outline" className="gap-2" onClick={handleRegenerate}>
+                        <IconRefresh className="size-4" />
+                        Regenerate
+                    </Button> */}
+                </div>
+
+                {/* Tags */}
+                <div className="flex flex-wrap items-center gap-2 mt-3 ml-11">
+                    <Badge variant="outline" className="gap-1.5">
+                        <IconFile className="size-3" />
+                        {sourceType}
+                    </Badge>
+                    <Badge variant="outline" className="gap-1.5">
+                        <IconLanguage className="size-3" />
+                        {language}
+                    </Badge>
+                    <Badge variant="outline" className="gap-1.5">
+                        <IconAspectRatio className="size-3" />
+                        {aspectRatio}
+                    </Badge>
+                    <Badge variant="outline" className="gap-1.5">
+                        <IconFlame className="size-3" />
+                        Viral Clips
+                    </Badge>
+                    {video.createdAt && (
+                        <Badge variant="outline" className="gap-1.5 text-primary border-primary/30">
+                            <IconCalendar className="size-3" />
+                            Expires: {formatDate(new Date(new Date(video.createdAt).getTime() + 30 * 24 * 60 * 60 * 1000).toISOString())}
+                        </Badge>
+                    )}
+                </div>
             </div>
 
-            {/* Clips Grid */}
-            <div className="flex-1 overflow-auto p-4">
+            {/* Clips List */}
+            <div className="flex-1 overflow-auto p-6 flex flex-col justify-center items-center">
                 {!clips || clips.length === 0 ? (
                     <NoClips
                         videoTitle={video.title || "this video"}
                         videoStatus={video.status}
                     />
                 ) : (
-                    <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-                        {clips.map((clip) => (
+                    <div className="space-y-6 max-w-4xl">
+                        {clips.map((clip, index) => (
                             <ClipCard
                                 key={clip.id}
                                 clip={clip}
-                                onClick={() => handleClipSelect(clip.id)}
-                                onFavorite={(e) => handleFavorite(e, clip.id)}
+                                index={index}
+                                onEdit={handleEditClip}
+                                onFavorite={handleFavorite}
+                                onDownload={handleDownload}
+                                onShare={handleShare}
                             />
                         ))}
                     </div>
                 )}
             </div>
-
-            {/* Clip Detail Modal */}
-            <ClipDetailModal
-                clipId={selectedClipId}
-                isOpen={isOpen}
-                onClose={closeModal}
-                onEdit={handleEditClip}
-                onPrevious={handlePrevious}
-                onNext={handleNext}
-                hasPrevious={hasPrevious}
-                hasNext={hasNext}
-            />
         </div>
     );
 }
