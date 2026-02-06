@@ -14,7 +14,7 @@ function CheckoutCancelContent() {
     if (workspaceSlug) {
       router.push(`/${workspaceSlug}/settings/billing`);
     } else {
-      router.push("/pricing");
+      router.push("/workspaces");
     }
   };
 

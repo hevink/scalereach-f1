@@ -295,7 +295,7 @@ export default function TermsOfServicePage() {
             <Link href="/privacy" className="hover:text-foreground transition-colors">
               Privacy Policy
             </Link>
-            <Link href="/pricing" className="hover:text-foreground transition-colors">
+            <Link href="/workspaces" className="hover:text-foreground transition-colors">
               Pricing
             </Link>
             <Link href="/" className="hover:text-foreground transition-colors">

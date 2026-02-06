@@ -1,337 +1,286 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
-import { IconCheck, IconInfoCircle, IconLoader2, IconArrowLeft } from "@tabler/icons-react";
+import { motion, AnimatePresence } from "framer-motion";
+import { Check, Loader2, ArrowLeft } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import {
-    Tooltip,
-    TooltipContent,
-    TooltipProvider,
-    TooltipTrigger,
-} from "@/components/ui/tooltip";
 import { creditsApi } from "@/lib/api/credits";
 import { useWorkspaceBySlug } from "@/hooks/useWorkspace";
 import { useCreditBalance } from "@/hooks/useCredits";
 import { toast } from "sonner";
-import Link from "next/link";
+import { analytics } from "@/lib/analytics";
 
 // ============================================================================
 // Types
 // ============================================================================
 
-interface PlanFeature {
-    text: string;
-    tooltip?: string;
-    highlighted?: boolean;
-}
+type BillingPeriod = "monthly" | "annually";
 
-interface PricingPlan {
-    id: string;
+interface Plan {
     name: string;
+    description: string;
+    monthly: number;
+    annually: number;
+    features: string[];
+    featured: boolean;
     badge?: string;
-    monthlyPrice: number;
-    yearlyPrice: number;
-    monthlyCredits: number;
-    features: PlanFeature[];
-    highlighted?: boolean;
     dodoProductIdMonthly: string;
     dodoProductIdYearly: string;
 }
 
 // ============================================================================
-// Pricing Data - Update these with your Dodo Payments product IDs
+// Pricing Data - Based on aivideocut.com pricing
 // ============================================================================
 
-const plans: PricingPlan[] = [
-    {
-        id: "starter",
-        name: "ScaleReach",
-        monthlyPrice: 29,
-        yearlyPrice: 17,
-        monthlyCredits: 100,
+const plans: Record<string, Plan> = {
+    free: {
+        name: "Free",
+        description: "Start creating viral clips for free",
+        monthly: 0,
+        annually: 0,
         features: [
-            { text: "Upload 10 videos monthly", tooltip: "Maximum 10 videos per month" },
-            { text: "Up to 45 minutes long videos", tooltip: "Each video can be up to 45 minutes" },
-            { text: "Generate 100 clips monthly", highlighted: true, tooltip: "AI generates up to 100 viral clips" },
-            { text: "HD download", tooltip: "Download clips in 1080p HD quality" },
+            "50 Minutes One-Time",
+            "Includes Watermark",
+            "Up to 30 Minutes File Length",
+            "Up to 2GB File Size Upload",
+            "Storage Limit: 14 Days",
+            "Limited Editing",
         ],
+        featured: false,
+        dodoProductIdMonthly: "",
+        dodoProductIdYearly: "",
+    },
+    starter: {
+        name: "Starter",
+        description: "Unlock access to all powerful features",
+        monthly: 12,
+        annually: 10,
+        features: [
+            "1800 Minutes/Year (or 200/Month)",
+            "Without Watermark",
+            "Up to 2h File Length",
+            "Up to 4GB File Size Upload",
+            "Storage Limit: 6 Months",
+            "Unlimited Editing",
+        ],
+        featured: false,
         dodoProductIdMonthly: "pdt_0NXOu8euwYE6EmEoLs6eQ",
-        dodoProductIdYearly: "pdt_starter_yearly", // TODO: Create in Dodo dashboard
+        dodoProductIdYearly: "pdt_starter_yearly",
     },
-    {
-        id: "pro",
-        name: "ScaleReach",
-        badge: "Pro",
-        monthlyPrice: 79,
-        yearlyPrice: 47,
-        monthlyCredits: 300,
+    pro: {
+        name: "Pro",
+        badge: "Super offer",
+        description: "Step up your game with bigger volume",
+        monthly: 18,
+        annually: 12.5,
         features: [
-            { text: "Upload 30 videos monthly", tooltip: "Maximum 30 videos per month" },
-            { text: "Up to 2 hours long videos", tooltip: "Each video can be up to 2 hours" },
-            { text: "Generate 300 clips monthly", highlighted: true, tooltip: "AI generates up to 300 viral clips" },
-            { text: "4K download", tooltip: "Download clips in 4K ultra HD quality" },
-            { text: "Translate to 29 languages (AI Dubbing)", tooltip: "AI-powered dubbing in 29 languages" },
+            "3600 Minutes/Year (or 300/Month)",
+            "Without Watermark",
+            "Up to 3h File Length",
+            "Up to 4GB File Size Upload",
+            "Storage Limit: 6 Months",
+            "Unlimited Editing",
         ],
-        highlighted: true,
-        dodoProductIdMonthly: "pdt_pro_monthly", // TODO: Create in Dodo dashboard
-        dodoProductIdYearly: "pdt_pro_yearly",   // TODO: Create in Dodo dashboard
+        featured: true,
+        dodoProductIdMonthly: "pdt_pro_monthly",
+        dodoProductIdYearly: "pdt_pro_yearly",
     },
-    {
-        id: "pro-plus",
-        name: "ScaleReach",
-        badge: "Pro+",
-        monthlyPrice: 189,
-        yearlyPrice: 113,
-        monthlyCredits: 1000,
-        features: [
-            { text: "Upload 100 videos monthly", tooltip: "Maximum 100 videos per month" },
-            { text: "Up to 3 hours long videos", tooltip: "Each video can be up to 3 hours" },
-            { text: "Generate 1000 clips monthly", highlighted: true, tooltip: "AI generates up to 1000 viral clips" },
-            { text: "4K download", tooltip: "Download clips in 4K ultra HD quality" },
-            { text: "Translate to 29 languages (AI Dubbing)", tooltip: "AI-powered dubbing in 29 languages" },
-        ],
-        dodoProductIdMonthly: "pdt_pro_plus_monthly", // TODO: Create in Dodo dashboard
-        dodoProductIdYearly: "pdt_pro_plus_yearly",   // TODO: Create in Dodo dashboard
-    },
+};
+
+const enterpriseFeatures = [
+    "Unlimited video uploads",
+    "Unlimited clip generation",
+    "Custom video length limits",
+    "White-label solution",
+    "Custom AI training",
+    "Dedicated account manager",
+    "SLA guarantee",
+    "Custom integrations",
+    "Team collaboration",
 ];
 
 // ============================================================================
 // Components
 // ============================================================================
 
-function BillingToggle({
-    isYearly,
-    onToggle,
-}: {
-    isYearly: boolean;
-    onToggle: (yearly: boolean) => void;
-}) {
-    return (
-        <div className="inline-flex items-center rounded-full border bg-muted/50 p-1">
-            <button
-                onClick={() => onToggle(false)}
-                className={cn(
-                    "rounded-full px-5 py-2 text-sm font-medium transition-all",
-                    !isYearly
-                        ? "bg-background text-foreground shadow-sm"
-                        : "text-muted-foreground hover:text-foreground"
-                )}
-            >
-                Monthly
-            </button>
-            <button
-                onClick={() => onToggle(true)}
-                className={cn(
-                    "rounded-full px-5 py-2 text-sm font-medium transition-all flex items-center gap-2",
-                    isYearly
-                        ? "bg-background text-foreground shadow-sm"
-                        : "text-muted-foreground hover:text-foreground"
-                )}
-            >
-                Yearly
-                <Badge className="bg-emerald-500/10 text-emerald-600 hover:bg-emerald-500/10 border-0 text-xs">
-                    40% off
-                </Badge>
-            </button>
-        </div>
-    );
-}
+function CornerDecoration({ position }: { position: "top-left" | "top-right" | "bottom-left" | "bottom-right" }) {
+    const positionClasses = {
+        "top-left": "-translate-x-[calc(50%+0.5px)] -translate-y-[calc(50%+0.5px)]",
+        "top-right": "right-0 translate-x-[calc(50%+0.5px)] -translate-y-[calc(50%+0.5px)]",
+        "bottom-left": "bottom-0 -translate-x-[calc(50%+0.5px)] translate-y-[calc(50%+0.5px)]",
+        "bottom-right": "bottom-0 right-0 translate-x-[calc(50%+0.5px)] translate-y-[calc(50%+0.5px)]",
+    };
 
-function FeatureItem({ feature }: { feature: PlanFeature }) {
     return (
-        <li className="flex items-start gap-3">
-            <div className={cn(
-                "flex size-5 shrink-0 items-center justify-center rounded-full mt-0.5",
-                feature.highlighted
-                    ? "bg-emerald-500/10"
-                    : "bg-muted"
-            )}>
-                <IconCheck className={cn(
-                    "size-3",
-                    feature.highlighted ? "text-emerald-500" : "text-muted-foreground"
-                )} />
-            </div>
-            <span className={cn(
-                "text-sm flex-1",
-                feature.highlighted ? "text-foreground font-medium" : "text-muted-foreground"
-            )}>
-                {feature.text}
-            </span>
-            {feature.tooltip && (
-                <TooltipProvider>
-                    <Tooltip>
-                        <TooltipTrigger asChild>
-                            <IconInfoCircle className="size-4 text-muted-foreground/50 shrink-0 cursor-help" />
-                        </TooltipTrigger>
-                        <TooltipContent>
-                            <p className="text-xs">{feature.tooltip}</p>
-                        </TooltipContent>
-                    </Tooltip>
-                </TooltipProvider>
-            )}
-        </li>
+        <div
+            aria-hidden="true"
+            className={`mask-radial-from-15% before:bg-foreground/25 after:bg-foreground/25 absolute size-3 before:absolute before:inset-0 before:m-auto before:h-px after:absolute after:inset-0 after:m-auto after:w-px ${positionClasses[position]}`}
+        />
     );
 }
 
 function PricingCard({
+    planKey,
     plan,
-    isYearly,
-    isCurrentPlan,
+    period,
+    index,
     onSelect,
     isLoading,
     loadingPlanId,
+    isCurrentPlan,
 }: {
-    plan: PricingPlan;
-    isYearly: boolean;
-    isCurrentPlan: boolean;
+    planKey: string;
+    plan: Plan;
+    period: BillingPeriod;
+    index: number;
     onSelect: (planId: string, productId: string) => void;
     isLoading: boolean;
     loadingPlanId: string | null;
+    isCurrentPlan: boolean;
 }) {
-    const price = isYearly ? plan.yearlyPrice : plan.monthlyPrice;
-    const productId = isYearly ? plan.dodoProductIdYearly : plan.dodoProductIdMonthly;
-    const isThisLoading = isLoading && loadingPlanId === plan.id;
+    const price = period === "monthly" ? plan.monthly : plan.annually;
+    const productId = period === "annually" ? plan.dodoProductIdYearly : plan.dodoProductIdMonthly;
+    const isThisLoading = isLoading && loadingPlanId === planKey;
 
     return (
-        <div
-            className={cn(
-                "relative flex flex-col rounded-2xl border p-6 transition-all",
-                plan.highlighted
-                    ? "bg-zinc-900 text-white border-zinc-800 shadow-2xl scale-105 z-10"
-                    : "bg-card border-border hover:border-primary/30"
-            )}
+        <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.5, delay: index * 0.1 }}
+            className={`@max-4xl:p-9 row-span-4 grid grid-rows-subgrid gap-8 p-8 ${plan.featured
+                ? "rounded-[--radius] ring-border bg-card @4xl:my-2 @max-4xl:mx-1 shadow-black/6.5 shadow-xl ring-1 backdrop-blur"
+                : ""
+                }`}
         >
-            {isCurrentPlan && (
-                <div className="absolute -top-3 left-1/2 -translate-x-1/2">
-                    <Badge className="bg-emerald-500 text-white hover:bg-emerald-500">
-                        Current Plan
-                    </Badge>
-                </div>
-            )}
-
-            {/* Plan Name */}
-            <div className="flex items-center gap-2 mb-6">
-                <div className={cn(
-                    "flex size-8 items-center justify-center rounded-lg",
-                    plan.highlighted ? "bg-white/10" : "bg-muted"
-                )}>
-                    <svg
-                        className={cn("size-5", plan.highlighted ? "text-white" : "text-foreground")}
-                        viewBox="0 0 24 24"
-                        fill="currentColor"
-                    >
-                        <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" />
-                    </svg>
-                </div>
-                <span className={cn(
-                    "text-lg font-semibold",
-                    plan.highlighted ? "text-white" : "text-foreground"
-                )}>
+            {/* Plan name and description */}
+            <div className="self-end">
+                <div className="tracking-tight text-lg font-medium flex items-center gap-2">
                     {plan.name}
-                </span>
-                {plan.badge && (
-                    <span className={cn(
-                        "text-sm",
-                        plan.highlighted ? "text-zinc-400" : "text-muted-foreground"
-                    )}>
-                        {plan.badge}
-                    </span>
-                )}
+                    {plan.badge && (
+                        <span className="text-xs bg-primary/10 text-primary px-2 py-0.5 rounded-full">
+                            {plan.badge}
+                        </span>
+                    )}
+                </div>
+                <div className="text-muted-foreground mt-1 text-balance text-sm">
+                    {plan.description}
+                </div>
             </div>
 
             {/* Price */}
-            <div className="mb-2">
-                <span className={cn(
-                    "text-5xl font-bold tracking-tight",
-                    plan.highlighted ? "text-white" : "text-foreground"
-                )}>
-                    ${price}
-                </span>
-                <span className={cn(
-                    "text-lg",
-                    plan.highlighted ? "text-zinc-400" : "text-muted-foreground"
-                )}>
-                    /month
-                </span>
+            <div>
+                <AnimatePresence mode="wait">
+                    <motion.div
+                        key={`${plan.name}-${period}`}
+                        initial={{ opacity: 0, y: -10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: 10 }}
+                        transition={{ duration: 0.2 }}
+                        className="text-3xl font-semibold"
+                    >
+                        ${price}
+                        {price > 0 && <span className="text-lg font-normal text-muted-foreground">/month</span>}
+                    </motion.div>
+                </AnimatePresence>
+                <div className="text-muted-foreground text-sm">
+                    {price === 0 ? "Free forever" : `billed ${period}`}
+                </div>
             </div>
 
-            {/* Billing info */}
-            <p className={cn(
-                "text-sm mb-6",
-                plan.highlighted ? "text-zinc-400" : "text-muted-foreground"
-            )}>
-                Billed {isYearly ? "yearly" : "monthly"} • {plan.monthlyCredits} credits/month
-            </p>
-
             {/* CTA Button */}
-            <Button
-                onClick={() => onSelect(plan.id, productId)}
-                disabled={isCurrentPlan || isLoading}
-                variant={plan.highlighted ? "secondary" : "outline"}
-                className={cn(
-                    "w-full mb-8",
-                    plan.highlighted
-                        ? "bg-white text-zinc-900 hover:bg-zinc-100"
-                        : ""
-                )}
+            <motion.button
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+                onClick={() => onSelect(planKey, productId)}
+                disabled={isLoading || isCurrentPlan || plan.monthly === 0}
+                className={`cursor-pointer inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium transition-colors h-9 px-4 py-2 w-full disabled:opacity-50 disabled:cursor-not-allowed ${plan.featured
+                    ? "shadow-md border-[0.5px] border-white/10 shadow-black/15 bg-primary text-primary-foreground hover:bg-primary/90"
+                    : "shadow-sm shadow-black/15 border border-transparent bg-card ring-1 ring-foreground/10 hover:bg-muted/50"
+                    }`}
             >
                 {isThisLoading ? (
                     <>
-                        <IconLoader2 className="size-4 mr-2 animate-spin" />
+                        <Loader2 className="size-4 animate-spin" />
                         Processing...
                     </>
                 ) : isCurrentPlan ? (
                     "Current Plan"
+                ) : plan.monthly === 0 ? (
+                    "Start for free"
                 ) : (
-                    "Subscribe"
+                    "Sign in & subscribe"
                 )}
-            </Button>
+            </motion.button>
 
-            {/* Features */}
-            <ul className="space-y-4 flex-1">
-                {plan.features.map((feature, index) => (
-                    <FeatureItem key={index} feature={feature} />
+            {/* Features list */}
+            <ul role="list" className="space-y-3 text-sm">
+                {plan.features.map((feature, i) => (
+                    <motion.li
+                        key={feature}
+                        initial={{ opacity: 0, x: -10 }}
+                        whileInView={{ opacity: 1, x: 0 }}
+                        viewport={{ once: true }}
+                        transition={{ duration: 0.3, delay: i * 0.05 }}
+                        className="group flex items-center gap-2 first:font-medium"
+                    >
+                        <Check className="text-muted-foreground size-3 group-first:hidden" strokeWidth={3.5} />
+                        {feature}
+                    </motion.li>
                 ))}
             </ul>
-        </div>
+        </motion.div>
     );
 }
 
-function CurrentPlanBanner({
-    plan,
-    credits,
-    workspaceSlug
-}: {
-    plan: PricingPlan | undefined;
-    credits: number;
-    workspaceSlug: string;
-}) {
-    if (!plan) return null;
-
+function EnterpriseSection() {
     return (
-        <div className="bg-muted/50 border rounded-xl p-6 mb-8">
-            <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-                <div>
-                    <p className="text-sm text-muted-foreground mb-1">Current Plan</p>
-                    <h2 className="text-2xl font-bold">
-                        {plan.name} {plan.badge && <span className="text-muted-foreground">{plan.badge}</span>}
-                    </h2>
-                    <p className="text-muted-foreground mt-1">
-                        {credits} credits remaining • {plan.monthlyCredits} credits/month
-                    </p>
+        <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.5, delay: 0.3 }}
+            className="relative mt-6"
+        >
+            <CornerDecoration position="top-right" />
+            <div className="@4xl:grid-cols-3 @max-4xl:divide-y @4xl:divide-x grid border-t">
+                <div className="space-y-6 p-8">
+                    <div className="self-end">
+                        <div className="tracking-tight text-lg font-medium">Enterprise</div>
+                        <div className="text-muted-foreground mt-1 text-balance text-sm">
+                            For media companies and agencies with custom requirements and high-volume needs.
+                        </div>
+                    </div>
+                    <motion.a
+                        whileHover={{ scale: 1.02 }}
+                        whileTap={{ scale: 0.98 }}
+                        className="cursor-pointer inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium transition-colors shadow-sm shadow-black/15 border border-transparent bg-card ring-1 ring-foreground/10 hover:bg-muted/50 h-9 px-4 py-2 @max-4xl:w-full"
+                        href="mailto:support@scalereach.com"
+                    >
+                        Contact Sales
+                    </motion.a>
                 </div>
-                <div className="flex gap-3">
-                    <Link href={`/${workspaceSlug}/settings/billing`}>
-                        <Button variant="outline">
-                            Manage Billing
-                        </Button>
-                    </Link>
+                <div className="col-span-2 p-8">
+                    <ul role="list" className="@4xl:grid-cols-2 grid gap-x-14 gap-y-3 text-sm">
+                        {enterpriseFeatures.map((feature, i) => (
+                            <motion.li
+                                key={feature}
+                                initial={{ opacity: 0, x: -10 }}
+                                whileInView={{ opacity: 1, x: 0 }}
+                                viewport={{ once: true }}
+                                transition={{ duration: 0.3, delay: i * 0.05 }}
+                                className="flex items-center gap-2"
+                            >
+                                <Check className="text-muted-foreground size-3" strokeWidth={3.5} />
+                                {feature}
+                            </motion.li>
+                        ))}
+                    </ul>
                 </div>
             </div>
-        </div>
+        </motion.div>
     );
 }
 
@@ -347,19 +296,33 @@ export default function WorkspacePricingPage() {
     const { data: workspace, isLoading: workspaceLoading } = useWorkspaceBySlug(workspaceSlug);
     const { data: creditBalance } = useCreditBalance(workspace?.id ?? "");
 
-    const [isYearly, setIsYearly] = useState(true);
+    const [period, setPeriod] = useState<BillingPeriod>("annually");
     const [isLoading, setIsLoading] = useState(false);
     const [loadingPlanId, setLoadingPlanId] = useState<string | null>(null);
 
     const currentPlanId = workspace?.plan ?? "free";
-    const currentPlan = plans.find(p => p.id === currentPlanId);
-    const currentCredits = creditBalance?.balance ?? 0;
+
+    // Track pricing page view
+    useEffect(() => {
+        analytics.pricingViewed();
+    }, []);
 
     const handleSelectPlan = async (planId: string, productId: string) => {
         if (!workspace?.id) {
             toast.error("Workspace not found");
             return;
         }
+
+        const plan = plans[planId];
+        const price = period === "annually" ? plan?.annually : plan?.monthly;
+
+        // Track plan selection
+        analytics.planSelected({
+            planId,
+            planName: plan?.name || planId,
+            price: price || 0,
+            billing: period === "annually" ? "yearly" : "monthly",
+        });
 
         setIsLoading(true);
         setLoadingPlanId(planId);
@@ -387,61 +350,104 @@ export default function WorkspacePricingPage() {
     if (workspaceLoading) {
         return (
             <div className="min-h-screen flex items-center justify-center">
-                <IconLoader2 className="size-8 animate-spin text-muted-foreground" />
+                <Loader2 className="size-8 animate-spin text-muted-foreground" />
             </div>
         );
     }
 
     return (
         <div className="min-h-screen bg-background">
-            <div className="container mx-auto px-4 py-8 md:py-16">
+            <div className="mx-auto max-w-5xl px-6 py-16 md:py-24">
                 {/* Back Button */}
                 <Button
                     variant="ghost"
                     className="mb-6"
                     onClick={() => router.back()}
                 >
-                    <IconArrowLeft className="size-4 mr-2" />
+                    <ArrowLeft className="size-4 mr-2" />
                     Back
                 </Button>
 
                 {/* Header */}
-                <div className="text-center mb-8">
-                    <h1 className="text-4xl md:text-5xl font-bold tracking-tight mb-4">
-                        Choose Your Plan
+                <motion.div
+                    initial={{ opacity: 0, y: 20 }}
+                    whileInView={{ opacity: 1, y: 0 }}
+                    viewport={{ once: true }}
+                    transition={{ duration: 0.5 }}
+                    className="mx-auto max-w-2xl text-center"
+                >
+                    <h1 className="text-balance text-3xl font-bold md:text-4xl lg:text-5xl lg:tracking-tight">
+                        Simple pricing for every creator
                     </h1>
-                    <p className="text-lg text-muted-foreground">
-                        Upgrade your workspace to unlock more features
+                    <p className="text-muted-foreground mx-auto mt-4 max-w-xl text-balance text-lg">
+                        Turn your long-form content into viral clips. No hidden fees, cancel anytime.
                     </p>
-                </div>
 
-                {/* Current Plan Banner */}
-                {currentPlan && (
-                    <CurrentPlanBanner
-                        plan={currentPlan}
-                        credits={currentCredits}
-                        workspaceSlug={workspaceSlug}
-                    />
-                )}
+                    {/* Billing Toggle */}
+                    <div className="my-12">
+                        <div className="bg-foreground/5 relative mx-auto grid w-fit grid-cols-2 rounded-full p-1">
+                            <motion.div
+                                className="bg-card ring-foreground/5 pointer-events-none absolute inset-1 w-[calc(50%-4px)] rounded-full border border-transparent shadow ring-1"
+                                animate={{ x: period === "monthly" ? 0 : "100%" }}
+                                transition={{ type: "spring", stiffness: 300, damping: 30 }}
+                            />
+                            <button
+                                onClick={() => setPeriod("monthly")}
+                                className={`relative z-10 block h-8 w-24 rounded-full text-sm transition-colors ${period === "monthly" ? "text-foreground font-medium" : "text-foreground/75 hover:opacity-75"
+                                    }`}
+                            >
+                                Monthly
+                            </button>
+                            <button
+                                onClick={() => setPeriod("annually")}
+                                className={`relative z-10 block h-8 w-24 rounded-full text-sm transition-colors ${period === "annually" ? "text-foreground font-medium" : "text-foreground/75 hover:opacity-75"
+                                    }`}
+                            >
+                                Annually
+                            </button>
+                        </div>
+                        <motion.div
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            className="mt-3 text-center text-xs"
+                        >
+                            <span className="text-primary font-medium">Save up to 30%</span> with annual billing
+                        </motion.div>
+                    </div>
+                </motion.div>
 
-                {/* Billing Toggle */}
-                <div className="flex justify-center mb-12">
-                    <BillingToggle isYearly={isYearly} onToggle={setIsYearly} />
-                </div>
+                {/* Pricing Cards Container */}
+                <div className="@container">
+                    <div className="@max-4xl:max-w-sm relative mx-auto border">
+                        {/* Corner decorations */}
+                        <CornerDecoration position="top-left" />
+                        <CornerDecoration position="top-right" />
+                        <CornerDecoration position="bottom-left" />
+                        <CornerDecoration position="bottom-right" />
 
-                {/* Pricing Cards */}
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-5xl mx-auto items-start">
-                    {plans.map((plan) => (
-                        <PricingCard
-                            key={plan.id}
-                            plan={plan}
-                            isYearly={isYearly}
-                            isCurrentPlan={plan.id === currentPlanId}
-                            onSelect={handleSelectPlan}
-                            isLoading={isLoading}
-                            loadingPlanId={loadingPlanId}
-                        />
-                    ))}
+                        {/* Main pricing cards */}
+                        <div className="relative mx-auto border-b">
+                            <CornerDecoration position="bottom-left" />
+                            <div className="@4xl:grid-cols-3 grid">
+                                {Object.entries(plans).map(([key, plan], index) => (
+                                    <PricingCard
+                                        key={key}
+                                        planKey={key}
+                                        plan={plan}
+                                        period={period}
+                                        index={index}
+                                        onSelect={handleSelectPlan}
+                                        isLoading={isLoading}
+                                        loadingPlanId={loadingPlanId}
+                                        isCurrentPlan={key === currentPlanId}
+                                    />
+                                ))}
+                            </div>
+                        </div>
+
+                        {/* Enterprise section */}
+                        <EnterpriseSection />
+                    </div>
                 </div>
 
                 {/* Footer */}

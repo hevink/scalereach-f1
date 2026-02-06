@@ -51,50 +51,53 @@ interface PricingPlan {
 }
 
 // ============================================================================
-// Pricing Data
+// Pricing Data - Based on aivideocut.com pricing
 // ============================================================================
 
 const plans: PricingPlan[] = [
     {
-        id: "starter",
-        name: "ScaleReach",
-        monthlyPrice: 29,
-        yearlyPrice: 17,
+        id: "free",
+        name: "Free",
+        monthlyPrice: 0,
+        yearlyPrice: 0,
         features: [
-            { text: "Upload 10 videos monthly" },
-            { text: "Up to 45 minutes long videos" },
-            { text: "Generate 100 clips monthly", highlighted: true },
-            { text: "HD download" },
+            { text: "50 Minutes One-Time" },
+            { text: "Includes Watermark" },
+            { text: "Up to 30 Minutes File Length" },
+            { text: "Up to 2GB File Size Upload" },
+            { text: "Storage Limit: 14 Days" },
+            { text: "Limited Editing" },
+        ],
+    },
+    {
+        id: "starter",
+        name: "Starter",
+        monthlyPrice: 12,
+        yearlyPrice: 10,
+        features: [
+            { text: "1800 Minutes/Year (or 200/Month)", highlighted: true },
+            { text: "Without Watermark" },
+            { text: "Up to 2h File Length" },
+            { text: "Up to 4GB File Size Upload" },
+            { text: "Storage Limit: 6 Months" },
+            { text: "Unlimited Editing" },
         ],
     },
     {
         id: "pro",
-        name: "ScaleReach",
-        badge: "Pro",
-        monthlyPrice: 79,
-        yearlyPrice: 47,
+        name: "Pro",
+        badge: "Super offer",
+        monthlyPrice: 18,
+        yearlyPrice: 12.5,
         features: [
-            { text: "Upload 30 videos monthly" },
-            { text: "Up to 2 hours long videos" },
-            { text: "Generate 300 clips monthly", highlighted: true },
-            { text: "4K download" },
-            { text: "Translate to 29 languages (AI Dubbing)" },
+            { text: "3600 Minutes/Year (or 300/Month)", highlighted: true },
+            { text: "Without Watermark" },
+            { text: "Up to 3h File Length" },
+            { text: "Up to 4GB File Size Upload" },
+            { text: "Storage Limit: 6 Months" },
+            { text: "Unlimited Editing" },
         ],
         highlighted: true,
-    },
-    {
-        id: "pro-plus",
-        name: "ScaleReach",
-        badge: "Pro+",
-        monthlyPrice: 189,
-        yearlyPrice: 113,
-        features: [
-            { text: "Upload 100 videos monthly" },
-            { text: "Up to 3 hours long videos" },
-            { text: "Generate 1000 clips monthly", highlighted: true },
-            { text: "4K download" },
-            { text: "Translate to 29 languages (AI Dubbing)" },
-        ],
     },
 ];
 
@@ -133,7 +136,7 @@ function BillingToggle({
             >
                 Yearly
                 <Badge className="bg-emerald-500/10 text-emerald-500 hover:bg-emerald-500/10 border-0 text-xs">
-                    40% off
+                    Save up to 30%
                 </Badge>
             </button>
         </div>
@@ -388,7 +391,7 @@ export default function BillingPage() {
     const { data: workspace } = useWorkspaceBySlug(workspaceSlug);
     const [isYearly, setIsYearly] = useState(true);
 
-    const currentPlanId = workspace?.plan ?? "starter";
+    const currentPlanId = workspace?.plan ?? "free";
 
     const handleSelectPlan = (planId: string) => {
         // TODO: Integrate with Polar checkout
