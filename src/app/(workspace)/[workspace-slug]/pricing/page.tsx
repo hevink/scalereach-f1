@@ -8,7 +8,7 @@ import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { creditsApi } from "@/lib/api/credits";
 import { useWorkspaceBySlug } from "@/hooks/useWorkspace";
-import { useCreditBalance } from "@/hooks/useCredits";
+import { useMinutesBalance } from "@/hooks/useMinutes";
 import { toast } from "sonner";
 import { analytics } from "@/lib/analytics";
 
@@ -294,7 +294,7 @@ export default function WorkspacePricingPage() {
     const workspaceSlug = params["workspace-slug"] as string;
 
     const { data: workspace, isLoading: workspaceLoading } = useWorkspaceBySlug(workspaceSlug);
-    const { data: creditBalance } = useCreditBalance(workspace?.id ?? "");
+    const { data: minutesBalance } = useMinutesBalance(workspace?.id ?? "");
 
     const [period, setPeriod] = useState<BillingPeriod>("annually");
     const [isLoading, setIsLoading] = useState(false);

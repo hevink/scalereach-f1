@@ -35,7 +35,7 @@ import { useClip, useUpdateClipBoundaries } from "@/hooks/useClips";
 import { useVideo } from "@/hooks/useVideo";
 import { useCaptionStyle, useUpdateCaptionStyle, useUpdateCaptionText, useCaptionTemplates } from "@/hooks/useCaptions";
 import { useInitiateExport } from "@/hooks/useExport";
-import { useCreditBalance } from "@/hooks/useCredits";
+import { useMinutesBalance } from "@/hooks/useMinutes";
 import { useWorkspaceBySlug } from "@/hooks/useWorkspace";
 import { savePageScrollPosition } from "@/hooks/useScrollPosition";
 import { useCaptionStylePresets } from "@/hooks/useCaptionStylePresets";
@@ -451,8 +451,8 @@ export default function ClipEditorPage({ params }: ClipEditorPageProps) {
     // Fetch caption style for this clip
     const { data: captionData } = useCaptionStyle(clipId);
 
-    // Fetch user credits
-    const { data: creditBalance } = useCreditBalance(workspace?.id);
+    // Fetch user minutes balance
+    const { data: minutesBalance } = useMinutesBalance(workspace?.id);
 
     // Mutations
     const updateCaptionStyle = useUpdateCaptionStyle();

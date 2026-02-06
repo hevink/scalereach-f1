@@ -29,15 +29,15 @@ import {
     SelectTrigger,
     SelectValue,
 } from "@/components/ui/select";
-import { useCreditTransactions } from "@/hooks/useCredits";
+import { useMinuteTransactions } from "@/hooks/useMinutes";
 import { useWorkspaceBySlug } from "@/hooks/useWorkspace";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
     IconArrowDown,
     IconArrowUp,
     IconRefresh,
-    IconCoins,
-    IconShoppingCart,
+    IconClock,
+    IconUpload,
     IconSparkles,
     IconReceipt,
     IconAdjustments,
@@ -49,10 +49,11 @@ import {
     IconArrowsSort,
     IconSortAscending,
     IconSortDescending,
+    IconRotate,
 } from "@tabler/icons-react";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
-import type { CreditTransaction } from "@/lib/api/credits";
+import type { MinuteTransaction } from "@/lib/api/minutes";
 
 interface CreditUsageTableProps {
     workspaceSlug: string;
@@ -60,34 +61,40 @@ interface CreditUsageTableProps {
 
 const TRANSACTION_TYPES = [
     { value: "all", label: "All Types" },
-    { value: "purchase", label: "Purchase" },
-    { value: "usage", label: "Usage" },
+    { value: "upload", label: "Upload" },
+    { value: "regenerate", label: "Regenerate" },
     { value: "refund", label: "Refund" },
-    { value: "bonus", label: "Bonus" },
+    { value: "allocation", label: "Allocation" },
+    { value: "reset", label: "Reset" },
     { value: "adjustment", label: "Adjustment" },
 ];
 
 const getTypeConfig = (type: string) => {
     switch (type) {
-        case "purchase":
-            return {
-                color: "bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border-emerald-500/20",
-                icon: IconShoppingCart,
-            };
-        case "usage":
+        case "upload":
             return {
                 color: "bg-rose-500/10 text-rose-700 dark:text-rose-400 border-rose-500/20",
-                icon: IconPlayerPlay,
+                icon: IconUpload,
+            };
+        case "regenerate":
+            return {
+                color: "bg-orange-500/10 text-orange-700 dark:text-orange-400 border-orange-500/20",
+                icon: IconRotate,
             };
         case "refund":
             return {
                 color: "bg-blue-500/10 text-blue-700 dark:text-blue-400 border-blue-500/20",
                 icon: IconReceipt,
             };
-        case "bonus":
+        case "allocation":
+            return {
+                color: "bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border-emerald-500/20",
+                icon: IconSparkles,
+            };
+        case "reset":
             return {
                 color: "bg-purple-500/10 text-purple-700 dark:text-purple-400 border-purple-500/20",
-                icon: IconSparkles,
+                icon: IconPlayerPlay,
             };
         case "adjustment":
             return {
@@ -97,7 +104,7 @@ const getTypeConfig = (type: string) => {
         default:
             return {
                 color: "bg-gray-500/10 text-gray-700 dark:text-gray-400 border-gray-500/20",
-                icon: IconCoins,
+                icon: IconClock,
             };
     }
 };
@@ -110,7 +117,7 @@ export function CreditUsageTable({ workspaceSlug }: CreditUsageTableProps) {
     const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
 
     const { data: workspace } = useWorkspaceBySlug(workspaceSlug);
-    const { data: transactions = [], isLoading, refetch } = useCreditTransactions(
+    const { data: transactions = [], isLoading, refetch } = useMinuteTransactions(
         workspace?.id,
         {
             limit: 100,
@@ -118,7 +125,7 @@ export function CreditUsageTable({ workspaceSlug }: CreditUsageTableProps) {
         }
     );
 
-    const columns = useMemo<ColumnDef<CreditTransaction>[]>(
+    const columns = useMemo<ColumnDef<MinuteTransaction>[]>(
         () => [
             {
                 accessorKey: "createdAt",
@@ -195,7 +202,7 @@ export function CreditUsageTable({ workspaceSlug }: CreditUsageTableProps) {
                 },
             },
             {
-                accessorKey: "amount",
+                accessorKey: "minutesAmount",
                 header: ({ column }) => {
                     return (
                         <Button
@@ -204,7 +211,7 @@ export function CreditUsageTable({ workspaceSlug }: CreditUsageTableProps) {
                             className="-ml-3 h-8 data-[state=open]:bg-accent"
                             onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
                         >
-                            Amount
+                            Minutes
                             {column.getIsSorted() === "asc" ? (
                                 <IconSortAscending className="ml-2 h-4 w-4" />
                             ) : column.getIsSorted() === "desc" ? (
@@ -216,7 +223,7 @@ export function CreditUsageTable({ workspaceSlug }: CreditUsageTableProps) {
                     );
                 },
                 cell: ({ row }) => {
-                    const amount = row.getValue("amount") as number;
+                    const amount = row.getValue("minutesAmount") as number;
                     const isPositive = amount > 0;
 
                     return (
@@ -239,14 +246,14 @@ export function CreditUsageTable({ workspaceSlug }: CreditUsageTableProps) {
                                     ? "text-emerald-700 dark:text-emerald-400"
                                     : "text-rose-700 dark:text-rose-400"
                             )}>
-                                {isPositive ? "+" : ""}{Math.abs(amount).toLocaleString()}
+                                {isPositive ? "+" : ""}{Math.abs(amount).toLocaleString()} min
                             </span>
                         </div>
                     );
                 },
             },
             {
-                accessorKey: "balanceAfter",
+                accessorKey: "minutesAfter",
                 header: ({ column }) => {
                     return (
                         <div className="text-right">
@@ -256,7 +263,7 @@ export function CreditUsageTable({ workspaceSlug }: CreditUsageTableProps) {
                                 className="-mr-3 h-8 data-[state=open]:bg-accent"
                                 onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
                             >
-                                Balance After
+                                Minutes After
                                 {column.getIsSorted() === "asc" ? (
                                     <IconSortAscending className="ml-2 h-4 w-4" />
                                 ) : column.getIsSorted() === "desc" ? (
@@ -269,14 +276,14 @@ export function CreditUsageTable({ workspaceSlug }: CreditUsageTableProps) {
                     );
                 },
                 cell: ({ row }) => {
-                    const balance = row.getValue("balanceAfter") as number;
+                    const balance = row.getValue("minutesAfter") as number;
                     return (
                         <div className="text-right">
                             <div className="text-sm font-semibold tabular-nums">
                                 {balance.toLocaleString()}
                             </div>
                             <div className="text-xs text-muted-foreground">
-                                credits
+                                min remaining
                             </div>
                         </div>
                     );
@@ -312,7 +319,7 @@ export function CreditUsageTable({ workspaceSlug }: CreditUsageTableProps) {
             <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
                     <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-primary/10">
-                        <IconCoins className="h-4 w-4 text-primary" />
+                        <IconClock className="h-4 w-4 text-primary" />
                     </div>
                     <div>
                         <h3 className="text-base font-semibold">Transaction History</h3>
@@ -386,13 +393,13 @@ export function CreditUsageTable({ workspaceSlug }: CreditUsageTableProps) {
                 <div className="rounded-lg border border-border/50 bg-card">
                     <div className="flex flex-col items-center justify-center py-16 text-center">
                         <div className="flex items-center justify-center w-16 h-16 rounded-full bg-muted/50 mb-4">
-                            <IconCoins className="h-8 w-8 text-muted-foreground/50" />
+                            <IconClock className="h-8 w-8 text-muted-foreground/50" />
                         </div>
                         <h3 className="font-medium text-sm mb-1">No transactions found</h3>
                         <p className="text-xs text-muted-foreground max-w-sm">
                             {typeFilter !== "all"
                                 ? `No ${typeFilter} transactions to display. Try changing the filter.`
-                                : "Your transaction history will appear here once you start using credits."
+                                : "Your transaction history will appear here once you start using minutes."
                             }
                         </p>
                     </div>

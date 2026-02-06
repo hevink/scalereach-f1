@@ -27,7 +27,7 @@ import {
     TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { useWorkspaceBySlug } from "@/hooks/useWorkspace";
-import { useCreditBalance, useCreditTransactions } from "@/hooks/useCredits";
+import { useMinutesBalance, useMinuteTransactions } from "@/hooks/useMinutes";
 import { cn } from "@/lib/utils";
 
 // ============================================================================
@@ -260,22 +260,31 @@ function PricingCard({
 }
 
 function UsageCard({ workspaceId }: { workspaceId: string }) {
-    const { data: balance, isLoading } = useCreditBalance(workspaceId);
+    const { data: balance, isLoading } = useMinutesBalance(workspaceId);
 
-    const currentBalance = balance?.balance ?? 0;
-    const lifetimeCredits = balance?.lifetimeCredits ?? 100;
-    const usedCredits = lifetimeCredits - currentBalance;
-    const usagePercent = lifetimeCredits > 0 ? (usedCredits / lifetimeCredits) * 100 : 0;
+    const minutesRemaining = balance?.minutesRemaining ?? 0;
+    const minutesTotal = balance?.minutesTotal ?? 0;
+    const minutesUsed = balance?.minutesUsed ?? 0;
+    const usagePercent = minutesTotal > 0 ? (minutesUsed / minutesTotal) * 100 : 0;
+
+    const resetDateFormatted = balance?.minutesResetDate
+        ? new Date(balance.minutesResetDate).toLocaleDateString("en-US", {
+            month: "short",
+            day: "numeric",
+            year: "numeric",
+        })
+        : null;
 
     return (
         <Card className="bg-white dark:bg-zinc-900 border-zinc-200 dark:border-zinc-800">
             <CardHeader>
                 <CardTitle className="flex items-center gap-2 text-zinc-900 dark:text-white">
                     <IconTrendingUp className="size-5" />
-                    Credit Balance
+                    Minutes Balance
                 </CardTitle>
                 <CardDescription className="text-zinc-500 dark:text-zinc-400">
-                    Your available credits for clip generation
+                    Your available minutes for video processing
+                    {resetDateFormatted && ` — Resets ${resetDateFormatted}`}
                 </CardDescription>
             </CardHeader>
             <CardContent>
@@ -287,14 +296,14 @@ function UsageCard({ workspaceId }: { workspaceId: string }) {
                 ) : (
                     <div className="space-y-3">
                         <div className="flex justify-between text-sm">
-                            <span className="text-zinc-500 dark:text-zinc-400">Credits Used</span>
+                            <span className="text-zinc-500 dark:text-zinc-400">Minutes Used</span>
                             <span className="text-zinc-900 dark:text-white font-medium">
-                                {usedCredits} / {lifetimeCredits}
+                                {minutesUsed} / {minutesTotal}
                             </span>
                         </div>
                         <Progress value={usagePercent} className="h-2 bg-zinc-200 dark:bg-zinc-800" />
                         <p className="text-xs text-zinc-500 dark:text-zinc-500">
-                            {currentBalance} credits remaining
+                            {minutesRemaining} minutes remaining
                         </p>
                     </div>
                 )}
@@ -304,7 +313,7 @@ function UsageCard({ workspaceId }: { workspaceId: string }) {
 }
 
 function TransactionHistoryCard({ workspaceId }: { workspaceId: string }) {
-    const { data: transactions, isLoading } = useCreditTransactions(workspaceId);
+    const { data: transactions, isLoading } = useMinuteTransactions(workspaceId);
 
     return (
         <Card className="bg-white dark:bg-zinc-900 border-zinc-200 dark:border-zinc-800">
@@ -339,9 +348,9 @@ function TransactionHistoryCard({ workspaceId }: { workspaceId: string }) {
                                 </div>
                                 <span className={cn(
                                     "text-sm font-medium",
-                                    tx.amount > 0 ? "text-emerald-500" : "text-zinc-500 dark:text-zinc-400"
+                                    tx.minutesAmount > 0 ? "text-emerald-500" : "text-zinc-500 dark:text-zinc-400"
                                 )}>
-                                    {tx.amount > 0 ? "+" : ""}{tx.amount} credits
+                                    {tx.minutesAmount > 0 ? "+" : ""}{tx.minutesAmount} min
                                 </span>
                             </div>
                         ))}

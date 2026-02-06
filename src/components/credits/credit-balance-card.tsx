@@ -2,9 +2,9 @@
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { useCreditBalance } from "@/hooks/useCredits";
+import { useMinutesBalance } from "@/hooks/useMinutes";
 import { useWorkspaceBySlug } from "@/hooks/useWorkspace";
-import { IconCoins, IconPlus, IconTrendingUp, IconSparkles } from "@tabler/icons-react";
+import { IconClock, IconPlus, IconTrendingUp, IconSparkles } from "@tabler/icons-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
@@ -16,20 +16,30 @@ interface CreditBalanceCardProps {
 export function CreditBalanceCard({ workspaceSlug }: CreditBalanceCardProps) {
     const router = useRouter();
     const { data: workspace } = useWorkspaceBySlug(workspaceSlug);
-    const { data: balance, isLoading } = useCreditBalance(workspace?.id);
+    const { data: balance, isLoading } = useMinutesBalance(workspace?.id);
 
-    const usedCredits = (balance?.lifetimeCredits || 0) - (balance?.balance || 0);
-    const usagePercentage = balance?.lifetimeCredits
-        ? Math.round((usedCredits / balance.lifetimeCredits) * 100)
+    const usagePercentage = balance?.minutesTotal
+        ? Math.round((balance.minutesUsed / balance.minutesTotal) * 100)
         : 0;
+
+    const remainingPercentage = 100 - usagePercentage;
+    const isLow = remainingPercentage < 20;
+
+    const resetDateFormatted = balance?.minutesResetDate
+        ? new Date(balance.minutesResetDate).toLocaleDateString("en-US", {
+            month: "short",
+            day: "numeric",
+            year: "numeric",
+        })
+        : null;
 
     if (isLoading) {
         return (
             <Card className="border-border/50 shadow-sm">
                 <CardHeader className="border-b border-border/50 bg-muted/20">
                     <CardTitle className="flex items-center gap-2">
-                        <IconCoins className="h-5 w-5" />
-                        Credit Balance
+                        <IconClock className="h-5 w-5" />
+                        Minutes Balance
                     </CardTitle>
                 </CardHeader>
                 <CardContent className="pt-6">
@@ -54,12 +64,14 @@ export function CreditBalanceCard({ workspaceSlug }: CreditBalanceCardProps) {
                 <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3">
                         <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-gradient-to-br from-primary to-primary/80 shadow-lg shadow-primary/20">
-                            <IconCoins className="h-5 w-5 text-primary-foreground" />
+                            <IconClock className="h-5 w-5 text-primary-foreground" />
                         </div>
                         <div>
-                            <CardTitle className="text-base">Credit Balance</CardTitle>
+                            <CardTitle className="text-base">Minutes Remaining</CardTitle>
                             <p className="text-xs text-muted-foreground mt-0.5">
-                                Your available credits
+                                {resetDateFormatted
+                                    ? `Resets ${resetDateFormatted}`
+                                    : "One-time allocation"}
                             </p>
                         </div>
                     </div>
@@ -69,7 +81,7 @@ export function CreditBalanceCard({ workspaceSlug }: CreditBalanceCardProps) {
                         onClick={() => router.push(`/${workspaceSlug}/pricing`)}
                     >
                         <IconPlus className="h-4 w-4" />
-                        Buy Credits
+                        Upgrade Plan
                     </Button>
                 </div>
             </CardHeader>
@@ -78,15 +90,22 @@ export function CreditBalanceCard({ workspaceSlug }: CreditBalanceCardProps) {
                 <div className="space-y-6">
                     {/* Main Balance Display */}
                     <div className="flex items-baseline gap-2">
-                        <div className="text-5xl font-bold bg-gradient-to-br from-foreground to-foreground/70 bg-clip-text text-transparent">
-                            {(balance?.balance || 0).toLocaleString()}
+                        <div className={cn(
+                            "text-5xl font-bold bg-gradient-to-br bg-clip-text text-transparent",
+                            isLow
+                                ? "from-rose-600 to-rose-400"
+                                : "from-foreground to-foreground/70"
+                        )}>
+                            {(balance?.minutesRemaining || 0).toLocaleString()}
                         </div>
-                        <div className="text-muted-foreground font-medium">credits</div>
+                        <div className="text-muted-foreground font-medium">
+                            / {(balance?.minutesTotal || 0).toLocaleString()} min
+                        </div>
                     </div>
 
                     {/* Stats Grid */}
                     <div className="grid grid-cols-3 gap-3">
-                        {/* Lifetime Credits */}
+                        {/* Total Minutes */}
                         <div className="relative group">
                             <div className={cn(
                                 "p-4 rounded-xl border border-border/50 bg-gradient-to-br transition-all duration-200",
@@ -99,15 +118,15 @@ export function CreditBalanceCard({ workspaceSlug }: CreditBalanceCardProps) {
                                     </div>
                                 </div>
                                 <div className="text-2xl font-bold text-emerald-700 dark:text-emerald-400 mb-1">
-                                    {(balance?.lifetimeCredits || 0).toLocaleString()}
+                                    {(balance?.minutesTotal || 0).toLocaleString()}
                                 </div>
                                 <div className="text-xs text-muted-foreground font-medium">
-                                    Lifetime Credits
+                                    Total Minutes
                                 </div>
                             </div>
                         </div>
 
-                        {/* Used Credits */}
+                        {/* Used Minutes */}
                         <div className="relative group">
                             <div className={cn(
                                 "p-4 rounded-xl border border-border/50 bg-gradient-to-br transition-all duration-200",
@@ -120,10 +139,10 @@ export function CreditBalanceCard({ workspaceSlug }: CreditBalanceCardProps) {
                                     </div>
                                 </div>
                                 <div className="text-2xl font-bold text-rose-700 dark:text-rose-400 mb-1">
-                                    {usedCredits.toLocaleString()}
+                                    {(balance?.minutesUsed || 0).toLocaleString()}
                                 </div>
                                 <div className="text-xs text-muted-foreground font-medium">
-                                    Credits Used
+                                    Minutes Used
                                 </div>
                             </div>
                         </div>
@@ -137,7 +156,7 @@ export function CreditBalanceCard({ workspaceSlug }: CreditBalanceCardProps) {
                             )}>
                                 <div className="flex items-center gap-2 mb-2">
                                     <div className="flex items-center justify-center w-7 h-7 rounded-lg bg-primary/10">
-                                        <IconCoins className="h-4 w-4 text-primary" />
+                                        <IconClock className="h-4 w-4 text-primary" />
                                     </div>
                                 </div>
                                 <div className="text-2xl font-bold text-primary mb-1">
@@ -151,10 +170,10 @@ export function CreditBalanceCard({ workspaceSlug }: CreditBalanceCardProps) {
                     </div>
 
                     {/* Progress Bar */}
-                    {balance?.lifetimeCredits && balance.lifetimeCredits > 0 && (
+                    {balance?.minutesTotal && balance.minutesTotal > 0 && (
                         <div className="space-y-2">
                             <div className="flex items-center justify-between text-xs text-muted-foreground">
-                                <span>Credit Usage</span>
+                                <span>Minute Usage</span>
                                 <span className="font-medium">{usagePercentage}%</span>
                             </div>
                             <div className="h-2 bg-muted rounded-full overflow-hidden">
@@ -171,6 +190,16 @@ export function CreditBalanceCard({ workspaceSlug }: CreditBalanceCardProps) {
                                 />
                             </div>
                         </div>
+                    )}
+
+                    {/* Low minutes warning */}
+                    {isLow && (
+                        <p className="text-xs text-destructive">
+                            Running low on minutes.{" "}
+                            <a href={`/${workspaceSlug}/pricing`} className="underline font-medium">
+                                Upgrade now
+                            </a>
+                        </p>
                     )}
                 </div>
             </CardContent>

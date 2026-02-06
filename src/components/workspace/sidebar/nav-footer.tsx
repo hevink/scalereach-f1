@@ -6,7 +6,7 @@ import {
   IconSettings,
   IconSettingsFilled,
   IconSparkles,
-  IconCoins,
+  IconClock,
   IconKeyboard,
 } from "@tabler/icons-react";
 import { usePathname, useRouter } from "next/navigation";
@@ -17,7 +17,7 @@ import {
   SidebarMenuBadge,
 } from "@/components/ui/sidebar";
 import { useWorkspaceBySlug } from "@/hooks/useWorkspace";
-import { useCreditBalance } from "@/hooks/useCredits";
+import { useMinutesBalance } from "@/hooks/useMinutes";
 import { cn } from "@/lib/utils";
 import { useWorkspaceShortcuts } from "@/components/workspace/workspace-shortcuts-provider";
 
@@ -29,15 +29,16 @@ export function NavFooter({ currentSlug }: NavFooterProps) {
   const pathname = usePathname();
   const router = useRouter();
   const { data: workspace } = useWorkspaceBySlug(currentSlug);
-  const { data: credits } = useCreditBalance(workspace?.id);
+  const { data: minutesData } = useMinutesBalance(workspace?.id);
   const { openShortcutsHelp } = useWorkspaceShortcuts();
 
   const settingsUrl = `/${currentSlug}/settings`;
   const isSettingsActive =
     pathname === settingsUrl || pathname.startsWith(`${settingsUrl}/`);
 
-  const creditBalance = credits?.balance ?? 0;
-  const isLowCredits = creditBalance < 10;
+  const minutesRemaining = minutesData?.minutesRemaining ?? 0;
+  const minutesTotal = minutesData?.minutesTotal ?? 0;
+  const isLowMinutes = minutesTotal > 0 && (minutesRemaining / minutesTotal) < 0.2;
 
   const footerItems = [
     {
@@ -73,26 +74,26 @@ export function NavFooter({ currentSlug }: NavFooterProps) {
 
   return (
     <SidebarMenu>
-      {/* Credits Display */}
+      {/* Minutes Display */}
       <SidebarMenuItem>
         <SidebarMenuButton
-          tooltip={`${creditBalance} credits remaining`}
+          tooltip={`${minutesRemaining} min remaining`}
           onClick={() => router.push(`/${currentSlug}/settings/billing`)}
           className={cn(
-            isLowCredits && "text-amber-600 dark:text-amber-500"
+            isLowMinutes && "text-amber-600 dark:text-amber-500"
           )}
         >
-          <IconCoins className={cn(isLowCredits && "text-amber-500")} />
-          <span className="font-[490] text-[13px]">Credits</span>
+          <IconClock className={cn(isLowMinutes && "text-amber-500")} />
+          <span className="font-[490] text-[13px]">Minutes</span>
         </SidebarMenuButton>
         <SidebarMenuBadge
           className={cn(
-            isLowCredits
+            isLowMinutes
               ? "bg-amber-500/10 text-amber-600 dark:text-amber-500"
               : "bg-primary/10 text-primary"
           )}
         >
-          {creditBalance}
+          {minutesRemaining} min
         </SidebarMenuBadge>
       </SidebarMenuItem>
 
