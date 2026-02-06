@@ -33,7 +33,7 @@ import type { VideoInfo } from "@/lib/api/video";
 import { CaptionTemplateGrid } from "@/components/configure/caption-template-grid";
 import { AspectRatioSelector } from "@/components/configure/aspect-ratio-selector";
 import { YouTubeIcon } from "@/components/icons/youtube-icon";
-import { UploadLimitErrorModal } from "@/components/upload/upload-limit-error-modal";
+import { InsufficientMinutesModal } from "@/components/upload/insufficient-minutes-modal";
 import {
     Select,
     SelectContent,
@@ -94,14 +94,14 @@ export default function ConfigurePage() {
     const [config, setConfig] = useState<VideoConfigInput>(DEFAULT_VIDEO_CONFIG);
     const initialConfigRef = useRef<VideoConfigInput>(DEFAULT_VIDEO_CONFIG);
 
-    // Error modal state for plan limit errors
-    const [showLimitError, setShowLimitError] = useState(false);
-    const [limitErrorDetails, setLimitErrorDetails] = useState<{
-        errorType: "fileSize" | "duration";
-        currentLimit: string;
-        attemptedValue: string;
-        currentPlan: string;
-        recommendedPlan?: string;
+    // Insufficient minutes modal state - used for all limit errors
+    const [showInsufficientMinutes, setShowInsufficientMinutes] = useState(false);
+    const [insufficientMinutesDetails, setInsufficientMinutesDetails] = useState<{
+        minutesRemaining: number;
+        minutesNeeded: number;
+        errorType?: "duration" | "fileSize" | "minutes";
+        currentLimit?: string;
+        attemptedValue?: string;
     } | null>(null);
 
     // Get plan limits for this workspace
@@ -176,16 +176,25 @@ export default function ConfigurePage() {
             router.push(`/${workspaceSlug}/videos/${result.video.id}/clips`);
         },
         onError: (error: any) => {
-            // Check if it's a plan limit error
+            // Check if it's a plan limit error (duration)
             if (error.response?.data?.upgradeRequired && error.response?.data?.reason === "VIDEO_TOO_LONG") {
-                setLimitErrorDetails({
+                // Show pricing modal for duration limit errors
+                setInsufficientMinutesDetails({
+                    minutesRemaining: 0, // Not applicable for duration errors
+                    minutesNeeded: 0, // Not applicable for duration errors
                     errorType: "duration",
                     currentLimit: error.response.data.currentLimit || planLimits.maxDurationFormatted,
                     attemptedValue: error.response.data.attemptedValue || "Unknown",
-                    currentPlan: planLimits.planName,
-                    recommendedPlan: error.response.data.recommendedPlan,
                 });
-                setShowLimitError(true);
+                setShowInsufficientMinutes(true);
+            } else if (error.response?.data?.reason === "INSUFFICIENT_MINUTES") {
+                // Show pricing modal for insufficient minutes
+                setInsufficientMinutesDetails({
+                    minutesRemaining: error.response.data.minutesRemaining || 0,
+                    minutesNeeded: error.response.data.minutesNeeded || 0,
+                    errorType: "minutes",
+                });
+                setShowInsufficientMinutes(true);
             } else {
                 toast.error("Failed to process video", {
                     description: error.message || error.response?.data?.error || "An error occurred",
@@ -303,20 +312,21 @@ export default function ConfigurePage() {
 
     return (
         <>
-            {/* Upload Limit Error Modal */}
-            {limitErrorDetails && (
-                <UploadLimitErrorModal
-                    isOpen={showLimitError}
+            {/* Insufficient Minutes Modal - handles all limit errors */}
+            {insufficientMinutesDetails && (
+                <InsufficientMinutesModal
+                    isOpen={showInsufficientMinutes}
                     onClose={() => {
-                        setShowLimitError(false);
-                        setLimitErrorDetails(null);
+                        setShowInsufficientMinutes(false);
+                        setInsufficientMinutesDetails(null);
                     }}
-                    errorType={limitErrorDetails.errorType}
-                    currentLimit={limitErrorDetails.currentLimit}
-                    attemptedValue={limitErrorDetails.attemptedValue}
-                    currentPlan={limitErrorDetails.currentPlan}
-                    recommendedPlan={limitErrorDetails.recommendedPlan}
+                    currentPlan={planLimits.planName}
+                    minutesRemaining={insufficientMinutesDetails.minutesRemaining}
+                    minutesNeeded={insufficientMinutesDetails.minutesNeeded}
                     workspaceSlug={workspaceSlug}
+                    errorType={insufficientMinutesDetails.errorType}
+                    currentLimit={insufficientMinutesDetails.currentLimit}
+                    attemptedValue={insufficientMinutesDetails.attemptedValue}
                 />
             )}
 
