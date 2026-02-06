@@ -14,15 +14,11 @@ import {
     IconEdit,
     IconShare2,
     IconSparkles,
-    IconRefresh,
     IconFile,
     IconLanguage,
     IconAspectRatio,
     IconFlame,
     IconCalendar,
-    IconMaximize,
-    IconVolume,
-    IconDotsVertical,
 } from "@tabler/icons-react";
 
 import { Button } from "@/components/ui/button";
@@ -52,28 +48,76 @@ function formatDate(dateString: string): string {
 function VideoClipsLoading() {
     return (
         <div className="flex h-full flex-col bg-background">
+            {/* Header Skeleton */}
             <div className="border-b px-6 py-4">
-                <Skeleton className="h-7 w-96 mb-2" />
-                <Skeleton className="h-4 w-24 mb-3" />
-                <div className="flex gap-2">
-                    <Skeleton className="h-6 w-20 rounded-full" />
-                    <Skeleton className="h-6 w-20 rounded-full" />
-                    <Skeleton className="h-6 w-16 rounded-full" />
-                </div>
-            </div>
-            <div className="flex-1 overflow-auto p-6 space-y-6">
-                {Array.from({ length: 3 }).map((_, i) => (
-                    <div key={i} className="rounded-xl border bg-card p-4">
-                        <Skeleton className="h-6 w-64 mb-4" />
-                        <div className="flex gap-4">
-                            <Skeleton className="w-80 aspect-video rounded-lg" />
-                            <div className="flex-1 space-y-3">
-                                <Skeleton className="h-8 w-48" />
-                                <Skeleton className="h-20 w-full" />
-                            </div>
+                <div className="flex items-start justify-between">
+                    <div className="flex items-start gap-3">
+                        <Skeleton className="size-9 rounded-md shrink-0 mt-0.5" />
+                        <div>
+                            <Skeleton className="h-7 w-96 mb-2" />
+                            <Skeleton className="h-4 w-24" />
                         </div>
                     </div>
-                ))}
+                </div>
+                <div className="flex flex-wrap items-center gap-2 mt-3 ml-11">
+                    <Skeleton className="h-6 w-24 rounded-full" />
+                    <Skeleton className="h-6 w-20 rounded-full" />
+                    <Skeleton className="h-6 w-16 rounded-full" />
+                    <Skeleton className="h-6 w-24 rounded-full" />
+                    <Skeleton className="h-6 w-32 rounded-full" />
+                </div>
+            </div>
+
+            {/* Clips Skeleton */}
+            <div className="flex-1 overflow-auto p-6 flex justify-center">
+                <div className="space-y-6 max-w-4xl w-full">
+                    {Array.from({ length: 3 }).map((_, i) => (
+                        <div key={i} className="rounded-xl border bg-card overflow-hidden">
+                            {/* Title */}
+                            <div className="px-5 py-3 border-b bg-muted/30">
+                                <Skeleton className="h-5 w-64" />
+                            </div>
+
+                            {/* Content */}
+                            <div className="p-4">
+                                <div className="flex flex-col lg:flex-row gap-4 lg:items-start">
+                                    {/* Video Preview Skeleton */}
+                                    <div className="shrink-0">
+                                        <Skeleton className="w-full lg:w-[230px] h-[400px] rounded-lg" />
+                                    </div>
+
+                                    {/* Tabs Section Skeleton */}
+                                    <div className="flex-1">
+                                        <div className="flex gap-2 mb-3">
+                                            <Skeleton className="h-9 w-28 rounded-md" />
+                                            <Skeleton className="h-9 w-36 rounded-md" />
+                                        </div>
+                                        <div className="space-y-2">
+                                            <Skeleton className="h-4 w-full" />
+                                            <Skeleton className="h-4 w-full" />
+                                            <Skeleton className="h-4 w-3/4" />
+                                            <Skeleton className="h-4 w-full" />
+                                            <Skeleton className="h-4 w-5/6" />
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {/* Action Buttons Skeleton */}
+                                <div className="flex items-center justify-between mt-4 pt-4 border-t">
+                                    <div className="flex items-center gap-2">
+                                        <Skeleton className="h-9 w-28" />
+                                        <Skeleton className="h-9 w-40" />
+                                        <Skeleton className="h-9 w-20" />
+                                    </div>
+                                    <div className="flex items-center gap-2">
+                                        <Skeleton className="size-9 rounded-md" />
+                                        <Skeleton className="size-9 rounded-md" />
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    ))}
+                </div>
             </div>
         </div>
     );
@@ -453,10 +497,6 @@ export default function VideoClipsPage({ params }: VideoClipsPageProps) {
             navigator.clipboard.writeText(clip.storageUrl || "");
         }
     }, []);
-
-    const handleRegenerate = useCallback(() => {
-        refetchClips();
-    }, [refetchClips]);
 
     if (videoLoading || clipsLoading) {
         return <VideoClipsLoading />;
