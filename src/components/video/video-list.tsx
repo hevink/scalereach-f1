@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { EmptyState } from "@/components/ui/empty-state";
+import { YouTubeIcon } from "@/components/icons/youtube-icon";
 import { useMyVideos, useDeleteVideo } from "@/hooks/useVideo";
 import { toast } from "sonner";
 import type { Video, VideoLite } from "@/lib/api/video";
@@ -79,13 +80,18 @@ interface VideoItemProps {
 
 function VideoItem({ video, onDelete, isDeleting }: VideoItemProps) {
     const statusConfig = STATUS_CONFIG[video.status];
+    const isYouTube = video.sourceType === "youtube";
 
     return (
         <div className="flex items-center gap-4 rounded-lg border p-4">
             {/* Thumbnail */}
             <div className="relative h-16 w-28 shrink-0 overflow-hidden rounded bg-muted">
                 <div className="flex h-full w-full items-center justify-center">
-                    <IconVideo className="size-6 text-muted-foreground" />
+                    {isYouTube ? (
+                        <YouTubeIcon className="size-6 text-[#FF0000]" />
+                    ) : (
+                        <IconUpload className="size-6 text-muted-foreground" />
+                    )}
                 </div>
                 {video.duration && (
                     <span className="absolute right-1 bottom-1 rounded bg-black/70 px-1 text-white text-xs">
@@ -96,9 +102,16 @@ function VideoItem({ video, onDelete, isDeleting }: VideoItemProps) {
 
             {/* Info */}
             <div className="flex flex-1 flex-col gap-1 overflow-hidden">
-                <h4 className="truncate font-medium text-sm">
-                    {video.title || "Processing..."}
-                </h4>
+                <div className="flex items-center gap-2">
+                    <h4 className="truncate font-medium text-sm">
+                        {video.title || "Processing..."}
+                    </h4>
+                    {isYouTube && (
+                        <Badge variant="outline" className="shrink-0 text-xs">
+                            YouTube
+                        </Badge>
+                    )}
+                </div>
                 <p className="text-muted-foreground text-xs">
                     {formatDate(video.createdAt)}
                 </p>

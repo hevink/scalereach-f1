@@ -216,13 +216,13 @@ export default function AllClipsPage({ params, searchParams }: AllClipsPageProps
     const videoIds = useMemo(() => completedVideos.map(v => v.id), [completedVideos]);
 
     // Fetch clips for each video - call hooks unconditionally
-    const clips0 = useClipsByVideo(videoIds[0] || "", !!videoIds[0]);
-    const clips1 = useClipsByVideo(videoIds[1] || "", !!videoIds[1]);
-    const clips2 = useClipsByVideo(videoIds[2] || "", !!videoIds[2]);
-    const clips3 = useClipsByVideo(videoIds[3] || "", !!videoIds[3]);
-    const clips4 = useClipsByVideo(videoIds[4] || "", !!videoIds[4]);
-    const clips5 = useClipsByVideo(videoIds[5] || "", !!videoIds[5]);
-    const clips6 = useClipsByVideo(videoIds[6] || "", !!videoIds[6]);
+    const clips0 = useClipsByVideo(videoIds[0] || "");
+    const clips1 = useClipsByVideo(videoIds[1] || "");
+    const clips2 = useClipsByVideo(videoIds[2] || "");
+    const clips3 = useClipsByVideo(videoIds[3] || "");
+    const clips4 = useClipsByVideo(videoIds[4] || "");
+    const clips5 = useClipsByVideo(videoIds[5] || "");
+    const clips6 = useClipsByVideo(videoIds[6] || "");
     const clips7 = useClipsByVideo(videoIds[7] || "", !!videoIds[7]);
     const clips8 = useClipsByVideo(videoIds[8] || "", !!videoIds[8]);
     const clips9 = useClipsByVideo(videoIds[9] || "", !!videoIds[9]);

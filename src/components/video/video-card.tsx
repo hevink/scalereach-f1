@@ -5,6 +5,7 @@ import { VideoLite } from "@/lib/api/video";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { YouTubeIcon } from "@/components/icons/youtube-icon";
 import {
     DropdownMenu,
     DropdownMenuContent,
@@ -196,8 +197,17 @@ export function VideoCard({
                 {/* Source column */}
                 <div className="hidden sm:flex items-center justify-center">
                     <div className="flex items-center gap-2 px-3 py-1.5 rounded-md bg-muted/50 text-xs font-medium">
-                        <IconFile className="size-3.5" />
-                        <span>{video.sourceType === 'youtube' ? 'YouTube' : 'Local file'}</span>
+                        {video.sourceType === 'youtube' ? (
+                            <>
+                                <YouTubeIcon className="size-3.5 text-[#FF0000]" />
+                                <span>YouTube</span>
+                            </>
+                        ) : (
+                            <>
+                                <IconFile className="size-3.5" />
+                                <span>Upload</span>
+                            </>
+                        )}
                     </div>
                 </div>
 
@@ -217,7 +227,7 @@ export function VideoCard({
                     {getStatusBadge()}
 
                     <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
+                        <DropdownMenuTrigger>
                             <Button
                                 variant="ghost"
                                 size="icon"

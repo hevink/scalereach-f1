@@ -42,10 +42,10 @@ import { analytics } from "@/lib/analytics";
 export interface ExportOptionsProps {
   /** Callback when export is initiated with selected options */
   onExport: (options: ExportOptionsType) => void;
-  /** Credit cost for the export operation */
-  creditCost: number;
-  /** User's current credit balance */
-  userCredits: number;
+  /** Credit cost for the export operation (deprecated - system now uses minutes) */
+  creditCost?: number;
+  /** User's current credit balance (deprecated - system now uses minutes) */
+  userCredits?: number;
   /** Whether the export controls are disabled */
   disabled?: boolean;
   /** Additional className */
@@ -157,6 +157,8 @@ export function ExportOptions({
    * @validates Requirement 22.5
    */
   const hasInsufficientCredits = useMemo(() => {
+    // Credits system is deprecated - always return false
+    if (creditCost === undefined || userCredits === undefined) return false;
     return userCredits < creditCost;
   }, [userCredits, creditCost]);
 
@@ -320,46 +322,48 @@ export function ExportOptions({
           </div>
         </div>
 
-        {/* Credit Cost Display - Requirement 22.4 */}
-        <div
-          className={cn(
-            "rounded-lg border p-4",
-            hasInsufficientCredits
-              ? "border-destructive/50 bg-destructive/10"
-              : "border-border bg-muted/30"
-          )}
-        >
-          <div className="flex items-center justify-between">
-            <span className="flex items-center gap-2 text-sm">
-              <IconCoin className="size-4 text-muted-foreground" />
-              <span className="text-muted-foreground">Credit Cost</span>
-            </span>
-            <span className="font-medium text-sm">{creditCost} credits</span>
-          </div>
+        {/* Credit Cost Display - Requirement 22.4 (deprecated - system now uses minutes) */}
+        {creditCost !== undefined && userCredits !== undefined && (
+          <div
+            className={cn(
+              "rounded-lg border p-4",
+              hasInsufficientCredits
+                ? "border-destructive/50 bg-destructive/10"
+                : "border-border bg-muted/30"
+            )}
+          >
+            <div className="flex items-center justify-between">
+              <span className="flex items-center gap-2 text-sm">
+                <IconCoin className="size-4 text-muted-foreground" />
+                <span className="text-muted-foreground">Credit Cost</span>
+              </span>
+              <span className="font-medium text-sm">{creditCost} credits</span>
+            </div>
 
-          {/* Credit Balance */}
-          <div className="mt-2 flex items-center justify-between border-border/50 border-t pt-2">
-            <span className="text-muted-foreground text-sm">Your Balance</span>
-            <span
-              className={cn(
-                "font-medium text-sm",
-                hasInsufficientCredits ? "text-destructive" : "text-foreground"
-              )}
-            >
-              {userCredits} credits
-            </span>
-          </div>
-
-          {/* Insufficient Credits Warning - Requirement 22.5 */}
-          {hasInsufficientCredits && (
-            <div className="mt-3 flex items-center gap-2 text-destructive text-sm">
-              <IconAlertTriangle className="size-4" />
-              <span>
-                Insufficient credits. Please purchase more credits to export.
+            {/* Credit Balance */}
+            <div className="mt-2 flex items-center justify-between border-border/50 border-t pt-2">
+              <span className="text-muted-foreground text-sm">Your Balance</span>
+              <span
+                className={cn(
+                  "font-medium text-sm",
+                  hasInsufficientCredits ? "text-destructive" : "text-foreground"
+                )}
+              >
+                {userCredits} credits
               </span>
             </div>
-          )}
-        </div>
+
+            {/* Insufficient Credits Warning - Requirement 22.5 */}
+            {hasInsufficientCredits && (
+              <div className="mt-3 flex items-center gap-2 text-destructive text-sm">
+                <IconAlertTriangle className="size-4" />
+                <span>
+                  Insufficient credits. Please purchase more credits to export.
+                </span>
+              </div>
+            )}
+          </div>
+        )}
       </CardContent>
 
       <CardFooter className="flex justify-end">

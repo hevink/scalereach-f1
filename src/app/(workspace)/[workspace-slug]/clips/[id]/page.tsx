@@ -291,8 +291,8 @@ interface ExportDialogProps {
     onOpenChange: (open: boolean) => void;
     clipId: string;
     captionStyleId?: string;
-    creditCost: number;
-    userCredits: number;
+    creditCost?: number;
+    userCredits?: number;
     activeExportId: string | null;
     onExport: (options: ExportOptionsType) => void;
     onExportComplete: (downloadUrl: string) => void;
@@ -1020,10 +1020,6 @@ export default function ClipEditorPage({ params }: ClipEditorPageProps) {
     // Captions for transcript panel (sentence-based paragraphs)
     const transcriptCaptions = captionsForTranscript;
 
-    // Credit cost (example: 5 credits per export)
-    const creditCost = 5;
-    const userCredits = creditBalance?.balance ?? 0;
-
     // Determine if saving is in progress (includes caption text auto-save)
     // @validates Requirements 13.2 - Show saving indicator during save operations
     const isSaving = updateCaptionStyle.isPending || updateClipBoundaries.isPending || updateCaptionText.isPending;
@@ -1145,8 +1141,6 @@ export default function ClipEditorPage({ params }: ClipEditorPageProps) {
                 onOpenChange={setExportDialogOpen}
                 clipId={clipId}
                 captionStyleId={captionData?.templateId ?? undefined}
-                creditCost={creditCost}
-                userCredits={userCredits}
                 activeExportId={activeExportId}
                 onExport={handleExport}
                 onExportComplete={handleExportComplete}
