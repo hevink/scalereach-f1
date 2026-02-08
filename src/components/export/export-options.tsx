@@ -7,6 +7,7 @@ import {
   IconDeviceTv,
   IconDownload,
   IconFile,
+  IconVolume,
 } from "@tabler/icons-react";
 import { useCallback, useMemo, useState } from "react";
 
@@ -56,6 +57,10 @@ export interface ExportOptionsProps {
   brandKitId?: string;
   /** Whether the user has Pro access (enables 4K export) */
   hasProAccess?: boolean;
+  /** Available translation languages for this clip */
+  translationLanguages?: Array<{ language: string; name: string }>;
+  /** Available dubbings for this video */
+  availableDubbings?: Array<{ id: string; targetLanguage: string; voiceName: string | null; status: string }>;
 }
 
 /**
@@ -147,10 +152,14 @@ export function ExportOptions({
   captionStyleId,
   brandKitId,
   hasProAccess = false,
+  translationLanguages,
+  availableDubbings,
 }: ExportOptionsProps) {
   // State for selected format and resolution
   const [format, setFormat] = useState<ExportFormat>("mp4");
   const [resolution, setResolution] = useState<VideoResolution>("1080p");
+  const [targetLanguage, setTargetLanguage] = useState<string | undefined>();
+  const [dubbingId, setDubbingId] = useState<string | undefined>();
 
   /**
    * Check if user has sufficient credits
@@ -191,6 +200,8 @@ export function ExportOptions({
       resolution,
       ...(captionStyleId && { captionStyleId }),
       ...(brandKitId && { brandKitId }),
+      ...(targetLanguage && { targetLanguage }),
+      ...(dubbingId && { dubbingId }),
     };
 
     // Track export event
@@ -199,10 +210,12 @@ export function ExportOptions({
       resolution,
       hasCaptions: !!captionStyleId,
       hasBrandKit: !!brandKitId,
+      targetLanguage: targetLanguage || "original",
+      hasDubbing: !!dubbingId,
     });
 
     onExport(options);
-  }, [format, resolution, captionStyleId, brandKitId, onExport]);
+  }, [format, resolution, captionStyleId, brandKitId, targetLanguage, dubbingId, onExport]);
 
   /**
    * Whether the export button should be disabled
@@ -297,6 +310,66 @@ export function ExportOptions({
             </SelectContent>
           </Select>
         </div>
+
+        {/* Caption Language Selector */}
+        {translationLanguages && translationLanguages.length > 0 && (
+          <div className="flex flex-col gap-2">
+            <Label className="flex items-center gap-2 font-medium text-foreground text-sm">
+              <IconFile className="size-4 text-muted-foreground" />
+              Caption Language
+            </Label>
+            <Select
+              disabled={disabled}
+              onValueChange={(value) =>
+                setTargetLanguage(value === "original" ? undefined : value)
+              }
+              value={targetLanguage || "original"}
+            >
+              <SelectTrigger className="w-full">
+                <SelectValue placeholder="Original" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="original">Original</SelectItem>
+                {translationLanguages.map((lang) => (
+                  <SelectItem key={lang.language} value={lang.language}>
+                    {lang.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+        )}
+
+        {/* Dubbed Audio Selector */}
+        {availableDubbings && availableDubbings.filter((d) => d.status === "completed").length > 0 && (
+          <div className="flex flex-col gap-2">
+            <Label className="flex items-center gap-2 font-medium text-foreground text-sm">
+              <IconVolume className="size-4 text-muted-foreground" />
+              Dubbed Audio
+            </Label>
+            <Select
+              disabled={disabled}
+              onValueChange={(value) =>
+                setDubbingId(value === "none" ? undefined : value)
+              }
+              value={dubbingId || "none"}
+            >
+              <SelectTrigger className="w-full">
+                <SelectValue placeholder="No dubbed audio" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="none">No dubbed audio</SelectItem>
+                {availableDubbings
+                  .filter((d) => d.status === "completed")
+                  .map((dub) => (
+                    <SelectItem key={dub.id} value={dub.id}>
+                      {dub.voiceName || "AI Voice"} ({dub.targetLanguage.toUpperCase()})
+                    </SelectItem>
+                  ))}
+              </SelectContent>
+            </Select>
+          </div>
+        )}
 
         {/* Pro Upgrade Warning - Requirement 22.4, 22.5 */}
         {requiresProUpgrade && (

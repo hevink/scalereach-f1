@@ -29,6 +29,8 @@ import { useVideo } from "@/hooks/useVideo";
 import { useClipsByVideo, useToggleFavorite } from "@/hooks/useClips";
 import { cn } from "@/lib/utils";
 import type { ClipResponse } from "@/lib/api/clips";
+import { TranslationPanel } from "@/components/translation/translation-panel";
+import { TranslatedCaptionPreview } from "@/components/translation/translated-caption-preview";
 
 interface VideoClipsPageProps {
     params: Promise<{ "workspace-slug": string; id: string }>;
@@ -347,9 +349,10 @@ function ClipCard({ clip, index, onEdit, onFavorite, onDownload, onShare }: Clip
                             </TabsList>
 
                             <TabsContent value="transcript" className="mt-0">
-                                <p className="text-sm text-muted-foreground leading-relaxed">
-                                    {clip.transcript || "No transcript available."}
-                                </p>
+                                <TranslatedCaptionPreview
+                                    clipId={clip.id}
+                                    originalTranscript={clip.transcript || "No transcript available."}
+                                />
                             </TabsContent>
 
                             <TabsContent value="description" className="mt-0">
@@ -577,6 +580,18 @@ export default function VideoClipsPage({ params }: VideoClipsPageProps) {
                     )}
                 </div>
             </div>
+
+            {/* Translation Panel */}
+            {video.status === "completed" && (
+                <div className="px-6 pt-4">
+                    <div className="max-w-4xl mx-auto">
+                        <TranslationPanel
+                            videoId={videoId}
+                            sourceLanguage={video.transcriptLanguage || "en"}
+                        />
+                    </div>
+                </div>
+            )}
 
             {/* Clips List */}
             <div className="flex-1 overflow-auto p-6 flex flex-col justify-center items-center">

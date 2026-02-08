@@ -28,6 +28,7 @@ export interface Video extends VideoLite {
   storageKey: string | null;
   storageUrl: string | null;
   transcript: string | null;
+  transcriptLanguage: string | null;
   errorMessage: string | null;
   metadata: Record<string, unknown> | null;
   updatedAt: string;

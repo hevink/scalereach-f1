@@ -14,6 +14,8 @@ export interface ExportOptions {
   captionStyleId?: string;
   brandKitId?: string;
   brandingOptions?: BrandingOptions;
+  targetLanguage?: string; // If set, export with translated captions
+  dubbingId?: string; // If set, export with dubbed audio
 }
 
 export interface ExportRecord {
