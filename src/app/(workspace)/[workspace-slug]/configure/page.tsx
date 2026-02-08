@@ -15,6 +15,8 @@ import {
     IconTypography,
     IconLanguage,
     IconRefresh,
+    IconVolume,
+    IconTrash,
 } from "@tabler/icons-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
@@ -93,6 +95,7 @@ export default function ConfigurePage() {
     const [errorMessage, setErrorMessage] = useState<string | null>(null);
     const [config, setConfig] = useState<VideoConfigInput>(DEFAULT_VIDEO_CONFIG);
     const initialConfigRef = useRef<VideoConfigInput>(DEFAULT_VIDEO_CONFIG);
+    const [translateTo, setTranslateTo] = useState<string[]>([]);
 
     // Insufficient minutes modal state - used for all limit errors
     const [showInsufficientMinutes, setShowInsufficientMinutes] = useState(false);
@@ -173,7 +176,8 @@ export default function ConfigurePage() {
             toast.success("Processing started!", {
                 description: "Your video is being processed. Clips will be ready soon.",
             });
-            router.push(`/${workspaceSlug}/videos/${result.video.id}/clips`);
+            const translateParams = translateTo.length > 0 ? `?translate=${translateTo.join(",")}` : "";
+            router.push(`/${workspaceSlug}/videos/${result.video.id}/clips${translateParams}`);
         },
         onError: (error: any) => {
             // Check if it's a plan limit error (duration)
@@ -226,7 +230,8 @@ export default function ConfigurePage() {
             toast.success("Processing started!", {
                 description: "Your video is being processed. Clips will be ready soon.",
             });
-            router.push(`/${workspaceSlug}/videos/${result.video.id}/clips`);
+            const translateParams = translateTo.length > 0 ? `?translate=${translateTo.join(",")}` : "";
+            router.push(`/${workspaceSlug}/videos/${result.video.id}/clips${translateParams}`);
         },
         onError: (error: Error) => {
             toast.error("Failed to process video", {
@@ -634,11 +639,75 @@ export default function ConfigurePage() {
                                                 </div>
                                             </div>
                                         </div>
+
+                                        {/* Translate To Section */}
+                                        <div className="space-y-4 border-t pt-6">
+                                            <div>
+                                                <h3 className="font-semibold">Translate To</h3>
+                                                <p className="text-muted-foreground text-sm">
+                                                    Select languages to auto-translate captions after processing
+                                                </p>
+                                            </div>
+                                            <div className="flex flex-wrap gap-2">
+                                                {[
+                                                    { code: "es", name: "Spanish" },
+                                                    { code: "fr", name: "French" },
+                                                    { code: "de", name: "German" },
+                                                    { code: "it", name: "Italian" },
+                                                    { code: "pt", name: "Portuguese" },
+                                                    { code: "nl", name: "Dutch" },
+                                                    { code: "ja", name: "Japanese" },
+                                                    { code: "ko", name: "Korean" },
+                                                    { code: "zh", name: "Chinese" },
+                                                    { code: "ru", name: "Russian" },
+                                                    { code: "ar", name: "Arabic" },
+                                                    { code: "hi", name: "Hindi" },
+                                                    { code: "tr", name: "Turkish" },
+                                                    { code: "pl", name: "Polish" },
+                                                    { code: "sv", name: "Swedish" },
+                                                    { code: "th", name: "Thai" },
+                                                    { code: "vi", name: "Vietnamese" },
+                                                    { code: "uk", name: "Ukrainian" },
+                                                ].filter((lang) => lang.code !== (config.language || "en")).map((lang) => {
+                                                    const isSelected = translateTo.includes(lang.code);
+                                                    return (
+                                                        <button
+                                                            key={lang.code}
+                                                            type="button"
+                                                            disabled={isSubmitting}
+                                                            onClick={() => {
+                                                                setTranslateTo((prev) =>
+                                                                    isSelected
+                                                                        ? prev.filter((c) => c !== lang.code)
+                                                                        : [...prev, lang.code]
+                                                                );
+                                                            }}
+                                                            className={cn(
+                                                                "inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-medium transition-colors cursor-pointer",
+                                                                isSelected
+                                                                    ? "border-primary bg-primary/10 text-primary"
+                                                                    : "border-border bg-background text-muted-foreground hover:border-primary/50 hover:text-foreground"
+                                                            )}
+                                                        >
+                                                            {isSelected && <IconCheck className="size-3" />}
+                                                            {lang.name}
+                                                        </button>
+                                                    );
+                                                })}
+                                            </div>
+                                            {translateTo.length > 0 && (
+                                                <p className="text-xs text-muted-foreground">
+                                                    {translateTo.length} language{translateTo.length > 1 ? "s" : ""} selected — translations will start automatically after video processing
+                                                </p>
+                                            )}
+                                        </div>
                                     </CardContent>
                                 </Card>
                             </motion.div>
                         )}
                     </AnimatePresence>
+
+                    {/* Translation & Dubbing - Show when video exists */}
 
                     {/* Get Clips Button */}
                     <Button

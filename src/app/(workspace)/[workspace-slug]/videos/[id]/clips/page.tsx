@@ -1,7 +1,7 @@
 "use client";
 
-import { use, useCallback, useState } from "react";
-import { useRouter } from "next/navigation";
+import { use, useCallback, useState, useEffect, useRef } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import {
     IconArrowLeft,
     IconAlertCircle,
@@ -29,8 +29,8 @@ import { useVideo } from "@/hooks/useVideo";
 import { useClipsByVideo, useToggleFavorite } from "@/hooks/useClips";
 import { cn } from "@/lib/utils";
 import type { ClipResponse } from "@/lib/api/clips";
-import { TranslationPanel } from "@/components/translation/translation-panel";
 import { TranslatedCaptionPreview } from "@/components/translation/translated-caption-preview";
+import { useStartTranslation } from "@/hooks/useTranslations";
 
 interface VideoClipsPageProps {
     params: Promise<{ "workspace-slug": string; id: string }>;
@@ -443,6 +443,9 @@ function ClipCard({ clip, index, onEdit, onFavorite, onDownload, onShare }: Clip
 export default function VideoClipsPage({ params }: VideoClipsPageProps) {
     const { "workspace-slug": slug, id: videoId } = use(params);
     const router = useRouter();
+    const searchParams = useSearchParams();
+    const startTranslation = useStartTranslation();
+    const autoTranslateTriggered = useRef(false);
 
     const {
         data: video,
@@ -458,6 +461,22 @@ export default function VideoClipsPage({ params }: VideoClipsPageProps) {
     } = useClipsByVideo(videoId);
 
     const toggleFavorite = useToggleFavorite();
+
+    // Auto-start translations from configure page ?translate=es,fr,de
+    useEffect(() => {
+        if (autoTranslateTriggered.current) return;
+        if (!video || video.status !== "completed") return;
+
+        const translateParam = searchParams.get("translate");
+        if (!translateParam) return;
+
+        autoTranslateTriggered.current = true;
+        const languages = translateParam.split(",").filter(Boolean);
+
+        for (const lang of languages) {
+            startTranslation.mutate({ videoId, targetLanguage: lang });
+        }
+    }, [video, searchParams, videoId, startTranslation]);
 
     const handleBack = useCallback(() => {
         router.push(`/${slug}`);
@@ -580,18 +599,6 @@ export default function VideoClipsPage({ params }: VideoClipsPageProps) {
                     )}
                 </div>
             </div>
-
-            {/* Translation Panel */}
-            {video.status === "completed" && (
-                <div className="px-6 pt-4">
-                    <div className="max-w-4xl mx-auto">
-                        <TranslationPanel
-                            videoId={videoId}
-                            sourceLanguage={video.transcriptLanguage || "en"}
-                        />
-                    </div>
-                </div>
-            )}
 
             {/* Clips List */}
             <div className="flex-1 overflow-auto p-6 flex flex-col justify-center items-center">
