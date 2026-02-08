@@ -1,7 +1,7 @@
 "use client";
 
-import { use, useCallback, useState, useEffect, useRef } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { use, useCallback, useState } from "react";
+import { useRouter } from "next/navigation";
 import {
     IconArrowLeft,
     IconAlertCircle,
@@ -15,7 +15,6 @@ import {
     IconShare2,
     IconSparkles,
     IconFile,
-    IconLanguage,
     IconAspectRatio,
     IconFlame,
     IconCalendar,
@@ -29,8 +28,6 @@ import { useVideo } from "@/hooks/useVideo";
 import { useClipsByVideo, useToggleFavorite } from "@/hooks/useClips";
 import { cn } from "@/lib/utils";
 import type { ClipResponse } from "@/lib/api/clips";
-import { TranslatedCaptionPreview } from "@/components/translation/translated-caption-preview";
-import { useStartTranslation } from "@/hooks/useTranslations";
 
 interface VideoClipsPageProps {
     params: Promise<{ "workspace-slug": string; id: string }>;
@@ -349,10 +346,9 @@ function ClipCard({ clip, index, onEdit, onFavorite, onDownload, onShare }: Clip
                             </TabsList>
 
                             <TabsContent value="transcript" className="mt-0">
-                                <TranslatedCaptionPreview
-                                    clipId={clip.id}
-                                    originalTranscript={clip.transcript || "No transcript available."}
-                                />
+                                <p className="text-sm text-muted-foreground leading-relaxed">
+                                    {clip.transcript || "No transcript available."}
+                                </p>
                             </TabsContent>
 
                             <TabsContent value="description" className="mt-0">
@@ -443,9 +439,6 @@ function ClipCard({ clip, index, onEdit, onFavorite, onDownload, onShare }: Clip
 export default function VideoClipsPage({ params }: VideoClipsPageProps) {
     const { "workspace-slug": slug, id: videoId } = use(params);
     const router = useRouter();
-    const searchParams = useSearchParams();
-    const startTranslation = useStartTranslation();
-    const autoTranslateTriggered = useRef(false);
 
     const {
         data: video,
@@ -461,22 +454,6 @@ export default function VideoClipsPage({ params }: VideoClipsPageProps) {
     } = useClipsByVideo(videoId);
 
     const toggleFavorite = useToggleFavorite();
-
-    // Auto-start translations from configure page ?translate=es,fr,de
-    useEffect(() => {
-        if (autoTranslateTriggered.current) return;
-        if (!video || video.status !== "completed") return;
-
-        const translateParam = searchParams.get("translate");
-        if (!translateParam) return;
-
-        autoTranslateTriggered.current = true;
-        const languages = translateParam.split(",").filter(Boolean);
-
-        for (const lang of languages) {
-            startTranslation.mutate({ videoId, targetLanguage: lang });
-        }
-    }, [video, searchParams, videoId, startTranslation]);
 
     const handleBack = useCallback(() => {
         router.push(`/${slug}`);
@@ -540,7 +517,6 @@ export default function VideoClipsPage({ params }: VideoClipsPageProps) {
     // Derive metadata for tags
     const sourceType = video.sourceType === "youtube" ? "YouTube" : "Local file";
     const aspectRatio = "9:16"; // Default, could come from video config
-    const language = "English"; // Could come from video metadata
 
     return (
         <div className="flex h-full flex-col bg-background">
@@ -578,10 +554,6 @@ export default function VideoClipsPage({ params }: VideoClipsPageProps) {
                     <Badge variant="outline" className="gap-1.5">
                         <IconFile className="size-3" />
                         {sourceType}
-                    </Badge>
-                    <Badge variant="outline" className="gap-1.5">
-                        <IconLanguage className="size-3" />
-                        {language}
                     </Badge>
                     <Badge variant="outline" className="gap-1.5">
                         <IconAspectRatio className="size-3" />
