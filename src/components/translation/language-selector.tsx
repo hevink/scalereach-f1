@@ -74,7 +74,7 @@ export function LanguageSelector({
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
-      <PopoverTrigger asChild>
+      <PopoverTrigger>
         <Button variant="outline" className="gap-2" disabled={disabled}>
           <IconLanguage className="size-4" />
           Translate

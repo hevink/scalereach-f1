@@ -130,7 +130,7 @@ export function DubbingConfigDialog({
               </Label>
               <Slider
                 value={[duckVolume]}
-                onValueChange={([v]) => setDuckVolume(v)}
+                onValueChange={(value) => setDuckVolume(Array.isArray(value) ? value[0] : value)}
                 min={0}
                 max={0.5}
                 step={0.05}

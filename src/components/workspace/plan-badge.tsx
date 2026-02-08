@@ -43,7 +43,7 @@ export function PlanBadge({ plan, workspaceSlug }: PlanBadgeProps) {
 
     return (
         <Popover>
-            <PopoverTrigger asChild>
+            <PopoverTrigger>
                 <Badge
                     variant={variant}
                     className="cursor-pointer gap-1 hover:opacity-80 transition-opacity"

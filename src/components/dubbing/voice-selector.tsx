@@ -58,7 +58,7 @@ export function VoiceSelector({
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
-      <PopoverTrigger asChild>
+      <PopoverTrigger>
         <Button
           variant="outline"
           className="w-full justify-start text-sm"
@@ -93,9 +93,8 @@ export function VoiceSelector({
               {filteredVoices.map((voice) => (
                 <button
                   key={voice.voiceId}
-                  className={`w-full flex items-center justify-between px-3 py-2 rounded-md text-sm hover:bg-accent cursor-pointer ${
-                    selectedVoiceId === voice.voiceId ? "bg-accent" : ""
-                  }`}
+                  className={`w-full flex items-center justify-between px-3 py-2 rounded-md text-sm hover:bg-accent cursor-pointer ${selectedVoiceId === voice.voiceId ? "bg-accent" : ""
+                    }`}
                   onClick={() => {
                     onSelect(voice);
                     setOpen(false);

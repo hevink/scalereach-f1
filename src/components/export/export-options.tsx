@@ -321,7 +321,7 @@ export function ExportOptions({
             <Select
               disabled={disabled}
               onValueChange={(value) =>
-                setTargetLanguage(value === "original" ? undefined : value)
+                setTargetLanguage(value === "original" ? undefined : (value || undefined))
               }
               value={targetLanguage || "original"}
             >
@@ -350,7 +350,7 @@ export function ExportOptions({
             <Select
               disabled={disabled}
               onValueChange={(value) =>
-                setDubbingId(value === "none" ? undefined : value)
+                setDubbingId(value === "none" ? undefined : (value || undefined))
               }
               value={dubbingId || "none"}
             >

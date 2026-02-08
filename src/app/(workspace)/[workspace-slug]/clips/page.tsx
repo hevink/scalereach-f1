@@ -223,9 +223,9 @@ export default function AllClipsPage({ params, searchParams }: AllClipsPageProps
     const clips4 = useClipsByVideo(videoIds[4] || "");
     const clips5 = useClipsByVideo(videoIds[5] || "");
     const clips6 = useClipsByVideo(videoIds[6] || "");
-    const clips7 = useClipsByVideo(videoIds[7] || "", !!videoIds[7]);
-    const clips8 = useClipsByVideo(videoIds[8] || "", !!videoIds[8]);
-    const clips9 = useClipsByVideo(videoIds[9] || "", !!videoIds[9]);
+    const clips7 = useClipsByVideo(videoIds[7] || "");
+    const clips8 = useClipsByVideo(videoIds[8] || "");
+    const clips9 = useClipsByVideo(videoIds[9] || "");
 
     // Collect all clips
     const allClipsData = [

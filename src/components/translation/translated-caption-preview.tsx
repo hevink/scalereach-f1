@@ -60,7 +60,7 @@ export function TranslatedCaptionPreview({
         <Select
           value={selectedLanguage || "original"}
           onValueChange={(v) =>
-            setSelectedLanguage(v === "original" ? undefined : v)
+            setSelectedLanguage(v === "original" ? undefined : (v || undefined))
           }
         >
           <SelectTrigger className="h-7 w-40 text-xs">
