@@ -154,7 +154,8 @@ function CaptionOverlay({ caption, style, currentTime }: CaptionOverlayProps) {
             let wordClassName = "inline-block transition-all duration-150";
             const isScaled = (style.highlightEnabled && isCurrentWord) ||
                 (style.animation === "karaoke" && isCurrentWord) ||
-                (style.animation === "word-by-word" && isCurrentWord && style.highlightEnabled);
+                (style.animation === "word-by-word" && isCurrentWord && style.highlightEnabled) ||
+                (style.animation === "bounce" && isCurrentWord);
             const scaleMargin = isScaled ? `0 ${Math.round((highlightScale - 1) * (style.fontSize || 24) * 0.5)}px` : "0 2px";
             const wordStyle: React.CSSProperties = {
                 textShadow,
@@ -175,7 +176,11 @@ function CaptionOverlay({ caption, style, currentTime }: CaptionOverlayProps) {
                             ? `drop-shadow(0 0 ${style.glowIntensity ?? 2}px ${style.glowColor || style.highlightColor || "#FFD700"})`
                             : undefined;
                     }
-                    wordClassName += isPastWord || isCurrentWord ? " opacity-100" : " opacity-30";
+                    // Hide future words in word-by-word mode
+                    if (!isPastWord && !isCurrentWord) {
+                        return null;
+                    }
+                    wordClassName += " opacity-100";
                     break;
                 case "karaoke":
                     if (isCurrentWord) {
@@ -188,21 +193,39 @@ function CaptionOverlay({ caption, style, currentTime }: CaptionOverlayProps) {
                     break;
                 case "bounce":
                     if (isCurrentWord) {
-                        wordClassName += " animate-bounce";
+                        // Calculate bounce scale based on word timing
+                        const wordProgress = (currentTime - word.start) / (word.end - word.start);
+                        const bounceProgress = Math.min(wordProgress * 5, 1);
+                        let bounceScale = 1;
+                        if (bounceProgress < 0.5) {
+                            bounceScale = 1 + (highlightScale - 1) * 0.92 * (bounceProgress * 2);
+                        } else {
+                            bounceScale = 1 + (highlightScale - 1) * 0.92 * (2 - bounceProgress * 2);
+                        }
+                        wordStyle.transform = `scale(${bounceScale})`;
                         if (style.highlightEnabled) {
                             wordStyle.color = style.highlightColor || "#FFD700";
                         }
                     }
                     break;
                 case "fade":
-                    wordClassName += isPastWord || isCurrentWord ? " opacity-100" : " opacity-0";
+                    // Calculate fade opacity
+                    if (isCurrentWord) {
+                        const wordProgress = (currentTime - word.start) / (word.end - word.start);
+                        const fadeOpacity = Math.min(wordProgress * 5, 1);
+                        wordStyle.opacity = fadeOpacity;
+                    } else if (isPastWord) {
+                        wordStyle.opacity = 1;
+                    } else {
+                        wordStyle.opacity = 0;
+                    }
                     break;
                 default:
                     break;
             }
 
             // Apply highlight for non-animated highlight
-            if (shouldHighlight && style.animation !== "karaoke" && style.animation !== "word-by-word") {
+            if (shouldHighlight && style.animation !== "karaoke" && style.animation !== "word-by-word" && style.animation !== "bounce") {
                 wordStyle.color = style.highlightColor || "#FFD700";
                 wordStyle.transform = `scale(${highlightScale})`;
             }
@@ -229,7 +252,7 @@ function CaptionOverlay({ caption, style, currentTime }: CaptionOverlayProps) {
             data-testid="caption-overlay"
         >
             <div
-                className="inline-block px-3 py-2 rounded-md max-w-[90%]"
+                className="inline-block px-3 py-2 rounded-md"
                 style={{
                     fontFamily: style.fontFamily,
                     fontSize: `${style.fontSize}px`,
@@ -242,6 +265,7 @@ function CaptionOverlay({ caption, style, currentTime }: CaptionOverlayProps) {
                         : undefined,
                     paintOrder: "stroke fill",
                     textTransform: style.textTransform === "uppercase" ? "uppercase" : "none",
+                    maxWidth: `${style.maxWidth ?? 90}%`,
                 }}
             >
                 {style.animation === "none" ? caption.text : renderWords()}

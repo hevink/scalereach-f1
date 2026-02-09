@@ -115,7 +115,24 @@ export function VideoPreviewWithCaptions({
   }
 
   const position = style?.position || "bottom";
-  const isKaraoke = style?.highlightEnabled;
+  const animation = style?.animation || "none";
+  const isKaraoke = animation === "karaoke";
+  const isWordByWord = animation === "word-by-word";
+  const isBounce = animation === "bounce";
+  const isFade = animation === "fade";
+
+  // For word-by-word, only show words up to current (cumulative display)
+  const displayWords = useMemo(() => {
+    if (isWordByWord) {
+      const currentIndex = words.findIndex((w) => w.id === currentWordId);
+      if (currentIndex === -1) return [];
+      // Show all words from start up to and including current word
+      return words.slice(0, currentIndex + 1).filter((w) =>
+        visibleWords.some((vw) => vw.id === w.id)
+      );
+    }
+    return visibleWords;
+  }, [isWordByWord, visibleWords, currentWordId, words]);
 
   return (
     <div className={cn("relative rounded-lg overflow-hidden bg-black", className)}>
@@ -142,16 +159,25 @@ export function VideoPreviewWithCaptions({
           )}
         >
           <div
-            className="flex flex-wrap justify-center gap-x-2 gap-y-1"
-            style={{ textAlign: style.alignment || "center" }}
+            className="flex flex-wrap justify-center gap-x-2 gap-y-1 mx-auto"
+            style={{
+              textAlign: style.alignment || "center",
+              maxWidth: `${style.maxWidth ?? 90}%`,
+            }}
           >
-            {visibleWords.map((word) => {
+            {displayWords.map((word) => {
               const isCurrent = word.id === currentWordId;
               const isPast = word.end < currentTime;
               const outlineWidth = style.outlineWidth ?? 3;
               const highlightScale = (style.highlightScale ?? 125) / 100;
-              const isScaled = isKaraoke && isCurrent;
-              const scaleMargin = isScaled ? `0 ${Math.round((highlightScale - 1) * (style.fontSize || 24) * 0.5)}px` : "0 2px";
+
+              // Determine if word should be scaled based on animation type
+              const shouldScale =
+                (isKaraoke && isCurrent && style.highlightEnabled) ||
+                (isWordByWord && isCurrent && style.highlightEnabled) ||
+                (isBounce && isCurrent);
+
+              const scaleMargin = shouldScale ? `0 ${Math.round((highlightScale - 1) * (style.fontSize || 24) * 0.5)}px` : "0 2px";
 
               // Build text shadow to match ASS rendering
               const textShadow = style.shadow
@@ -161,21 +187,62 @@ export function VideoPreviewWithCaptions({
                 : `0 0 ${outlineWidth}px ${style.outlineColor || "#000000"},
                    0 0 ${outlineWidth * 2}px ${style.outlineColor || "#000000"}`;
 
+              // Determine color based on animation and highlight
+              let wordColor = style.textColor || "#FFFFFF";
+              if (isCurrent) {
+                if ((isKaraoke || isWordByWord) && style.highlightEnabled && style.highlightColor) {
+                  wordColor = style.highlightColor;
+                } else if (isBounce && style.highlightEnabled && style.highlightColor) {
+                  wordColor = style.highlightColor;
+                }
+              }
+
+              // For bounce animation, calculate scale based on word timing
+              let bounceScale = 1;
+              if (isBounce && isCurrent) {
+                const wordProgress = (currentTime - word.start) / (word.end - word.start);
+                const bounceProgress = Math.min(wordProgress * 5, 1); // First 20% of word duration
+                if (bounceProgress < 0.5) {
+                  // Scale up (0 to 0.5)
+                  bounceScale = 1 + (highlightScale - 1) * 0.92 * (bounceProgress * 2);
+                } else {
+                  // Scale down (0.5 to 1)
+                  bounceScale = 1 + (highlightScale - 1) * 0.92 * (2 - bounceProgress * 2);
+                }
+              }
+
+              // For fade animation, calculate opacity
+              let fadeOpacity = 1;
+              if (isFade) {
+                if (isCurrent) {
+                  const wordProgress = (currentTime - word.start) / (word.end - word.start);
+                  fadeOpacity = Math.min(wordProgress * 5, 1); // Fade in over first 20%
+                } else if (isPast) {
+                  fadeOpacity = 1;
+                } else {
+                  fadeOpacity = 0;
+                }
+              }
+
               return (
                 <span
                   key={word.id}
-                  className="transition-all duration-150 inline-block"
+                  className={cn(
+                    "inline-block",
+                    (isKaraoke || isWordByWord || isBounce || isFade) && "transition-all duration-150"
+                  )}
                   style={{
                     fontFamily: style.fontFamily || "sans-serif",
                     fontSize: `${style.fontSize || 24}px`,
                     fontWeight: 700,
                     margin: scaleMargin,
-                    color:
-                      isCurrent && isKaraoke && style.highlightColor
-                        ? style.highlightColor
-                        : style.textColor || "#FFFFFF",
-                    transform: isKaraoke && isCurrent ? `scale(${highlightScale})` : "scale(1)",
-                    opacity: isPast ? 0.7 : 1,
+                    color: wordColor,
+                    transform: isBounce && isCurrent
+                      ? `scale(${bounceScale})`
+                      : shouldScale
+                        ? `scale(${highlightScale})`
+                        : "scale(1)",
+                    opacity: isFade ? fadeOpacity : (isPast && !isWordByWord ? 0.7 : 1),
                     WebkitTextStroke: style.outline
                       ? `${outlineWidth}px ${style.outlineColor || "#000000"}`
                       : undefined,

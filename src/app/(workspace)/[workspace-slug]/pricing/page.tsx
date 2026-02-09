@@ -66,8 +66,8 @@ const plans: Record<string, Plan> = {
             "Unlimited Editing",
         ],
         featured: false,
-        dodoProductIdMonthly: "pdt_0NXOu8euwYE6EmEoLs6eQ",
-        dodoProductIdYearly: "pdt_starter_yearly",
+        dodoProductIdMonthly: "pdt_0NY6k5d7b4MxSsVM7KzEV",
+        dodoProductIdYearly: "pdt_0NY6kJuPXxJUv7SFNbQOB",
     },
     pro: {
         name: "Pro",
@@ -84,8 +84,8 @@ const plans: Record<string, Plan> = {
             "Unlimited Editing",
         ],
         featured: true,
-        dodoProductIdMonthly: "pdt_pro_monthly",
-        dodoProductIdYearly: "pdt_pro_yearly",
+        dodoProductIdMonthly: "pdt_0NY6llF7a0oFiFsaeVOW7",
+        dodoProductIdYearly: "pdt_0NY6lyuXXpnq6BWWOeDTy",
     },
 };
 
@@ -129,7 +129,8 @@ function PricingCard({
     onSelect,
     isLoading,
     loadingPlanId,
-    isCurrentPlan,
+    isCurrentPlanAndCycle,
+    getButtonText,
 }: {
     planKey: string;
     plan: Plan;
@@ -138,11 +139,14 @@ function PricingCard({
     onSelect: (planId: string, productId: string) => void;
     isLoading: boolean;
     loadingPlanId: string | null;
-    isCurrentPlan: boolean;
+    isCurrentPlanAndCycle: (planKey: string) => boolean;
+    getButtonText: (planKey: string, isThisLoading: boolean) => string;
 }) {
     const price = period === "monthly" ? plan.monthly : plan.annually;
     const productId = period === "annually" ? plan.dodoProductIdYearly : plan.dodoProductIdMonthly;
     const isThisLoading = isLoading && loadingPlanId === planKey;
+    const isCurrentCombination = isCurrentPlanAndCycle(planKey);
+    const buttonText = getButtonText(planKey, isThisLoading);
 
     return (
         <motion.div
@@ -195,7 +199,7 @@ function PricingCard({
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
                 onClick={() => onSelect(planKey, productId)}
-                disabled={isLoading || isCurrentPlan || plan.monthly === 0}
+                disabled={isLoading || isCurrentCombination || plan.monthly === 0}
                 className={`cursor-pointer inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium transition-colors h-9 px-4 py-2 w-full disabled:opacity-50 disabled:cursor-not-allowed ${plan.featured
                     ? "shadow-md border-[0.5px] border-white/10 shadow-black/15 bg-primary text-primary-foreground hover:bg-primary/90"
                     : "shadow-sm shadow-black/15 border border-transparent bg-card ring-1 ring-foreground/10 hover:bg-muted/50"
@@ -204,14 +208,10 @@ function PricingCard({
                 {isThisLoading ? (
                     <>
                         <Loader2 className="size-4 animate-spin" />
-                        Processing...
+                        {buttonText}
                     </>
-                ) : isCurrentPlan ? (
-                    "Current Plan"
-                ) : plan.monthly === 0 ? (
-                    "Start for free"
                 ) : (
-                    "Sign in & subscribe"
+                    buttonText
                 )}
             </motion.button>
 
@@ -301,6 +301,43 @@ export default function WorkspacePricingPage() {
     const [loadingPlanId, setLoadingPlanId] = useState<string | null>(null);
 
     const currentPlanId = workspace?.plan ?? "free";
+    const currentBillingCycle = workspace?.billingCycle; // 'monthly' | 'annual' | null
+
+    // Determine if user is on current plan + billing cycle combination
+    const isCurrentPlanAndCycle = (planKey: string) => {
+        if (planKey === "free") return currentPlanId === "free";
+        if (planKey !== currentPlanId) return false;
+
+        // Check billing cycle match
+        const cycleMatch = period === "annually"
+            ? currentBillingCycle === "annual"
+            : currentBillingCycle === "monthly";
+
+        return cycleMatch;
+    };
+
+    // Determine button text based on plan relationship
+    const getButtonText = (planKey: string, isThisLoading: boolean) => {
+        if (isThisLoading) return "Processing...";
+        if (planKey === "free") return "Start for free";
+
+        const isCurrentCombination = isCurrentPlanAndCycle(planKey);
+        if (isCurrentCombination) return "Current Plan";
+
+        // Check if it's an upgrade, downgrade, or cycle switch
+        const planOrder = { free: 0, starter: 1, pro: 2 };
+        const currentOrder = planOrder[currentPlanId as keyof typeof planOrder] || 0;
+        const targetOrder = planOrder[planKey as keyof typeof planOrder] || 0;
+
+        if (planKey === currentPlanId) {
+            // Same plan, different cycle
+            return period === "annually" ? "Switch to Annual" : "Switch to Monthly";
+        } else if (targetOrder > currentOrder) {
+            return "Upgrade Plan";
+        } else {
+            return "Downgrade Plan";
+        }
+    };
 
     // Track pricing page view
     useEffect(() => {
@@ -439,7 +476,8 @@ export default function WorkspacePricingPage() {
                                         onSelect={handleSelectPlan}
                                         isLoading={isLoading}
                                         loadingPlanId={loadingPlanId}
-                                        isCurrentPlan={key === currentPlanId}
+                                        isCurrentPlanAndCycle={isCurrentPlanAndCycle}
+                                        getButtonText={getButtonText}
                                     />
                                 ))}
                             </div>

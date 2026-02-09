@@ -422,29 +422,15 @@ export function TranscriptParagraphView({
                                                         onClick={() => handleWordClick(word)}
                                                         data-segment-id={segment.id}
                                                         data-word-id={`word-${segIdx}-${wordIdx}`}
-                                                        className="cursor-pointer relative inline-block"
+                                                        className={cn(
+                                                            "cursor-pointer transition-colors duration-200",
+                                                            highlightCurrent && isCurrentWord
+                                                                ? "bg-secondary rounded px-0.5 py-1"
+                                                                : "hover:text-gray-300"
+                                                        )}
                                                         title={`${formatTimestamp(word.start)} - ${formatTimestamp(word.end)}`}
                                                     >
-                                                        {/* Highlight background */}
-                                                        {highlightCurrent && isCurrentWord && (
-                                                            <div
-                                                                className="bg-secondary"
-                                                                style={{
-                                                                    borderRadius: "4px",
-                                                                    position: "absolute",
-                                                                    top: "-4px",
-                                                                    left: "0px",
-                                                                    width: "100%",
-                                                                    height: "calc(100% + 8px)",
-                                                                }}
-                                                            />
-                                                        )}
-                                                        <span className={cn(
-                                                            "relative z-10 transition-colors duration-200",
-                                                            !isCurrentWord && "hover:text-gray-300"
-                                                        )}>
-                                                            {word.word}
-                                                        </span>
+                                                        {word.word}
                                                     </span>
                                                 );
                                             }).reduce((prev, curr) => (

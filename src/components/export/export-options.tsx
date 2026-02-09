@@ -7,6 +7,7 @@ import {
   IconDeviceTv,
   IconDownload,
   IconFile,
+  IconLoader2,
   IconVolume,
 } from "@tabler/icons-react";
 import { useCallback, useMemo, useState } from "react";
@@ -446,8 +447,12 @@ export function ExportOptions({
           disabled={isExportDisabled}
           onClick={handleExport}
         >
-          <IconDownload className="size-4" data-icon="inline-start" />
-          Export Clip
+          {disabled ? (
+            <IconLoader2 className="size-4 animate-spin" />
+          ) : (
+            <IconDownload className="size-4" data-icon="inline-start" />
+          )}
+          {disabled ? "Exporting..." : "Export Clip"}
         </Button>
       </CardFooter>
     </Card>

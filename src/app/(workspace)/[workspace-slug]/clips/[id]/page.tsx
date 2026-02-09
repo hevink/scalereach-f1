@@ -186,6 +186,8 @@ interface EditorHeaderProps {
     workspaceSlug: string;
     videoId?: string;
     videoTitle?: string;
+    hasUnsavedChanges?: boolean;
+    onSave?: () => void;
 }
 
 /**
@@ -200,6 +202,8 @@ function EditorHeader({
     workspaceSlug,
     videoId,
     videoTitle,
+    hasUnsavedChanges = false,
+    onSave,
 }: EditorHeaderProps) {
     return (
         <div className="flex flex-col gap-2 px-4 py-3">
@@ -257,24 +261,29 @@ function EditorHeader({
                             Saving...
                         </Badge>
                     )}
+                    {hasUnsavedChanges && !isSaving && (
+                        <Badge variant="outline" className="gap-1 text-yellow-500 border-yellow-500">
+                            Unsaved changes
+                        </Badge>
+                    )}
                 </div>
                 <div className="flex items-center gap-2">
+                    {hasUnsavedChanges && onSave && (
+                        <Button
+                            onClick={onSave}
+                            variant="outline"
+                            disabled={isSaving}
+                            className="gap-2"
+                        >
+                            Save
+                        </Button>
+                    )}
                     <Button
                         onClick={onExportClick}
-                        disabled={hasActiveExport}
                         className="gap-2"
                     >
-                        {hasActiveExport ? (
-                            <>
-                                <IconLoader className="size-4 animate-spin" />
-                                Exporting...
-                            </>
-                        ) : (
-                            <>
-                                <IconDownload className="size-4" />
-                                Export
-                            </>
-                        )}
+                        <IconDownload className="size-4" />
+                        {hasUnsavedChanges ? "Save & Export" : "Export"}
                     </Button>
                 </div>
             </div>
@@ -297,6 +306,7 @@ interface ExportDialogProps {
     onExport: (options: ExportOptionsType) => void;
     onExportComplete: (downloadUrl: string) => void;
     onExportError: (error: string) => void;
+    onReset: () => void;
     isExporting: boolean;
 }
 
@@ -311,6 +321,7 @@ function ExportDialog({
     onExport,
     onExportComplete,
     onExportError,
+    onReset,
     isExporting,
 }: ExportDialogProps) {
     return (
@@ -324,11 +335,20 @@ function ExportDialog({
                 </DialogHeader>
                 <div className="grid gap-6 py-4">
                     {activeExportId ? (
-                        <ExportProgress
-                            exportId={activeExportId}
-                            onComplete={onExportComplete}
-                            onError={onExportError}
-                        />
+                        <div className="flex flex-col gap-4">
+                            <ExportProgress
+                                exportId={activeExportId}
+                                onComplete={onExportComplete}
+                                onError={onExportError}
+                            />
+                            <Button
+                                variant="outline"
+                                onClick={onReset}
+                                className="w-full"
+                            >
+                                Export Again
+                            </Button>
+                        </div>
                     ) : (
                         <ExportOptions
                             onExport={onExport}
@@ -382,6 +402,10 @@ export default function ClipEditorPage({ params }: ClipEditorPageProps) {
     const [clipBoundaries, setClipBoundaries] = useState<{ start: number; end: number } | null>(null);
     // Local captions state for optimistic UI updates during real-time editing
     const [localCaptions, setLocalCaptions] = useState<Caption[] | null>(null);
+    // Track unsaved changes
+    const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
+    const [showUnsavedDialog, setShowUnsavedDialog] = useState(false);
+    const [pendingNavigation, setPendingNavigation] = useState<(() => void) | null>(null);
 
     // Undo/redo state management for caption text edits
     const {
@@ -592,17 +616,30 @@ export default function ClipEditorPage({ params }: ClipEditorPageProps) {
 
     // Navigation handlers
     /**
-     * Handle back navigation with scroll position preservation
+     * Handle back navigation with unsaved changes check
      */
     const handleBack = useCallback(() => {
-        // Save scroll position for the video clips page before navigating
-        if (clip?.videoId) {
-            savePageScrollPosition(`video_clips_${clip.videoId}`);
-            router.push(`/${slug}/videos/${clip.videoId}/clips`);
+        if (hasUnsavedChanges) {
+            setPendingNavigation(() => () => {
+                // Save scroll position for the video clips page before navigating
+                if (clip?.videoId) {
+                    savePageScrollPosition(`video_clips_${clip.videoId}`);
+                    router.push(`/${slug}/videos/${clip.videoId}/clips`);
+                } else {
+                    router.push(`/${slug}`);
+                }
+            });
+            setShowUnsavedDialog(true);
         } else {
-            router.push(`/${slug}`);
+            // Save scroll position for the video clips page before navigating
+            if (clip?.videoId) {
+                savePageScrollPosition(`video_clips_${clip.videoId}`);
+                router.push(`/${slug}/videos/${clip.videoId}/clips`);
+            } else {
+                router.push(`/${slug}`);
+            }
         }
-    }, [router, slug, clip?.videoId]);
+    }, [router, slug, clip?.videoId, hasUnsavedChanges]);
 
     // Video time update handler
     const handleTimeUpdate = useCallback((time: number) => {
@@ -686,7 +723,7 @@ export default function ClipEditorPage({ params }: ClipEditorPageProps) {
 
     /**
      * Handle manual style changes (not from preset selection)
-     * Saves immediately to the server
+     * Marks changes as unsaved instead of auto-saving
      */
     const handleStyleChange = useCallback(
         (newStyle: CaptionStyle | Partial<CaptionStyle>) => {
@@ -696,25 +733,19 @@ export default function ClipEditorPage({ params }: ClipEditorPageProps) {
             // Update local state immediately for responsive UI
             setCaptionStyle(mergedStyle);
 
+            // Mark as unsaved
+            setHasUnsavedChanges(true);
+
             // Clear the selected preset since user is manually editing
             clearSelectedPreset();
             setCurrentPresetId(undefined);
-
-            // Save the style as last used (without preset association)
-            saveLastUsedStyle(mergedStyle);
-
-            // Save immediately to server
-            updateCaptionStyle.mutate({
-                clipId,
-                style: mergedStyle,
-            });
         },
-        [clipId, captionStyle, updateCaptionStyle, clearSelectedPreset, saveLastUsedStyle]
+        [captionStyle, clearSelectedPreset]
     );
 
     /**
      * Handle preset selection
-     * Applies all style properties from the selected preset and saves immediately
+     * Marks changes as unsaved instead of auto-saving
      */
     const handlePresetSelect = useCallback(
         (presetId: string, presetStyle: CaptionStyle) => {
@@ -722,17 +753,13 @@ export default function ClipEditorPage({ params }: ClipEditorPageProps) {
             setCaptionStyle(presetStyle);
             setCurrentPresetId(presetId);
 
+            // Mark as unsaved
+            setHasUnsavedChanges(true);
+
             // Use the hook's applyPreset to handle localStorage persistence
             applyPreset(presetId);
-
-            // Save immediately to server
-            updateCaptionStyle.mutate({
-                clipId,
-                style: presetStyle,
-                templateId: presetId,
-            });
         },
-        [clipId, updateCaptionStyle, applyPreset]
+        [applyPreset]
     );
 
     // Timeline boundary change handler
@@ -750,16 +777,65 @@ export default function ClipEditorPage({ params }: ClipEditorPageProps) {
         [clipId, updateClipBoundaries]
     );
 
+    /**
+     * Handle save action - saves all pending changes (caption style and clip boundaries)
+     * Triggered by Ctrl+S / Cmd+S keyboard shortcut or Save & Export button
+     * @validates Requirements 14.4 - Ctrl+S (or Cmd+S on Mac) saves all pending changes
+     */
+    const handleSave = useCallback(async () => {
+        const promises: Promise<any>[] = [];
+
+        // Save caption style if there are changes
+        if (captionStyle) {
+            promises.push(
+                updateCaptionStyle.mutateAsync({
+                    clipId,
+                    style: captionStyle,
+                    templateId: currentPresetId,
+                })
+            );
+
+            // Save the style as last used
+            saveLastUsedStyle(captionStyle, currentPresetId);
+        }
+
+        // Save clip boundaries if there are changes
+        if (clipBoundaries) {
+            promises.push(
+                updateClipBoundaries.mutateAsync({
+                    clipId,
+                    boundaries: {
+                        startTime: clipBoundaries.start,
+                        endTime: clipBoundaries.end,
+                    },
+                })
+            );
+        }
+
+        await Promise.all(promises);
+
+        // Clear unsaved changes flag
+        setHasUnsavedChanges(false);
+    }, [clipId, captionStyle, currentPresetId, clipBoundaries, updateCaptionStyle, updateClipBoundaries, saveLastUsedStyle]);
+
     // Export handler
     const handleExport = useCallback(
-        (options: ExportOptionsType) => {
+        async (options: ExportOptionsType) => {
+            // Save changes before exporting and wait for them to complete
+            try {
+                await handleSave();
+            } catch (e) {
+                console.error("Failed to save before export:", e);
+                // Continue with export anyway — backend will use whatever is in DB
+            }
+
             initiateExport.mutate(
                 {
                     clipId,
                     options: {
                         format: options.format as "mp4" | "mov",
                         resolution: options.resolution as "720p" | "1080p" | "4k",
-                        captionStyleId: captionData?.templateId ?? undefined,
+                        captionStyleId: currentPresetId ?? undefined,
                     },
                 },
                 {
@@ -769,46 +845,20 @@ export default function ClipEditorPage({ params }: ClipEditorPageProps) {
                 }
             );
         },
-        [clipId, captionData?.templateId, initiateExport]
+        [clipId, currentPresetId, initiateExport, handleSave]
     );
 
-    // Export completion handler
+    // Export completion handler — keep progress view so user can see download button
     const handleExportComplete = useCallback((downloadUrl: string) => {
         console.log("Export complete:", downloadUrl);
-        setActiveExportId(null);
+        // Don't clear activeExportId — ExportProgress shows the completed state with download button
     }, []);
 
-    // Export error handler
+    // Export error handler — keep progress view so user can see error and retry
     const handleExportError = useCallback((error: string) => {
         console.error("Export error:", error);
-        setActiveExportId(null);
+        // Don't clear activeExportId — ExportProgress shows the error with retry option
     }, []);
-
-    /**
-     * Handle save action - saves all pending changes (caption style and clip boundaries)
-     * Triggered by Ctrl+S / Cmd+S keyboard shortcut
-     * @validates Requirements 14.4 - Ctrl+S (or Cmd+S on Mac) saves all pending changes
-     */
-    const handleSave = useCallback(() => {
-        // Save caption style if there are changes
-        if (captionStyle) {
-            updateCaptionStyle.mutate({
-                clipId,
-                style: captionStyle,
-            });
-        }
-
-        // Save clip boundaries if there are changes
-        if (clipBoundaries) {
-            updateClipBoundaries.mutate({
-                clipId,
-                boundaries: {
-                    startTime: clipBoundaries.start,
-                    endTime: clipBoundaries.end,
-                },
-            });
-        }
-    }, [clipId, captionStyle, clipBoundaries, updateCaptionStyle, updateClipBoundaries]);
 
     /**
      * Handle Escape key - close export dialog or exit fullscreen
@@ -1038,6 +1088,8 @@ export default function ClipEditorPage({ params }: ClipEditorPageProps) {
                         workspaceSlug={slug}
                         videoId={clip.videoId}
                         videoTitle={video?.title ?? undefined}
+                        hasUnsavedChanges={hasUnsavedChanges}
+                        onSave={handleSave}
                     />
                 }
             >
@@ -1145,6 +1197,7 @@ export default function ClipEditorPage({ params }: ClipEditorPageProps) {
                 onExport={handleExport}
                 onExportComplete={handleExportComplete}
                 onExportError={handleExportError}
+                onReset={() => setActiveExportId(null)}
                 isExporting={initiateExport.isPending}
             />
 
@@ -1153,6 +1206,57 @@ export default function ClipEditorPage({ params }: ClipEditorPageProps) {
                 open={shortcutsModalOpen}
                 onOpenChange={setShortcutsModalOpen}
             />
+
+            {/* Unsaved Changes Dialog */}
+            <Dialog open={showUnsavedDialog} onOpenChange={setShowUnsavedDialog}>
+                <DialogContent>
+                    <DialogHeader>
+                        <DialogTitle>Unsaved Changes</DialogTitle>
+                        <DialogDescription>
+                            You have unsaved changes. Do you want to save them before leaving?
+                        </DialogDescription>
+                    </DialogHeader>
+                    <div className="flex justify-end gap-2 mt-4">
+                        <Button
+                            variant="outline"
+                            onClick={() => {
+                                setShowUnsavedDialog(false);
+                                setHasUnsavedChanges(false);
+                                if (pendingNavigation) {
+                                    pendingNavigation();
+                                    setPendingNavigation(null);
+                                }
+                            }}
+                        >
+                            Discard Changes
+                        </Button>
+                        <Button
+                            variant="outline"
+                            onClick={() => {
+                                setShowUnsavedDialog(false);
+                                setPendingNavigation(null);
+                            }}
+                        >
+                            Cancel
+                        </Button>
+                        <Button
+                            onClick={() => {
+                                handleSave();
+                                setShowUnsavedDialog(false);
+                                // Wait for save to complete before navigating
+                                setTimeout(() => {
+                                    if (pendingNavigation) {
+                                        pendingNavigation();
+                                        setPendingNavigation(null);
+                                    }
+                                }, 500);
+                            }}
+                        >
+                            Save & Leave
+                        </Button>
+                    </div>
+                </DialogContent>
+            </Dialog>
         </>
     );
 }

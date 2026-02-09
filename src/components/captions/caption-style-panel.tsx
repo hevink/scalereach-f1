@@ -603,6 +603,18 @@ export function CaptionStylePanel({
           options={ALIGNMENT_OPTIONS}
           value={localStyle.alignment ?? "center"}
         />
+
+        {/* Max Width Slider */}
+        <LabeledSlider
+          disabled={disabled}
+          label="Max Width"
+          max={100}
+          min={20}
+          onChange={(value) => updateStyle("maxWidth", value)}
+          step={1}
+          unit="%"
+          value={localStyle.maxWidth ?? 90}
+        />
       </div>
 
       {/* Effects Section */}

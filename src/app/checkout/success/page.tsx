@@ -2,9 +2,9 @@
 
 import { Suspense, useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { IconCircleCheck } from "@tabler/icons-react";
 import { Button } from "@/components/ui/button";
 import Confetti from "react-confetti";
+import { DotLottieReact } from "@lottiefiles/dotlottie-react";
 
 function CheckoutSuccessContent() {
   const router = useRouter();
@@ -45,8 +45,12 @@ function CheckoutSuccessContent() {
 
       <div className="max-w-md w-full mx-auto p-8 text-center">
         <div className="flex justify-center mb-6">
-          <div className="size-20 rounded-full bg-emerald-500/10 flex items-center justify-center">
-            <IconCircleCheck className="size-12 text-emerald-500" />
+          <div className="size-32">
+            <DotLottieReact
+              src="/Success Animation.lottie"
+              loop={false}
+              autoplay
+            />
           </div>
         </div>
 

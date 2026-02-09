@@ -45,7 +45,11 @@ export function CaptionLivePreview({
     );
   }
 
-  const isKaraoke = style.animation === "karaoke" || style.animation === "word-by-word";
+  const animation = style.animation || "none";
+  const isKaraoke = animation === "karaoke";
+  const isWordByWord = animation === "word-by-word";
+  const isBounce = animation === "bounce";
+  const isFade = animation === "fade";
   const position = style.position || "bottom";
   const outlineWidth = style.outlineWidth ?? 3;
   const highlightScale = (style.highlightScale ?? 125) / 100;
@@ -75,16 +79,61 @@ export function CaptionLivePreview({
         )}
         style={{
           textAlign: style.alignment || "center",
+          maxWidth: `${style.maxWidth ?? 90}%`,
+          margin: "0 auto",
         }}
       >
-        {visibleWords.map((word) => {
+        {visibleWords.map((word, index) => {
           const isCurrent = word.id === currentWordId;
           const isPast = word.end < currentTime;
 
           // Calculate font size for preview (scaled down)
           const baseFontSize = Math.min((style.fontSize || 24) * 0.5, 24);
-          const isScaled = isKaraoke && isCurrent;
-          const scaleMargin = isScaled ? `0 ${Math.round((highlightScale - 1) * baseFontSize * 0.5)}px` : "0 2px";
+
+          // Determine if word should be scaled
+          const shouldScale =
+            ((isKaraoke || isWordByWord) && isCurrent && style.highlightEnabled) ||
+            (isBounce && isCurrent);
+
+          const scaleMargin = shouldScale ? `0 ${Math.round((highlightScale - 1) * baseFontSize * 0.5)}px` : "0 2px";
+
+          // Determine color based on animation and highlight
+          let wordColor = style.textColor || "#FFFFFF";
+          if (isCurrent) {
+            if ((isKaraoke || isWordByWord || isBounce) && style.highlightEnabled && style.highlightColor) {
+              wordColor = style.highlightColor;
+            }
+          }
+
+          // For bounce animation, calculate scale based on word timing
+          let bounceScale = 1;
+          if (isBounce && isCurrent) {
+            const wordProgress = (currentTime - word.start) / (word.end - word.start);
+            const bounceProgress = Math.min(wordProgress * 5, 1);
+            if (bounceProgress < 0.5) {
+              bounceScale = 1 + (highlightScale - 1) * 0.92 * (bounceProgress * 2);
+            } else {
+              bounceScale = 1 + (highlightScale - 1) * 0.92 * (2 - bounceProgress * 2);
+            }
+          }
+
+          // For fade animation, calculate opacity
+          let fadeOpacity = 1;
+          if (isFade) {
+            if (isCurrent) {
+              const wordProgress = (currentTime - word.start) / (word.end - word.start);
+              fadeOpacity = Math.min(wordProgress * 5, 1);
+            } else if (isPast) {
+              fadeOpacity = 1;
+            } else {
+              fadeOpacity = 0;
+            }
+          }
+
+          // For word-by-word, hide future words
+          if (isWordByWord && !isCurrent && !isPast) {
+            return null;
+          }
 
           return (
             <span
@@ -97,11 +146,13 @@ export function CaptionLivePreview({
                 fontSize: `${baseFontSize}px`,
                 fontWeight: 700,
                 margin: scaleMargin,
-                color: isCurrent && style.highlightEnabled && style.highlightColor
-                  ? style.highlightColor
-                  : style.textColor || "#FFFFFF",
-                transform: isKaraoke && isCurrent ? `scale(${highlightScale})` : "scale(1)",
-                opacity: isPast ? 0.6 : 1,
+                color: wordColor,
+                transform: isBounce && isCurrent
+                  ? `scale(${bounceScale})`
+                  : shouldScale
+                    ? `scale(${highlightScale})`
+                    : "scale(1)",
+                opacity: isFade ? fadeOpacity : (isPast && !isWordByWord ? 0.6 : 1),
                 textShadow,
                 WebkitTextStroke: style.outline
                   ? `${Math.max(1, outlineWidth * 0.5)}px ${style.outlineColor || "#000000"}`

@@ -150,6 +150,7 @@ export function DraggableCaption({
         left: `${position.x}%`,
         top: `${position.y}%`,
         transform: "translate(-50%, -50%)",
+        maxWidth: `${style.maxWidth ?? 90}%`,
       }}
       onMouseDown={handleMouseDown}
       onDoubleClick={handleDoubleClick}

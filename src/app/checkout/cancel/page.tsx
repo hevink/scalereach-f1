@@ -2,8 +2,9 @@
 
 import { Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { IconXboxX, IconArrowLeft, IconRefresh } from "@tabler/icons-react";
+import { IconArrowLeft, IconRefresh } from "@tabler/icons-react";
 import { Button } from "@/components/ui/button";
+import { DotLottieReact } from "@lottiefiles/dotlottie-react";
 
 function CheckoutCancelContent() {
   const router = useRouter();
@@ -30,8 +31,12 @@ function CheckoutCancelContent() {
     <div className="min-h-screen flex items-center justify-center bg-background">
       <div className="max-w-md w-full mx-auto p-8 text-center">
         <div className="flex justify-center mb-6">
-          <div className="size-20 rounded-full bg-red-500/10 flex items-center justify-center">
-            <IconXboxX className="size-12 text-red-500" />
+          <div className="size-32">
+            <DotLottieReact
+              src="/cancel animation.lottie"
+              loop={false}
+              autoplay
+            />
           </div>
         </div>
 
