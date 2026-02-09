@@ -18,6 +18,8 @@ import {
     IconAspectRatio,
     IconFlame,
     IconCalendar,
+    IconFileText,
+    IconWand,
 } from "@tabler/icons-react";
 
 import { Button } from "@/components/ui/button";
@@ -314,14 +316,14 @@ function ClipCard({ clip, index, onEdit, onFavorite, onDownload, onShare }: Clip
                                 <video
                                     src={clip.storageUrl}
                                     poster={clip.thumbnailUrl}
-                                    className="h-full w-full object-cover"
+                                    className="h-full w-full object-contain"
                                     controls
                                 />
                             ) : clip.thumbnailUrl ? (
                                 <img
                                     src={clip.thumbnailUrl}
                                     alt={clip.title}
-                                    className="h-full w-full object-cover"
+                                    className="h-full w-full object-contain"
                                 />
                             ) : (
                                 <div className="flex h-full w-full items-center justify-center">
@@ -336,11 +338,11 @@ function ClipCard({ clip, index, onEdit, onFavorite, onDownload, onShare }: Clip
                         <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as "transcript" | "description")}>
                             <TabsList className="mb-3">
                                 <TabsTrigger value="transcript" className="gap-1.5">
-                                    <span className="size-2 rounded-full bg-green-500" />
+                                    <IconFileText className="size-4" />
                                     Transcript
                                 </TabsTrigger>
                                 <TabsTrigger value="description" className="gap-1.5">
-                                    <span className="size-2 rounded-full bg-muted-foreground" />
+                                    <IconWand className="size-4" />
                                     Auto-Description
                                 </TabsTrigger>
                             </TabsList>
