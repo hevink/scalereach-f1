@@ -24,6 +24,10 @@ function getFontVariable(fontFamily: string): string {
         "Lilita One": "var(--font-lilita-one)",
         "Inter": "var(--font-inter)",
         "Oswald": "var(--font-oswald)",
+        "Righteous": "var(--font-righteous)",
+        "Russo One": "var(--font-russo-one)",
+        "Black Ops One": "var(--font-black-ops-one)",
+        "Georgia": "Georgia, serif",
     };
     return fontMap[fontFamily] || fontFamily;
 }

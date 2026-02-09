@@ -14,6 +14,9 @@ import {
   Libre_Baskerville,
   Lilita_One,
   Inter,
+  Righteous,
+  Russo_One,
+  Black_Ops_One,
 } from "next/font/google";
 import "./globals.css";
 import { ThemeProvider } from "next-themes";
@@ -118,6 +121,27 @@ const inter = Inter({
   display: "swap",
 });
 
+const righteous = Righteous({
+  weight: "400",
+  variable: "--font-righteous",
+  subsets: ["latin"],
+  display: "swap",
+});
+
+const russoOne = Russo_One({
+  weight: "400",
+  variable: "--font-russo-one",
+  subsets: ["latin"],
+  display: "swap",
+});
+
+const blackOpsOne = Black_Ops_One({
+  weight: "400",
+  variable: "--font-black-ops-one",
+  subsets: ["latin"],
+  display: "swap",
+});
+
 export const metadata: Metadata = constructMetadata();
 
 export default function RootLayout({
@@ -128,7 +152,7 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <body
-        className={`${geistSans.variable} ${geistMono.variable} ${bangers.variable} ${permanentMarker.variable} ${anton.variable} ${bebasNeue.variable} ${oswald.variable} ${montserrat.variable} ${poppins.variable} ${lexend.variable} ${titanOne.variable} ${libreBaskerville.variable} ${lilitaOne.variable} ${inter.variable} antialiased`}
+        className={`${geistSans.variable} ${geistMono.variable} ${bangers.variable} ${permanentMarker.variable} ${anton.variable} ${bebasNeue.variable} ${oswald.variable} ${montserrat.variable} ${poppins.variable} ${lexend.variable} ${titanOne.variable} ${libreBaskerville.variable} ${lilitaOne.variable} ${inter.variable} ${righteous.variable} ${russoOne.variable} ${blackOpsOne.variable} antialiased`}
       >
         <QueryProvider>
           <PostHogProvider>

@@ -60,12 +60,16 @@ export const SUPPORTED_FONTS = [
   "Anton",
   "Bebas Neue",
   "Oswald",
+  "Righteous",
+  "Russo One",
+  "Black Ops One",
   // Standard fonts
   "Inter",
   "Roboto",
   "Open Sans",
   "Montserrat",
   "Poppins",
+  "Georgia",
 ] as const;
 
 /**
@@ -79,6 +83,9 @@ export const FONT_FAMILY_MAP: Record<string, string> = {
   "Anton": "var(--font-anton), sans-serif",
   "Bebas Neue": "var(--font-bebas-neue), sans-serif",
   "Oswald": "var(--font-oswald), sans-serif",
+  "Righteous": "var(--font-righteous), cursive",
+  "Russo One": "var(--font-russo-one), sans-serif",
+  "Black Ops One": "var(--font-black-ops-one), cursive",
   // Custom viral fonts (require custom font files - using fallbacks)
   "Moji Pop": "'Moji Pop', 'Comic Sans MS', cursive",
   "Line": "'Line', 'Arial Rounded MT Bold', sans-serif",
@@ -91,6 +98,7 @@ export const FONT_FAMILY_MAP: Record<string, string> = {
   "Open Sans": "'Open Sans', sans-serif",
   "Montserrat": "Montserrat, sans-serif",
   "Poppins": "Poppins, sans-serif",
+  "Georgia": "Georgia, serif",
 };
 
 /**
