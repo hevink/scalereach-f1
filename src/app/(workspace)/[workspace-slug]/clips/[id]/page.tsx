@@ -1180,7 +1180,6 @@ export default function ClipEditorPage({ params }: ClipEditorPageProps) {
                             onSkipForward={handleSkipForward}
                             onSkipBackward={handleSkipBackward}
                             videoSrc={videoSrc}
-                            captions={videoCaptions}
                             className="w-full"
                         />
                     ),

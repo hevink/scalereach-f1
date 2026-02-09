@@ -778,7 +778,6 @@ export const VideoCanvasEditor = forwardRef<VideoCanvasEditorRef, VideoCanvasEdi
                     style={{ left: -9999, top: -9999 }}
                     onLoadedMetadata={handleLoadedMetadata}
                     onTimeUpdate={handleTimeUpdate}
-                    muted
                     playsInline
                     preload="auto"
                 />
