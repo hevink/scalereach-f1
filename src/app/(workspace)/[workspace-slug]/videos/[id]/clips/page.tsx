@@ -28,8 +28,10 @@ import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useVideo } from "@/hooks/useVideo";
 import { useClipsByVideo, useToggleFavorite } from "@/hooks/useClips";
+import { useWorkspaceBySlug } from "@/hooks/useWorkspace";
 import { cn } from "@/lib/utils";
 import type { ClipResponse } from "@/lib/api/clips";
+import { ShareManager } from "@/components/share/share-manager";
 
 interface VideoClipsPageProps {
     params: Promise<{ "workspace-slug": string; id: string }>;
@@ -455,6 +457,10 @@ export default function VideoClipsPage({ params }: VideoClipsPageProps) {
         refetch: refetchClips,
     } = useClipsByVideo(videoId);
 
+    const {
+        data: workspace,
+    } = useWorkspaceBySlug(slug);
+
     const toggleFavorite = useToggleFavorite();
 
     const handleBack = useCallback(() => {
@@ -545,10 +551,15 @@ export default function VideoClipsPage({ params }: VideoClipsPageProps) {
                         </div>
                     </div>
 
-                    {/* <Button variant="outline" className="gap-2" onClick={handleRegenerate}>
-                        <IconRefresh className="size-4" />
-                        Regenerate
-                    </Button> */}
+                    {/* Share Button */}
+                    {workspace && (
+                        <ShareManager
+                            videoId={videoId}
+                            workspaceSlug={slug}
+                            clipCount={clips?.length || 0}
+                            userPlan={workspace.plan as "free" | "starter" | "pro"}
+                        />
+                    )}
                 </div>
 
                 {/* Tags */}
