@@ -83,6 +83,8 @@ export function CaptionLivePreview({
 
           // Calculate font size for preview (scaled down)
           const baseFontSize = Math.min((style.fontSize || 24) * 0.5, 24);
+          const isScaled = isKaraoke && isCurrent;
+          const scaleMargin = isScaled ? `0 ${Math.round((highlightScale - 1) * baseFontSize * 0.5)}px` : "0 2px";
 
           return (
             <span
@@ -94,6 +96,7 @@ export function CaptionLivePreview({
                 fontFamily: style.fontFamily || "sans-serif",
                 fontSize: `${baseFontSize}px`,
                 fontWeight: 700,
+                margin: scaleMargin,
                 color: isCurrent && style.highlightEnabled && style.highlightColor
                   ? style.highlightColor
                   : style.textColor || "#FFFFFF",

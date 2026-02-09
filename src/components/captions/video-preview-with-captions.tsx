@@ -150,6 +150,8 @@ export function VideoPreviewWithCaptions({
               const isPast = word.end < currentTime;
               const outlineWidth = style.outlineWidth ?? 3;
               const highlightScale = (style.highlightScale ?? 125) / 100;
+              const isScaled = isKaraoke && isCurrent;
+              const scaleMargin = isScaled ? `0 ${Math.round((highlightScale - 1) * (style.fontSize || 24) * 0.5)}px` : "0 2px";
 
               // Build text shadow to match ASS rendering
               const textShadow = style.shadow
@@ -167,6 +169,7 @@ export function VideoPreviewWithCaptions({
                     fontFamily: style.fontFamily || "sans-serif",
                     fontSize: `${style.fontSize || 24}px`,
                     fontWeight: 700,
+                    margin: scaleMargin,
                     color:
                       isCurrent && isKaraoke && style.highlightColor
                         ? style.highlightColor

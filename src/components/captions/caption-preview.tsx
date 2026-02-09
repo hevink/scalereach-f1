@@ -151,9 +151,14 @@ function CaptionOverlay({ caption, style, currentTime }: CaptionOverlayProps) {
             const isPastWord = index < currentWordIndex;
             const shouldHighlight = style.highlightEnabled && isCurrentWord;
 
-            let wordClassName = "inline-block mx-0.5 transition-all duration-150";
+            let wordClassName = "inline-block transition-all duration-150";
+            const isScaled = (style.highlightEnabled && isCurrentWord) ||
+                (style.animation === "karaoke" && isCurrentWord) ||
+                (style.animation === "word-by-word" && isCurrentWord && style.highlightEnabled);
+            const scaleMargin = isScaled ? `0 ${Math.round((highlightScale - 1) * (style.fontSize || 24) * 0.5)}px` : "0 2px";
             const wordStyle: React.CSSProperties = {
                 textShadow,
+                margin: scaleMargin,
                 WebkitTextStroke: style.outline
                     ? `${outlineWidth}px ${style.outlineColor || "#000000"}`
                     : undefined,
