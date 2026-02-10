@@ -11,6 +11,7 @@ import React, {
 } from "react";
 import { cn } from "@/lib/utils";
 import type { Caption, CaptionStyle } from "@/lib/api/captions";
+import type { TextOverlay } from "@/components/text/text-overlay-panel";
 
 // ============================================================================
 // Types
@@ -29,6 +30,10 @@ export interface VideoCanvasEditorProps {
     captionStyle?: CaptionStyle;
     /** Callback when caption style changes */
     onCaptionStyleChange?: (style: Partial<CaptionStyle>) => void;
+    /** Text overlays to render on the video */
+    textOverlays?: TextOverlay[];
+    /** Callback when a text overlay is updated (e.g. dragged to new position) */
+    onTextOverlayUpdate?: (id: string, updates: Partial<TextOverlay>) => void;
     /** Callback when playback time updates */
     onTimeUpdate?: (time: number) => void;
     /** Aspect ratio: 9:16 (vertical), 16:9 (horizontal), 1:1 (square) */
@@ -483,6 +488,102 @@ function DraggableCaption({
 }
 
 // ============================================================================
+// Draggable Text Overlay Component
+// ============================================================================
+
+interface DraggableTextOverlayProps {
+    overlay: TextOverlay;
+    containerScale: number;
+    displaySize: { width: number; height: number };
+    onUpdate?: (id: string, updates: Partial<TextOverlay>) => void;
+}
+
+function DraggableTextOverlay({
+    overlay,
+    containerScale,
+    displaySize,
+    onUpdate,
+}: DraggableTextOverlayProps) {
+    const [isDragging, setIsDragging] = useState(false);
+    const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
+    const [startPos, setStartPos] = useState({ x: 0, y: 0 });
+
+    const handleMouseDown = useCallback((e: React.MouseEvent) => {
+        if (!onUpdate) return;
+        e.preventDefault();
+        e.stopPropagation();
+        setIsDragging(true);
+        setDragStart({ x: e.clientX, y: e.clientY });
+        setStartPos({ x: overlay.x, y: overlay.y });
+    }, [onUpdate, overlay.x, overlay.y]);
+
+    useEffect(() => {
+        if (!isDragging) return;
+
+        const handleMouseMove = (e: MouseEvent) => {
+            const dx = e.clientX - dragStart.x;
+            const dy = e.clientY - dragStart.y;
+            const newX = Math.max(0, Math.min(100, startPos.x + (dx / displaySize.width) * 100));
+            const newY = Math.max(0, Math.min(100, startPos.y + (dy / displaySize.height) * 100));
+            onUpdate?.(overlay.id, { x: newX, y: newY });
+        };
+
+        const handleMouseUp = () => setIsDragging(false);
+
+        document.addEventListener("mousemove", handleMouseMove);
+        document.addEventListener("mouseup", handleMouseUp);
+        return () => {
+            document.removeEventListener("mousemove", handleMouseMove);
+            document.removeEventListener("mouseup", handleMouseUp);
+        };
+    }, [isDragging, dragStart, startPos, displaySize, overlay.id, onUpdate]);
+
+    const bgOpacityHex = Math.round((overlay.backgroundOpacity / 100) * 255)
+        .toString(16)
+        .padStart(2, "0");
+
+    return (
+        <div
+            className={cn(
+                "absolute z-20",
+                onUpdate ? "pointer-events-auto cursor-grab" : "pointer-events-none",
+                isDragging && "cursor-grabbing",
+            )}
+            style={{
+                left: `${overlay.x}%`,
+                top: `${overlay.y}%`,
+                transform: `translate(-50%, -50%) rotate(${overlay.rotation}deg)`,
+                fontFamily: overlay.fontFamily,
+                fontSize: `${overlay.fontSize * containerScale}px`,
+                fontWeight: overlay.fontWeight,
+                fontStyle: overlay.fontStyle,
+                color: overlay.textColor,
+                textAlign: overlay.alignment,
+                textShadow: overlay.shadow
+                    ? "2px 2px 0 #000, -2px -2px 0 #000, 2px -2px 0 #000, -2px 2px 0 #000, 0 2px 0 #000, 0 -2px 0 #000, 2px 0 0 #000, -2px 0 0 #000"
+                    : "none",
+                WebkitTextStroke: overlay.outline
+                    ? `${Math.max(1, Math.round(containerScale * 2))}px ${overlay.outlineColor}`
+                    : "none",
+                paintOrder: "stroke fill",
+                backgroundColor:
+                    overlay.backgroundOpacity > 0
+                        ? `${overlay.backgroundColor}${bgOpacityHex}`
+                        : "transparent",
+                borderRadius: "4px",
+                padding: `${2 * containerScale}px ${8 * containerScale}px`,
+                lineHeight: 1.3,
+                whiteSpace: "pre-wrap",
+                maxWidth: `${80}%`,
+            }}
+            onMouseDown={handleMouseDown}
+        >
+            {overlay.text}
+        </div>
+    );
+}
+
+// ============================================================================
 // Video Canvas Editor Component
 // ============================================================================
 
@@ -495,6 +596,8 @@ export const VideoCanvasEditor = forwardRef<VideoCanvasEditorRef, VideoCanvasEdi
             captions = [],
             captionStyle,
             onCaptionStyleChange,
+            textOverlays = [],
+            onTextOverlayUpdate,
             onTimeUpdate,
             aspectRatio = "9:16",
             className,
@@ -841,6 +944,19 @@ export const VideoCanvasEditor = forwardRef<VideoCanvasEditorRef, VideoCanvasEdi
                             {renderCaptionText()}
                         </DraggableCaption>
                     )}
+
+                    {/* Text overlays — draggable, filtered by current time */}
+                    {textOverlays
+                        .filter((overlay) => relativeTime >= overlay.startTime && relativeTime <= overlay.endTime)
+                        .map((overlay) => (
+                            <DraggableTextOverlay
+                                key={overlay.id}
+                                overlay={overlay}
+                                containerScale={containerScale}
+                                displaySize={displaySize}
+                                onUpdate={onTextOverlayUpdate}
+                            />
+                        ))}
 
                     {/* Transform overlay */}
                     <div

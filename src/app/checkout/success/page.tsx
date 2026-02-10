@@ -73,7 +73,7 @@ function CheckoutSuccessContent() {
           {workspaceSlug && (
             <Button
               variant="outline"
-              onClick={() => router.push(`/${workspaceSlug}/settings/billing`)}
+              onClick={() => router.push(`/${workspaceSlug}/pricing`)}
               className="w-full h-12 border-zinc-700 text-white hover:bg-zinc-800"
             >
               View Billing Details

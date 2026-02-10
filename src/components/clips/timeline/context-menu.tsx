@@ -2,7 +2,6 @@
 
 import * as React from "react";
 import { useTimelineContext } from "./timeline-container";
-import { MIN_ZOOM } from "./types";
 
 interface ContextMenuProps {
     x: number;
@@ -16,6 +15,7 @@ export function ContextMenu({ x, y, onClose }: ContextMenuProps) {
         addMarker,
         setLoopRegion,
         setZoom,
+        setScrollLeft,
         state,
         clipDuration,
     } = useTimelineContext();
@@ -85,7 +85,9 @@ export function ContextMenu({ x, y, onClose }: ContextMenuProps) {
         {
             label: "Zoom to fit",
             action: () => {
-                setZoom(MIN_ZOOM);
+                // Fit entire clip in view: set zoom to 1 and scroll to start
+                setZoom(1);
+                setScrollLeft(0);
                 onClose();
             },
         },
@@ -93,6 +95,7 @@ export function ContextMenu({ x, y, onClose }: ContextMenuProps) {
             label: "Reset zoom to 1x",
             disabled: state.zoomLevel === 1,
             action: () => {
+                // Reset zoom without changing scroll position
                 setZoom(1);
                 onClose();
             },

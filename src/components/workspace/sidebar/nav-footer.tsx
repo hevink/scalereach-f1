@@ -78,7 +78,7 @@ export function NavFooter({ currentSlug }: NavFooterProps) {
       <SidebarMenuItem>
         <SidebarMenuButton
           tooltip={`${minutesRemaining} min remaining`}
-          onClick={() => router.push(`/${currentSlug}/settings/billing`)}
+          onClick={() => router.push(`/${currentSlug}/pricing`)}
           className={cn(
             isLowMinutes && "text-amber-600 dark:text-amber-500"
           )}

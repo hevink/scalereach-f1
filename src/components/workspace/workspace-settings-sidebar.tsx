@@ -4,8 +4,6 @@ import {
   IconAlertTriangle,
   IconAlertTriangleFilled,
   IconBrush,
-  IconCreditCard,
-  IconCreditCardFilled,
   IconPalette,
   IconPaletteFilled,
   IconSearch,
@@ -161,19 +159,6 @@ export function WorkspaceSettingsSidebar({
         type: "card",
       },
       {
-        title: "Billing",
-        url: `${baseUrl}/billing`,
-        category: "Billing",
-        type: "category",
-      },
-      {
-        title: "Manage Billing",
-        description: "View your plan, credits, and manage subscriptions.",
-        url: `${baseUrl}/billing`,
-        category: "Billing",
-        type: "card",
-      },
-      {
         title: "Danger Zone",
         url: `${baseUrl}/danger-zone`,
         category: "Danger Zone",
@@ -221,12 +206,6 @@ export function WorkspaceSettingsSidebar({
         url: `${baseUrl}/members`,
         icon: IconUsers,
         iconFilled: IconUsers,
-      },
-      {
-        title: "Billing",
-        url: `${baseUrl}/billing`,
-        icon: IconCreditCard,
-        iconFilled: IconCreditCardFilled,
       },
       {
         title: "Danger Zone",

@@ -4,11 +4,25 @@ import { useState, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import { Check, Loader2, ArrowLeft } from "lucide-react";
+import {
+    IconCreditCard,
+    IconHistory,
+    IconExternalLink,
+    IconTrendingUp,
+} from "@tabler/icons-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
+import {
+    Card,
+    CardContent,
+    CardDescription,
+    CardHeader,
+    CardTitle,
+} from "@/components/ui/card";
+import { Progress } from "@/components/ui/progress";
 import { creditsApi } from "@/lib/api/credits";
 import { useWorkspaceBySlug } from "@/hooks/useWorkspace";
-import { useMinutesBalance } from "@/hooks/useMinutes";
+import { useMinutesBalance, useMinuteTransactions } from "@/hooks/useMinutes";
 import { toast } from "sonner";
 import { analytics } from "@/lib/analytics";
 
@@ -102,7 +116,139 @@ const enterpriseFeatures = [
 ];
 
 // ============================================================================
-// Components
+// Billing Components
+// ============================================================================
+
+function UsageCard({ workspaceId }: { workspaceId: string }) {
+    const { data: balance, isLoading } = useMinutesBalance(workspaceId);
+
+    const minutesRemaining = balance?.minutesRemaining ?? 0;
+    const minutesTotal = balance?.minutesTotal ?? 0;
+    const minutesUsed = balance?.minutesUsed ?? 0;
+    const usagePercent = minutesTotal > 0 ? (minutesUsed / minutesTotal) * 100 : 0;
+
+    const resetDateFormatted = balance?.minutesResetDate
+        ? new Date(balance.minutesResetDate).toLocaleDateString("en-US", {
+            month: "short",
+            day: "numeric",
+            year: "numeric",
+        })
+        : null;
+
+    return (
+        <Card>
+            <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                    <IconTrendingUp className="size-5" />
+                    Minutes Balance
+                </CardTitle>
+                <CardDescription>
+                    Your available minutes for video processing
+                    {resetDateFormatted && ` — Resets ${resetDateFormatted}`}
+                </CardDescription>
+            </CardHeader>
+            <CardContent>
+                {isLoading ? (
+                    <div className="space-y-3">
+                        <div className="h-4 bg-muted rounded animate-pulse" />
+                        <div className="h-2 bg-muted rounded animate-pulse" />
+                    </div>
+                ) : (
+                    <div className="space-y-3">
+                        <div className="flex justify-between text-sm">
+                            <span className="text-muted-foreground">Minutes Used</span>
+                            <span className="font-medium">
+                                {minutesUsed} / {minutesTotal}
+                            </span>
+                        </div>
+                        <Progress value={usagePercent} className="h-2" />
+                        <p className="text-xs text-muted-foreground">
+                            {minutesRemaining} minutes remaining
+                        </p>
+                    </div>
+                )}
+            </CardContent>
+        </Card>
+    );
+}
+
+function TransactionHistoryCard({ workspaceId }: { workspaceId: string }) {
+    const { data: transactions, isLoading } = useMinuteTransactions(workspaceId);
+
+    return (
+        <Card>
+            <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                    <IconHistory className="size-5" />
+                    Recent Activity
+                </CardTitle>
+                <CardDescription>
+                    Your recent billing and usage activity
+                </CardDescription>
+            </CardHeader>
+            <CardContent>
+                {isLoading ? (
+                    <div className="space-y-3">
+                        {[1, 2, 3].map((i) => (
+                            <div key={i} className="h-12 bg-muted rounded animate-pulse" />
+                        ))}
+                    </div>
+                ) : transactions && transactions.length > 0 ? (
+                    <div className="space-y-3">
+                        {transactions.slice(0, 5).map((tx) => (
+                            <div
+                                key={tx.id}
+                                className="flex items-center justify-between py-2 border-b last:border-0"
+                            >
+                                <div>
+                                    <p className="text-sm">{tx.description}</p>
+                                    <p className="text-xs text-muted-foreground">
+                                        {new Date(tx.createdAt).toLocaleDateString()}
+                                    </p>
+                                </div>
+                                <span className={cn(
+                                    "text-sm font-medium",
+                                    tx.minutesAmount > 0 ? "text-emerald-500" : "text-muted-foreground"
+                                )}>
+                                    {tx.minutesAmount > 0 ? "+" : ""}{tx.minutesAmount} min
+                                </span>
+                            </div>
+                        ))}
+                    </div>
+                ) : (
+                    <p className="text-sm text-muted-foreground text-center py-4">
+                        No recent activity
+                    </p>
+                )}
+            </CardContent>
+        </Card>
+    );
+}
+
+function ManageBillingCard() {
+    return (
+        <Card>
+            <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                    <IconCreditCard className="size-5" />
+                    Payment Method
+                </CardTitle>
+                <CardDescription>
+                    Manage your payment methods and billing information
+                </CardDescription>
+            </CardHeader>
+            <CardContent>
+                <Button variant="outline" className="w-full">
+                    <IconExternalLink className="size-4 mr-2" />
+                    Manage Billing
+                </Button>
+            </CardContent>
+        </Card>
+    );
+}
+
+// ============================================================================
+// Pricing Components
 // ============================================================================
 
 function CornerDecoration({ position }: { position: "top-left" | "top-right" | "bottom-left" | "bottom-right" }) {
@@ -404,6 +550,29 @@ export default function WorkspacePricingPage() {
                     <ArrowLeft className="size-4 mr-2" />
                     Back
                 </Button>
+
+                {/* Billing Management Section */}
+                <motion.div
+                    initial={{ opacity: 0, y: 20 }}
+                    whileInView={{ opacity: 1, y: 0 }}
+                    viewport={{ once: true }}
+                    transition={{ duration: 0.5 }}
+                    className="mb-12 space-y-6"
+                >
+                    <div>
+                        <h2 className="text-2xl font-bold">Billing</h2>
+                        <p className="text-muted-foreground">
+                            Manage your subscription and billing information
+                        </p>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <UsageCard workspaceId={workspace?.id ?? ""} />
+                        <TransactionHistoryCard workspaceId={workspace?.id ?? ""} />
+                    </div>
+
+                    <ManageBillingCard />
+                </motion.div>
 
                 {/* Header */}
                 <motion.div

@@ -31,6 +31,7 @@ import { VideoCanvasEditor, type VideoCanvasEditorRef } from "@/components/video
 import { TranscriptParagraphView } from "@/components/transcript/transcript-paragraph-view";
 import { ExportOptions } from "@/components/export/export-options";
 import { ExportProgress } from "@/components/export/export-progress";
+import { TextOverlayPanel, createTextOverlay, type TextOverlay } from "@/components/text/text-overlay-panel";
 import { useClip, useUpdateClipBoundaries } from "@/hooks/useClips";
 import { useVideo } from "@/hooks/useVideo";
 import { useCaptionStyle, useUpdateCaptionStyle, useUpdateCaptionText, useCaptionTemplates } from "@/hooks/useCaptions";
@@ -406,6 +407,43 @@ export default function ClipEditorPage({ params }: ClipEditorPageProps) {
     const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
     const [showUnsavedDialog, setShowUnsavedDialog] = useState(false);
     const [pendingNavigation, setPendingNavigation] = useState<(() => void) | null>(null);
+
+    // Text overlay state
+    const [textOverlays, setTextOverlays] = useState<TextOverlay[]>([]);
+    const [selectedTextOverlayId, setSelectedTextOverlayId] = useState<string | null>(null);
+
+    const handleAddTextOverlay = useCallback(() => {
+        const overlay = createTextOverlay({
+            startTime: currentTime,
+            endTime: currentTime + 5,
+        });
+        setTextOverlays((prev) => [...prev, overlay]);
+        setSelectedTextOverlayId(overlay.id);
+    }, [currentTime]);
+
+    const handleRemoveTextOverlay = useCallback((id: string) => {
+        setTextOverlays((prev) => prev.filter((o) => o.id !== id));
+        setSelectedTextOverlayId((prev) => (prev === id ? null : prev));
+    }, []);
+
+    const handleUpdateTextOverlay = useCallback((id: string, updates: Partial<TextOverlay>) => {
+        setTextOverlays((prev) =>
+            prev.map((o) => (o.id === id ? { ...o, ...updates } : o)),
+        );
+    }, []);
+
+    const handleDuplicateTextOverlay = useCallback((id: string) => {
+        setTextOverlays((prev) => {
+            const source = prev.find((o) => o.id === id);
+            if (!source) return prev;
+            const copy = createTextOverlay({
+                ...source,
+                x: Math.min(source.x + 5, 100),
+                y: Math.min(source.y + 5, 100),
+            });
+            return [...prev, copy];
+        });
+    }, []);
 
     // Undo/redo state management for caption text edits
     const {
@@ -1142,6 +1180,8 @@ export default function ClipEditorPage({ params }: ClipEditorPageProps) {
                                     captions={videoCaptions}
                                     captionStyle={captionStyle}
                                     onCaptionStyleChange={handleStyleChange}
+                                    textOverlays={textOverlays}
+                                    onTextOverlayUpdate={handleUpdateTextOverlay}
                                     onTimeUpdate={handleTimeUpdate}
                                     aspectRatio="9:16"
                                     className="flex-1 rounded-lg overflow-hidden"
@@ -1168,6 +1208,19 @@ export default function ClipEditorPage({ params }: ClipEditorPageProps) {
                         />
                     ),
 
+                    /* Text Overlay Panel */
+                    textPanel: (
+                        <TextOverlayPanel
+                            overlays={textOverlays}
+                            selectedId={selectedTextOverlayId}
+                            onAdd={handleAddTextOverlay}
+                            onRemove={handleRemoveTextOverlay}
+                            onUpdate={handleUpdateTextOverlay}
+                            onSelect={setSelectedTextOverlayId}
+                            onDuplicate={handleDuplicateTextOverlay}
+                        />
+                    ),
+
                     /* Bottom Panel: Timeline Editor */
                     timeline: (
                         <AdvancedTimeline
@@ -1181,6 +1234,10 @@ export default function ClipEditorPage({ params }: ClipEditorPageProps) {
                             onSkipBackward={handleSkipBackward}
                             videoSrc={videoSrc}
                             className="w-full"
+                            textOverlays={textOverlays}
+                            selectedTextOverlayId={selectedTextOverlayId}
+                            onTextOverlaySelect={setSelectedTextOverlayId}
+                            onTextOverlayUpdate={handleUpdateTextOverlay}
                         />
                     ),
                 }}

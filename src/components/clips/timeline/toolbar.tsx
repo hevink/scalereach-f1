@@ -25,6 +25,7 @@ export function Toolbar({ onHide }: ToolbarProps) {
     };
 
     const handleZoomToFit = () => {
+        // At zoom=1, trackWidth equals the visible area (baseWidth), so 1 is the "fit" level
         setZoom(1);
     };
 

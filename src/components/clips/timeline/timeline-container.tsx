@@ -18,6 +18,7 @@ import { LoopRegionOverlay } from "./loop-region";
 import { Marker } from "./marker";
 import { TrackResizer } from "./track-resizer";
 import { ContextMenu } from "./context-menu";
+import { TextTrack, TEXT_TRACK_HEIGHT } from "./text-track";
 
 // ============================================================================
 // React Context
@@ -46,6 +47,10 @@ export function TimelineContainer({
     onSkipBackward,
     videoSrc,
     className,
+    textOverlays = [],
+    selectedTextOverlayId = null,
+    onTextOverlaySelect,
+    onTextOverlayUpdate,
 }: AdvancedTimelineProps) {
     const [isVisible, setIsVisible] = React.useState(true);
     const containerRef = React.useRef<HTMLDivElement>(null);
@@ -179,9 +184,12 @@ export function TimelineContainer({
     const videoTrack = state.tracks.find((t) => t.type === "video");
     const audioTrack = state.tracks.find((t) => t.type === "audio");
 
+    const hasTextOverlays = textOverlays.length > 0;
+
     const totalTracksHeight =
         (videoTrack?.visible ? videoTrack.height : 0) +
         (audioTrack?.visible ? audioTrack.height : 0) +
+        (hasTextOverlays ? TEXT_TRACK_HEIGHT : 0) +
         16; // padding
 
     if (!isVisible) {
@@ -261,6 +269,31 @@ export function TimelineContainer({
                                 <div className="flex">
                                     <TrackLabel track={audioTrack} />
                                     <AudioTrack track={audioTrack} />
+                                </div>
+                            )}
+
+                            {/* Text track */}
+                            {hasTextOverlays && (
+                                <div className="flex">
+                                    <div
+                                        className="flex flex-col items-start justify-center gap-1 px-2 border-r border-zinc-800 bg-zinc-900/50 shrink-0"
+                                        style={{ width: TRACK_LABEL_WIDTH, height: TEXT_TRACK_HEIGHT }}
+                                        data-no-seek
+                                    >
+                                        <div className="flex items-center gap-1.5">
+                                            <div className="w-1.5 h-1.5 rounded-full bg-purple-500" />
+                                            <span className="text-[10px] font-medium text-zinc-300 leading-none">Text</span>
+                                        </div>
+                                    </div>
+                                    <TextTrack
+                                        textOverlays={textOverlays}
+                                        clipDuration={clipDuration}
+                                        trackWidth={state.trackWidth}
+                                        currentTime={relativeCurrentTime}
+                                        selectedId={selectedTextOverlayId}
+                                        onSelect={onTextOverlaySelect}
+                                        onUpdate={onTextOverlayUpdate}
+                                    />
                                 </div>
                             )}
                         </div>

@@ -59,7 +59,7 @@ export function ShareManager({
                 description: "Clip sharing is available for Pro users only. Upgrade to share your clips publicly.",
                 action: {
                     label: "Upgrade",
-                    onClick: () => router.push(`/${workspaceSlug}/settings/billing`),
+                    onClick: () => router.push(`/${workspaceSlug}/pricing`),
                 },
             });
             return;
@@ -99,7 +99,7 @@ export function ShareManager({
                     description: error.response.data.message || "Upgrade to Pro to share clips.",
                     action: {
                         label: "Upgrade",
-                        onClick: () => router.push(`/${workspaceSlug}/settings/billing`),
+                        onClick: () => router.push(`/${workspaceSlug}/pricing`),
                     },
                 });
             } else {

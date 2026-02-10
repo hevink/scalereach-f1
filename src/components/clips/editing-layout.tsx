@@ -37,6 +37,8 @@ export interface EditingLayoutProps {
         videoPlayer: ReactNode;
         /** Caption style panel component (shown in toolbar panel) */
         stylePanel: ReactNode;
+        /** Text overlay panel component (shown in toolbar panel) */
+        textPanel?: ReactNode;
         /** Timeline editor component for the bottom row */
         timeline: ReactNode;
     };
@@ -139,6 +141,7 @@ function DesktopLayout({ children, header, onPanelResize, className }: DesktopLa
                     activePanel={activeToolbarPanel}
                     onPanelChange={setActiveToolbarPanel}
                     captionsPanel={children.stylePanel}
+                    textPanel={children.textPanel}
                 />
             </div>
 
@@ -207,6 +210,7 @@ function MobileLayout({ children, header, className }: MobileLayoutProps) {
                     activePanel={activeToolbarPanel}
                     onPanelChange={setActiveToolbarPanel}
                     captionsPanel={children.stylePanel}
+                    textPanel={children.textPanel}
                 />
             </div>
 

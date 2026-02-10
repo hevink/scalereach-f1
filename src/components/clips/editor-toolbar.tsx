@@ -35,6 +35,8 @@ export interface EditorToolbarProps {
     onPanelChange: (panel: ToolbarPanel) => void;
     /** Content to show in the captions panel */
     captionsPanel?: ReactNode;
+    /** Content to show in the text overlay panel */
+    textPanel?: ReactNode;
     /** Additional class names */
     className?: string;
 }
@@ -57,7 +59,7 @@ const TOOLBAR_ITEMS: ToolbarItem[] = [
     { id: "brand", icon: IconPalette, label: "Brand template", disabled: true },
     { id: "broll", icon: IconMovie, label: "B-Roll", disabled: true },
     { id: "transitions", icon: IconTransitionRight, label: "Transitions", disabled: true },
-    { id: "text", icon: IconTypography, label: "Text", disabled: true },
+    { id: "text", icon: IconTypography, label: "Text" },
     { id: "music", icon: IconMusic, label: "Music", disabled: true },
     { id: "ai", icon: IconSubtask, label: "AI hook", disabled: true },
 ];
@@ -140,6 +142,7 @@ export function EditorToolbar({
     activePanel,
     onPanelChange,
     captionsPanel,
+    textPanel,
     className,
 }: EditorToolbarProps) {
     const handleItemClick = (itemId: ToolbarPanel) => {
@@ -166,7 +169,8 @@ export function EditorToolbar({
                     />
                     <div className="flex-1 overflow-auto p-4">
                         {activePanel === "captions" && captionsPanel}
-                        {activePanel !== "captions" && (
+                        {activePanel === "text" && textPanel}
+                        {activePanel !== "captions" && activePanel !== "text" && (
                             <div className="flex flex-col items-center justify-center h-full text-center text-zinc-500">
                                 <p className="text-sm">Coming soon</p>
                             </div>

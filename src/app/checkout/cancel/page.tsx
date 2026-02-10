@@ -13,7 +13,7 @@ function CheckoutCancelContent() {
 
   const handleRetry = () => {
     if (workspaceSlug) {
-      router.push(`/${workspaceSlug}/settings/billing`);
+      router.push(`/${workspaceSlug}/pricing`);
     } else {
       router.push("/workspaces");
     }

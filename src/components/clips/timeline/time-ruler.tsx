@@ -6,7 +6,7 @@ import { getTimeInterval, formatTime } from "./utils";
 import { TIME_RULER_HEIGHT } from "./types";
 
 export function TimeRuler() {
-    const { state, clipDuration, timeToX, onSeek } = useTimelineContext();
+    const { state, clipDuration, timeToX, xToTime, onSeek } = useTimelineContext();
     const canvasRef = React.useRef<HTMLCanvasElement>(null);
 
     React.useEffect(() => {
@@ -77,8 +77,9 @@ export function TimeRuler() {
         if (!canvas) return;
         const rect = canvas.getBoundingClientRect();
         const x = e.clientX - rect.left;
-        const time = (x / rect.width) * clipDuration;
-        onSeek(Math.max(0, Math.min(clipDuration, time)));
+        const ratio = state.trackWidth > 0 ? x * (state.trackWidth / rect.width) : x;
+        const time = xToTime(ratio);
+        onSeek(time);
     };
 
     return (

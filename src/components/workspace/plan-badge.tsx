@@ -67,7 +67,7 @@ export function PlanBadge({ plan, workspaceSlug }: PlanBadgeProps) {
                         <Button
                             size="sm"
                             className="w-full"
-                            onClick={() => router.push(`/${workspaceSlug}/settings/billing`)}
+                            onClick={() => router.push(`/${workspaceSlug}/pricing`)}
                         >
                             Upgrade Plan
                         </Button>

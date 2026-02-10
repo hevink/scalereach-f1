@@ -25,7 +25,7 @@ export function UploadLimitErrorModal(props: UploadLimitErrorModalProps) {
     const router = useRouter();
 
     const handleUpgrade = () => {
-        router.push(`/${props.workspaceSlug}/settings/billing`);
+        router.push(`/${props.workspaceSlug}/pricing`);
         props.onClose();
     };
 

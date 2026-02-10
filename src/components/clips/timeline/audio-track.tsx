@@ -11,7 +11,8 @@ interface AudioTrackProps {
 
 export function AudioTrack({ track }: AudioTrackProps) {
     const { state, clipDuration, currentTime, videoSrc, onSeek, xToTime, timeToX } = useTimelineContext();
-    const canvasRef = React.useRef<HTMLCanvasElement>(null);
+    const baseCanvasRef = React.useRef<HTMLCanvasElement>(null);
+    const overlayCanvasRef = React.useRef<HTMLCanvasElement>(null);
     const waveformDataRef = React.useRef<number[]>([]);
     const trackRef = React.useRef<HTMLDivElement>(null);
     const [isDragging, setIsDragging] = React.useState(false);
@@ -71,39 +72,52 @@ export function AudioTrack({ track }: AudioTrackProps) {
         }
     }, [videoSrc, clipDuration, state.trackWidth, totalBarWidth]);
 
-    // Draw waveform with dual-color playback indicator
+    // Draw static waveform (base layer — unplayed color + overlay layer — played color)
+    // Only redraws when waveform data, size, or mute state changes (NOT on currentTime)
     React.useEffect(() => {
-        const canvas = canvasRef.current;
-        if (!canvas || state.trackWidth <= 0) return;
-
-        const ctx = canvas.getContext("2d");
-        if (!ctx) return;
+        const baseCanvas = baseCanvasRef.current;
+        const overlayCanvas = overlayCanvasRef.current;
+        if (!baseCanvas || !overlayCanvas || state.trackWidth <= 0) return;
 
         const dpr = window.devicePixelRatio || 1;
-        canvas.width = state.trackWidth * dpr;
-        canvas.height = track.height * dpr;
-        ctx.scale(dpr, dpr);
-
-        // Background
-        ctx.fillStyle = "#1c1c1e";
-        ctx.fillRect(0, 0, state.trackWidth, track.height);
-
         const waveform = waveformDataRef.current;
-        if (waveform.length === 0) return;
-
         const centerY = track.height / 2;
-        const playedX = timeToX(currentTime);
-
-        const playedColor = track.muted ? "#3f3f46" : "#22c55e";
         const unplayedColor = track.muted ? "#27272a" : "#52525b";
+        const playedColor = track.muted ? "#3f3f46" : "#22c55e";
+
+        // Draw base canvas (unplayed waveform)
+        baseCanvas.width = state.trackWidth * dpr;
+        baseCanvas.height = track.height * dpr;
+        const baseCtx = baseCanvas.getContext("2d");
+        if (!baseCtx) return;
+        baseCtx.scale(dpr, dpr);
+        baseCtx.fillStyle = "#1c1c1e";
+        baseCtx.fillRect(0, 0, state.trackWidth, track.height);
 
         waveform.forEach((value, i) => {
             const x = i * totalBarWidth;
             const barHeight = value * (track.height - 4);
-            ctx.fillStyle = x <= playedX ? playedColor : unplayedColor;
-            ctx.fillRect(x, centerY - barHeight / 2, barWidth, barHeight);
+            baseCtx.fillStyle = unplayedColor;
+            baseCtx.fillRect(x, centerY - barHeight / 2, barWidth, barHeight);
         });
-    }, [state.trackWidth, track.height, track.muted, currentTime, timeToX, totalBarWidth]);
+
+        // Draw overlay canvas (played waveform — full width, clipped via CSS)
+        overlayCanvas.width = state.trackWidth * dpr;
+        overlayCanvas.height = track.height * dpr;
+        const overlayCtx = overlayCanvas.getContext("2d");
+        if (!overlayCtx) return;
+        overlayCtx.scale(dpr, dpr);
+
+        waveform.forEach((value, i) => {
+            const x = i * totalBarWidth;
+            const barHeight = value * (track.height - 4);
+            overlayCtx.fillStyle = playedColor;
+            overlayCtx.fillRect(x, centerY - barHeight / 2, barWidth, barHeight);
+        });
+    }, [state.trackWidth, track.height, track.muted, isLoading, totalBarWidth]);
+
+    // Playback position — only updates the overlay clip width (no canvas redraw)
+    const playedX = timeToX(currentTime);
 
     // Scrub on drag
     const calculateTime = React.useCallback(
@@ -146,10 +160,21 @@ export function AudioTrack({ track }: AudioTrackProps) {
             style={{ width: state.trackWidth, height: track.height }}
             onMouseDown={handleMouseDown}
         >
+            {/* Base waveform (unplayed color) */}
             <canvas
-                ref={canvasRef}
+                ref={baseCanvasRef}
                 style={{ width: state.trackWidth, height: track.height, display: "block" }}
             />
+            {/* Overlay waveform (played color) — clipped to playback position */}
+            <div
+                className="absolute inset-0 overflow-hidden pointer-events-none"
+                style={{ width: playedX }}
+            >
+                <canvas
+                    ref={overlayCanvasRef}
+                    style={{ width: state.trackWidth, height: track.height, display: "block" }}
+                />
+            </div>
             {/* Loading state */}
             {isLoading && (
                 <div className="absolute inset-0 flex items-center justify-center bg-zinc-900/60">

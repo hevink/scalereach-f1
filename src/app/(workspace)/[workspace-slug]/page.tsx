@@ -435,7 +435,7 @@ export default function WorkspacePage({ params }: WorkspacePageProps) {
                   variant="link"
                   size="sm"
                   className="h-auto py-0 px-0 text-xs text-primary hover:underline"
-                  onClick={() => router.push(`/${slug}/settings/billing`)}
+                  onClick={() => router.push(`/${slug}/pricing`)}
                 >
                   Upgrade for longer videos →
                 </Button>
