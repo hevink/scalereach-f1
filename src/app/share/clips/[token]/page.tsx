@@ -33,7 +33,7 @@ export async function generateMetadata({ params }: SharePageProps): Promise<Meta
 
     const title = `${data.videoTitle} - ${data.clipCount} Viral Clip${data.clipCount === 1 ? "" : "s"}`;
     const description = `Check out ${data.clipCount} AI-detected viral clip${data.clipCount === 1 ? "" : "s"} from "${data.videoTitle}". View, preview, and download on ScaleReach.`;
-    const ogImage = data.thumbnailUrl || data.clips?.[0]?.thumbnailUrl || "/og-image.png";
+    const ogImage = data.videoThumbnailUrl || data.thumbnailUrl || data.clips?.[0]?.thumbnailUrl || "/og-image.png";
     const shareUrl = `${APP_URL}/share/clips/${token}`;
 
     return {

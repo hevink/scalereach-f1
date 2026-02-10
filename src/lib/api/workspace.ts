@@ -8,6 +8,7 @@ export interface Workspace {
   description: string | null;
   logo?: string | null;
   plan?: "free" | "pro" | "agency";
+  billingCycle?: "monthly" | "annual" | null;
   ownerId?: string;
   role: "owner" | "admin" | "member";
   defaultCaptionStyle?: CaptionStyle | null;
