@@ -45,6 +45,7 @@ import { useCaptionStylePresets } from "@/hooks/useCaptionStylePresets";
 import { useKeyboardShortcuts, type KeyboardShortcut } from "@/hooks/useKeyboardShortcuts";
 import type { CaptionStyle, Caption, CaptionWord } from "@/lib/api/captions";
 import type { ExportOptions as ExportOptionsType } from "@/lib/api/export";
+import { analytics } from "@/lib/analytics";
 import {
     Dialog,
     DialogContent,
@@ -893,6 +894,14 @@ export default function ClipEditorPage({ params }: ClipEditorPageProps) {
     // Export handler
     const handleExport = useCallback(
         async (options: ExportOptionsType) => {
+            // Track clip export
+            analytics.clipExported({
+                clipId,
+                aspectRatio: "9:16",
+                quality: options.resolution as string,
+                withCaptions: !!currentPresetId,
+            });
+
             // Save changes before exporting and wait for them to complete
             try {
                 await handleSave();

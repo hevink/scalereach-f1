@@ -21,6 +21,7 @@ import {
 } from "@/components/ui/sidebar";
 import { Skeleton } from "@/components/ui/skeleton";
 import { CreateWorkspaceDialog } from "./create-workspace-dialog";
+import { analytics } from "@/lib/analytics";
 
 interface Workspace {
   id: string;
@@ -105,6 +106,7 @@ export function WorkspaceSwitcher({
     name: string;
     slug: string;
   }) => {
+    analytics.workspaceCreated(workspace.id);
     onWorkspaceCreated?.(workspace);
     router.push(`/${workspace.slug}`);
   };

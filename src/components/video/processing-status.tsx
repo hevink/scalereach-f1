@@ -22,6 +22,7 @@ import { useVideoStatus } from "@/hooks/useVideo";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import type { Video } from "@/lib/api/video";
+import { analytics } from "@/lib/analytics";
 
 // Video status type
 type VideoStatus = Video["status"];
@@ -235,6 +236,7 @@ export function ProcessingStatus({ videoId, onComplete, onError }: ProcessingSta
     const [notificationsEnabled, setNotificationsEnabled] = useState(false);
     const [notificationPermission, setNotificationPermission] = useState<NotificationPermission | "unsupported">("default");
     const hasNotifiedCompletion = useRef(false);
+    const hasTrackedProcessing = useRef(false);
 
     const video = data?.video;
     const job = data?.job;
@@ -255,6 +257,14 @@ export function ProcessingStatus({ videoId, onComplete, onError }: ProcessingSta
             setNotificationsEnabled(true);
         }
     }, []);
+
+    // Track video processing status changes
+    useEffect(() => {
+        if (status === "analyzing" && !hasTrackedProcessing.current) {
+            hasTrackedProcessing.current = true;
+            analytics.videoProcessingStarted(videoId);
+        }
+    }, [status, videoId]);
 
     // Handle enabling notifications
     const handleEnableNotifications = useCallback(async () => {
@@ -277,6 +287,12 @@ export function ProcessingStatus({ videoId, onComplete, onError }: ProcessingSta
         if (status === "completed" && !hasNotifiedCompletion.current) {
             hasNotifiedCompletion.current = true;
 
+            analytics.videoProcessingCompleted({
+                videoId,
+                clipsGenerated: job?.clipsGenerated ?? 0,
+                duration: video?.duration ?? 0,
+            });
+
             toast.success("Video processing complete!", {
                 description: "Your video is ready. You can now view the detected clips.",
             });
@@ -296,6 +312,7 @@ export function ProcessingStatus({ videoId, onComplete, onError }: ProcessingSta
     // Handle error callback
     useEffect(() => {
         if (status === "failed" && onError && video?.errorMessage) {
+            analytics.videoProcessingFailed(videoId, video.errorMessage);
             if (notificationsEnabled) {
                 sendBrowserNotification(
                     "Processing Failed",

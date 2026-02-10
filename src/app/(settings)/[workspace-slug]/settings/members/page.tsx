@@ -45,6 +45,7 @@ import {
 } from "@/hooks/useWorkspace";
 import { authClient } from "@/lib/auth-client";
 import { workspaceApi } from "@/lib/api/workspace";
+import { analytics } from "@/lib/analytics";
 import type { WorkspaceInvitation, WorkspaceMember } from "@/lib/api/workspace";
 
 function getRoleIcon(role: string) {
@@ -148,6 +149,7 @@ function InviteMemberDialog({ workspaceId }: { workspaceId: string }) {
     if (!email.trim()) return;
 
     await createInvitation.mutateAsync({ workspaceId, email: email.trim(), role });
+    analytics.workspaceMemberInvited(workspaceId);
     setEmail("");
     setRole("member");
     setOpen(false);

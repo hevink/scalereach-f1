@@ -9,6 +9,7 @@ import { VideoPreviewWithCaptions } from "./video-preview-with-captions";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Undo2, Redo2, RotateCcw, Save, Loader2, RefreshCw } from "lucide-react";
+import { analytics } from "@/lib/analytics";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -97,6 +98,16 @@ export function CaptionEditorPanel({
     [words, currentTime, duration, addWord]
   );
 
+  const handleSave = useCallback(() => {
+    analytics.clipEdited(clipId, "captions");
+    save();
+  }, [clipId, save]);
+
+  const handleSaveAndRegenerate = useCallback(() => {
+    analytics.clipEdited(clipId, "captions");
+    saveAndRegenerate();
+  }, [clipId, saveAndRegenerate]);
+
   const handleStyleChange = useCallback(
     (newStyle: typeof style) => {
       if (newStyle) {
@@ -158,7 +169,7 @@ export function CaptionEditorPanel({
           <Button
             variant="outline"
             size="sm"
-            onClick={save}
+            onClick={handleSave}
             disabled={!isDirty || isSaving}
           >
             {isSaving ? (
@@ -170,7 +181,7 @@ export function CaptionEditorPanel({
           </Button>
           <Button
             size="sm"
-            onClick={saveAndRegenerate}
+            onClick={handleSaveAndRegenerate}
             disabled={isSaving || isRegenerating}
           >
             {isRegenerating ? (

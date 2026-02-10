@@ -32,6 +32,7 @@ import {
 } from "@tabler/icons-react";
 import { cn } from "@/lib/utils";
 import { useClip } from "@/hooks/useClips";
+import { analytics } from "@/lib/analytics";
 import type { ClipResponse, RecommendedPlatform } from "@/lib/api/clips";
 
 // ============================================================================
@@ -216,6 +217,7 @@ export function ClipDetailModal({
 
     const handleDownload = React.useCallback(() => {
         if (clip?.storageUrl) {
+            analytics.clipDownloaded(clipId!);
             const link = document.createElement('a');
             link.href = clip.storageUrl;
             link.download = `${clip.title || 'clip'}.mp4`;
@@ -223,7 +225,14 @@ export function ClipDetailModal({
             link.click();
             document.body.removeChild(link);
         }
-    }, [clip]);
+    }, [clip, clipId]);
+
+    // Track clip view when modal opens with clip data
+    React.useEffect(() => {
+        if (isOpen && clip && clipId) {
+            analytics.clipViewed(clipId, clip.viralityScore);
+        }
+    }, [isOpen, clip, clipId]);
 
     // Keyboard navigation
     React.useEffect(() => {

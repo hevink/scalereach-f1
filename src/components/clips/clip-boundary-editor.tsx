@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { VideoPlayer, type VideoPlayerRef } from "@/components/video/video-player";
 import { TimelineEditor, validateClipDuration } from "./timeline-editor";
 import { useUpdateClipBoundaries } from "@/hooks/useClips";
+import { analytics } from "@/lib/analytics";
 import type { ClipResponse } from "@/lib/api/clips";
 
 // ============================================================================
@@ -180,6 +181,7 @@ export function ClipBoundaryEditor({
                 description: `Duration: ${Math.round(endTime - startTime)}s`,
             });
 
+            analytics.clipEdited(clipId, "boundaries");
             setHasChanges(false);
             onSave(startTime, endTime);
         } catch (error) {
@@ -226,7 +228,7 @@ export function ClipBoundaryEditor({
                 }}
                 captions={[]}
                 currentTime={startTime}
-                onSeek={() => {}}
+                onSeek={() => { }}
                 onBoundaryChange={handleTimelineChange}
             />
 

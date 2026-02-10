@@ -22,6 +22,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { cn } from "@/lib/utils";
 import { api } from "@/lib/axios";
 import { downloadClip, downloadAllClips } from "@/lib/download-utils";
+import { analytics } from "@/lib/analytics";
 
 interface ShareViewerProps {
     token: string;
@@ -394,6 +395,7 @@ export default function ShareViewer({ token }: ShareViewerProps) {
     }, [token]);
 
     const handleDownload = (clip: PublicClipData) => {
+        analytics.clipDownloaded(clip.id);
         downloadClip(token, clip.id, clip.title);
     };
 

@@ -559,7 +559,7 @@ export function SignUpForm() {
               <div className="text-center font-semibold text-muted-foreground text-sm">
                 OR
               </div>
-              <LoginWithGoogle />
+              <LoginWithGoogle isSignUp />
             </>
           )}
         </div>

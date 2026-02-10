@@ -30,6 +30,7 @@ import { useMyVideos } from "@/hooks/useVideo";
 import { useClipsByVideo, useToggleFavorite } from "@/hooks/useClips";
 import { useWorkspaceBySlug } from "@/hooks/useWorkspace";
 import { cn } from "@/lib/utils";
+import { analytics } from "@/lib/analytics";
 import type { ClipResponse } from "@/lib/api/clips";
 
 interface AllClipsPageProps {
@@ -283,6 +284,7 @@ export default function AllClipsPage({ params, searchParams }: AllClipsPageProps
 
     const handleDownload = useCallback((clip: ClipResponse) => {
         if (clip.storageUrl) {
+            analytics.clipDownloaded(clip.id);
             const link = document.createElement("a");
             link.href = clip.storageUrl;
             link.download = `${clip.title || "clip"}.mp4`;

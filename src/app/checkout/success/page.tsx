@@ -5,16 +5,26 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import Confetti from "react-confetti";
 import { DotLottieReact } from "@lottiefiles/dotlottie-react";
+import { analytics } from "@/lib/analytics";
 
 function CheckoutSuccessContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const workspaceSlug = searchParams.get("workspace");
+  const planId = searchParams.get("plan") || "unknown";
+  const planName = searchParams.get("planName") || planId;
   const [showConfetti, setShowConfetti] = useState(true);
   const [windowSize, setWindowSize] = useState({ width: 0, height: 0 });
 
   useEffect(() => {
     setWindowSize({ width: window.innerWidth, height: window.innerHeight });
+
+    // Track subscription started
+    analytics.subscriptionStarted({
+      planId,
+      planName,
+      price: 0, // Price not available from URL params
+    });
 
     const timer = setTimeout(() => {
       setShowConfetti(false);

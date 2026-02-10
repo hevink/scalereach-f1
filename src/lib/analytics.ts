@@ -42,6 +42,10 @@ export const analytics = {
     posthog.capture("video_processing_completed", props);
   },
 
+  videoProcessingFailed: (videoId: string, error?: string) => {
+    posthog.capture("video_processing_failed", { videoId, error });
+  },
+
   // Clip events
   clipViewed: (clipId: string, viralScore?: number) => {
     posthog.capture("clip_viewed", { clipId, viralScore });

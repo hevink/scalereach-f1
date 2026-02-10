@@ -13,11 +13,14 @@ const FRONTEND_URL = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
 interface LoginWithGoogleProps {
   variant?: ComponentProps<typeof Button>["variant"];
   showHelperText?: boolean;
+  /** When true, tracks as sign-up instead of login */
+  isSignUp?: boolean;
 }
 
 export function LoginWithGoogle({
   variant = "outline",
   showHelperText = false,
+  isSignUp = false,
 }: LoginWithGoogleProps) {
   const [isLoading, setIsLoading] = useState(false);
 
@@ -45,8 +48,12 @@ export function LoginWithGoogle({
         return;
       }
 
-      // Track Google login (will redirect, so track before)
-      analytics.login("google");
+      // Track Google auth (will redirect, so track before)
+      if (isSignUp) {
+        analytics.signUp("google");
+      } else {
+        analytics.login("google");
+      }
     } catch (error) {
       setIsLoading(false);
       const errorMessage = getAuthErrorMessage(
