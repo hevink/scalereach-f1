@@ -24,6 +24,13 @@ import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Switch } from "@/components/ui/switch";
 import { cn } from "@/lib/utils";
+import {
+    Carousel,
+    CarouselContent,
+    CarouselItem,
+    CarouselNext,
+    CarouselPrevious,
+} from "@/components/ui/carousel";
 import { useValidateYouTubeUrl, useVideo } from "@/hooks/useVideo";
 import { useWorkspaceBySlug } from "@/hooks/useWorkspace";
 import { usePlanLimits } from "@/hooks/usePlanLimits";
@@ -544,50 +551,70 @@ export default function ConfigurePage() {
                                                     ))}
                                                 </div>
                                             ) : (
-                                                <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
-                                                    {templates.map((template) => {
-                                                        const isSelected = (config.captionTemplateId ?? "classic") === template.id;
-                                                        return (
-                                                            <button
-                                                                key={template.id}
-                                                                onClick={() => updateConfig({ captionTemplateId: template.id })}
-                                                                disabled={isSubmitting}
-                                                                className={cn(
-                                                                    "relative flex flex-col items-center justify-center rounded-lg p-3 h-20 transition-all bg-muted/50",
-                                                                    "hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary",
-                                                                    isSelected && "ring-2 ring-primary bg-muted",
-                                                                    isSubmitting && "opacity-50 cursor-not-allowed"
-                                                                )}
-                                                            >
-                                                                <div className="flex flex-col items-center justify-center">
-                                                                    <span
-                                                                        className="text-[10px] font-bold leading-tight"
-                                                                        style={{
-                                                                            fontFamily: template.style?.fontFamily || "Inter",
-                                                                            color: template.style?.textColor || "#FFFFFF",
-                                                                            textShadow: template.style?.shadow ? "1px 1px 2px rgba(0,0,0,0.8)" : "none",
-                                                                        }}
-                                                                    >
-                                                                        TO GET
-                                                                    </span>
-                                                                    <span
-                                                                        className="text-[10px] font-bold leading-tight"
-                                                                        style={{
-                                                                            fontFamily: template.style?.fontFamily || "Inter",
-                                                                            color: template.style?.highlightColor || template.style?.textColor || "#00FF00",
-                                                                            textShadow: template.style?.shadow ? "1px 1px 2px rgba(0,0,0,0.8)" : "none",
-                                                                        }}
-                                                                    >
-                                                                        STARTED
-                                                                    </span>
-                                                                </div>
-                                                                <span className="absolute bottom-1 text-[9px] text-muted-foreground truncate max-w-full px-1">
-                                                                    {template.name}
-                                                                </span>
-                                                            </button>
-                                                        );
-                                                    })}
-                                                </div>
+                                                <Carousel
+                                                    opts={{
+                                                        align: "start",
+                                                        loop: true,
+                                                    }}
+                                                    className="w-full"
+                                                >
+                                                    <CarouselContent>
+                                                        {Array.from({ length: Math.ceil(templates.length / 8) }).map((_, pageIndex) => {
+                                                            const startIdx = pageIndex * 8;
+                                                            const pageTemplates = templates.slice(startIdx, startIdx + 8);
+                                                            return (
+                                                                <CarouselItem key={pageIndex}>
+                                                                    <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+                                                                        {pageTemplates.map((template) => {
+                                                                            const isSelected = (config.captionTemplateId ?? "classic") === template.id;
+                                                                            return (
+                                                                                <button
+                                                                                    key={template.id}
+                                                                                    onClick={() => updateConfig({ captionTemplateId: template.id })}
+                                                                                    disabled={isSubmitting}
+                                                                                    className={cn(
+                                                                                        "relative flex flex-col items-center justify-center rounded-lg p-3 h-20 transition-all bg-muted/50",
+                                                                                        "hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary",
+                                                                                        isSelected && "ring-2 ring-primary bg-muted",
+                                                                                        isSubmitting && "opacity-50 cursor-not-allowed"
+                                                                                    )}
+                                                                                >
+                                                                                    <div className="flex flex-col items-center justify-center">
+                                                                                        <span
+                                                                                            className="text-[10px] font-bold leading-tight"
+                                                                                            style={{
+                                                                                                fontFamily: template.style?.fontFamily || "Inter",
+                                                                                                color: template.style?.textColor || "#FFFFFF",
+                                                                                                textShadow: template.style?.shadow ? "1px 1px 2px rgba(0,0,0,0.8)" : "none",
+                                                                                            }}
+                                                                                        >
+                                                                                            TO GET
+                                                                                        </span>
+                                                                                        <span
+                                                                                            className="text-[10px] font-bold leading-tight"
+                                                                                            style={{
+                                                                                                fontFamily: template.style?.fontFamily || "Inter",
+                                                                                                color: template.style?.highlightColor || template.style?.textColor || "#00FF00",
+                                                                                                textShadow: template.style?.shadow ? "1px 1px 2px rgba(0,0,0,0.8)" : "none",
+                                                                                            }}
+                                                                                        >
+                                                                                            STARTED
+                                                                                        </span>
+                                                                                    </div>
+                                                                                    <span className="absolute bottom-1 text-[9px] text-muted-foreground truncate max-w-full px-1">
+                                                                                        {template.name}
+                                                                                    </span>
+                                                                                </button>
+                                                                            );
+                                                                        })}
+                                                                    </div>
+                                                                </CarouselItem>
+                                                            );
+                                                        })}
+                                                    </CarouselContent>
+                                                    <CarouselPrevious className="left-0 -translate-x-1/2" />
+                                                    <CarouselNext className="right-0 translate-x-1/2" />
+                                                </Carousel>
                                             )}
                                         </div>
 
