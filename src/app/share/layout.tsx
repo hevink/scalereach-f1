@@ -6,7 +6,10 @@
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-    title: "Shared Clips - ScaleReach",
+    title: {
+        template: "%s | ScaleReach",
+        default: "Shared Clips - ScaleReach",
+    },
     description: "View and download viral clips",
 };
 
