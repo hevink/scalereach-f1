@@ -575,8 +575,8 @@ export default function ConfigurePage() {
                                                                                     className={cn(
                                                                                         "relative flex flex-col items-center justify-center rounded-lg border p-3 h-20 transition-all",
                                                                                         "bg-muted/50 border-border",
-                                                                                        "hover:bg-muted hover:border-primary/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary",
-                                                                                        isSelected && "ring-2 ring-primary bg-muted border-primary",
+                                                                                        "hover:bg-muted hover:border-primary/50 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-primary",
+                                                                                        isSelected && "ring-1 ring-primary bg-muted border-primary",
                                                                                         isSubmitting && "opacity-50 cursor-not-allowed"
                                                                                     )}
                                                                                 >
