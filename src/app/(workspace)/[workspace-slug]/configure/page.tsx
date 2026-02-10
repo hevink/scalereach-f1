@@ -556,15 +556,15 @@ export default function ConfigurePage() {
                                                         align: "start",
                                                         loop: true,
                                                     }}
-                                                    className="w-full"
+                                                    className="w-full px-1"
                                                 >
-                                                    <CarouselContent>
+                                                    <CarouselContent className="-ml-2">
                                                         {Array.from({ length: Math.ceil(templates.length / 8) }).map((_, pageIndex) => {
                                                             const startIdx = pageIndex * 8;
                                                             const pageTemplates = templates.slice(startIdx, startIdx + 8);
                                                             return (
-                                                                <CarouselItem key={pageIndex}>
-                                                                    <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+                                                                <CarouselItem key={pageIndex} className="pl-2">
+                                                                    <div className="grid grid-cols-2 md:grid-cols-4 gap-2 p-1">
                                                                         {pageTemplates.map((template) => {
                                                                             const isSelected = (config.captionTemplateId ?? "classic") === template.id;
                                                                             return (
