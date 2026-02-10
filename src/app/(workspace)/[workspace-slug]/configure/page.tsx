@@ -573,9 +573,10 @@ export default function ConfigurePage() {
                                                                                     onClick={() => updateConfig({ captionTemplateId: template.id })}
                                                                                     disabled={isSubmitting}
                                                                                     className={cn(
-                                                                                        "relative flex flex-col items-center justify-center rounded-lg p-3 h-20 transition-all bg-muted/50",
-                                                                                        "hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary",
-                                                                                        isSelected && "ring-2 ring-primary bg-muted",
+                                                                                        "relative flex flex-col items-center justify-center rounded-lg border p-3 h-20 transition-all",
+                                                                                        "bg-muted/50 border-border",
+                                                                                        "hover:bg-muted hover:border-primary/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary",
+                                                                                        isSelected && "ring-2 ring-primary bg-muted border-primary",
                                                                                         isSubmitting && "opacity-50 cursor-not-allowed"
                                                                                     )}
                                                                                 >
