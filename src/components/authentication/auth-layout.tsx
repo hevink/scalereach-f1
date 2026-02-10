@@ -72,7 +72,7 @@ export function AuthLayout({ children, title, subtitle }: AuthLayoutProps) {
           </div>
           <div>
             <h1 className="text-5xl font-medium mb-1 leading-tight text-zinc-900 dark:text-white">
-              Go viral on{" "}
+              Create viral clips for{" "}
               <span className="relative italic font-serif inline-flex items-center h-[1em] min-w-[280px]">
                 {PLATFORMS.map((platform, index) => (
                   <span
@@ -97,7 +97,7 @@ export function AuthLayout({ children, title, subtitle }: AuthLayoutProps) {
               </span>
             </h1>
             <p className="text-lg text-zinc-600 dark:text-zinc-400 mb-8 mt-10">
-              Turn your long-form videos into viral clips with AI. No editing skills required.
+              AI-powered video clipping that finds the best moments from your long-form content and turns them into ready-to-post clips.
             </p>
           </div>
           <div className="bg-white dark:bg-zinc-900 rounded-2xl shadow-2xl p-6 mt-8 border border-zinc-200 dark:border-zinc-800">
