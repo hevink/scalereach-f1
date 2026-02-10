@@ -438,7 +438,7 @@ export function createTextOverlay(partial?: Partial<TextOverlay>): TextOverlay {
         outline: false,
         outlineColor: "#000000",
         startTime: 0,
-        endTime: 5,
+        endTime: 3,
         ...partial,
     };
 }

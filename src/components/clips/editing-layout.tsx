@@ -46,6 +46,10 @@ export interface EditingLayoutProps {
     className?: string;
     header?: ReactNode;
     onPanelResize?: (sizes: { captionEditor: number; videoPlayer: number }) => void;
+    /** Controlled toolbar panel (optional — if omitted, uses internal state) */
+    activeToolbarPanel?: ToolbarPanel;
+    /** Callback when toolbar panel changes */
+    onToolbarPanelChange?: (panel: ToolbarPanel) => void;
 }
 
 // ============================================================================
@@ -80,10 +84,14 @@ interface DesktopLayoutProps {
     header?: ReactNode;
     onPanelResize?: EditingLayoutProps["onPanelResize"];
     className?: string;
+    activeToolbarPanel?: ToolbarPanel;
+    onToolbarPanelChange?: (panel: ToolbarPanel) => void;
 }
 
-function DesktopLayout({ children, header, onPanelResize, className }: DesktopLayoutProps) {
-    const [activeToolbarPanel, setActiveToolbarPanel] = useState<ToolbarPanel>(null);
+function DesktopLayout({ children, header, onPanelResize, className, activeToolbarPanel: controlledPanel, onToolbarPanelChange }: DesktopLayoutProps) {
+    const [internalPanel, setInternalPanel] = useState<ToolbarPanel>(null);
+    const activeToolbarPanel = controlledPanel !== undefined ? controlledPanel : internalPanel;
+    const setActiveToolbarPanel = onToolbarPanelChange || setInternalPanel;
 
     return (
         <div
@@ -164,10 +172,14 @@ interface MobileLayoutProps {
     children: EditingLayoutProps["children"];
     header?: ReactNode;
     className?: string;
+    activeToolbarPanel?: ToolbarPanel;
+    onToolbarPanelChange?: (panel: ToolbarPanel) => void;
 }
 
-function MobileLayout({ children, header, className }: MobileLayoutProps) {
-    const [activeToolbarPanel, setActiveToolbarPanel] = useState<ToolbarPanel>(null);
+function MobileLayout({ children, header, className, activeToolbarPanel: controlledPanel, onToolbarPanelChange }: MobileLayoutProps) {
+    const [internalPanel, setInternalPanel] = useState<ToolbarPanel>(null);
+    const activeToolbarPanel = controlledPanel !== undefined ? controlledPanel : internalPanel;
+    const setActiveToolbarPanel = onToolbarPanelChange || setInternalPanel;
 
     return (
         <div
@@ -267,6 +279,8 @@ export function EditingLayout({
     className,
     header,
     onPanelResize,
+    activeToolbarPanel,
+    onToolbarPanelChange,
 }: EditingLayoutProps) {
     const isDesktopDetected = useIsDesktop();
     const effectiveLayout = layout ?? (isDesktopDetected ? "desktop" : "mobile");
@@ -281,6 +295,8 @@ export function EditingLayout({
                 header={header}
                 onPanelResize={onPanelResize}
                 className={className}
+                activeToolbarPanel={activeToolbarPanel}
+                onToolbarPanelChange={onToolbarPanelChange}
             >
                 {children}
             </DesktopLayout>
@@ -288,7 +304,12 @@ export function EditingLayout({
     }
 
     return (
-        <MobileLayout header={header} className={className}>
+        <MobileLayout
+            header={header}
+            className={className}
+            activeToolbarPanel={activeToolbarPanel}
+            onToolbarPanelChange={onToolbarPanelChange}
+        >
             {children}
         </MobileLayout>
     );

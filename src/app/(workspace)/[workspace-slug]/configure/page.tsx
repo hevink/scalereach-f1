@@ -32,7 +32,6 @@ import { videoConfigApi, DEFAULT_VIDEO_CONFIG, type VideoConfigInput } from "@/l
 import { toast } from "sonner";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import type { VideoInfo } from "@/lib/api/video";
-import { CaptionTemplateGrid } from "@/components/configure/caption-template-grid";
 import { AspectRatioSelector } from "@/components/configure/aspect-ratio-selector";
 import { YouTubeIcon } from "@/components/icons/youtube-icon";
 import { InsufficientMinutesModal } from "@/components/upload/insufficient-minutes-modal";
@@ -538,14 +537,57 @@ export default function ConfigurePage() {
                                                         )}
                                                     </Button>
                                                 </div>
+                                            ) : templatesLoading ? (
+                                                <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+                                                    {Array.from({ length: 8 }).map((_, i) => (
+                                                        <div key={i} className="h-20 rounded-lg bg-muted animate-pulse" />
+                                                    ))}
+                                                </div>
                                             ) : (
-                                                <CaptionTemplateGrid
-                                                    templates={templates}
-                                                    selectedId={config.captionTemplateId ?? "classic"}
-                                                    onSelect={(id) => updateConfig({ captionTemplateId: id })}
-                                                    disabled={isSubmitting}
-                                                    isLoading={templatesLoading}
-                                                />
+                                                <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+                                                    {templates.map((template) => {
+                                                        const isSelected = (config.captionTemplateId ?? "classic") === template.id;
+                                                        return (
+                                                            <button
+                                                                key={template.id}
+                                                                onClick={() => updateConfig({ captionTemplateId: template.id })}
+                                                                disabled={isSubmitting}
+                                                                className={cn(
+                                                                    "relative flex flex-col items-center justify-center rounded-lg p-3 h-20 transition-all bg-muted/50",
+                                                                    "hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary",
+                                                                    isSelected && "ring-2 ring-primary bg-muted",
+                                                                    isSubmitting && "opacity-50 cursor-not-allowed"
+                                                                )}
+                                                            >
+                                                                <div className="flex flex-col items-center justify-center">
+                                                                    <span
+                                                                        className="text-[10px] font-bold leading-tight"
+                                                                        style={{
+                                                                            fontFamily: template.style?.fontFamily || "Inter",
+                                                                            color: template.style?.textColor || "#FFFFFF",
+                                                                            textShadow: template.style?.shadow ? "1px 1px 2px rgba(0,0,0,0.8)" : "none",
+                                                                        }}
+                                                                    >
+                                                                        TO GET
+                                                                    </span>
+                                                                    <span
+                                                                        className="text-[10px] font-bold leading-tight"
+                                                                        style={{
+                                                                            fontFamily: template.style?.fontFamily || "Inter",
+                                                                            color: template.style?.highlightColor || template.style?.textColor || "#00FF00",
+                                                                            textShadow: template.style?.shadow ? "1px 1px 2px rgba(0,0,0,0.8)" : "none",
+                                                                        }}
+                                                                    >
+                                                                        STARTED
+                                                                    </span>
+                                                                </div>
+                                                                <span className="absolute bottom-1 text-[9px] text-muted-foreground truncate max-w-full px-1">
+                                                                    {template.name}
+                                                                </span>
+                                                            </button>
+                                                        );
+                                                    })}
+                                                </div>
                                             )}
                                         </div>
 

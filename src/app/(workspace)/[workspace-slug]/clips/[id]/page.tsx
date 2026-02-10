@@ -24,6 +24,7 @@ import {
     BreadcrumbSeparator,
 } from "@/components/ui/breadcrumb";
 import { EditingLayout } from "@/components/clips/editing-layout";
+import type { ToolbarPanel } from "@/components/clips/editor-toolbar";
 import { AdvancedTimeline } from "@/components/clips/advanced-timeline";
 import { KeyboardShortcutsModal, useKeyboardShortcutsModal } from "@/components/clips/keyboard-shortcuts-modal";
 import { CaptionPanelTabs } from "@/components/captions/caption-panel-tabs";
@@ -37,6 +38,7 @@ import { useVideo } from "@/hooks/useVideo";
 import { useCaptionStyle, useUpdateCaptionStyle, useUpdateCaptionText, useCaptionTemplates } from "@/hooks/useCaptions";
 import { useInitiateExport } from "@/hooks/useExport";
 import { useMinutesBalance } from "@/hooks/useMinutes";
+import { useTextOverlays, useUpdateTextOverlays } from "@/hooks/useTextOverlays";
 import { useWorkspaceBySlug } from "@/hooks/useWorkspace";
 import { savePageScrollPosition } from "@/hooks/useScrollPosition";
 import { useCaptionStylePresets } from "@/hooks/useCaptionStylePresets";
@@ -408,28 +410,51 @@ export default function ClipEditorPage({ params }: ClipEditorPageProps) {
     const [showUnsavedDialog, setShowUnsavedDialog] = useState(false);
     const [pendingNavigation, setPendingNavigation] = useState<(() => void) | null>(null);
 
-    // Text overlay state
+    // Text overlay state — persisted via API on explicit save
+    const { data: textOverlayData } = useTextOverlays(clipId);
+    const updateTextOverlays = useUpdateTextOverlays();
     const [textOverlays, setTextOverlays] = useState<TextOverlay[]>([]);
     const [selectedTextOverlayId, setSelectedTextOverlayId] = useState<string | null>(null);
+    const [activeToolbarPanel, setActiveToolbarPanel] = useState<ToolbarPanel>(null);
+    const textOverlaysInitialized = useRef(false);
+
+    // When a text overlay is selected, open the text panel in the toolbar
+    const handleSelectTextOverlay = useCallback((id: string | null) => {
+        setSelectedTextOverlayId(id);
+        if (id) {
+            setActiveToolbarPanel("text");
+        }
+    }, []);
+
+    // Seed local state from server once
+    useEffect(() => {
+        if (textOverlayData?.overlays && !textOverlaysInitialized.current) {
+            setTextOverlays(textOverlayData.overlays);
+            textOverlaysInitialized.current = true;
+        }
+    }, [textOverlayData?.overlays]);
 
     const handleAddTextOverlay = useCallback(() => {
         const overlay = createTextOverlay({
             startTime: currentTime,
-            endTime: currentTime + 5,
+            endTime: currentTime + 3,
         });
         setTextOverlays((prev) => [...prev, overlay]);
         setSelectedTextOverlayId(overlay.id);
+        setHasUnsavedChanges(true);
     }, [currentTime]);
 
     const handleRemoveTextOverlay = useCallback((id: string) => {
         setTextOverlays((prev) => prev.filter((o) => o.id !== id));
         setSelectedTextOverlayId((prev) => (prev === id ? null : prev));
+        setHasUnsavedChanges(true);
     }, []);
 
     const handleUpdateTextOverlay = useCallback((id: string, updates: Partial<TextOverlay>) => {
         setTextOverlays((prev) =>
             prev.map((o) => (o.id === id ? { ...o, ...updates } : o)),
         );
+        setHasUnsavedChanges(true);
     }, []);
 
     const handleDuplicateTextOverlay = useCallback((id: string) => {
@@ -443,6 +468,7 @@ export default function ClipEditorPage({ params }: ClipEditorPageProps) {
             });
             return [...prev, copy];
         });
+        setHasUnsavedChanges(true);
     }, []);
 
     // Undo/redo state management for caption text edits
@@ -850,11 +876,19 @@ export default function ClipEditorPage({ params }: ClipEditorPageProps) {
             );
         }
 
+        // Save text overlays
+        promises.push(
+            updateTextOverlays.mutateAsync({
+                clipId,
+                overlays: textOverlays,
+            })
+        );
+
         await Promise.all(promises);
 
         // Clear unsaved changes flag
         setHasUnsavedChanges(false);
-    }, [clipId, captionStyle, currentPresetId, clipBoundaries, updateCaptionStyle, updateClipBoundaries, saveLastUsedStyle]);
+    }, [clipId, captionStyle, currentPresetId, clipBoundaries, textOverlays, updateCaptionStyle, updateClipBoundaries, updateTextOverlays, saveLastUsedStyle]);
 
     // Export handler
     const handleExport = useCallback(
@@ -1110,12 +1144,14 @@ export default function ClipEditorPage({ params }: ClipEditorPageProps) {
 
     // Determine if saving is in progress (includes caption text auto-save)
     // @validates Requirements 13.2 - Show saving indicator during save operations
-    const isSaving = updateCaptionStyle.isPending || updateClipBoundaries.isPending || updateCaptionText.isPending;
+    const isSaving = updateCaptionStyle.isPending || updateClipBoundaries.isPending || updateCaptionText.isPending || updateTextOverlays.isPending;
 
     return (
         <>
             <EditingLayout
                 className="h-screen"
+                activeToolbarPanel={activeToolbarPanel}
+                onToolbarPanelChange={setActiveToolbarPanel}
                 header={
                     <EditorHeader
                         title={clip.title || "Untitled Clip"}
@@ -1182,6 +1218,7 @@ export default function ClipEditorPage({ params }: ClipEditorPageProps) {
                                     onCaptionStyleChange={handleStyleChange}
                                     textOverlays={textOverlays}
                                     onTextOverlayUpdate={handleUpdateTextOverlay}
+                                    onTextOverlaySelect={handleSelectTextOverlay}
                                     onTimeUpdate={handleTimeUpdate}
                                     aspectRatio="9:16"
                                     className="flex-1 rounded-lg overflow-hidden"
@@ -1236,7 +1273,7 @@ export default function ClipEditorPage({ params }: ClipEditorPageProps) {
                             className="w-full"
                             textOverlays={textOverlays}
                             selectedTextOverlayId={selectedTextOverlayId}
-                            onTextOverlaySelect={setSelectedTextOverlayId}
+                            onTextOverlaySelect={handleSelectTextOverlay}
                             onTextOverlayUpdate={handleUpdateTextOverlay}
                         />
                     ),

@@ -17,7 +17,6 @@ import { Toolbar } from "./toolbar";
 import { LoopRegionOverlay } from "./loop-region";
 import { Marker } from "./marker";
 import { TrackResizer } from "./track-resizer";
-import { ContextMenu } from "./context-menu";
 import { TextTrack, TEXT_TRACK_HEIGHT } from "./text-track";
 
 // ============================================================================
@@ -139,14 +138,6 @@ export function TimelineContainer({
         onSeek(time);
     };
 
-    // Context menu
-    const [contextMenu, setContextMenu] = React.useState<{ x: number; y: number } | null>(null);
-
-    const handleContextMenu = (e: React.MouseEvent) => {
-        e.preventDefault();
-        setContextMenu({ x: e.clientX, y: e.clientY });
-    };
-
     // Build context value
     const contextValue: TimelineContextValue = {
         state: { ...state, trackWidth: timeline.state.trackWidth },
@@ -225,7 +216,6 @@ export function TimelineContainer({
                     ref={scrollRef}
                     className="overflow-x-auto overflow-y-hidden relative"
                     onClick={handleTimelineClick}
-                    onContextMenu={handleContextMenu}
                 >
                     <div style={{ width: state.trackWidth + TRACK_LABEL_WIDTH + 16, minWidth: state.containerWidth }}>
                         {/* Time ruler row */}
@@ -302,15 +292,6 @@ export function TimelineContainer({
 
                 {/* Playback controls */}
                 <PlaybackControls />
-
-                {/* Context menu */}
-                {contextMenu && (
-                    <ContextMenu
-                        x={contextMenu.x}
-                        y={contextMenu.y}
-                        onClose={() => setContextMenu(null)}
-                    />
-                )}
             </div>
         </TimelineContext.Provider>
     );

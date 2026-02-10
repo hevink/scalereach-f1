@@ -34,6 +34,8 @@ export interface VideoCanvasEditorProps {
     textOverlays?: TextOverlay[];
     /** Callback when a text overlay is updated (e.g. dragged to new position) */
     onTextOverlayUpdate?: (id: string, updates: Partial<TextOverlay>) => void;
+    /** Callback when a text overlay is clicked (to select it in the panel) */
+    onTextOverlaySelect?: (id: string) => void;
     /** Callback when playback time updates */
     onTimeUpdate?: (time: number) => void;
     /** Aspect ratio: 9:16 (vertical), 16:9 (horizontal), 1:1 (square) */
@@ -496,6 +498,7 @@ interface DraggableTextOverlayProps {
     containerScale: number;
     displaySize: { width: number; height: number };
     onUpdate?: (id: string, updates: Partial<TextOverlay>) => void;
+    onSelect?: (id: string) => void;
 }
 
 function DraggableTextOverlay({
@@ -503,24 +506,35 @@ function DraggableTextOverlay({
     containerScale,
     displaySize,
     onUpdate,
+    onSelect,
 }: DraggableTextOverlayProps) {
     const [isDragging, setIsDragging] = useState(false);
     const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
     const [startPos, setStartPos] = useState({ x: 0, y: 0 });
+    const didDragRef = useRef(false);
 
     const handleMouseDown = useCallback((e: React.MouseEvent) => {
         if (!onUpdate) return;
         e.preventDefault();
         e.stopPropagation();
         setIsDragging(true);
+        didDragRef.current = false;
         setDragStart({ x: e.clientX, y: e.clientY });
         setStartPos({ x: overlay.x, y: overlay.y });
     }, [onUpdate, overlay.x, overlay.y]);
+
+    const handleClick = useCallback((e: React.MouseEvent) => {
+        e.stopPropagation();
+        if (!didDragRef.current) {
+            onSelect?.(overlay.id);
+        }
+    }, [onSelect, overlay.id]);
 
     useEffect(() => {
         if (!isDragging) return;
 
         const handleMouseMove = (e: MouseEvent) => {
+            didDragRef.current = true;
             const dx = e.clientX - dragStart.x;
             const dy = e.clientY - dragStart.y;
             const newX = Math.max(0, Math.min(100, startPos.x + (dx / displaySize.width) * 100));
@@ -577,6 +591,7 @@ function DraggableTextOverlay({
                 maxWidth: `${80}%`,
             }}
             onMouseDown={handleMouseDown}
+            onClick={handleClick}
         >
             {overlay.text}
         </div>
@@ -598,6 +613,7 @@ export const VideoCanvasEditor = forwardRef<VideoCanvasEditorRef, VideoCanvasEdi
             onCaptionStyleChange,
             textOverlays = [],
             onTextOverlayUpdate,
+            onTextOverlaySelect,
             onTimeUpdate,
             aspectRatio = "9:16",
             className,
@@ -955,6 +971,7 @@ export const VideoCanvasEditor = forwardRef<VideoCanvasEditorRef, VideoCanvasEdi
                                 containerScale={containerScale}
                                 displaySize={displaySize}
                                 onUpdate={onTextOverlayUpdate}
+                                onSelect={onTextOverlaySelect}
                             />
                         ))}
 
