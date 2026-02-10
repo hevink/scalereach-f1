@@ -1,17 +1,10 @@
 "use client";
 
 import {
-  // IconHome,
-  // IconHomeFilled,
   IconVideo,
   IconVideoFilled,
-  // IconFolder,
-  // IconFolderFilled,
   IconScissors,
   IconDownload,
-  IconPalette,
-  IconPaletteFilled,
-  IconTextCaption,
   IconStar,
   IconStarFilled,
   IconClock,
@@ -87,18 +80,6 @@ export function NavMain({ currentSlug, workspaceId }: NavMainProps) {
   ];
 
   const toolsItems = [
-    {
-      title: "Brand Kit",
-      url: `/${currentSlug}/settings/brand-kit`,
-      icon: IconPalette,
-      iconFilled: IconPaletteFilled,
-    },
-    {
-      title: "Caption Templates",
-      url: `/${currentSlug}/settings/captions`,
-      icon: IconTextCaption,
-      iconFilled: IconTextCaption,
-    },
     {
       title: "Minute Usage",
       url: `/${currentSlug}/credits`,
