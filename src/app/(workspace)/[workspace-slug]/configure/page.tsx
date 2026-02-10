@@ -640,7 +640,7 @@ export default function ConfigurePage() {
                                             </div>
                                         </div>
 
-                                        {/* Translate To Section */}
+                                        {/* Translate To Section - Temporarily disabled
                                         <div className="space-y-4 border-t pt-6">
                                             <div>
                                                 <h3 className="font-semibold">Translate To</h3>
@@ -701,6 +701,7 @@ export default function ConfigurePage() {
                                                 </p>
                                             )}
                                         </div>
+                                        */}
                                     </CardContent>
                                 </Card>
                             </motion.div>
