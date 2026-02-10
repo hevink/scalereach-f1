@@ -178,10 +178,17 @@ function VideoNotFound({ onBack }: VideoNotFoundProps) {
 interface NoClipsProps {
     videoTitle: string;
     videoStatus: string;
+    videoCreatedAt: string;
 }
 
-function NoClips({ videoTitle, videoStatus }: NoClipsProps) {
-    if (videoStatus === "downloading") {
+function NoClips({ videoTitle, videoStatus, videoCreatedAt }: NoClipsProps) {
+    // Calculate time elapsed since video creation (in minutes)
+    const timeElapsedMinutes = (Date.now() - new Date(videoCreatedAt).getTime()) / (1000 * 60);
+
+    // If video has been processing for more than 5 minutes and still no clips, show "No Clips Found"
+    const hasTimedOut = timeElapsedMinutes > 5;
+
+    if (videoStatus === "downloading" && !hasTimedOut) {
         return (
             <div className="flex flex-col items-center justify-center gap-4 rounded-lg border bg-muted/30 p-8">
                 <IconLoader2 className="size-8 animate-spin text-primary" />
@@ -195,7 +202,7 @@ function NoClips({ videoTitle, videoStatus }: NoClipsProps) {
         );
     }
 
-    if (videoStatus === "uploading") {
+    if (videoStatus === "uploading" && !hasTimedOut) {
         return (
             <div className="flex flex-col items-center justify-center gap-4 rounded-lg border bg-muted/30 p-8">
                 <IconLoader2 className="size-8 animate-spin text-primary" />
@@ -209,7 +216,7 @@ function NoClips({ videoTitle, videoStatus }: NoClipsProps) {
         );
     }
 
-    if (videoStatus === "transcribing") {
+    if (videoStatus === "transcribing" && !hasTimedOut) {
         return (
             <div className="flex flex-col items-center justify-center gap-4 rounded-lg border bg-muted/30 p-8">
                 <IconLoader2 className="size-8 animate-spin text-primary" />
@@ -223,7 +230,7 @@ function NoClips({ videoTitle, videoStatus }: NoClipsProps) {
         );
     }
 
-    if (videoStatus === "analyzing" || videoStatus === "processing") {
+    if ((videoStatus === "analyzing" || videoStatus === "processing") && !hasTimedOut) {
         return (
             <div className="flex flex-col items-center justify-center gap-4 rounded-lg border bg-muted/30 p-8">
                 <IconLoader2 className="size-8 animate-spin text-primary" />
@@ -253,7 +260,7 @@ function NoClips({ videoTitle, videoStatus }: NoClipsProps) {
         );
     }
 
-    if (videoStatus === "pending") {
+    if (videoStatus === "pending" && !hasTimedOut) {
         return (
             <div className="flex flex-col items-center justify-center gap-4 rounded-lg border bg-muted/30 p-8">
                 <IconClock className="size-8 text-muted-foreground" />
@@ -267,6 +274,7 @@ function NoClips({ videoTitle, videoStatus }: NoClipsProps) {
         );
     }
 
+    // Default: Show "No Clips Found" for completed videos or timed-out processing
     return (
         <div className="flex flex-col items-center justify-center gap-4 rounded-lg border bg-muted/30 p-8">
             <IconVideo className="size-8 text-muted-foreground" />
@@ -591,6 +599,7 @@ export default function VideoClipsPage({ params }: VideoClipsPageProps) {
                     <NoClips
                         videoTitle={video.title || "this video"}
                         videoStatus={video.status}
+                        videoCreatedAt={video.createdAt}
                     />
                 ) : (
                     <div className="space-y-6 max-w-4xl">
