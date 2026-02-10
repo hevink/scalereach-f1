@@ -3,8 +3,6 @@
 import {
   IconAlertTriangle,
   IconAlertTriangleFilled,
-  IconPalette,
-  IconPaletteFilled,
   IconSearch,
   IconSettings,
   IconSettingsFilled,
@@ -105,19 +103,6 @@ export function WorkspaceSettingsSidebar({
         type: "category",
       },
       {
-        title: "Customization",
-        url: `${baseUrl}/customization`,
-        category: "Customization",
-        type: "category",
-      },
-      {
-        title: "Workspace Customization",
-        description: "Customize your workspace appearance and settings.",
-        url: `${baseUrl}/customization`,
-        category: "Customization",
-        type: "card",
-      },
-      {
         title: "Members",
         url: `${baseUrl}/members`,
         category: "Members",
@@ -154,12 +139,6 @@ export function WorkspaceSettingsSidebar({
         url: baseUrl,
         icon: IconSettings,
         iconFilled: IconSettingsFilled,
-      },
-      {
-        title: "Customization",
-        url: `${baseUrl}/customization`,
-        icon: IconPalette,
-        iconFilled: IconPaletteFilled,
       },
       {
         title: "Members",
