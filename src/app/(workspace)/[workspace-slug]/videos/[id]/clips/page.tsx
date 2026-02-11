@@ -35,6 +35,7 @@ import { analytics } from "@/lib/analytics";
 import type { ClipResponse } from "@/lib/api/clips";
 import type { RecommendedPlatform } from "@/lib/api/clips";
 import { ShareManager } from "@/components/share/share-manager";
+import { UpgradeDialog } from "@/components/pricing/upgrade-dialog";
 import {
     YouTubeIcon,
     TikTokIcon,
@@ -306,6 +307,8 @@ interface ClipCardProps {
     onFavorite: (e: React.MouseEvent, clipId: string) => void;
     onDownload: (clip: ClipResponse) => void;
     onShare: (clip: ClipResponse) => void;
+    userPlan: "free" | "starter" | "pro" | "agency";
+    workspaceSlug: string;
 }
 
 const PLATFORM_CONFIG: Record<RecommendedPlatform, { icon: React.ElementType; label: string; tooltip: string }> = {
@@ -317,9 +320,11 @@ const PLATFORM_CONFIG: Record<RecommendedPlatform, { icon: React.ElementType; la
     facebook_reels: { icon: FacebookIcon, label: "FB Reels", tooltip: "Facebook Reels" },
 };
 
-function ClipCard({ clip, index, onEdit, onFavorite, onDownload, onShare }: ClipCardProps) {
+function ClipCard({ clip, index, onEdit, onFavorite, onDownload, onShare, userPlan, workspaceSlug }: ClipCardProps) {
     const [activeTab, setActiveTab] = useState<"transcript" | "description">("transcript");
+    const [upgradeFeature, setUpgradeFeature] = useState<string | null>(null);
     const isGenerating = clip.status === "generating" || clip.status === "detected";
+    const isFreePlan = userPlan === "free";
 
     return (
         <div className="rounded-xl border bg-card overflow-hidden">
@@ -469,6 +474,13 @@ function ClipCard({ clip, index, onEdit, onFavorite, onDownload, onShare }: Clip
                             variant="outline"
                             className="gap-2"
                             disabled={isGenerating}
+                            onClick={() => {
+                                if (isFreePlan) {
+                                    setUpgradeFeature("Remove watermark");
+                                } else {
+                                    // TODO: handle remove watermark for paid users
+                                }
+                            }}
                         >
                             <IconSparkles className="size-4" />
                             Remove watermark
@@ -478,7 +490,13 @@ function ClipCard({ clip, index, onEdit, onFavorite, onDownload, onShare }: Clip
                             size="sm"
                             variant="outline"
                             className="gap-2"
-                            onClick={() => onEdit(clip.id)}
+                            onClick={() => {
+                                if (isFreePlan) {
+                                    setUpgradeFeature("Edit");
+                                } else {
+                                    onEdit(clip.id);
+                                }
+                            }}
                             disabled={isGenerating}
                         >
                             <IconEdit className="size-4" />
@@ -514,6 +532,16 @@ function ClipCard({ clip, index, onEdit, onFavorite, onDownload, onShare }: Clip
                     </div>
                 </div>
             </div>
+
+            {/* Upgrade Dialog for free plan users */}
+            <UpgradeDialog
+                open={upgradeFeature !== null}
+                onOpenChange={(open) => {
+                    if (!open) setUpgradeFeature(null);
+                }}
+                workspaceSlug={workspaceSlug}
+                feature={upgradeFeature || ""}
+            />
         </div>
     );
 }
@@ -683,6 +711,8 @@ export default function VideoClipsPage({ params }: VideoClipsPageProps) {
                                 onFavorite={handleFavorite}
                                 onDownload={handleDownload}
                                 onShare={handleShare}
+                                userPlan={(workspace?.plan as "free" | "starter" | "pro" | "agency") || "free"}
+                                workspaceSlug={slug}
                             />
                         ))}
                     </div>

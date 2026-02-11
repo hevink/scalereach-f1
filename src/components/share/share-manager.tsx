@@ -7,6 +7,7 @@ import { ShareModal, ShareAnalytics } from "./share-modal";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 import { api } from "@/lib/axios";
+import { UpgradeDialog } from "@/components/pricing/upgrade-dialog";
 import {
     AlertDialog,
     AlertDialogAction,
@@ -63,16 +64,11 @@ export function ShareManager({
 
     const isPro = userPlan === "pro";
     const hasClips = clipCount > 0;
+    const [showUpgradeDialog, setShowUpgradeDialog] = useState(false);
 
     const handleCreateShare = async () => {
         if (!isPro) {
-            toast.error("Pro plan required", {
-                description: "Clip sharing is available for Pro users only. Upgrade to share your clips publicly.",
-                action: {
-                    label: "Upgrade",
-                    onClick: () => router.push(`/${workspaceSlug}/pricing`),
-                },
-            });
+            setShowUpgradeDialog(true);
             return;
         }
 
@@ -272,6 +268,13 @@ export function ShareManager({
                     isLoading={isLoading}
                 />
             )}
+
+            <UpgradeDialog
+                open={showUpgradeDialog}
+                onOpenChange={setShowUpgradeDialog}
+                workspaceSlug={workspaceSlug}
+                feature="Share Clips"
+            />
         </>
     );
 }
