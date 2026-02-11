@@ -1,12 +1,5 @@
 "use client";
 
-/**
- * Share Manager Component
- * Manages share link creation, display, and revocation within the authenticated clips page
- * 
- * Validates: Requirements 1.1, 1.2, 2.1, 3.2, 4.1, 4.2, 4.4, 17.1, 17.2
- */
-
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { IconShare2, IconLoader2, IconLock, IconWorld } from "@tabler/icons-react";
@@ -43,6 +36,13 @@ interface CreateShareResponse {
     };
 }
 
+interface ShareStatusResponse {
+    exists: boolean;
+    shareToken?: string;
+    shareUrl?: string;
+    createdAt?: string;
+}
+
 export function ShareManager({
     videoId,
     workspaceSlug,
@@ -65,7 +65,6 @@ export function ShareManager({
     const hasClips = clipCount > 0;
 
     const handleCreateShare = async () => {
-        // Check Pro plan requirement
         if (!isPro) {
             toast.error("Pro plan required", {
                 description: "Clip sharing is available for Pro users only. Upgrade to share your clips publicly.",
@@ -77,7 +76,6 @@ export function ShareManager({
             return;
         }
 
-        // Check if video has clips
         if (!hasClips) {
             toast.error("No clips available", {
                 description: "Generate clips before creating a share link.",
@@ -85,8 +83,33 @@ export function ShareManager({
             return;
         }
 
-        // Show confirmation dialog
-        setShowConfirmDialog(true);
+        // If we already have a share link in state, go straight to modal
+        if (shareLink) {
+            setIsModalOpen(true);
+            return;
+        }
+
+        // Check if share link already exists on the server
+        setIsLoading(true);
+        try {
+            const { data } = await api.get<ShareStatusResponse>(
+                `/api/videos/${videoId}/share`
+            );
+
+            if (data.exists && data.shareUrl) {
+                // Already public — skip confirmation, open modal directly
+                setShareLink(data.shareUrl);
+                setIsModalOpen(true);
+            } else {
+                // Not public yet — ask for confirmation
+                setShowConfirmDialog(true);
+            }
+        } catch {
+            // If check fails, fall back to showing confirmation
+            setShowConfirmDialog(true);
+        } finally {
+            setIsLoading(false);
+        }
     };
 
     const handleConfirmShare = async () => {
@@ -158,7 +181,7 @@ export function ShareManager({
             if (response.data.success) {
                 setShareLink(response.data.shareUrl);
                 setAnalytics({
-                    totalViews: 0, // Reset analytics for new link
+                    totalViews: 0,
                     uniqueViewers: 0,
                     totalDownloads: 0,
                 });
@@ -174,7 +197,6 @@ export function ShareManager({
         }
     };
 
-    // Determine button state and tooltip
     const getButtonProps = () => {
         if (!isPro) {
             return {
@@ -217,7 +239,7 @@ export function ShareManager({
                 {buttonProps.label}
             </Button>
 
-            {/* Confirmation Dialog */}
+            {/* Confirmation Dialog — only shown for first-time share */}
             <AlertDialog open={showConfirmDialog} onOpenChange={(open) => !isCreating && setShowConfirmDialog(open)}>
                 <AlertDialogContent>
                     <AlertDialogHeader>
