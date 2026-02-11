@@ -2,24 +2,16 @@
 
 import {
   IconAlertTriangle,
+  IconCheck,
   IconCoin,
   IconCrown,
-  IconDeviceTv,
   IconDownload,
-  IconFile,
   IconLoader2,
   IconVolume,
 } from "@tabler/icons-react";
 import { useCallback, useMemo, useState } from "react";
 
 import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import {
   Select,
@@ -38,112 +30,54 @@ import { analytics } from "@/lib/analytics";
 
 /**
  * ExportOptionsProps interface
- *
- * @validates Requirements 22.1, 22.2, 22.3, 22.4, 22.5
  */
 export interface ExportOptionsProps {
-  /** Callback when export is initiated with selected options */
   onExport: (options: ExportOptionsType) => void;
-  /** Credit cost for the export operation (deprecated - system now uses minutes) */
   creditCost?: number;
-  /** User's current credit balance (deprecated - system now uses minutes) */
   userCredits?: number;
-  /** Whether the export controls are disabled */
   disabled?: boolean;
-  /** Additional className */
   className?: string;
-  /** Optional caption style ID to include in export */
   captionStyleId?: string;
-  /** Optional brand kit ID to include in export */
   brandKitId?: string;
-  /** Whether the user has Pro access (enables 4K export) */
   hasProAccess?: boolean;
-  /** Available translation languages for this clip */
   translationLanguages?: Array<{ language: string; name: string }>;
-  /** Available dubbings for this video */
   availableDubbings?: Array<{ id: string; targetLanguage: string; voiceName: string | null; status: string }>;
 }
 
-/**
- * Format options with labels and recommendations
- * @validates Requirement 22.1
- */
 const FORMAT_OPTIONS: Array<{
   value: ExportFormat;
   label: string;
+  description: string;
   recommended?: boolean;
 }> = [
-    { value: "mp4", label: "MP4", recommended: true },
-    { value: "mov", label: "MOV" },
+    { value: "mp4", label: "MP4", description: "Best compatibility", recommended: true },
+    { value: "mov", label: "MOV", description: "Apple ecosystem" },
   ];
 
-/**
- * Resolution options with labels, recommendations, and estimated file size multipliers
- * @validates Requirements 22.2, 22.3, 22.4
- */
 const RESOLUTION_OPTIONS: Array<{
   value: VideoResolution;
   label: string;
+  shortLabel: string;
+  description: string;
   recommended?: boolean;
-  /** Estimated file size multiplier (relative to 720p baseline) */
   sizeMultiplier: number;
-  /** Whether this resolution requires Pro access */
   requiresPro?: boolean;
 }> = [
-    { value: "720p", label: "720p (HD)", sizeMultiplier: 1 },
-    {
-      value: "1080p",
-      label: "1080p (Full HD)",
-      recommended: true,
-      sizeMultiplier: 2.25,
-    },
-    { value: "4k", label: "4K (Ultra HD)", sizeMultiplier: 9, requiresPro: true },
+    { value: "720p", label: "720p", shortLabel: "HD", description: "Good for social", sizeMultiplier: 1 },
+    { value: "1080p", label: "1080p", shortLabel: "Full HD", description: "Recommended", recommended: true, sizeMultiplier: 2.25 },
+    { value: "4k", label: "4K", shortLabel: "Ultra HD", description: "Pro only", sizeMultiplier: 9, requiresPro: true },
   ];
 
-/**
- * Base file size estimate in MB for a 1-minute clip at 720p
- * Used for rough file size estimation
- */
 const BASE_FILE_SIZE_MB = 15;
 
-/**
- * Estimates file size based on resolution
- * @validates Requirement 22.3
- */
 function estimateFileSize(resolution: VideoResolution): string {
-  const resolutionConfig = RESOLUTION_OPTIONS.find(
-    (r) => r.value === resolution
-  );
+  const resolutionConfig = RESOLUTION_OPTIONS.find((r) => r.value === resolution);
   const multiplier = resolutionConfig?.sizeMultiplier ?? 1;
   const estimatedMB = Math.round(BASE_FILE_SIZE_MB * multiplier);
-
-  if (estimatedMB >= 1000) {
-    return `~${(estimatedMB / 1000).toFixed(1)} GB`;
-  }
+  if (estimatedMB >= 1000) return `~${(estimatedMB / 1000).toFixed(1)} GB`;
   return `~${estimatedMB} MB`;
 }
 
-/**
- * ExportOptions Component
- *
- * A comprehensive export configuration interface with:
- * - Format selector (MP4, MOV) (Requirement 22.1)
- * - Resolution selector (720p, 1080p, 4K) (Requirement 22.2)
- * - Estimated file size display (Requirement 22.3)
- * - Credit cost display with warning (Requirement 22.4)
- * - User permission validation (Requirement 22.5)
- *
- * @example
- * ```tsx
- * <ExportOptions
- *   onExport={(options) => handleExport(options)}
- *   creditCost={5}
- *   userCredits={10}
- * />
- * ```
- *
- * @validates Requirements 22.1, 22.2, 22.3, 22.4, 22.5
- */
 export function ExportOptions({
   onExport,
   creditCost,
@@ -156,45 +90,23 @@ export function ExportOptions({
   translationLanguages,
   availableDubbings,
 }: ExportOptionsProps) {
-  // State for selected format and resolution
   const [format, setFormat] = useState<ExportFormat>("mp4");
   const [resolution, setResolution] = useState<VideoResolution>("1080p");
   const [targetLanguage, setTargetLanguage] = useState<string | undefined>();
   const [dubbingId, setDubbingId] = useState<string | undefined>();
 
-  /**
-   * Check if user has sufficient credits
-   * @validates Requirement 22.5
-   */
   const hasInsufficientCredits = useMemo(() => {
-    // Credits system is deprecated - always return false
     if (creditCost === undefined || userCredits === undefined) return false;
     return userCredits < creditCost;
   }, [userCredits, creditCost]);
 
-  /**
-   * Check if selected resolution requires Pro access that user doesn't have
-   * @validates Requirement 22.4, 22.5
-   */
   const requiresProUpgrade = useMemo(() => {
-    const selectedOption = RESOLUTION_OPTIONS.find(
-      (r) => r.value === resolution
-    );
+    const selectedOption = RESOLUTION_OPTIONS.find((r) => r.value === resolution);
     return selectedOption?.requiresPro && !hasProAccess;
   }, [resolution, hasProAccess]);
 
-  /**
-   * Estimated file size based on selected resolution
-   * @validates Requirement 22.3
-   */
-  const estimatedSize = useMemo(() => {
-    return estimateFileSize(resolution);
-  }, [resolution]);
+  const estimatedSize = useMemo(() => estimateFileSize(resolution), [resolution]);
 
-  /**
-   * Handle export button click
-   * Builds export options and calls onExport callback
-   */
   const handleExport = useCallback(() => {
     const options: ExportOptionsType = {
       format,
@@ -204,8 +116,6 @@ export function ExportOptions({
       ...(targetLanguage && { targetLanguage }),
       ...(dubbingId && { dubbingId }),
     };
-
-    // Track export event
     analytics.featureUsed("clip_export", {
       format,
       resolution,
@@ -214,248 +124,237 @@ export function ExportOptions({
       targetLanguage: targetLanguage || "original",
       hasDubbing: !!dubbingId,
     });
-
     onExport(options);
   }, [format, resolution, captionStyleId, brandKitId, targetLanguage, dubbingId, onExport]);
 
-  /**
-   * Whether the export button should be disabled
-   * @validates Requirement 22.5
-   */
-  const isExportDisabled =
-    disabled || hasInsufficientCredits || requiresProUpgrade;
+  const isExportDisabled = disabled || hasInsufficientCredits || requiresProUpgrade;
 
   return (
-    <Card className={cn("w-full", className)} data-slot="export-options">
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <IconDownload className="size-5" />
-          Export Options
-        </CardTitle>
-      </CardHeader>
-
-      <CardContent className="flex flex-col gap-6">
-        {/* Format Selector - Requirement 22.1 */}
-        <div className="flex flex-col gap-2">
-          <Label className="flex items-center gap-2 font-medium text-foreground text-sm">
-            <IconFile className="size-4 text-muted-foreground" />
-            Format
-          </Label>
-          <Select
-            disabled={disabled}
-            onValueChange={(value) => value && setFormat(value as ExportFormat)}
-            value={format}
-          >
-            <SelectTrigger className="w-full">
-              <SelectValue>
-                {FORMAT_OPTIONS.find((f) => f.value === format)?.label ??
-                  "Select format"}
-              </SelectValue>
-            </SelectTrigger>
-            <SelectContent>
-              {FORMAT_OPTIONS.map((option) => (
-                <SelectItem key={option.value} value={option.value}>
-                  <span className="flex items-center gap-2">
-                    {option.label}
-                    {option.recommended && (
-                      <span className="rounded bg-primary/10 px-1.5 py-0.5 text-primary text-xs">
-                        Recommended
-                      </span>
-                    )}
-                  </span>
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+    <div className={cn("flex flex-col gap-5", className)} data-slot="export-options">
+      {/* Format Selector — Card-style toggle */}
+      <div className="flex flex-col gap-2.5">
+        <Label className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
+          Format
+        </Label>
+        <div className="grid grid-cols-2 gap-2">
+          {FORMAT_OPTIONS.map((option) => (
+            <button
+              key={option.value}
+              type="button"
+              disabled={disabled}
+              onClick={() => setFormat(option.value)}
+              className={cn(
+                "relative flex flex-col items-center gap-1 rounded-xl border-2 px-4 py-3 transition-all",
+                "hover:border-primary/40 hover:bg-primary/5",
+                "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary",
+                format === option.value
+                  ? "border-primary bg-primary/10 shadow-sm shadow-primary/10"
+                  : "border-border bg-card",
+                disabled && "opacity-50 cursor-not-allowed"
+              )}
+            >
+              {format === option.value && (
+                <div className="absolute top-1.5 right-1.5 flex size-4 items-center justify-center rounded-full bg-primary">
+                  <IconCheck className="size-2.5 text-primary-foreground" />
+                </div>
+              )}
+              <span className={cn(
+                "text-sm font-semibold",
+                format === option.value ? "text-primary" : "text-foreground"
+              )}>
+                {option.label}
+              </span>
+              <span className="text-[11px] text-muted-foreground">{option.description}</span>
+            </button>
+          ))}
         </div>
+      </div>
 
-        {/* Resolution Selector - Requirement 22.2, 22.4 */}
-        <div className="flex flex-col gap-2">
-          <Label className="flex items-center gap-2 font-medium text-foreground text-sm">
-            <IconDeviceTv className="size-4 text-muted-foreground" />
-            Resolution
+      {/* Resolution Selector — Card-style toggle */}
+      <div className="flex flex-col gap-2.5">
+        <Label className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
+          Resolution
+        </Label>
+        <div className="grid grid-cols-3 gap-2">
+          {RESOLUTION_OPTIONS.map((option) => {
+            const isLocked = option.requiresPro && !hasProAccess;
+            const isSelected = resolution === option.value;
+            return (
+              <button
+                key={option.value}
+                type="button"
+                disabled={disabled || isLocked}
+                onClick={() => setResolution(option.value)}
+                className={cn(
+                  "relative flex flex-col items-center gap-0.5 rounded-xl border-2 px-3 py-3 transition-all",
+                  "hover:border-primary/40 hover:bg-primary/5",
+                  "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary",
+                  isSelected
+                    ? "border-primary bg-primary/10 shadow-sm shadow-primary/10"
+                    : "border-border bg-card",
+                  isLocked && "opacity-50 cursor-not-allowed hover:border-border hover:bg-card",
+                  disabled && "opacity-50 cursor-not-allowed"
+                )}
+              >
+                {isSelected && !isLocked && (
+                  <div className="absolute top-1.5 right-1.5 flex size-4 items-center justify-center rounded-full bg-primary">
+                    <IconCheck className="size-2.5 text-primary-foreground" />
+                  </div>
+                )}
+                {isLocked && (
+                  <div className="absolute top-1.5 right-1.5">
+                    <IconCrown className="size-3.5 text-amber-500" />
+                  </div>
+                )}
+                <span className={cn(
+                  "text-sm font-semibold",
+                  isSelected ? "text-primary" : "text-foreground",
+                  isLocked && "text-muted-foreground"
+                )}>
+                  {option.label}
+                </span>
+                <span className="text-[11px] text-muted-foreground">{option.shortLabel}</span>
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* Caption Language Selector */}
+      {translationLanguages && translationLanguages.length > 0 && (
+        <div className="flex flex-col gap-2.5">
+          <Label className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
+            Caption Language
           </Label>
           <Select
             disabled={disabled}
             onValueChange={(value) =>
-              value && setResolution(value as VideoResolution)
+              setTargetLanguage(value === "original" ? undefined : (value || undefined))
             }
-            value={resolution}
+            value={targetLanguage || "original"}
           >
-            <SelectTrigger className="w-full">
-              <SelectValue>
-                {RESOLUTION_OPTIONS.find((r) => r.value === resolution)
-                  ?.label ?? "Select resolution"}
-              </SelectValue>
+            <SelectTrigger className="w-full rounded-xl">
+              <SelectValue placeholder="Original" />
             </SelectTrigger>
             <SelectContent>
-              {RESOLUTION_OPTIONS.map((option) => (
-                <SelectItem key={option.value} value={option.value}>
-                  <span className="flex items-center gap-2">
-                    {option.label}
-                    {option.recommended && (
-                      <span className="rounded bg-primary/10 px-1.5 py-0.5 text-primary text-xs">
-                        Recommended
-                      </span>
-                    )}
-                    {/* Pro badge for 4K - Requirement 22.4 */}
-                    {option.requiresPro && (
-                      <span className="flex items-center gap-1 rounded bg-amber-500/10 px-1.5 py-0.5 text-amber-600 text-xs dark:text-amber-400">
-                        <IconCrown className="size-3" />
-                        Pro
-                      </span>
-                    )}
-                  </span>
+              <SelectItem value="original">Original</SelectItem>
+              {translationLanguages.map((lang) => (
+                <SelectItem key={lang.language} value={lang.language}>
+                  {lang.name}
                 </SelectItem>
               ))}
             </SelectContent>
           </Select>
         </div>
+      )}
 
-        {/* Caption Language Selector */}
-        {translationLanguages && translationLanguages.length > 0 && (
-          <div className="flex flex-col gap-2">
-            <Label className="flex items-center gap-2 font-medium text-foreground text-sm">
-              <IconFile className="size-4 text-muted-foreground" />
-              Caption Language
-            </Label>
-            <Select
-              disabled={disabled}
-              onValueChange={(value) =>
-                setTargetLanguage(value === "original" ? undefined : (value || undefined))
-              }
-              value={targetLanguage || "original"}
-            >
-              <SelectTrigger className="w-full">
-                <SelectValue placeholder="Original" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="original">Original</SelectItem>
-                {translationLanguages.map((lang) => (
-                  <SelectItem key={lang.language} value={lang.language}>
-                    {lang.name}
+      {/* Dubbed Audio Selector */}
+      {availableDubbings && availableDubbings.filter((d) => d.status === "completed").length > 0 && (
+        <div className="flex flex-col gap-2.5">
+          <Label className="flex items-center gap-2 text-xs font-medium uppercase tracking-wider text-muted-foreground">
+            <IconVolume className="size-3.5" />
+            Dubbed Audio
+          </Label>
+          <Select
+            disabled={disabled}
+            onValueChange={(value) =>
+              setDubbingId(value === "none" ? undefined : (value || undefined))
+            }
+            value={dubbingId || "none"}
+          >
+            <SelectTrigger className="w-full rounded-xl">
+              <SelectValue placeholder="No dubbed audio" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="none">No dubbed audio</SelectItem>
+              {availableDubbings
+                .filter((d) => d.status === "completed")
+                .map((dub) => (
+                  <SelectItem key={dub.id} value={dub.id}>
+                    {dub.voiceName || "AI Voice"} ({dub.targetLanguage.toUpperCase()})
                   </SelectItem>
                 ))}
-              </SelectContent>
-            </Select>
-          </div>
-        )}
+            </SelectContent>
+          </Select>
+        </div>
+      )}
 
-        {/* Dubbed Audio Selector */}
-        {availableDubbings && availableDubbings.filter((d) => d.status === "completed").length > 0 && (
-          <div className="flex flex-col gap-2">
-            <Label className="flex items-center gap-2 font-medium text-foreground text-sm">
-              <IconVolume className="size-4 text-muted-foreground" />
-              Dubbed Audio
-            </Label>
-            <Select
-              disabled={disabled}
-              onValueChange={(value) =>
-                setDubbingId(value === "none" ? undefined : (value || undefined))
-              }
-              value={dubbingId || "none"}
-            >
-              <SelectTrigger className="w-full">
-                <SelectValue placeholder="No dubbed audio" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="none">No dubbed audio</SelectItem>
-                {availableDubbings
-                  .filter((d) => d.status === "completed")
-                  .map((dub) => (
-                    <SelectItem key={dub.id} value={dub.id}>
-                      {dub.voiceName || "AI Voice"} ({dub.targetLanguage.toUpperCase()})
-                    </SelectItem>
-                  ))}
-              </SelectContent>
-            </Select>
-          </div>
-        )}
-
-        {/* Pro Upgrade Warning - Requirement 22.4, 22.5 */}
-        {requiresProUpgrade && (
-          <div className="rounded-lg border border-amber-500/50 bg-amber-500/10 p-4">
-            <div className="flex items-center gap-2 text-amber-600 text-sm dark:text-amber-400">
-              <IconCrown className="size-4" />
-              <span className="font-medium">4K export requires Pro</span>
-            </div>
-            <p className="mt-1 text-muted-foreground text-sm">
-              Upgrade to Pro to unlock 4K Ultra HD exports and other premium
-              features.
+      {/* Pro Upgrade Warning */}
+      {requiresProUpgrade && (
+        <div className="flex items-start gap-3 rounded-xl border border-amber-500/30 bg-amber-500/5 p-3.5">
+          <IconCrown className="mt-0.5 size-4 shrink-0 text-amber-500" />
+          <div>
+            <p className="text-sm font-medium text-amber-600 dark:text-amber-400">
+              4K requires Pro
+            </p>
+            <p className="mt-0.5 text-xs text-muted-foreground">
+              Upgrade to unlock Ultra HD exports.
             </p>
           </div>
-        )}
-
-        {/* Estimated File Size - Requirement 22.3 */}
-        <div className="rounded-lg border border-border bg-muted/30 p-4">
-          <div className="flex items-center justify-between">
-            <span className="text-muted-foreground text-sm">
-              Estimated File Size
-            </span>
-            <span className="font-medium text-sm">{estimatedSize}</span>
-          </div>
         </div>
+      )}
 
-        {/* Credit Cost Display - Requirement 22.4 (deprecated - system now uses minutes) */}
-        {creditCost !== undefined && userCredits !== undefined && (
-          <div
-            className={cn(
-              "rounded-lg border p-4",
-              hasInsufficientCredits
-                ? "border-destructive/50 bg-destructive/10"
-                : "border-border bg-muted/30"
-            )}
-          >
-            <div className="flex items-center justify-between">
-              <span className="flex items-center gap-2 text-sm">
-                <IconCoin className="size-4 text-muted-foreground" />
-                <span className="text-muted-foreground">Credit Cost</span>
-              </span>
-              <span className="font-medium text-sm">{creditCost} credits</span>
-            </div>
+      {/* Summary bar */}
+      <div className="flex items-center justify-between rounded-xl bg-muted/50 px-4 py-3">
+        <div className="flex items-center gap-4 text-sm text-muted-foreground">
+          <span>{format.toUpperCase()}</span>
+          <span className="text-border">·</span>
+          <span>{RESOLUTION_OPTIONS.find((r) => r.value === resolution)?.label}</span>
+          <span className="text-border">·</span>
+          <span>{estimatedSize}</span>
+        </div>
+      </div>
 
-            {/* Credit Balance */}
-            <div className="mt-2 flex items-center justify-between border-border/50 border-t pt-2">
-              <span className="text-muted-foreground text-sm">Your Balance</span>
-              <span
-                className={cn(
-                  "font-medium text-sm",
-                  hasInsufficientCredits ? "text-destructive" : "text-foreground"
-                )}
-              >
-                {userCredits} credits
-              </span>
-            </div>
-
-            {/* Insufficient Credits Warning - Requirement 22.5 */}
-            {hasInsufficientCredits && (
-              <div className="mt-3 flex items-center gap-2 text-destructive text-sm">
-                <IconAlertTriangle className="size-4" />
-                <span>
-                  Insufficient credits. Please purchase more credits to export.
-                </span>
-              </div>
-            )}
-          </div>
-        )}
-      </CardContent>
-
-      <CardFooter className="flex justify-end">
-        {/* Export Button - validates against user permissions (Requirement 22.5) */}
-        <Button
-          className="gap-2"
-          disabled={isExportDisabled}
-          onClick={handleExport}
-        >
-          {disabled ? (
-            <IconLoader2 className="size-4 animate-spin" />
-          ) : (
-            <IconDownload className="size-4" data-icon="inline-start" />
+      {/* Credit Cost Display (deprecated) */}
+      {creditCost !== undefined && userCredits !== undefined && (
+        <div
+          className={cn(
+            "rounded-xl border p-3.5",
+            hasInsufficientCredits
+              ? "border-destructive/50 bg-destructive/5"
+              : "border-border bg-muted/30"
           )}
-          {disabled ? "Exporting..." : "Export Clip"}
-        </Button>
-      </CardFooter>
-    </Card>
+        >
+          <div className="flex items-center justify-between">
+            <span className="flex items-center gap-2 text-sm text-muted-foreground">
+              <IconCoin className="size-4" />
+              Cost
+            </span>
+            <span className="text-sm font-medium">{creditCost} credits</span>
+          </div>
+          <div className="mt-2 flex items-center justify-between border-t border-border/50 pt-2">
+            <span className="text-sm text-muted-foreground">Balance</span>
+            <span className={cn(
+              "text-sm font-medium",
+              hasInsufficientCredits ? "text-destructive" : "text-foreground"
+            )}>
+              {userCredits} credits
+            </span>
+          </div>
+          {hasInsufficientCredits && (
+            <div className="mt-2.5 flex items-center gap-2 text-xs text-destructive">
+              <IconAlertTriangle className="size-3.5" />
+              <span>Insufficient credits.</span>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Export Button */}
+      <Button
+        size="lg"
+        className="w-full gap-2 rounded-xl text-sm font-semibold"
+        disabled={isExportDisabled}
+        onClick={handleExport}
+      >
+        {disabled ? (
+          <IconLoader2 className="size-4 animate-spin" />
+        ) : (
+          <IconDownload className="size-4" />
+        )}
+        {disabled ? "Exporting..." : "Export Clip"}
+      </Button>
+    </div>
   );
 }
 

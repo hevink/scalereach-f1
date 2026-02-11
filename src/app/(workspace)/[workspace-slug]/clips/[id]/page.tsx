@@ -328,14 +328,14 @@ function ExportDialog({
 }: ExportDialogProps) {
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
-            <DialogContent className="max-w-2xl">
+            <DialogContent className="max-w-md">
                 <DialogHeader>
                     <DialogTitle>Export Clip</DialogTitle>
                     <DialogDescription>
-                        Configure your export settings and download your clip.
+                        Configure settings and download your clip.
                     </DialogDescription>
                 </DialogHeader>
-                <div className="grid gap-6 py-4">
+                <div className="py-2">
                     {activeExportId ? (
                         <div className="flex flex-col gap-4">
                             <ExportProgress
@@ -346,7 +346,7 @@ function ExportDialog({
                             <Button
                                 variant="outline"
                                 onClick={onReset}
-                                className="w-full"
+                                className="w-full rounded-xl"
                             >
                                 Export Again
                             </Button>
