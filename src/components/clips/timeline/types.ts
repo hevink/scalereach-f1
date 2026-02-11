@@ -113,11 +113,6 @@ export interface AdvancedTimelineProps {
     onSkipBackward?: () => void;
     videoSrc?: string;
     className?: string;
-    // Text overlays
-    textOverlays?: import("@/components/text/text-overlay-panel").TextOverlay[];
-    selectedTextOverlayId?: string | null;
-    onTextOverlaySelect?: (id: string | null) => void;
-    onTextOverlayUpdate?: (id: string, updates: Partial<import("@/components/text/text-overlay-panel").TextOverlay>) => void;
 }
 
 // ============================================================================
