@@ -26,13 +26,23 @@ import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { useVideo } from "@/hooks/useVideo";
 import { useClipsByVideo, useToggleFavorite } from "@/hooks/useClips";
 import { useWorkspaceBySlug } from "@/hooks/useWorkspace";
 import { cn } from "@/lib/utils";
 import { analytics } from "@/lib/analytics";
 import type { ClipResponse } from "@/lib/api/clips";
+import type { RecommendedPlatform } from "@/lib/api/clips";
 import { ShareManager } from "@/components/share/share-manager";
+import {
+    YouTubeIcon,
+    TikTokIcon,
+    InstagramIcon,
+    LinkedInIcon,
+    TwitterIcon,
+    FacebookIcon,
+} from "@/components/icons/platform-icons";
 
 interface VideoClipsPageProps {
     params: Promise<{ "workspace-slug": string; id: string }>;
@@ -298,6 +308,15 @@ interface ClipCardProps {
     onShare: (clip: ClipResponse) => void;
 }
 
+const PLATFORM_CONFIG: Record<RecommendedPlatform, { icon: React.ElementType; label: string; tooltip: string }> = {
+    youtube_shorts: { icon: YouTubeIcon, label: "YT Shorts", tooltip: "YouTube Shorts" },
+    instagram_reels: { icon: InstagramIcon, label: "Reels", tooltip: "Instagram Reels" },
+    tiktok: { icon: TikTokIcon, label: "TikTok", tooltip: "TikTok" },
+    linkedin: { icon: LinkedInIcon, label: "LinkedIn", tooltip: "LinkedIn" },
+    twitter: { icon: TwitterIcon, label: "Twitter/X", tooltip: "Twitter / X" },
+    facebook_reels: { icon: FacebookIcon, label: "FB Reels", tooltip: "Facebook Reels" },
+};
+
 function ClipCard({ clip, index, onEdit, onFavorite, onDownload, onShare }: ClipCardProps) {
     const [activeTab, setActiveTab] = useState<"transcript" | "description">("transcript");
     const isGenerating = clip.status === "generating" || clip.status === "detected";
@@ -305,11 +324,31 @@ function ClipCard({ clip, index, onEdit, onFavorite, onDownload, onShare }: Clip
     return (
         <div className="rounded-xl border bg-card overflow-hidden">
             {/* Clip Title */}
-            <div className="px-5 py-3 border-b bg-muted/30">
+            <div className="px-5 py-3 border-b bg-muted/30 flex items-center justify-between">
                 <h3 className="font-semibold text-base">
                     <span className="text-muted-foreground">#{index + 1}</span>{" "}
                     {clip.title}
                 </h3>
+                <TooltipProvider>
+                    {clip.viralityScore != null && (
+                        <Tooltip>
+                            <TooltipTrigger asChild>
+                                <div className={cn(
+                                    "flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-semibold cursor-default",
+                                    clip.viralityScore >= 90 ? "bg-emerald-500/15 text-emerald-500" :
+                                        clip.viralityScore >= 70 ? "bg-amber-500/15 text-amber-500" :
+                                            "bg-zinc-500/15 text-zinc-400"
+                                )}>
+                                    <IconFlame className="size-3.5" />
+                                    {clip.viralityScore}
+                                </div>
+                            </TooltipTrigger>
+                            <TooltipContent>
+                                <p>Virality Score — {clip.viralityScore >= 90 ? "High potential" : clip.viralityScore >= 70 ? "Good potential" : "Moderate potential"}</p>
+                            </TooltipContent>
+                        </Tooltip>
+                    )}
+                </TooltipProvider>
             </div>
 
             {/* Content */}
@@ -354,7 +393,7 @@ function ClipCard({ clip, index, onEdit, onFavorite, onDownload, onShare }: Clip
                                 </TabsTrigger>
                                 <TabsTrigger value="description" className="gap-1.5">
                                     <IconWand className="size-4" />
-                                    Auto-Description
+                                    Why This Goes Viral
                                 </TabsTrigger>
                             </TabsList>
 
@@ -369,16 +408,46 @@ function ClipCard({ clip, index, onEdit, onFavorite, onDownload, onShare }: Clip
                                     {clip.viralityReason || "No auto-description available."}
                                 </p>
                                 {clip.hooks.length > 0 && (
-                                    <div className="mt-3 flex flex-wrap gap-1.5">
-                                        {clip.hooks.map((hook, i) => (
-                                            <Badge key={i} variant="secondary" className="text-xs">
-                                                {hook}
-                                            </Badge>
-                                        ))}
+                                    <div className="mt-3 rounded-lg border bg-muted/30 p-3">
+                                        <p className="text-[11px] font-medium text-muted-foreground uppercase tracking-wider mb-2">Key Hooks</p>
+                                        <div className="grid grid-cols-2 gap-x-4 gap-y-2">
+                                            {clip.hooks.map((hook, i) => (
+                                                <div key={i} className="flex items-start gap-2">
+                                                    <span className="mt-1.5 size-1.5 rounded-full bg-emerald-500 shrink-0" />
+                                                    <span className="text-xs text-foreground/80 leading-snug">{hook}</span>
+                                                </div>
+                                            ))}
+                                        </div>
                                     </div>
                                 )}
                             </TabsContent>
                         </Tabs>
+
+                        {/* Platform Chips */}
+                        {clip.recommendedPlatforms && clip.recommendedPlatforms.length > 0 && (
+                            <div className="flex flex-wrap items-center gap-2 mt-4">
+                                <TooltipProvider>
+                                    {clip.recommendedPlatforms.map((platform) => {
+                                        const config = PLATFORM_CONFIG[platform];
+                                        if (!config) return null;
+                                        const Icon = config.icon;
+                                        return (
+                                            <Tooltip key={platform}>
+                                                <TooltipTrigger asChild>
+                                                    <div className="flex items-center gap-1.5 rounded-full border bg-muted/40 px-3 py-1.5 cursor-default">
+                                                        <Icon className="size-4" />
+                                                        <span className="text-xs font-medium">{config.label}</span>
+                                                    </div>
+                                                </TooltipTrigger>
+                                                <TooltipContent>
+                                                    <p>Best for {config.tooltip}</p>
+                                                </TooltipContent>
+                                            </Tooltip>
+                                        );
+                                    })}
+                                </TooltipProvider>
+                            </div>
+                        )}
                     </div>
                 </div>
 
