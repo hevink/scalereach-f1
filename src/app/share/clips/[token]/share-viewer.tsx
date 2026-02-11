@@ -23,6 +23,15 @@ import { cn } from "@/lib/utils";
 import { api } from "@/lib/axios";
 import { downloadClip, downloadAllClips } from "@/lib/download-utils";
 import { analytics } from "@/lib/analytics";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import {
+    YouTubeIcon,
+    TikTokIcon,
+    InstagramIcon,
+    LinkedInIcon,
+    TwitterIcon,
+    FacebookIcon,
+} from "@/components/icons/platform-icons";
 
 interface ShareViewerProps {
     token: string;
@@ -35,6 +44,8 @@ interface PublicClipData {
     viralityScore: number;
     viralityReason: string;
     hooks: string[];
+    recommendedPlatforms?: string[];
+    transcript?: string;
     thumbnailUrl: string;
     storageUrl: string;
     aspectRatio: string;
@@ -227,6 +238,15 @@ function ShareError() {
 }
 
 // ── Clip Card ───────────────────────────────────────────────────────────────
+const SHARE_PLATFORM_CONFIG: Record<string, { icon: React.ElementType; label: string; tooltip: string }> = {
+    youtube_shorts: { icon: YouTubeIcon, label: "YT Shorts", tooltip: "YouTube Shorts" },
+    instagram_reels: { icon: InstagramIcon, label: "Reels", tooltip: "Instagram Reels" },
+    tiktok: { icon: TikTokIcon, label: "TikTok", tooltip: "TikTok" },
+    linkedin: { icon: LinkedInIcon, label: "LinkedIn", tooltip: "LinkedIn" },
+    twitter: { icon: TwitterIcon, label: "Twitter/X", tooltip: "Twitter / X" },
+    facebook_reels: { icon: FacebookIcon, label: "FB Reels", tooltip: "Facebook Reels" },
+};
+
 interface ClipCardProps {
     clip: PublicClipData;
     index: number;
@@ -234,7 +254,7 @@ interface ClipCardProps {
 }
 
 function ClipCard({ clip, index, onDownload }: ClipCardProps) {
-    const [activeTab, setActiveTab] = useState<"description" | "details">("description");
+    const [activeTab, setActiveTab] = useState<"transcript" | "description">("transcript");
     const scoreBadge = getScoreBadge(clip.viralityScore);
 
     return (
@@ -246,10 +266,24 @@ function ClipCard({ clip, index, onDownload }: ClipCardProps) {
                     {clip.title}
                 </h3>
                 <div className="flex items-center gap-2 shrink-0 ml-3">
-                    <Badge variant="outline" className={cn("gap-1 text-xs", scoreBadge.className)}>
-                        <IconFlame className="size-3" />
-                        {scoreBadge.label} · {clip.viralityScore}
-                    </Badge>
+                    <TooltipProvider>
+                        <Tooltip>
+                            <TooltipTrigger asChild>
+                                <div className={cn(
+                                    "flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-semibold cursor-default",
+                                    clip.viralityScore >= 90 ? "bg-emerald-500/15 text-emerald-500" :
+                                        clip.viralityScore >= 70 ? "bg-amber-500/15 text-amber-500" :
+                                            "bg-zinc-500/15 text-zinc-400"
+                                )}>
+                                    <IconFlame className="size-3.5" />
+                                    {clip.viralityScore}
+                                </div>
+                            </TooltipTrigger>
+                            <TooltipContent>
+                                <p>Virality Score — {clip.viralityScore >= 90 ? "High potential" : clip.viralityScore >= 70 ? "Good potential" : "Moderate potential"}</p>
+                            </TooltipContent>
+                        </Tooltip>
+                    </TooltipProvider>
                     <Badge variant="outline" className="gap-1 text-xs text-muted-foreground">
                         <IconClock className="size-3" />
                         {formatDuration(clip.duration)}
@@ -287,66 +321,69 @@ function ClipCard({ clip, index, onDownload }: ClipCardProps) {
 
                     {/* Tabs Section */}
                     <div className="flex-1 min-w-0">
-                        <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as "description" | "details")}>
+                        <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as "transcript" | "description")}>
                             <TabsList className="mb-3">
+                                <TabsTrigger value="transcript" className="gap-1.5 text-xs sm:text-sm">
+                                    <IconFileText className="size-3.5" />
+                                    Transcript
+                                </TabsTrigger>
                                 <TabsTrigger value="description" className="gap-1.5 text-xs sm:text-sm">
                                     <IconWand className="size-3.5" />
-                                    Why it&apos;s viral
-                                </TabsTrigger>
-                                <TabsTrigger value="details" className="gap-1.5 text-xs sm:text-sm">
-                                    <IconFileText className="size-3.5" />
-                                    Details
+                                    Why This Goes Viral
                                 </TabsTrigger>
                             </TabsList>
+
+                            <TabsContent value="transcript" className="mt-0">
+                                <p className="text-sm text-muted-foreground leading-relaxed">
+                                    {clip.transcript || "No transcript available."}
+                                </p>
+                            </TabsContent>
 
                             <TabsContent value="description" className="mt-0">
                                 <p className="text-sm text-muted-foreground leading-relaxed">
                                     {clip.viralityReason || "No description available."}
                                 </p>
                                 {clip.hooks.length > 0 && (
-                                    <div className="mt-3 flex flex-wrap gap-1.5">
-                                        {clip.hooks.map((hook, i) => (
-                                            <Badge key={i} variant="secondary" className="text-xs font-normal">
-                                                {hook}
-                                            </Badge>
-                                        ))}
+                                    <div className="mt-3 rounded-lg border bg-muted/30 p-3">
+                                        <p className="text-[11px] font-medium text-muted-foreground uppercase tracking-wider mb-2">Key Hooks</p>
+                                        <div className="grid grid-cols-2 gap-x-4 gap-y-2">
+                                            {clip.hooks.map((hook, i) => (
+                                                <div key={i} className="flex items-start gap-2">
+                                                    <span className="mt-1.5 size-1.5 rounded-full bg-emerald-500 shrink-0" />
+                                                    <span className="text-xs text-foreground/80 leading-snug">{hook}</span>
+                                                </div>
+                                            ))}
+                                        </div>
                                     </div>
                                 )}
                             </TabsContent>
-
-                            <TabsContent value="details" className="mt-0">
-                                <div className="grid grid-cols-2 gap-3 text-sm">
-                                    <div className="flex items-center gap-2 text-muted-foreground">
-                                        <IconClock className="size-4 shrink-0" />
-                                        <div>
-                                            <div className="text-xs text-muted-foreground/70">Duration</div>
-                                            <div className="font-medium text-foreground">{formatDuration(clip.duration)}</div>
-                                        </div>
-                                    </div>
-                                    <div className="flex items-center gap-2 text-muted-foreground">
-                                        <IconFlame className="size-4 shrink-0" />
-                                        <div>
-                                            <div className="text-xs text-muted-foreground/70">Virality Score</div>
-                                            <div className="font-medium text-foreground">{clip.viralityScore}/100</div>
-                                        </div>
-                                    </div>
-                                    <div className="flex items-center gap-2 text-muted-foreground">
-                                        <IconRuler2 className="size-4 shrink-0" />
-                                        <div>
-                                            <div className="text-xs text-muted-foreground/70">Aspect Ratio</div>
-                                            <div className="font-medium text-foreground">{clip.aspectRatio}</div>
-                                        </div>
-                                    </div>
-                                    <div className="flex items-center gap-2 text-muted-foreground">
-                                        <IconSparkles className="size-4 shrink-0" />
-                                        <div>
-                                            <div className="text-xs text-muted-foreground/70">Hooks</div>
-                                            <div className="font-medium text-foreground">{clip.hooks.length} detected</div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </TabsContent>
                         </Tabs>
+
+                        {/* Platform Chips */}
+                        {clip.recommendedPlatforms && clip.recommendedPlatforms.length > 0 && (
+                            <div className="flex flex-wrap items-center gap-2 mt-4">
+                                <TooltipProvider>
+                                    {clip.recommendedPlatforms.map((platform) => {
+                                        const config = SHARE_PLATFORM_CONFIG[platform];
+                                        if (!config) return null;
+                                        const Icon = config.icon;
+                                        return (
+                                            <Tooltip key={platform}>
+                                                <TooltipTrigger asChild>
+                                                    <div className="flex items-center gap-1.5 rounded-full border bg-muted/40 px-3 py-1.5 cursor-default">
+                                                        <Icon className="size-4" />
+                                                        <span className="text-xs font-medium">{config.label}</span>
+                                                    </div>
+                                                </TooltipTrigger>
+                                                <TooltipContent>
+                                                    <p>Best for {config.tooltip}</p>
+                                                </TooltipContent>
+                                            </Tooltip>
+                                        );
+                                    })}
+                                </TooltipProvider>
+                            </div>
+                        )}
                     </div>
                 </div>
 

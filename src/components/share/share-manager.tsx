@@ -9,11 +9,21 @@
 
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { IconShare2, IconLoader2, IconLock } from "@tabler/icons-react";
+import { IconShare2, IconLoader2, IconLock, IconWorld } from "@tabler/icons-react";
 import { ShareModal, ShareAnalytics } from "./share-modal";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 import { api } from "@/lib/axios";
+import {
+    AlertDialog,
+    AlertDialogAction,
+    AlertDialogCancel,
+    AlertDialogContent,
+    AlertDialogDescription,
+    AlertDialogFooter,
+    AlertDialogHeader,
+    AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 export interface ShareManagerProps {
     videoId: string;
@@ -43,6 +53,8 @@ export function ShareManager({
     const [shareLink, setShareLink] = useState<string | null>(null);
     const [isLoading, setIsLoading] = useState(false);
     const [isModalOpen, setIsModalOpen] = useState(false);
+    const [showConfirmDialog, setShowConfirmDialog] = useState(false);
+    const [isCreating, setIsCreating] = useState(false);
     const [analytics, setAnalytics] = useState<ShareAnalytics>({
         totalViews: 0,
         uniqueViewers: 0,
@@ -73,9 +85,12 @@ export function ShareManager({
             return;
         }
 
-        // Open modal immediately with loading state for snappy feel
-        setIsModalOpen(true);
-        setIsLoading(true);
+        // Show confirmation dialog
+        setShowConfirmDialog(true);
+    };
+
+    const handleConfirmShare = async () => {
+        setIsCreating(true);
 
         try {
             const response = await api.post<CreateShareResponse>(
@@ -89,10 +104,12 @@ export function ShareManager({
                     uniqueViewers: 0,
                     totalDownloads: response.data.analytics.totalDownloads,
                 });
+                setShowConfirmDialog(false);
+                setIsModalOpen(true);
             }
         } catch (error: any) {
             console.error("Failed to create share link:", error);
-            setIsModalOpen(false);
+            setShowConfirmDialog(false);
 
             if (error.response?.status === 403) {
                 toast.error("Pro plan required", {
@@ -108,7 +125,7 @@ export function ShareManager({
                 });
             }
         } finally {
-            setIsLoading(false);
+            setIsCreating(false);
         }
     };
 
@@ -199,6 +216,28 @@ export function ShareManager({
                 {buttonProps.icon}
                 {buttonProps.label}
             </Button>
+
+            {/* Confirmation Dialog */}
+            <AlertDialog open={showConfirmDialog} onOpenChange={(open) => !isCreating && setShowConfirmDialog(open)}>
+                <AlertDialogContent>
+                    <AlertDialogHeader>
+                        <AlertDialogTitle className="flex items-center gap-2">
+                            <IconWorld className="size-5 text-primary" />
+                            Make Clips Public?
+                        </AlertDialogTitle>
+                        <AlertDialogDescription>
+                            This will generate a public link that anyone can use to view and download your clips — no sign-in required. You can revoke access anytime.
+                        </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                        <AlertDialogCancel disabled={isCreating}>Cancel</AlertDialogCancel>
+                        <AlertDialogAction onClick={handleConfirmShare} disabled={isCreating} className="gap-2">
+                            {isCreating && <IconLoader2 className="size-4 animate-spin" />}
+                            {isCreating ? "Creating..." : "Yes, Make Public"}
+                        </AlertDialogAction>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>
 
             {shareLink && (
                 <ShareModal

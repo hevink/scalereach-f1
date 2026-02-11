@@ -95,30 +95,45 @@ export function useToggleFavorite() {
     onMutate: async (clipId: string) => {
       // Cancel any outgoing refetches to avoid overwriting optimistic update
       await queryClient.cancelQueries({ queryKey: clipKeys.byId(clipId) });
+      await queryClient.cancelQueries({ queryKey: clipKeys.all });
 
-      // Snapshot the previous value
-      const previousClip = queryClient.getQueryData<ClipResponse>(
+      // Snapshot the previous value — check individual cache first, then video lists
+      let previousClip = queryClient.getQueryData<ClipResponse>(
         clipKeys.byId(clipId)
       );
 
-      // Optimistically update the clip
+      // If not individually cached, find it in a video clips list
+      if (!previousClip) {
+        const allQueries = queryClient.getQueriesData<ClipResponse[]>({ queryKey: clipKeys.all });
+        for (const [, clips] of allQueries) {
+          if (Array.isArray(clips)) {
+            const found = clips.find((c) => c.id === clipId);
+            if (found) {
+              previousClip = found;
+              break;
+            }
+          }
+        }
+      }
+
+      // Optimistically update the clip in individual cache
       if (previousClip) {
         queryClient.setQueryData<ClipResponse>(clipKeys.byId(clipId), {
           ...previousClip,
           favorited: !previousClip.favorited,
         });
-
-        // Also update the clip in any video clips list that contains it
-        queryClient.setQueriesData<ClipResponse[]>(
-          { queryKey: clipKeys.byVideo(previousClip.videoId), exact: false },
-          (oldClips) => {
-            if (!oldClips) return oldClips;
-            return oldClips.map((clip) =>
-              clip.id === clipId ? { ...clip, favorited: !clip.favorited } : clip
-            );
-          }
-        );
       }
+
+      // Optimistically update in all video clips lists
+      queryClient.setQueriesData<ClipResponse[]>(
+        { queryKey: clipKeys.all, exact: false },
+        (oldClips) => {
+          if (!Array.isArray(oldClips)) return oldClips;
+          return oldClips.map((clip) =>
+            clip.id === clipId ? { ...clip, favorited: !clip.favorited } : clip
+          );
+        }
+      );
 
       // Return context with the previous value for rollback
       return { previousClip };
@@ -138,11 +153,11 @@ export function useToggleFavorite() {
           context.previousClip
         );
 
-        // Also rollback in video clips list
+        // Rollback in all clips lists
         queryClient.setQueriesData<ClipResponse[]>(
-          { queryKey: clipKeys.byVideo(context.previousClip.videoId), exact: false },
+          { queryKey: clipKeys.all, exact: false },
           (oldClips) => {
-            if (!oldClips) return oldClips;
+            if (!Array.isArray(oldClips)) return oldClips;
             return oldClips.map((clip) =>
               clip.id === clipId ? context.previousClip! : clip
             );

@@ -17,7 +17,7 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
-import { IconEye, IconDownload, IconTrash, IconRefresh, IconAlertCircle } from "@tabler/icons-react";
+import { IconEye, IconDownload, IconTrash, IconRefresh, IconAlertCircle, IconLoader2 } from "@tabler/icons-react";
 import { CopyInterface } from "./copy-interface";
 import {
     AlertDialog,
@@ -62,15 +62,21 @@ export function ShareModal({
 }: ShareModalProps) {
     const [showRevokeDialog, setShowRevokeDialog] = useState(false);
     const [showRegenerateDialog, setShowRegenerateDialog] = useState(false);
+    const [isRevoking, setIsRevoking] = useState(false);
+    const [isRegenerating, setIsRegenerating] = useState(false);
 
     const handleRevoke = async () => {
+        setIsRevoking(true);
         await onRevoke();
+        setIsRevoking(false);
         setShowRevokeDialog(false);
         onClose();
     };
 
     const handleRegenerate = async () => {
+        setIsRegenerating(true);
         await onRegenerate();
+        setIsRegenerating(false);
         setShowRegenerateDialog(false);
     };
 
@@ -157,7 +163,7 @@ export function ShareModal({
             </Dialog>
 
             {/* Revoke Confirmation Dialog */}
-            <AlertDialog open={showRevokeDialog} onOpenChange={setShowRevokeDialog}>
+            <AlertDialog open={showRevokeDialog} onOpenChange={(open) => !isRevoking && setShowRevokeDialog(open)}>
                 <AlertDialogContent>
                     <AlertDialogHeader>
                         <AlertDialogTitle>Revoke Share Link?</AlertDialogTitle>
@@ -167,19 +173,21 @@ export function ShareModal({
                         </AlertDialogDescription>
                     </AlertDialogHeader>
                     <AlertDialogFooter>
-                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                        <AlertDialogCancel disabled={isRevoking}>Cancel</AlertDialogCancel>
                         <AlertDialogAction
                             onClick={handleRevoke}
-                            className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                            disabled={isRevoking}
+                            className="bg-destructive text-destructive-foreground hover:bg-destructive/90 gap-2"
                         >
-                            Revoke Link
+                            {isRevoking && <IconLoader2 className="size-4 animate-spin" />}
+                            {isRevoking ? "Revoking..." : "Revoke Link"}
                         </AlertDialogAction>
                     </AlertDialogFooter>
                 </AlertDialogContent>
             </AlertDialog>
 
             {/* Regenerate Warning Dialog */}
-            <AlertDialog open={showRegenerateDialog} onOpenChange={setShowRegenerateDialog}>
+            <AlertDialog open={showRegenerateDialog} onOpenChange={(open) => !isRegenerating && setShowRegenerateDialog(open)}>
                 <AlertDialogContent>
                     <AlertDialogHeader>
                         <AlertDialogTitle className="flex items-center gap-2">
@@ -192,9 +200,10 @@ export function ShareModal({
                         </AlertDialogDescription>
                     </AlertDialogHeader>
                     <AlertDialogFooter>
-                        <AlertDialogCancel>Cancel</AlertDialogCancel>
-                        <AlertDialogAction onClick={handleRegenerate}>
-                            Regenerate Link
+                        <AlertDialogCancel disabled={isRegenerating}>Cancel</AlertDialogCancel>
+                        <AlertDialogAction onClick={handleRegenerate} disabled={isRegenerating} className="gap-2">
+                            {isRegenerating && <IconLoader2 className="size-4 animate-spin" />}
+                            {isRegenerating ? "Regenerating..." : "Regenerate Link"}
                         </AlertDialogAction>
                     </AlertDialogFooter>
                 </AlertDialogContent>
