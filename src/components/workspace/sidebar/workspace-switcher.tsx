@@ -192,6 +192,7 @@ export function WorkspaceSwitcher({
         onOpenChange={setIsDialogOpen}
         onSuccess={handleWorkspaceCreated}
         open={isDialogOpen}
+        currentWorkspaceSlug={currentSlug}
       />
     </SidebarMenu>
   );

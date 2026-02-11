@@ -84,6 +84,11 @@ const FEATURE_MESSAGES: Record<string, { title: string; message: string; subtitl
         message: "Clip sharing is a very powerful feature — share your best clips with your fans and community to grow your reach.",
         subtitle: "Upgrade to Pro to create public share links, track views & downloads, and let anyone watch your clips without signing in.",
     },
+    "create workspace": {
+        title: "Upgrade Required",
+        message: "Free plan users can only have one workspace. To create additional workspaces, upgrade any existing workspace to a paid plan.",
+        subtitle: "Upgrade to Starter or Pro to unlock multiple workspaces, more minutes, and premium features.",
+    },
 };
 
 function PricingCard({

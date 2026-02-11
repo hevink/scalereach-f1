@@ -27,6 +27,7 @@ import { Spinner } from "@/components/ui/spinner";
 import { Textarea } from "@/components/ui/textarea";
 import { useCreateWorkspace, useCheckSlug } from "@/hooks/useWorkspace";
 import { workspaceApi } from "@/lib/api";
+import { UpgradeDialog } from "@/components/pricing/upgrade-dialog";
 
 const SLUG_REGEX = /^[a-zA-Z0-9_-]+$/;
 const MIN_SLUG_LENGTH = 3;
@@ -75,15 +76,18 @@ interface CreateWorkspaceDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onSuccess?: (workspace: { id: string; name: string; slug: string }) => void;
+  currentWorkspaceSlug?: string;
 }
 
 export function CreateWorkspaceDialog({
   open,
   onOpenChange,
   onSuccess,
+  currentWorkspaceSlug,
 }: CreateWorkspaceDialogProps) {
   const [slugAvailable, setSlugAvailable] = useState<boolean | null>(null);
   const [checkingSlug, setCheckingSlug] = useState(false);
+  const [showUpgradeDialog, setShowUpgradeDialog] = useState(false);
   const slugDebounceRef = useRef<NodeJS.Timeout | null>(null);
   const slugManuallyEditedRef = useRef<boolean>(false);
   const abortControllerRef = useRef<AbortController | null>(null);
@@ -269,6 +273,11 @@ export function CreateWorkspaceDialog({
           },
           onError: (error: any) => {
             console.error("Error creating workspace:", error);
+            if (error.response?.status === 403 && error.response?.data?.code === "WORKSPACE_LIMIT_REACHED") {
+              onOpenChange(false);
+              setShowUpgradeDialog(true);
+              return;
+            }
             toast.error(error.message || "Failed to create workspace");
           },
         }
@@ -281,114 +290,127 @@ export function CreateWorkspaceDialog({
   const showSlugError = slugFieldState.invalid || slugAvailable === false;
 
   return (
-    <Dialog onOpenChange={onOpenChange} open={open}>
-      <DialogContent className="sm:max-w-md">
-        <DialogHeader>
-          <DialogTitle>Create Workspace</DialogTitle>
-          <DialogDescription>
-            Create a new workspace to organize your projects and collaborate
-            with your team.
-          </DialogDescription>
-        </DialogHeader>
-        <form
-          className="flex flex-col gap-6"
-          onSubmit={form.handleSubmit(onSubmit)}
-        >
-          <FieldGroup>
-            <Field>
-              <FieldLabel>
-                <span>Name</span>
-              </FieldLabel>
-              <FieldContent>
-                <Input
-                  {...form.register("name")}
-                  aria-invalid={form.formState.errors.name ? "true" : "false"}
-                  onChange={(e) => handleNameChange(e.target.value)}
-                  placeholder="My Workspace…"
-                />
-                <FieldError errors={[form.formState.errors.name]} />
-              </FieldContent>
-            </Field>
-
-            <Field>
-              <FieldLabel>
-                <span>Slug</span>
-              </FieldLabel>
-              <FieldContent>
-                <div className="relative">
+    <>
+      <Dialog onOpenChange={onOpenChange} open={open}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Create Workspace</DialogTitle>
+            <DialogDescription>
+              Create a new workspace to organize your projects and collaborate
+              with your team.
+            </DialogDescription>
+          </DialogHeader>
+          <form
+            className="flex flex-col gap-6"
+            onSubmit={form.handleSubmit(onSubmit)}
+          >
+            <FieldGroup>
+              <Field>
+                <FieldLabel>
+                  <span>Name</span>
+                </FieldLabel>
+                <FieldContent>
                   <Input
-                    {...form.register("slug")}
-                    aria-invalid={showSlugError ? "true" : "false"}
-                    onChange={(e) => handleSlugChange(e.target.value)}
-                    placeholder="my-workspace…"
+                    {...form.register("name")}
+                    aria-invalid={form.formState.errors.name ? "true" : "false"}
+                    onChange={(e) => handleNameChange(e.target.value)}
+                    placeholder="My Workspace…"
                   />
-                  {checkingSlug && (
-                    <div className="absolute top-1/2 right-2 -translate-y-1/2">
-                      <Spinner className="size-4" />
-                    </div>
-                  )}
-                  {!checkingSlug && slugAvailable === true && (
-                    <div className="absolute top-1/2 right-2 -translate-y-1/2 text-green-600 text-xs">
-                      Available
-                    </div>
-                  )}
-                </div>
-                <FieldDescription>
-                  A unique identifier for your workspace. This will be used in
-                  the URL.
-                </FieldDescription>
-                <FieldError
-                  errors={[
-                    form.formState.errors.slug,
-                    slugAvailable === false
-                      ? { message: "This slug is already taken" }
-                      : undefined,
-                  ]}
-                />
-              </FieldContent>
-            </Field>
+                  <FieldError errors={[form.formState.errors.name]} />
+                </FieldContent>
+              </Field>
 
-            <Field>
-              <FieldLabel>
-                <span>Description</span>
-                <span className="font-normal text-muted-foreground">
-                  {" "}
-                  (optional)
-                </span>
-              </FieldLabel>
-              <FieldContent>
-                <Textarea
-                  {...form.register("description")}
-                  aria-invalid={
-                    form.formState.errors.description ? "true" : "false"
-                  }
-                  placeholder="A brief description of your workspace…"
-                  rows={3}
-                />
-                <FieldError errors={[form.formState.errors.description]} />
-              </FieldContent>
-            </Field>
-          </FieldGroup>
+              <Field>
+                <FieldLabel>
+                  <span>Slug</span>
+                </FieldLabel>
+                <FieldContent>
+                  <div className="relative">
+                    <Input
+                      {...form.register("slug")}
+                      aria-invalid={showSlugError ? "true" : "false"}
+                      onChange={(e) => handleSlugChange(e.target.value)}
+                      placeholder="my-workspace…"
+                    />
+                    {checkingSlug && (
+                      <div className="absolute top-1/2 right-2 -translate-y-1/2">
+                        <Spinner className="size-4" />
+                      </div>
+                    )}
+                    {!checkingSlug && slugAvailable === true && (
+                      <div className="absolute top-1/2 right-2 -translate-y-1/2 text-green-600 text-xs">
+                        Available
+                      </div>
+                    )}
+                  </div>
+                  <FieldDescription>
+                    A unique identifier for your workspace. This will be used in
+                    the URL.
+                  </FieldDescription>
+                  <FieldError
+                    errors={[
+                      form.formState.errors.slug,
+                      slugAvailable === false
+                        ? { message: "This slug is already taken" }
+                        : undefined,
+                    ]}
+                  />
+                </FieldContent>
+              </Field>
 
-          <DialogFooter>
-            <Button
-              disabled={isLoading}
-              onClick={() => onOpenChange(false)}
-              type="button"
-              variant="outline"
-            >
-              Cancel
-            </Button>
-            <Button
-              disabled={isLoading || checkingSlug}
-              loading={isLoading}
-              type="submit"
-            >
-              Create Workspace
-            </Button>
-          </DialogFooter>
-        </form>
-      </DialogContent>
-    </Dialog>
+              <Field>
+                <FieldLabel>
+                  <span>Description</span>
+                  <span className="font-normal text-muted-foreground">
+                    {" "}
+                    (optional)
+                  </span>
+                </FieldLabel>
+                <FieldContent>
+                  <Textarea
+                    {...form.register("description")}
+                    aria-invalid={
+                      form.formState.errors.description ? "true" : "false"
+                    }
+                    placeholder="A brief description of your workspace…"
+                    rows={3}
+                  />
+                  <FieldError errors={[form.formState.errors.description]} />
+                </FieldContent>
+              </Field>
+            </FieldGroup>
+
+            <DialogFooter>
+              <Button
+                disabled={isLoading}
+                onClick={() => onOpenChange(false)}
+                type="button"
+                variant="outline"
+              >
+                Cancel
+              </Button>
+              <Button
+                disabled={isLoading || checkingSlug}
+                loading={isLoading}
+                type="submit"
+              >
+                Create Workspace
+              </Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
+
+      {
+        currentWorkspaceSlug && (
+          <UpgradeDialog
+            open={showUpgradeDialog}
+            onOpenChange={setShowUpgradeDialog}
+            workspaceSlug={currentWorkspaceSlug}
+            feature="Create Workspace"
+          />
+        )
+      }
+    </>
   );
 }
