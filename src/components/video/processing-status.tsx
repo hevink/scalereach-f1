@@ -289,7 +289,7 @@ export function ProcessingStatus({ videoId, onComplete, onError }: ProcessingSta
 
             analytics.videoProcessingCompleted({
                 videoId,
-                clipsGenerated: job?.clipsGenerated ?? 0,
+                clipsGenerated: (job as any)?.clipsGenerated ?? 0,
                 duration: video?.duration ?? 0,
             });
 

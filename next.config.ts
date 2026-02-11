@@ -26,8 +26,8 @@ export default withSentryConfig(nextConfig, {
   silent: true,
   // Upload source maps for better stack traces
   widenClientFileUpload: true,
-  // Hides source maps from generated client bundles
-  hideSourceMaps: true,
-  // Automatically tree-shake Sentry logger statements to reduce bundle size
-  disableLogger: true,
+  // Hide source maps from generated client bundles
+  sourcemaps: {
+    deleteSourcemapsAfterUpload: true,
+  },
 });
