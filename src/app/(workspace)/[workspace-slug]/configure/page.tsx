@@ -40,6 +40,7 @@ import { toast } from "sonner";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import type { VideoInfo } from "@/lib/api/video";
 import { AspectRatioSelector } from "@/components/configure/aspect-ratio-selector";
+import { TimeframeSelector } from "@/components/configure/timeframe-selector";
 import { YouTubeIcon } from "@/components/icons/youtube-icon";
 import { InsufficientMinutesModal } from "@/components/upload/insufficient-minutes-modal";
 import {
@@ -168,6 +169,8 @@ export default function ConfigurePage() {
                 genre: config.genre,
                 clipDurationMin: config.clipDurationMin || 15,
                 clipDurationMax: config.clipDurationMax || 90,
+                timeframeStart: config.timeframeStart ?? 0,
+                timeframeEnd: config.timeframeEnd ?? null,
                 language: config.language,
                 captionTemplateId: config.captionTemplateId,
                 aspectRatio: config.aspectRatio,
@@ -222,6 +225,8 @@ export default function ConfigurePage() {
                 genre: config.genre,
                 clipDurationMin: config.clipDurationMin || 15,
                 clipDurationMax: config.clipDurationMax || 90,
+                timeframeStart: config.timeframeStart ?? 0,
+                timeframeEnd: config.timeframeEnd ?? null,
                 language: config.language,
                 captionTemplateId: config.captionTemplateId,
                 aspectRatio: config.aspectRatio,
@@ -662,6 +667,31 @@ export default function ConfigurePage() {
                                                 </Select>
                                             </div>
                                         </div>
+
+                                        {/* Timeframe Section */}
+                                        {(() => {
+                                            const duration = mode === "upload"
+                                                ? uploadedVideo?.duration
+                                                : videoInfo?.duration;
+                                            if (!duration || duration <= 0) return null;
+                                            return (
+                                                <div className="space-y-4 border-t pt-6">
+                                                    <div>
+                                                        <h3 className="font-semibold">Processing Timeframe</h3>
+                                                        <p className="text-muted-foreground text-sm">
+                                                            Select which part of the video to process
+                                                        </p>
+                                                    </div>
+                                                    <TimeframeSelector
+                                                        videoDuration={duration}
+                                                        start={config.timeframeStart ?? 0}
+                                                        end={config.timeframeEnd ?? null}
+                                                        onChange={(start, end) => updateConfig({ timeframeStart: start, timeframeEnd: end })}
+                                                        disabled={isSubmitting}
+                                                    />
+                                                </div>
+                                            );
+                                        })()}
 
                                         {/* Editing Options Section */}
                                         <div className="space-y-4 border-t pt-6">
