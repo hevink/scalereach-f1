@@ -97,6 +97,9 @@ export function VideoCard({
     };
 
     const getThumbnailUrl = () => {
+        if (video.thumbnailUrl) {
+            return video.thumbnailUrl;
+        }
         if (video.sourceType === "youtube" && video.sourceUrl) {
             const videoIdMatch = video.sourceUrl.match(/[a-zA-Z0-9_-]{11}/);
             if (videoIdMatch) {

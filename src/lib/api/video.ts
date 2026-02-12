@@ -16,6 +16,7 @@ export interface VideoLite {
   id: string;
   title: string | null;
   duration: number | null;
+  thumbnailUrl: string | null;
   status: "pending" | "pending_config" | "downloading" | "uploading" | "transcribing" | "analyzing" | "completed" | "failed";
   sourceType: "youtube" | "upload";
   sourceUrl: string | null;
