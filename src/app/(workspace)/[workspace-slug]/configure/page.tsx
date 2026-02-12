@@ -37,6 +37,7 @@ import type { VideoInfo } from "@/lib/api/video";
 import { AspectRatioSelector } from "@/components/configure/aspect-ratio-selector";
 import { TimeframeSelector } from "@/components/configure/timeframe-selector";
 import { ClipTypeSelector } from "@/components/configure/clip-type-selector";
+import { ClipDurationSelector } from "@/components/configure/clip-duration-selector";
 import { YouTubeIcon } from "@/components/icons/youtube-icon";
 import { InsufficientMinutesModal } from "@/components/upload/insufficient-minutes-modal";
 import {
@@ -148,8 +149,8 @@ export default function ConfigurePage() {
                 skipClipping: config.skipClipping,
                 clipModel: config.clipModel,
                 genre: config.genre,
-                clipDurationMin: config.clipDurationMin || 15,
-                clipDurationMax: config.clipDurationMax || 90,
+                clipDurationMin: config.clipDurationMin || 30,
+                clipDurationMax: config.clipDurationMax || 60,
                 timeframeStart: config.timeframeStart ?? 0,
                 timeframeEnd: config.timeframeEnd ?? null,
                 language: config.language,
@@ -201,8 +202,8 @@ export default function ConfigurePage() {
                 skipClipping: config.skipClipping,
                 clipModel: config.clipModel,
                 genre: config.genre,
-                clipDurationMin: config.clipDurationMin || 15,
-                clipDurationMax: config.clipDurationMax || 90,
+                clipDurationMin: config.clipDurationMin || 30,
+                clipDurationMax: config.clipDurationMax || 60,
                 timeframeStart: config.timeframeStart ?? 0,
                 timeframeEnd: config.timeframeEnd ?? null,
                 language: config.language,
@@ -563,8 +564,17 @@ export default function ConfigurePage() {
                                         )}
                                     </div>
 
-                                    {/* Aspect Ratio & Language - inline rows */}
+                                    {/* Aspect Ratio, Language & Clip Duration - inline rows */}
                                     <div className="rounded-xl border bg-card divide-y">
+                                        <div className="flex items-center justify-between gap-4 px-4 py-3">
+                                            <span className="text-sm font-medium shrink-0">Clip Duration</span>
+                                            <ClipDurationSelector
+                                                min={config.clipDurationMin ?? 30}
+                                                max={config.clipDurationMax ?? 60}
+                                                onChange={(min, max) => updateConfig({ clipDurationMin: min, clipDurationMax: max })}
+                                                disabled={isSubmitting}
+                                            />
+                                        </div>
                                         <div className="flex items-center justify-between gap-4 px-4 py-3">
                                             <span className="text-sm font-medium shrink-0">Aspect Ratio</span>
                                             <div className="w-48">

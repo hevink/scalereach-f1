@@ -134,8 +134,8 @@ export const DEFAULT_VIDEO_CONFIG: VideoConfigInput = {
   skipClipping: false,
   clipModel: "ClipBasic",
   genre: "Auto",
-  clipDurationMin: 15,
-  clipDurationMax: 90,
+  clipDurationMin: 30,
+  clipDurationMax: 60,
   timeframeStart: 0,
   timeframeEnd: null,
   language: "auto", // Auto-detect by default
