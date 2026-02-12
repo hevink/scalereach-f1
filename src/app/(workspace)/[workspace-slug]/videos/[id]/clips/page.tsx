@@ -402,29 +402,37 @@ function ClipCard({ clip, index, onEdit, onFavorite, onDownload, onShare, userPl
                                 </TabsTrigger>
                             </TabsList>
 
-                            <TabsContent value="transcript" className="mt-0 max-h-64 overflow-y-auto">
-                                <p className="text-sm text-muted-foreground leading-relaxed">
-                                    {clip.transcript || "No transcript available."}
-                                </p>
+                            <TabsContent value="transcript" className="mt-0 relative">
+                                <div className="max-h-[18rem] overflow-y-auto">
+                                    <p className="text-sm text-muted-foreground leading-relaxed pb-6">
+                                        {clip.transcript || "No transcript available."}
+                                    </p>
+                                </div>
+                                <div className="pointer-events-none absolute bottom-0 left-0 right-0 h-8 bg-gradient-to-t from-card to-transparent" />
                             </TabsContent>
 
-                            <TabsContent value="description" className="mt-0 max-h-64 overflow-y-auto">
-                                <p className="text-sm text-muted-foreground leading-relaxed">
-                                    {clip.viralityReason || "No auto-description available."}
-                                </p>
-                                {clip.hooks.length > 0 && (
-                                    <div className="mt-3 rounded-lg border bg-muted/30 p-3">
-                                        <p className="text-[11px] font-medium text-muted-foreground uppercase tracking-wider mb-2">Key Hooks</p>
-                                        <div className="grid grid-cols-2 gap-x-4 gap-y-2">
-                                            {clip.hooks.map((hook, i) => (
-                                                <div key={i} className="flex items-start gap-2">
-                                                    <span className="mt-1.5 size-1.5 rounded-full bg-emerald-500 shrink-0" />
-                                                    <span className="text-xs text-foreground/80 leading-snug">{hook}</span>
+                            <TabsContent value="description" className="mt-0 relative">
+                                <div className="max-h-[18rem] overflow-y-auto">
+                                    <div className="pb-6">
+                                        <p className="text-sm text-muted-foreground leading-relaxed">
+                                            {clip.viralityReason || "No auto-description available."}
+                                        </p>
+                                        {clip.hooks.length > 0 && (
+                                            <div className="mt-3 rounded-lg border bg-muted/30 p-3">
+                                                <p className="text-[11px] font-medium text-muted-foreground uppercase tracking-wider mb-2">Key Hooks</p>
+                                                <div className="grid grid-cols-2 gap-x-4 gap-y-2">
+                                                    {clip.hooks.map((hook, i) => (
+                                                        <div key={i} className="flex items-start gap-2">
+                                                            <span className="mt-1.5 size-1.5 rounded-full bg-emerald-500 shrink-0" />
+                                                            <span className="text-xs text-foreground/80 leading-snug">{hook}</span>
+                                                        </div>
+                                                    ))}
                                                 </div>
-                                            ))}
-                                        </div>
+                                            </div>
+                                        )}
                                     </div>
-                                )}
+                                </div>
+                                <div className="pointer-events-none absolute bottom-0 left-0 right-0 h-8 bg-gradient-to-t from-card to-transparent" />
                             </TabsContent>
                         </Tabs>
 
