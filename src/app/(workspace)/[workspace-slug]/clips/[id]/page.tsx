@@ -404,6 +404,8 @@ export default function ClipEditorPage({ params }: ClipEditorPageProps) {
     const [clipBoundaries, setClipBoundaries] = useState<{ start: number; end: number } | null>(null);
     // Local captions state for optimistic UI updates during real-time editing
     const [localCaptions, setLocalCaptions] = useState<Caption[] | null>(null);
+    // Local transcript captions state (paragraph-grouped) for inline editing
+    const [localTranscriptCaptions, setLocalTranscriptCaptions] = useState<Caption[] | null>(null);
     // Track unsaved changes
     const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
     const [showUnsavedDialog, setShowUnsavedDialog] = useState(false);
@@ -497,6 +499,7 @@ export default function ClipEditorPage({ params }: ClipEditorPageProps) {
             return [];
         }
 
+        const wordsPerLine = captionStyle?.wordsPerLine ?? 5;
         const segments: Caption[] = [];
         let currentWords: CaptionWord[] = [];
 
@@ -509,8 +512,8 @@ export default function ClipEditorPage({ params }: ClipEditorPageProps) {
                 highlight: words[i].highlight || false,
             });
 
-            // Match backend: max 5 words per line, or break on sentence-ending punctuation
-            if (/[.!?]$/.test(words[i].word) || currentWords.length >= 5 || i === words.length - 1) {
+            // Break on sentence-ending punctuation, max words per line, or last word
+            if (/[.!?,;:]$/.test(words[i].word) || currentWords.length >= wordsPerLine || i === words.length - 1) {
                 segments.push({
                     id: `caption-${segments.length}`,
                     text: currentWords.map(w => w.word).join(" "),
@@ -522,7 +525,7 @@ export default function ClipEditorPage({ params }: ClipEditorPageProps) {
             }
         }
         return segments;
-    }, [captionData?.words]);
+    }, [captionData?.words, captionStyle?.wordsPerLine]);
 
     // Convert words from API to Caption[] format for TRANSCRIPT PANEL
     // Groups words into sentence-based paragraphs for better readability
@@ -533,8 +536,16 @@ export default function ClipEditorPage({ params }: ClipEditorPageProps) {
             return [];
         }
 
+        // Check if any words have sentence-ending punctuation
+        const hasPunctuation = words.some(w => /[.!?]$/.test(w.word));
+
         const segments: Caption[] = [];
         let currentWords: CaptionWord[] = [];
+
+        // Threshold for detecting a natural pause between words (in seconds)
+        const PAUSE_THRESHOLD = 0.7;
+        // Max words per paragraph when no punctuation is available
+        const MAX_WORDS_PER_PARAGRAPH = 20;
 
         for (let i = 0; i < words.length; i++) {
             currentWords.push({
@@ -545,8 +556,20 @@ export default function ClipEditorPage({ params }: ClipEditorPageProps) {
                 highlight: words[i].highlight || false,
             });
 
-            // Break on sentence-ending punctuation for paragraph grouping
-            if (/[.!?]$/.test(words[i].word) || i === words.length - 1) {
+            const isLastWord = i === words.length - 1;
+            const hasSentenceEnd = /[.!?]$/.test(words[i].word);
+
+            // Detect a timing gap to the next word (natural pause in speech)
+            const hasTimingGap = !isLastWord &&
+                currentWords.length >= 5 &&
+                (words[i + 1].start - words[i].end) >= PAUSE_THRESHOLD;
+
+            // Break on: sentence punctuation, timing gap (when no punctuation), word count limit, or last word
+            const shouldBreak = hasPunctuation
+                ? (hasSentenceEnd || isLastWord)
+                : (hasTimingGap || currentWords.length >= MAX_WORDS_PER_PARAGRAPH || isLastWord);
+
+            if (shouldBreak) {
                 segments.push({
                     id: `paragraph-${segments.length}`,
                     text: currentWords.map(w => w.word).join(" "),
@@ -692,38 +715,37 @@ export default function ClipEditorPage({ params }: ClipEditorPageProps) {
 
     /**
      * Handle caption edit for real-time sync with video overlay
-     * Updates local captions state optimistically and saves immediately
+     * Updates local captions state optimistically — saved only on explicit Save
      */
     const handleCaptionEdit = useCallback((segmentId: string, newText: string) => {
-        // Get the current captions (either local state or from server)
-        // Use transcript captions since editing happens in the transcript panel
+        // Update transcript captions (paragraph-grouped, used by transcript panel)
+        const currentTranscript = localTranscriptCaptions ?? captionsForTranscript;
+        const updatedTranscript = currentTranscript.map((caption: Caption) => {
+            if (caption.id === segmentId) {
+                return { ...caption, text: newText };
+            }
+            return caption;
+        });
+        setLocalTranscriptCaptions(updatedTranscript);
+
+        // Update video overlay captions too
         const currentCaptions = localCaptions ?? captionsForVideo;
 
         // Find the original text for undo history
-        const originalCaption = currentCaptions.find((caption: Caption) => caption.id === segmentId);
+        const originalCaption = currentTranscript.find((caption: Caption) => caption.id === segmentId);
         const originalText = originalCaption?.text ?? "";
-
-        // Track the edit in undo history
         setCaptionUndoState({ segmentId, text: originalText });
 
-        // Find the caption that matches the segment ID and update it optimistically
         const updatedCaptions = currentCaptions.map((caption: Caption) => {
             if (caption.id === segmentId) {
                 return { ...caption, text: newText };
             }
             return caption;
         });
-
-        // Update local state for immediate UI feedback
         setLocalCaptions(updatedCaptions);
 
-        // Save immediately
-        updateCaptionText.mutate({
-            clipId,
-            captionId: segmentId,
-            text: newText,
-        });
-    }, [localCaptions, captionsForVideo, clipId, updateCaptionText, setCaptionUndoState]);
+        setHasUnsavedChanges(true);
+    }, [localCaptions, captionsForVideo, localTranscriptCaptions, captionsForTranscript, setCaptionUndoState]);
 
     /**
      * Handle manual style changes (not from preset selection)
@@ -803,6 +825,24 @@ export default function ClipEditorPage({ params }: ClipEditorPageProps) {
             saveLastUsedStyle(captionStyle, currentPresetId);
         }
 
+        // Save edited caption text if there are local changes
+        if (localCaptions && localCaptions.length > 0) {
+            // Compare local captions against server captions and save each changed segment
+            const serverCaptions = captionsForVideo;
+            for (const local of localCaptions) {
+                const server = serverCaptions.find((s: Caption) => s.id === local.id);
+                if (!server || server.text !== local.text) {
+                    promises.push(
+                        updateCaptionText.mutateAsync({
+                            clipId,
+                            captionId: local.id,
+                            text: local.text,
+                        })
+                    );
+                }
+            }
+        }
+
         // Save clip boundaries if there are changes
         if (clipBoundaries) {
             promises.push(
@@ -820,7 +860,7 @@ export default function ClipEditorPage({ params }: ClipEditorPageProps) {
 
         // Clear unsaved changes flag
         setHasUnsavedChanges(false);
-    }, [clipId, captionStyle, currentPresetId, clipBoundaries, updateCaptionStyle, updateClipBoundaries, saveLastUsedStyle]);
+    }, [clipId, captionStyle, currentPresetId, clipBoundaries, localCaptions, captionsForVideo, updateCaptionStyle, updateClipBoundaries, updateCaptionText, saveLastUsedStyle]);
 
     // Export handler
     const handleExport = useCallback(
@@ -921,34 +961,35 @@ export default function ClipEditorPage({ params }: ClipEditorPageProps) {
 
     /**
      * Effect to apply undo/redo state changes to local captions
-     * When captionUndoState changes (from undo/redo), update the local captions and save
+     * When captionUndoState changes (from undo/redo), update the local captions
      */
     useEffect(() => {
         if (captionUndoState === null) return;
 
         const { segmentId, text } = captionUndoState;
 
-        // Get the current captions
+        // Update video overlay captions
         const currentCaptions = localCaptions ?? captionsForVideo;
-
-        // Update the caption with the undone/redone text
         const updatedCaptions = currentCaptions.map((caption: Caption) => {
             if (caption.id === segmentId) {
                 return { ...caption, text };
             }
             return caption;
         });
-
-        // Update local state
         setLocalCaptions(updatedCaptions);
 
-        // Save immediately
-        updateCaptionText.mutate({
-            clipId,
-            captionId: segmentId,
-            text,
+        // Update transcript captions
+        const currentTranscript = localTranscriptCaptions ?? captionsForTranscript;
+        const updatedTranscript = currentTranscript.map((caption: Caption) => {
+            if (caption.id === segmentId) {
+                return { ...caption, text };
+            }
+            return caption;
         });
-    }, [captionUndoState, localCaptions, captionsForVideo, clipId, updateCaptionText]);
+        setLocalTranscriptCaptions(updatedTranscript);
+
+        setHasUnsavedChanges(true);
+    }, [captionUndoState, localCaptions, captionsForVideo, localTranscriptCaptions, captionsForTranscript]);
 
     /**
      * Global keyboard shortcuts for the editing screen
@@ -1080,7 +1121,7 @@ export default function ClipEditorPage({ params }: ClipEditorPageProps) {
     const videoCaptions = localCaptions && localCaptions.length > 0 ? localCaptions : captionsForVideo;
 
     // Captions for transcript panel (sentence-based paragraphs)
-    const transcriptCaptions = captionsForTranscript;
+    const transcriptCaptions = localTranscriptCaptions ?? captionsForTranscript;
 
     // Determine if saving is in progress (includes caption text auto-save)
     // @validates Requirements 13.2 - Show saving indicator during save operations
@@ -1149,7 +1190,7 @@ export default function ClipEditorPage({ params }: ClipEditorPageProps) {
                             </h2>
                             {videoSrc ? (
                                 <VideoCanvasEditor
-                                    ref={videoPlayerRef as React.Ref<VideoCanvasEditorRef>}
+                                    ref={videoPlayerRef as any}
                                     src={videoSrc}
                                     startTime={videoStartTime}
                                     endTime={videoEndTime}
