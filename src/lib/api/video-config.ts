@@ -2,7 +2,7 @@ import { api } from "../axios";
 
 // Supported languages for transcription (matches Deepgram)
 export const SUPPORTED_LANGUAGES = {
-  auto: "Auto-detect",
+  auto: "Auto-detect (Multilingual)",
   en: "English",
   es: "Spanish",
   fr: "French",
