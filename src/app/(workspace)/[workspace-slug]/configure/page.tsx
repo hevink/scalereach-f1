@@ -712,8 +712,8 @@ export default function ConfigurePage() {
                                                     />
                                                 </div>
 
-                                                {/* Emojis */}
-                                                <div className="flex items-center justify-between py-3">
+                                                {/* Emojis - disabled for now */}
+                                                {/* <div className="flex items-center justify-between py-3">
                                                     <div className="flex items-center gap-3">
                                                         <IconMoodSmile className="size-5 text-muted-foreground" />
                                                         <span className="font-medium">Emojis</span>
@@ -723,10 +723,10 @@ export default function ConfigurePage() {
                                                         onCheckedChange={(checked) => updateConfig({ enableEmojis: checked })}
                                                         disabled={isSubmitting}
                                                     />
-                                                </div>
+                                                </div> */}
 
-                                                {/* Intro Title */}
-                                                <div className="flex items-center justify-between py-3">
+                                                {/* Intro Title - disabled for now */}
+                                                {/* <div className="flex items-center justify-between py-3">
                                                     <div className="flex items-center gap-3">
                                                         <IconTypography className="size-5 text-muted-foreground" />
                                                         <span className="font-medium">Intro title</span>
@@ -736,7 +736,7 @@ export default function ConfigurePage() {
                                                         onCheckedChange={(checked) => updateConfig({ enableIntroTitle: checked })}
                                                         disabled={isSubmitting}
                                                     />
-                                                </div>
+                                                </div> */}
                                             </div>
                                         </div>
 

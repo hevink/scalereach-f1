@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState, useCallback, useMemo } from "react";
+import { useRef, useState, useCallback, useMemo, useEffect } from "react";
 import { CaptionWord, CaptionStyle } from "@/lib/api/captions";
 import { cn } from "@/lib/utils";
 import { Play, Pause, Volume2, VolumeX } from "lucide-react";
@@ -34,10 +34,29 @@ export function VideoPreviewWithCaptions({
   className,
 }: VideoPreviewWithCaptionsProps) {
   const videoRef = useRef<HTMLVideoElement>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
   const [isPlaying, setIsPlaying] = useState(false);
   const [isMuted, setIsMuted] = useState(false);
   const [internalTime, setInternalTime] = useState(0);
   const [duration, setDuration] = useState(0);
+  const [containerHeight, setContainerHeight] = useState(0);
+
+  // Track container height to scale font sizes relative to the 700px design space
+  // (same scaling the backend uses for FFmpeg rendering)
+  const DESIGN_HEIGHT = 700;
+  useEffect(() => {
+    const el = containerRef.current;
+    if (!el) return;
+    const observer = new ResizeObserver((entries) => {
+      for (const entry of entries) {
+        setContainerHeight(entry.contentRect.height);
+      }
+    });
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, []);
+
+  const scaleFactor = containerHeight > 0 ? containerHeight / DESIGN_HEIGHT : 1;
 
   const currentTime = externalTime ?? internalTime;
 
@@ -135,7 +154,7 @@ export function VideoPreviewWithCaptions({
   }, [isWordByWord, visibleWords, currentWordId, words]);
 
   return (
-    <div className={cn("relative rounded-lg overflow-hidden bg-black", className)}>
+    <div ref={containerRef} className={cn("relative rounded-lg overflow-hidden bg-black", className)}>
       {/* Video */}
       <video
         ref={videoRef}
@@ -168,7 +187,7 @@ export function VideoPreviewWithCaptions({
             {displayWords.map((word) => {
               const isCurrent = word.id === currentWordId;
               const isPast = word.end < currentTime;
-              const outlineWidth = style.outlineWidth ?? 3;
+              const outlineWidth = Math.round((style.outlineWidth ?? 3) * scaleFactor);
               const highlightScale = (style.highlightScale ?? 125) / 100;
 
               // Determine if word should be scaled based on animation type
@@ -177,7 +196,8 @@ export function VideoPreviewWithCaptions({
                 (isWordByWord && isCurrent && style.highlightEnabled) ||
                 (isBounce && isCurrent);
 
-              const scaleMargin = shouldScale ? `0 ${Math.round((highlightScale - 1) * (style.fontSize || 24) * 0.5)}px` : "0 2px";
+              const scaledFontSize = Math.round((style.fontSize || 24) * scaleFactor);
+              const scaleMargin = shouldScale ? `0 ${Math.round((highlightScale - 1) * scaledFontSize * 0.5)}px` : "0 2px";
 
               // Build text shadow to match ASS rendering
               const textShadow = style.shadow
@@ -233,7 +253,7 @@ export function VideoPreviewWithCaptions({
                   )}
                   style={{
                     fontFamily: style.fontFamily || "sans-serif",
-                    fontSize: `${style.fontSize || 24}px`,
+                    fontSize: `${Math.round((style.fontSize || 24) * scaleFactor)}px`,
                     fontWeight: 700,
                     margin: scaleMargin,
                     color: wordColor,

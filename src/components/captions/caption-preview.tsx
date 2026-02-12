@@ -93,6 +93,7 @@ interface CaptionOverlayProps {
     caption: Caption | null;
     style: CaptionStyle;
     currentTime: number;
+    scaleFactor: number;
 }
 
 /**
@@ -102,7 +103,7 @@ interface CaptionOverlayProps {
  * Matches the backend ASS rendering for consistent preview
  * @validates Requirements 17.1, 17.4, 17.5
  */
-function CaptionOverlay({ caption, style, currentTime }: CaptionOverlayProps) {
+function CaptionOverlay({ caption, style, currentTime, scaleFactor }: CaptionOverlayProps) {
     if (!caption) return null;
 
     const currentWordIndex = getCurrentWordIndex(caption, currentTime);
@@ -122,7 +123,7 @@ function CaptionOverlay({ caption, style, currentTime }: CaptionOverlayProps) {
     };
 
     // Build text shadow style - match ASS rendering with stronger shadow
-    const outlineWidth = style.outlineWidth ?? 3;
+    const outlineWidth = Math.round((style.outlineWidth ?? 3) * scaleFactor);
     const textShadow = style.shadow
         ? `0 0 ${outlineWidth}px ${style.outlineColor || "#000000"},
            0 0 ${outlineWidth * 2}px ${style.outlineColor || "#000000"},
@@ -156,7 +157,7 @@ function CaptionOverlay({ caption, style, currentTime }: CaptionOverlayProps) {
                 (style.animation === "karaoke" && isCurrentWord) ||
                 (style.animation === "word-by-word" && isCurrentWord && style.highlightEnabled) ||
                 (style.animation === "bounce" && isCurrentWord);
-            const scaleMargin = isScaled ? `0 ${Math.round((highlightScale - 1) * (style.fontSize || 24) * 0.5)}px` : "0 2px";
+            const scaleMargin = isScaled ? `0 ${Math.round((highlightScale - 1) * Math.round((style.fontSize || 24) * scaleFactor) * 0.5)}px` : "0 2px";
             const wordStyle: React.CSSProperties = {
                 textShadow,
                 margin: scaleMargin,
@@ -255,7 +256,7 @@ function CaptionOverlay({ caption, style, currentTime }: CaptionOverlayProps) {
                 className="inline-block px-3 py-2 rounded-md"
                 style={{
                     fontFamily: style.fontFamily,
-                    fontSize: `${style.fontSize}px`,
+                    fontSize: `${Math.round((style.fontSize || 24) * scaleFactor)}px`,
                     fontWeight: 700,
                     color: style.textColor,
                     backgroundColor,
@@ -326,6 +327,23 @@ export function CaptionPreview({
     const [duration, setDuration] = useState(0);
     const [isLoading, setIsLoading] = useState(true);
     const [debouncedStyle, setDebouncedStyle] = useState(style);
+    const [containerHeight, setContainerHeight] = useState(0);
+
+    // Track container height to scale font sizes relative to the 854px design space
+    const DESIGN_HEIGHT = 700;
+    useEffect(() => {
+        const el = containerRef.current;
+        if (!el) return;
+        const observer = new ResizeObserver((entries) => {
+            for (const entry of entries) {
+                setContainerHeight(entry.contentRect.height);
+            }
+        });
+        observer.observe(el);
+        return () => observer.disconnect();
+    }, []);
+
+    const scaleFactor = containerHeight > 0 ? containerHeight / DESIGN_HEIGHT : 1;
 
     // Use internal time for playback sync, external time for seeking
     const effectiveTime = isPlaying ? internalTime : currentTime;
@@ -489,6 +507,7 @@ export function CaptionPreview({
                 caption={currentCaption}
                 style={debouncedStyle}
                 currentTime={effectiveTime}
+                scaleFactor={scaleFactor}
             />
 
             {/* Play/Pause Overlay (center) */}

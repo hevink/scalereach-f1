@@ -816,8 +816,8 @@ export const VideoCanvasEditor = forwardRef<VideoCanvasEditorRef, VideoCanvasEdi
                         }}
                     />
 
-                    {/* Layers container */}
-                    <div
+                    {/* Layers container - fill layers hidden */}
+                    {/* <div
                         className="absolute inset-0"
                         style={{
                             width: displaySize.width,
@@ -841,7 +841,7 @@ export const VideoCanvasEditor = forwardRef<VideoCanvasEditorRef, VideoCanvasEdi
                                 containerScale={containerScale}
                             />
                         ))}
-                    </div>
+                    </div> */}
 
                     {/* Caption overlay - draggable when there's a caption */}
                     {currentCaption && (

@@ -145,8 +145,8 @@ export function VideoConfigForm({
                                 />
                             </div>
 
-                            {/* Emojis Toggle */}
-                            <div className="flex items-center justify-between">
+                            {/* Emojis Toggle - disabled for now */}
+                            {/* <div className="flex items-center justify-between">
                                 <div className="flex items-center gap-3">
                                     <IconMoodSmile className="size-5 text-muted-foreground" />
                                     <Label className="text-base font-medium">Emojis</Label>
@@ -156,10 +156,10 @@ export function VideoConfigForm({
                                     onCheckedChange={(checked) => onChange({ enableEmojis: checked })}
                                     disabled={isDisabled}
                                 />
-                            </div>
+                            </div> */}
 
-                            {/* Intro Title Toggle */}
-                            <div className="flex items-center justify-between">
+                            {/* Intro Title Toggle - disabled for now */}
+                            {/* <div className="flex items-center justify-between">
                                 <div className="flex items-center gap-3">
                                     <IconTypography className="size-5 text-muted-foreground" />
                                     <Label className="text-base font-medium">Intro title</Label>
@@ -169,7 +169,7 @@ export function VideoConfigForm({
                                     onCheckedChange={(checked) => onChange({ enableIntroTitle: checked })}
                                     disabled={isDisabled}
                                 />
-                            </div>
+                            </div> */}
                         </CardContent>
                     </CollapsibleContent>
                 </Collapsible>

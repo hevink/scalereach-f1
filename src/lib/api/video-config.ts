@@ -146,6 +146,6 @@ export const DEFAULT_VIDEO_CONFIG: VideoConfigInput = {
   enableWatermark: true,
   // Editing Options
   enableCaptions: true,
-  enableEmojis: true,
-  enableIntroTitle: true,
+  enableEmojis: false,
+  enableIntroTitle: false,
 };
