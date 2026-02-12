@@ -139,7 +139,7 @@ function CaptionOverlay({ caption, style, currentTime, scaleFactor }: CaptionOve
         : "transparent";
 
     // Highlight scale from style or default to 125%
-    const highlightScale = (style.highlightScale ?? 125) / 100;
+    const highlightScale = (style.highlightScale ?? 110) / 100;
 
     /**
      * Render words with animation and highlighting

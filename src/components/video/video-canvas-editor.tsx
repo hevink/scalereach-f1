@@ -737,7 +737,7 @@ export const VideoCanvasEditor = forwardRef<VideoCanvasEditorRef, VideoCanvasEdi
             const glowEnabled = captionStyle?.glowEnabled ?? false;
             const glowColor = captionStyle?.glowColor || highlightColor;
             const glowIntensity = captionStyle?.glowIntensity ?? 2;
-            const highlightScale = captionStyle?.highlightScale ?? 120;
+            const highlightScale = captionStyle?.highlightScale ?? 110;
 
             // Render each word with highlighting for the current word
             return currentCaption.words.map((word, index) => {

@@ -188,7 +188,7 @@ export function VideoPreviewWithCaptions({
               const isCurrent = word.id === currentWordId;
               const isPast = word.end < currentTime;
               const outlineWidth = Math.round((style.outlineWidth ?? 3) * scaleFactor);
-              const highlightScale = (style.highlightScale ?? 125) / 100;
+              const highlightScale = (style.highlightScale ?? 110) / 100;
 
               // Determine if word should be scaled based on animation type
               const shouldScale =

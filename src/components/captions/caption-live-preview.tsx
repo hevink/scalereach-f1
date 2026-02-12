@@ -52,7 +52,7 @@ export function CaptionLivePreview({
   const isFade = animation === "fade";
   const position = style.position || "bottom";
   const outlineWidth = style.outlineWidth ?? 3;
-  const highlightScale = (style.highlightScale ?? 125) / 100;
+  const highlightScale = (style.highlightScale ?? 110) / 100;
 
   // Build text shadow to match ASS rendering
   const textShadow = style.shadow
