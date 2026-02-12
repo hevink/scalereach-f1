@@ -465,7 +465,7 @@ function DraggableCaption({
                         ? "2px 2px 0 #000, -2px -2px 0 #000, 2px -2px 0 #000, -2px 2px 0 #000, 0 2px 0 #000, 0 -2px 0 #000, 2px 0 0 #000, -2px 0 0 #000"
                         : "none",
                     WebkitTextStroke: captionStyle?.outline
-                        ? `${Math.max(2, Math.round(containerScale * 3))}px ${captionStyle?.outlineColor || "#000000"}`
+                        ? `${Math.max(2, Math.round(containerScale * (captionStyle?.outlineWidth ?? 3)))}px ${captionStyle?.outlineColor || "#000000"}`
                         : "none",
                     paintOrder: "stroke fill",
                     backgroundColor: captionStyle?.backgroundColor && (captionStyle?.backgroundOpacity ?? 0) > 0
@@ -474,6 +474,7 @@ function DraggableCaption({
                     borderRadius: "4px",
                     padding: `${4 * containerScale}px ${12 * containerScale}px`,
                     lineHeight: 1.3,
+                    textTransform: captionStyle?.textTransform === "uppercase" ? "uppercase" : "none",
                 }}
             >
                 {children}
@@ -732,23 +733,35 @@ export const VideoCanvasEditor = forwardRef<VideoCanvasEditorRef, VideoCanvasEdi
             const highlightColor = captionStyle?.highlightColor || "#FFFF00";
             const textColor = captionStyle?.textColor || "#FFFFFF";
             const outlineColor = captionStyle?.outlineColor || "#000000";
-            const scaledOutlineWidth = Math.max(2, Math.round(containerScale * 3));
+            const scaledOutlineWidth = Math.max(2, Math.round(containerScale * (captionStyle?.outlineWidth ?? 3)));
+            const glowEnabled = captionStyle?.glowEnabled ?? false;
+            const glowColor = captionStyle?.glowColor || highlightColor;
+            const glowIntensity = captionStyle?.glowIntensity ?? 2;
+            const highlightScale = captionStyle?.highlightScale ?? 120;
 
             // Render each word with highlighting for the current word
             return currentCaption.words.map((word, index) => {
                 const isHighlighted = index === currentWordIndex;
 
                 // Glow effect for highlighted word
-                const glowShadow = isHighlighted
-                    ? `0 0 ${10 * containerScale}px ${highlightColor}, 0 0 ${20 * containerScale}px ${highlightColor}40`
-                    : "none";
+                // Always show a default glow using highlightColor; when glowEnabled, use glowColor + glowIntensity
+                let glowShadow = "none";
+                if (isHighlighted) {
+                    if (glowEnabled) {
+                        const blur1 = Math.round(glowIntensity * 5 * containerScale);
+                        const blur2 = Math.round(glowIntensity * 10 * containerScale);
+                        glowShadow = `0 0 ${blur1}px ${glowColor}, 0 0 ${blur2}px ${glowColor}40`;
+                    } else {
+                        glowShadow = `0 0 ${10 * containerScale}px ${highlightColor}, 0 0 ${20 * containerScale}px ${highlightColor}40`;
+                    }
+                }
 
                 return (
                     <span
                         key={word.id || index}
                         style={{
                             color: isHighlighted ? highlightColor : textColor,
-                            transform: isHighlighted ? "scale(1.2)" : "scale(1)",
+                            transform: isHighlighted ? `scale(${highlightScale / 100})` : "scale(1)",
                             display: "inline-block",
                             transition: "transform 0.1s ease-out, color 0.1s ease-out",
                             marginRight: `${4 * containerScale}px`,

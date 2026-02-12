@@ -516,33 +516,7 @@ export const DEFAULT_PRESETS: CaptionStylePreset[] = [
         },
         tags: ["elegant", "classic", "professional"],
     },
-    {
-        id: "glassmorphism",
-        name: "Glassmorphism",
-        description: "Frosted glass panel with soft glow and translucent backdrop - modern UI aesthetic",
-        style: {
-            fontFamily: "Montserrat",
-            fontSize: 34,
-            textColor: "#FFFFFF",
-            backgroundColor: "#88AAFF",
-            backgroundOpacity: 25,
-            x: 50, y: 85,
-            alignment: "center",
-            animation: "fade",
-            highlightColor: "#E0E8FF",
-            highlightEnabled: true,
-            shadow: true,
-            outline: true,
-            outlineColor: "rgba(255,255,255,0.3)",
-            outlineWidth: 1,
-            glowEnabled: true,
-            glowColor: "#AACCFF",
-            glowIntensity: 2,
-            textTransform: "none",
-            wordsPerLine: 5,
-        },
-        tags: ["minimal", "modern", "clean"],
-    },
+
 ];
 
 /**
