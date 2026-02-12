@@ -8,6 +8,8 @@ import { useWorkspaceBySlug } from "@/hooks/useWorkspace";
 import { useMyVideos, useSubmitYouTubeUrl, useDeleteVideo, videoKeys } from "@/hooks/useVideo";
 import { usePlanLimits } from "@/hooks/usePlanLimits";
 import { Spinner } from "@/components/ui/spinner";
+import { Skeleton } from "@/components/ui/skeleton";
+import { SkeletonVideoGrid } from "@/components/ui/skeletons";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
@@ -324,7 +326,35 @@ export default function WorkspacePage({ params }: WorkspacePageProps) {
   //   openCreateProjectDialog();
   // }, [openCreateProjectDialog]);
 
-  if (sessionPending || workspaceLoading) return <div className="flex min-h-[50vh] items-center justify-center"><Spinner /></div>;
+  if (sessionPending || workspaceLoading) return (
+    <div className="flex flex-col items-center">
+      {/* Hero Section Skeleton */}
+      <div className="w-full max-w-2xl pt-4 sm:pt-8 pb-8 sm:pb-12 px-4">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4 mb-6 sm:mb-8">
+          <Skeleton className="h-9 w-48 rounded" />
+          <Skeleton className="h-8 w-32 rounded-lg" />
+        </div>
+        <div className="bg-card rounded-2xl p-4 sm:p-6 space-y-3 sm:space-y-4 border">
+          <Skeleton className="h-10 sm:h-12 w-full rounded-lg" />
+          <div className="flex items-center gap-3 sm:gap-4">
+            <Skeleton className="h-5 w-24 rounded" />
+            <Skeleton className="h-4 w-48 rounded" />
+          </div>
+          <Skeleton className="h-10 sm:h-12 w-full rounded-lg" />
+        </div>
+      </div>
+      {/* Video Grid Skeleton */}
+      <div className="w-full border-t">
+        <div className="max-w-6xl mx-auto px-4 py-4">
+          <div className="flex items-center gap-2 mb-4">
+            <Skeleton className="size-5 rounded" />
+            <Skeleton className="h-6 w-28 rounded" />
+          </div>
+          <SkeletonVideoGrid count={10} />
+        </div>
+      </div>
+    </div>
+  );
   if (!workspace) return null;
 
   return (

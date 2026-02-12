@@ -1,6 +1,6 @@
 "use client";
 
-import { use, useCallback, useState } from "react";
+import { use, useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import {
     IconArrowLeft,
@@ -27,7 +27,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { useVideo } from "@/hooks/useVideo";
+import { useVideo, useVideoStatus } from "@/hooks/useVideo";
 import { useClipsByVideo, useToggleFavorite } from "@/hooks/useClips";
 import { useWorkspaceBySlug } from "@/hooks/useWorkspace";
 import { cn } from "@/lib/utils";
@@ -402,13 +402,13 @@ function ClipCard({ clip, index, onEdit, onFavorite, onDownload, onShare, userPl
                                 </TabsTrigger>
                             </TabsList>
 
-                            <TabsContent value="transcript" className="mt-0">
+                            <TabsContent value="transcript" className="mt-0 max-h-64 overflow-y-auto">
                                 <p className="text-sm text-muted-foreground leading-relaxed">
                                     {clip.transcript || "No transcript available."}
                                 </p>
                             </TabsContent>
 
-                            <TabsContent value="description" className="mt-0">
+                            <TabsContent value="description" className="mt-0 max-h-64 overflow-y-auto">
                                 <p className="text-sm text-muted-foreground leading-relaxed">
                                     {clip.viralityReason || "No auto-description available."}
                                 </p>
@@ -554,6 +554,7 @@ export default function VideoClipsPage({ params }: VideoClipsPageProps) {
         data: video,
         isLoading: videoLoading,
         error: videoError,
+        refetch: refetchVideo,
     } = useVideo(videoId);
 
     const {
@@ -562,6 +563,21 @@ export default function VideoClipsPage({ params }: VideoClipsPageProps) {
         error: clipsError,
         refetch: refetchClips,
     } = useClipsByVideo(videoId);
+
+    const isProcessing = !!video?.status && !["completed", "failed", "error"].includes(video.status);
+
+    // Adaptive polling for video status during processing
+    const { data: statusData } = useVideoStatus(videoId, isProcessing);
+
+    // When status polling detects a change, refetch video and clips
+    useEffect(() => {
+        if (!statusData?.video) return;
+        const polledStatus = statusData.video.status;
+        if (polledStatus !== video?.status) {
+            refetchVideo();
+            refetchClips();
+        }
+    }, [statusData, video?.status, refetchVideo, refetchClips]);
 
     const {
         data: workspace,
