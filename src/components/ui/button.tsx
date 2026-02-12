@@ -60,7 +60,7 @@ function Button({
     >
       <span
         className={cn(
-          "inline-flex items-center gap-1.5",
+          "inline-flex items-center justify-center w-full gap-1.5",
           loading && "opacity-0"
         )}
       >

@@ -4,3 +4,4 @@ export { TimeframeSelector } from "./timeframe-selector";
 export { CaptionTemplateGrid } from "./caption-template-grid";
 export { AspectRatioSelector } from "./aspect-ratio-selector";
 export { VideoConfigForm } from "./video-config-form";
+export { ClipTypeSelector } from "./clip-type-selector";
