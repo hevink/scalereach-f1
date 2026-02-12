@@ -64,10 +64,10 @@ export const minutesApi = {
   },
 
   // Validate upload before starting
-  validateUpload: async (workspaceId: string, duration: number, size: number) => {
+  validateUpload: async (workspaceId: string, duration: number, size: number, effectiveDuration?: number) => {
     const response = await api.post<UploadValidation>(
       `/api/minutes/workspaces/${workspaceId}/validate-upload`,
-      { duration, size }
+      { duration, size, effectiveDuration }
     );
     return response.data;
   },

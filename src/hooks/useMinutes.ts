@@ -25,7 +25,7 @@ export function useMinuteTransactions(workspaceId: string | undefined, params?: 
 
 export function useValidateUpload() {
   return useMutation({
-    mutationFn: ({ workspaceId, duration, size }: { workspaceId: string; duration: number; size: number }) =>
-      minutesApi.validateUpload(workspaceId, duration, size),
+    mutationFn: ({ workspaceId, duration, size, effectiveDuration }: { workspaceId: string; duration: number; size: number; effectiveDuration?: number }) =>
+      minutesApi.validateUpload(workspaceId, duration, size, effectiveDuration),
   });
 }
