@@ -1,9 +1,11 @@
 "use client";
 
-import { use, useEffect } from "react";
+import { useEffect } from "react";
 import { useRouter, usePathname } from "next/navigation";
+import { useTheme } from "next-themes";
 import { useSession } from "@/lib/auth-client";
 import { useWorkspaceBySlug } from "@/hooks/useWorkspace";
+import { useKeyboardShortcuts } from "@/hooks/useKeyboardShortcuts";
 import {
     SidebarInset,
     SidebarProvider,
@@ -28,6 +30,14 @@ export function WorkspaceLayoutContent({
     const pathname = usePathname();
     const { data: session, isPending: sessionPending } = useSession();
     const { data: workspace, isLoading: workspaceLoading, error } = useWorkspaceBySlug(slug);
+    const { theme, setTheme } = useTheme();
+
+    useKeyboardShortcuts([
+        {
+            key: "d",
+            handler: () => setTheme(theme === "dark" ? "light" : "dark"),
+        },
+    ]);
 
     useEffect(() => {
         if (sessionPending || workspaceLoading) return;
