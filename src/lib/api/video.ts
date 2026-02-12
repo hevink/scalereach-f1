@@ -46,6 +46,7 @@ export interface ViralClip {
   viralityReason: string;
   hooks: string[];
   emotions: string[];
+  clipType?: string;
   status: "pending" | "processing" | "completed" | "failed";
   createdAt: string;
 }
@@ -78,6 +79,7 @@ export interface SubmitVideoWithConfigRequest {
     // Language Settings
     language?: string | null; // null or 'auto' = auto-detect
     enableAutoHook?: boolean;
+    clipType?: string;
     customPrompt?: string;
     topicKeywords?: string[];
     captionTemplateId?: string;

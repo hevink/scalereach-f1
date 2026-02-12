@@ -31,6 +31,7 @@ export interface VideoConfigInput {
   // Language Settings
   language?: SupportedLanguageCode | null; // null or 'auto' = auto-detect
   enableAutoHook?: boolean;
+  clipType?: string;
   customPrompt?: string;
   topicKeywords?: string[];
   captionTemplateId?: string;
@@ -139,6 +140,7 @@ export const DEFAULT_VIDEO_CONFIG: VideoConfigInput = {
   timeframeEnd: null,
   language: "auto", // Auto-detect by default
   enableAutoHook: true,
+  clipType: "viral-clips",
   customPrompt: "",
   topicKeywords: [],
   captionTemplateId: "classic",

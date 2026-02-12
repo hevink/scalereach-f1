@@ -36,6 +36,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import type { VideoInfo } from "@/lib/api/video";
 import { AspectRatioSelector } from "@/components/configure/aspect-ratio-selector";
 import { TimeframeSelector } from "@/components/configure/timeframe-selector";
+import { ClipTypeSelector } from "@/components/configure/clip-type-selector";
 import { YouTubeIcon } from "@/components/icons/youtube-icon";
 import { InsufficientMinutesModal } from "@/components/upload/insufficient-minutes-modal";
 import {
@@ -92,6 +93,8 @@ export default function ConfigurePage() {
     const [config, setConfig] = useState<VideoConfigInput>(DEFAULT_VIDEO_CONFIG);
     const initialConfigRef = useRef<VideoConfigInput>(DEFAULT_VIDEO_CONFIG);
     const [translateTo, setTranslateTo] = useState<string[]>([]);
+    const [clipType, setClipType] = useState("viral-clips");
+    const [clipTypeCustomPrompt, setClipTypeCustomPrompt] = useState("");
 
     const [showInsufficientMinutes, setShowInsufficientMinutes] = useState(false);
     const [insufficientMinutesDetails, setInsufficientMinutesDetails] = useState<{
@@ -150,6 +153,8 @@ export default function ConfigurePage() {
                 timeframeStart: config.timeframeStart ?? 0,
                 timeframeEnd: config.timeframeEnd ?? null,
                 language: config.language,
+                clipType,
+                customPrompt: clipTypeCustomPrompt || undefined,
                 captionTemplateId: config.captionTemplateId,
                 aspectRatio: config.aspectRatio,
                 enableCaptions: config.enableCaptions,
@@ -201,6 +206,8 @@ export default function ConfigurePage() {
                 timeframeStart: config.timeframeStart ?? 0,
                 timeframeEnd: config.timeframeEnd ?? null,
                 language: config.language,
+                clipType,
+                customPrompt: clipTypeCustomPrompt || undefined,
                 captionTemplateId: config.captionTemplateId,
                 aspectRatio: config.aspectRatio,
                 enableCaptions: config.enableCaptions,
@@ -454,6 +461,21 @@ export default function ConfigurePage() {
                                     transition={{ duration: 0.25, ease: "easeOut" }}
                                     className="space-y-5"
                                 >
+                                    {/* Clip Type */}
+                                    <div className="rounded-xl border bg-card p-4 space-y-3">
+                                        <div>
+                                            <h3 className="font-semibold text-sm">Clip Type</h3>
+                                            <p className="text-muted-foreground text-xs">Choose what kind of clips to generate</p>
+                                        </div>
+                                        <ClipTypeSelector
+                                            value={clipType}
+                                            customPrompt={clipTypeCustomPrompt}
+                                            onChange={setClipType}
+                                            onCustomPromptChange={setClipTypeCustomPrompt}
+                                            disabled={isSubmitting}
+                                        />
+                                    </div>
+
                                     {/* Caption Style */}
                                     <div className="rounded-xl border bg-card p-4 space-y-3">
                                         <div>
