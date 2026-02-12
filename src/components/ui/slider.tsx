@@ -41,11 +41,11 @@ function Slider({
         )}
       >
         <SliderPrimitive.Track
-          className="relative select-none overflow-hidden rounded-full bg-muted data-horizontal:h-1.5 data-vertical:h-full data-horizontal:w-full data-vertical:w-1.5"
+          className="relative h-2 w-full select-none overflow-hidden rounded-full bg-muted"
           data-slot="slider-track"
         >
           <SliderPrimitive.Indicator
-            className="select-none bg-primary data-horizontal:h-full data-vertical:w-full"
+            className="absolute h-full rounded-full bg-primary"
             data-slot="slider-range"
           />
         </SliderPrimitive.Track>

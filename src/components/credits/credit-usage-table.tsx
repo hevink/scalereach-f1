@@ -52,6 +52,12 @@ import {
     IconRotate,
 } from "@tabler/icons-react";
 import { format } from "date-fns";
+import {
+    Tooltip,
+    TooltipContent,
+    TooltipProvider,
+    TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
 import type { MinuteTransaction } from "@/lib/api/minutes";
 
@@ -192,11 +198,56 @@ export function CreditUsageTable({ workspaceSlug }: CreditUsageTableProps) {
                 header: "Description",
                 cell: ({ row }) => {
                     const description = row.getValue("description") as string | null;
-                    return (
-                        <div className="max-w-md">
-                            <span className="text-sm text-foreground/90">
-                                {description || "—"}
+                    const type = row.getValue("type") as string;
+                    const videoId = row.original.videoId;
+                    const config = getTypeConfig(type);
+                    const TypeIcon = config.icon;
+
+                    if (!description) {
+                        return (
+                            <span className="text-sm text-muted-foreground italic">
+                                No description
                             </span>
+                        );
+                    }
+
+                    const isLong = description.length > 60;
+
+                    return (
+                        <div className="max-w-xs">
+                            <div className="flex items-start gap-2">
+                                <div className={cn(
+                                    "flex items-center justify-center w-6 h-6 rounded-md shrink-0 mt-0.5",
+                                    config.color
+                                )}>
+                                    <TypeIcon className="h-3 w-3" />
+                                </div>
+                                <div className="min-w-0">
+                                    {isLong ? (
+                                        <TooltipProvider delayDuration={300}>
+                                            <Tooltip>
+                                                <TooltipTrigger asChild>
+                                                    <p className="text-sm text-foreground/90 leading-snug truncate cursor-default">
+                                                        {description}
+                                                    </p>
+                                                </TooltipTrigger>
+                                                <TooltipContent side="bottom" className="max-w-sm">
+                                                    <p className="text-sm">{description}</p>
+                                                </TooltipContent>
+                                            </Tooltip>
+                                        </TooltipProvider>
+                                    ) : (
+                                        <p className="text-sm text-foreground/90 leading-snug">
+                                            {description}
+                                        </p>
+                                    )}
+                                    {videoId && (
+                                        <p className="text-xs text-muted-foreground mt-0.5 font-mono truncate">
+                                            {videoId}
+                                        </p>
+                                    )}
+                                </div>
+                            </div>
                         </div>
                     );
                 },
