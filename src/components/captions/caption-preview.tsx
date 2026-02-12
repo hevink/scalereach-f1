@@ -173,9 +173,6 @@ function CaptionOverlay({ caption, style, currentTime, scaleFactor }: CaptionOve
                     if (isCurrentWord && style.highlightEnabled) {
                         wordStyle.color = style.highlightColor || "#FFD700";
                         wordStyle.transform = `scale(${highlightScale})`;
-                        wordStyle.filter = style.glowEnabled
-                            ? `drop-shadow(0 0 ${style.glowIntensity ?? 2}px ${style.glowColor || style.highlightColor || "#FFD700"})`
-                            : undefined;
                     }
                     // Hide future words in word-by-word mode
                     if (!isPastWord && !isCurrentWord) {
@@ -187,9 +184,6 @@ function CaptionOverlay({ caption, style, currentTime, scaleFactor }: CaptionOve
                     if (isCurrentWord) {
                         wordStyle.color = style.highlightColor || "#FFD700";
                         wordStyle.transform = `scale(${highlightScale})`;
-                        wordStyle.filter = style.glowEnabled
-                            ? `drop-shadow(0 0 ${style.glowIntensity ?? 2}px ${style.glowColor || style.highlightColor || "#FFD700"})`
-                            : undefined;
                     }
                     break;
                 case "bounce":

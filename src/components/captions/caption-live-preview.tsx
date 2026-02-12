@@ -158,9 +158,6 @@ export function CaptionLivePreview({
                   ? `${Math.max(1, outlineWidth * 0.5)}px ${style.outlineColor || "#000000"}`
                   : undefined,
                 paintOrder: "stroke fill",
-                filter: isCurrent && style.glowEnabled
-                  ? `drop-shadow(0 0 ${style.glowIntensity ?? 2}px ${style.glowColor || style.highlightColor || "#FFD700"})`
-                  : undefined,
                 textTransform: style.textTransform === "uppercase" ? "uppercase" : "none",
               }}
             >

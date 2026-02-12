@@ -268,9 +268,6 @@ export function VideoPreviewWithCaptions({
                       : undefined,
                     paintOrder: "stroke fill",
                     textShadow,
-                    filter: isCurrent && style.glowEnabled
-                      ? `drop-shadow(0 0 ${style.glowIntensity ?? 2}px ${style.glowColor || style.highlightColor || "#FFD700"})`
-                      : undefined,
                     textTransform: style.textTransform === "uppercase" ? "uppercase" : "none",
                   }}
                 >

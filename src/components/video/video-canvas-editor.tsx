@@ -734,27 +734,11 @@ export const VideoCanvasEditor = forwardRef<VideoCanvasEditorRef, VideoCanvasEdi
             const textColor = captionStyle?.textColor || "#FFFFFF";
             const outlineColor = captionStyle?.outlineColor || "#000000";
             const scaledOutlineWidth = Math.max(2, Math.round(containerScale * (captionStyle?.outlineWidth ?? 3)));
-            const glowEnabled = captionStyle?.glowEnabled ?? false;
-            const glowColor = captionStyle?.glowColor || highlightColor;
-            const glowIntensity = captionStyle?.glowIntensity ?? 2;
             const highlightScale = captionStyle?.highlightScale ?? 110;
 
             // Render each word with highlighting for the current word
             return currentCaption.words.map((word, index) => {
                 const isHighlighted = index === currentWordIndex;
-
-                // Glow effect for highlighted word
-                // Always show a default glow using highlightColor; when glowEnabled, use glowColor + glowIntensity
-                let glowShadow = "none";
-                if (isHighlighted) {
-                    if (glowEnabled) {
-                        const blur1 = Math.round(glowIntensity * 5 * containerScale);
-                        const blur2 = Math.round(glowIntensity * 10 * containerScale);
-                        glowShadow = `0 0 ${blur1}px ${glowColor}, 0 0 ${blur2}px ${glowColor}40`;
-                    } else {
-                        glowShadow = `0 0 ${10 * containerScale}px ${highlightColor}, 0 0 ${20 * containerScale}px ${highlightColor}40`;
-                    }
-                }
 
                 return (
                     <span
@@ -765,7 +749,6 @@ export const VideoCanvasEditor = forwardRef<VideoCanvasEditorRef, VideoCanvasEdi
                             display: "inline-block",
                             transition: "transform 0.1s ease-out, color 0.1s ease-out",
                             marginRight: `${4 * containerScale}px`,
-                            textShadow: glowShadow,
                             WebkitTextStroke: `${scaledOutlineWidth}px ${outlineColor}`,
                             paintOrder: "stroke fill",
                         }}

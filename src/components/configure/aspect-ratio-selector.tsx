@@ -39,10 +39,9 @@ export function AspectRatioSelector({
     const selected = ASPECT_RATIOS.find((r) => r.value === value);
 
     return (
-        <div className="space-y-2">
-            <Label id="aspect-ratio-label">Aspect Ratio</Label>
+        <div>
             <Select value={value} onValueChange={(val) => val && onChange(val)} disabled={disabled}>
-                <SelectTrigger aria-labelledby="aspect-ratio-label">
+                <SelectTrigger aria-label="Aspect Ratio" className="w-full">
                     <SelectValue>
                         {selected && (
                             <div className="flex items-center gap-2">

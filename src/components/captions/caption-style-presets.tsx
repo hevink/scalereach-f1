@@ -227,7 +227,7 @@ export const DEFAULT_PRESETS: CaptionStylePreset[] = [
             outline: true,
             outlineColor: "#000000",
         },
-        tags: ["neon", "glow", "vibrant"],
+        tags: ["neon", "vibrant"],
     },
     {
         id: "clean-creator",
@@ -274,7 +274,7 @@ export const DEFAULT_PRESETS: CaptionStylePreset[] = [
     {
         id: "gold-luxe",
         name: "Gold Luxe",
-        description: "Luxurious gold glow with thick outline - premium creator aesthetic",
+        description: "Luxurious gold with thick outline - premium creator aesthetic",
         style: {
             fontFamily: "Righteous",
             fontSize: 42,
@@ -290,9 +290,6 @@ export const DEFAULT_PRESETS: CaptionStylePreset[] = [
             outline: true,
             outlineColor: "#8B6914",
             outlineWidth: 5,
-            glowEnabled: true,
-            glowColor: "#FFD700",
-            glowIntensity: 3,
             highlightScale: 125,
             textTransform: "uppercase",
             wordsPerLine: 3,
@@ -327,7 +324,7 @@ export const DEFAULT_PRESETS: CaptionStylePreset[] = [
     {
         id: "electric-blue",
         name: "Electric Blue",
-        description: "High-voltage cyan glow with deep blue outline - gaming & tech aesthetic",
+        description: "High-voltage cyan with deep blue outline - gaming & tech aesthetic",
         style: {
             fontFamily: "Russo One",
             fontSize: 46,
@@ -343,9 +340,6 @@ export const DEFAULT_PRESETS: CaptionStylePreset[] = [
             outline: true,
             outlineColor: "#001133",
             outlineWidth: 5,
-            glowEnabled: true,
-            glowColor: "#0066FF",
-            glowIntensity: 4,
             highlightScale: 130,
             textTransform: "uppercase",
             wordsPerLine: 3,
@@ -371,9 +365,6 @@ export const DEFAULT_PRESETS: CaptionStylePreset[] = [
             outline: true,
             outlineColor: "#8B0000",
             outlineWidth: 5,
-            glowEnabled: true,
-            glowColor: "#FF6B35",
-            glowIntensity: 3,
             highlightScale: 125,
             textTransform: "uppercase",
             wordsPerLine: 3,
@@ -399,9 +390,6 @@ export const DEFAULT_PRESETS: CaptionStylePreset[] = [
             outline: true,
             outlineColor: "#2C5F7C",
             outlineWidth: 4,
-            glowEnabled: true,
-            glowColor: "#00FFFF",
-            glowIntensity: 3,
             highlightScale: 120,
             textTransform: "uppercase",
             wordsPerLine: 3,
@@ -411,7 +399,7 @@ export const DEFAULT_PRESETS: CaptionStylePreset[] = [
     {
         id: "coral-pop",
         name: "Coral Pop",
-        description: "Vibrant pink glow with bouncy animation - fun & feminine aesthetic",
+        description: "Vibrant pink with bouncy animation - fun & feminine aesthetic",
         style: {
             fontFamily: "Poppins",
             fontSize: 38,
@@ -427,9 +415,6 @@ export const DEFAULT_PRESETS: CaptionStylePreset[] = [
             outline: true,
             outlineColor: "#C71585",
             outlineWidth: 4,
-            glowEnabled: true,
-            glowColor: "#FF69B4",
-            glowIntensity: 3,
             highlightScale: 120,
             textTransform: "none",
             wordsPerLine: 3,
@@ -439,7 +424,7 @@ export const DEFAULT_PRESETS: CaptionStylePreset[] = [
     {
         id: "midnight-purple",
         name: "Midnight Purple",
-        description: "Deep purple glow with lavender text - mysterious & stylish karaoke",
+        description: "Deep purple with lavender text - mysterious & stylish karaoke",
         style: {
             fontFamily: "Oswald",
             fontSize: 44,
@@ -455,9 +440,6 @@ export const DEFAULT_PRESETS: CaptionStylePreset[] = [
             outline: true,
             outlineColor: "#2D0A4E",
             outlineWidth: 5,
-            glowEnabled: true,
-            glowColor: "#8B00FF",
-            glowIntensity: 3,
             highlightScale: 125,
             textTransform: "uppercase",
             wordsPerLine: 3,
@@ -467,7 +449,7 @@ export const DEFAULT_PRESETS: CaptionStylePreset[] = [
     {
         id: "toxic-green",
         name: "Toxic Green",
-        description: "Radioactive neon green glow with dark outline - bold & attention-grabbing",
+        description: "Radioactive neon green with dark outline - bold & attention-grabbing",
         style: {
             fontFamily: "Anton",
             fontSize: 48,
@@ -483,9 +465,6 @@ export const DEFAULT_PRESETS: CaptionStylePreset[] = [
             outline: true,
             outlineColor: "#003300",
             outlineWidth: 5,
-            glowEnabled: true,
-            glowColor: "#00FF41",
-            glowIntensity: 4,
             highlightScale: 130,
             textTransform: "uppercase",
             wordsPerLine: 3,
