@@ -9,7 +9,7 @@ export default async function CreditsPage({
     const { "workspace-slug": slug } = await params;
 
     return (
-        <div className="flex flex-col gap-6 p-6">
+        <div className="flex flex-col gap-6 p-6 max-w-5xl mx-auto w-full">
             <div>
                 <h1 className="text-2xl font-semibold tracking-tight">Minute Usage</h1>
                 <p className="text-sm text-muted-foreground mt-1">

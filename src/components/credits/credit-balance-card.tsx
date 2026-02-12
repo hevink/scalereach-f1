@@ -57,10 +57,10 @@ export function CreditBalanceCard({ workspaceSlug }: CreditBalanceCardProps) {
     }
 
     return (
-        <Card className="border-border/50 shadow-sm overflow-hidden">
+        <Card className="border-border/50 shadow-sm overflow-hidden relative">
             <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-transparent pointer-events-none" />
 
-            <CardHeader className="relative border-b border-border/50 bg-muted/20">
+            <CardHeader className="relative border-b border-border/50 bg-muted/20 pb-4">
                 <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3">
                         <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-gradient-to-br from-primary to-primary/80 shadow-lg shadow-primary/20">
@@ -91,92 +91,26 @@ export function CreditBalanceCard({ workspaceSlug }: CreditBalanceCardProps) {
                     {/* Main Balance Display */}
                     <div className="flex items-baseline gap-2">
                         <div className={cn(
-                            "text-5xl font-bold bg-gradient-to-br bg-clip-text text-transparent",
+                            "text-4xl font-bold bg-gradient-to-br bg-clip-text text-transparent",
                             isLow
                                 ? "from-rose-600 to-rose-400"
                                 : "from-foreground to-foreground/70"
                         )}>
                             {(balance?.minutesRemaining || 0).toLocaleString()}
                         </div>
-                        <div className="text-muted-foreground font-medium">
+                        <div className="text-sm text-muted-foreground font-medium">
                             / {(balance?.minutesTotal || 0).toLocaleString()} min
-                        </div>
-                    </div>
-
-                    {/* Stats Grid */}
-                    <div className="grid grid-cols-3 gap-3">
-                        {/* Total Minutes */}
-                        <div className="relative group">
-                            <div className={cn(
-                                "p-4 rounded-xl border border-border/50 bg-gradient-to-br transition-all duration-200",
-                                "from-emerald-500/5 to-emerald-500/0",
-                                "hover:from-emerald-500/10 hover:to-emerald-500/5 hover:border-emerald-500/20"
-                            )}>
-                                <div className="flex items-center gap-2 mb-2">
-                                    <div className="flex items-center justify-center w-7 h-7 rounded-lg bg-emerald-500/10">
-                                        <IconTrendingUp className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
-                                    </div>
-                                </div>
-                                <div className="text-2xl font-bold text-emerald-700 dark:text-emerald-400 mb-1">
-                                    {(balance?.minutesTotal || 0).toLocaleString()}
-                                </div>
-                                <div className="text-xs text-muted-foreground font-medium">
-                                    Total Minutes
-                                </div>
-                            </div>
-                        </div>
-
-                        {/* Used Minutes */}
-                        <div className="relative group">
-                            <div className={cn(
-                                "p-4 rounded-xl border border-border/50 bg-gradient-to-br transition-all duration-200",
-                                "from-rose-500/5 to-rose-500/0",
-                                "hover:from-rose-500/10 hover:to-rose-500/5 hover:border-rose-500/20"
-                            )}>
-                                <div className="flex items-center gap-2 mb-2">
-                                    <div className="flex items-center justify-center w-7 h-7 rounded-lg bg-rose-500/10">
-                                        <IconSparkles className="h-4 w-4 text-rose-600 dark:text-rose-400" />
-                                    </div>
-                                </div>
-                                <div className="text-2xl font-bold text-rose-700 dark:text-rose-400 mb-1">
-                                    {(balance?.minutesUsed || 0).toLocaleString()}
-                                </div>
-                                <div className="text-xs text-muted-foreground font-medium">
-                                    Minutes Used
-                                </div>
-                            </div>
-                        </div>
-
-                        {/* Usage Percentage */}
-                        <div className="relative group">
-                            <div className={cn(
-                                "p-4 rounded-xl border border-border/50 bg-gradient-to-br transition-all duration-200",
-                                "from-primary/5 to-primary/0",
-                                "hover:from-primary/10 hover:to-primary/5 hover:border-primary/20"
-                            )}>
-                                <div className="flex items-center gap-2 mb-2">
-                                    <div className="flex items-center justify-center w-7 h-7 rounded-lg bg-primary/10">
-                                        <IconClock className="h-4 w-4 text-primary" />
-                                    </div>
-                                </div>
-                                <div className="text-2xl font-bold text-primary mb-1">
-                                    {usagePercentage}%
-                                </div>
-                                <div className="text-xs text-muted-foreground font-medium">
-                                    Usage Rate
-                                </div>
-                            </div>
                         </div>
                     </div>
 
                     {/* Progress Bar */}
                     {balance?.minutesTotal && balance.minutesTotal > 0 && (
-                        <div className="space-y-2">
+                        <div className="space-y-1.5">
                             <div className="flex items-center justify-between text-xs text-muted-foreground">
-                                <span>Minute Usage</span>
-                                <span className="font-medium">{usagePercentage}%</span>
+                                <span>Usage</span>
+                                <span className="font-medium">{usagePercentage}% used</span>
                             </div>
-                            <div className="h-2 bg-muted rounded-full overflow-hidden">
+                            <div className="h-2.5 bg-muted rounded-full overflow-hidden">
                                 <div
                                     className={cn(
                                         "h-full rounded-full transition-all duration-500 ease-out",
@@ -191,6 +125,39 @@ export function CreditBalanceCard({ workspaceSlug }: CreditBalanceCardProps) {
                             </div>
                         </div>
                     )}
+
+                    {/* Stats Grid */}
+                    <div className="grid grid-cols-3 gap-3">
+                        <div className="p-3 rounded-lg border border-border/50 bg-emerald-500/5">
+                            <div className="flex items-center gap-2 mb-1">
+                                <IconTrendingUp className="h-3.5 w-3.5 text-emerald-600 dark:text-emerald-400" />
+                                <span className="text-xs text-muted-foreground font-medium">Total</span>
+                            </div>
+                            <div className="text-lg font-bold text-emerald-700 dark:text-emerald-400">
+                                {(balance?.minutesTotal || 0).toLocaleString()} min
+                            </div>
+                        </div>
+
+                        <div className="p-3 rounded-lg border border-border/50 bg-rose-500/5">
+                            <div className="flex items-center gap-2 mb-1">
+                                <IconSparkles className="h-3.5 w-3.5 text-rose-600 dark:text-rose-400" />
+                                <span className="text-xs text-muted-foreground font-medium">Used</span>
+                            </div>
+                            <div className="text-lg font-bold text-rose-700 dark:text-rose-400">
+                                {(balance?.minutesUsed || 0).toLocaleString()} min
+                            </div>
+                        </div>
+
+                        <div className="p-3 rounded-lg border border-border/50 bg-primary/5">
+                            <div className="flex items-center gap-2 mb-1">
+                                <IconClock className="h-3.5 w-3.5 text-primary" />
+                                <span className="text-xs text-muted-foreground font-medium">Rate</span>
+                            </div>
+                            <div className="text-lg font-bold text-primary">
+                                {usagePercentage}%
+                            </div>
+                        </div>
+                    </div>
 
                     {/* Low minutes warning */}
                     {isLow && (
