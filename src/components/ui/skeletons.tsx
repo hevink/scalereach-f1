@@ -569,6 +569,114 @@ export function SkeletonCaptionStyle({ className }: SkeletonCaptionStyleProps) {
 }
 
 /**
+ * SkeletonVideoListItem - Skeleton for video list items in workspace dashboard
+ * 
+ * Matches the layout of video cards in the workspace page list view.
+ * Includes thumbnail, title, source, type, ratio, and actions.
+ * 
+ * @validates Requirements 29.1, 29.2, 29.4
+ * 
+ * @example
+ * // Single video list item skeleton
+ * <SkeletonVideoListItem />
+ */
+export interface SkeletonVideoListItemProps {
+    /** Additional className */
+    className?: string;
+}
+
+export function SkeletonVideoListItem({ className }: SkeletonVideoListItemProps) {
+    return (
+        <div
+            className={cn("grid grid-cols-[80px_1fr_140px_140px_100px_100px] gap-6 px-6 py-4", className)}
+            role="status"
+            aria-label="Loading video"
+        >
+            {/* Thumbnail */}
+            <div className="relative aspect-video w-20 overflow-hidden rounded">
+                <Skeleton className="absolute inset-0" />
+            </div>
+
+            {/* Description */}
+            <div className="flex flex-col justify-center gap-2 min-w-0">
+                <Skeleton className="h-4 w-3/4 rounded" />
+                <Skeleton className="h-3 w-1/2 rounded" />
+            </div>
+
+            {/* Source */}
+            <div className="hidden sm:flex items-center justify-center">
+                <Skeleton className="h-6 w-20 rounded-full" />
+            </div>
+
+            {/* Video type */}
+            <div className="hidden md:flex items-center justify-center">
+                <Skeleton className="h-6 w-24 rounded-full" />
+            </div>
+
+            {/* Ratio */}
+            <div className="hidden lg:flex items-center justify-center">
+                <Skeleton className="h-6 w-12 rounded" />
+            </div>
+
+            {/* Actions */}
+            <div className="flex items-center justify-end">
+                <Skeleton className="size-8 rounded" />
+            </div>
+        </div>
+    );
+}
+
+/**
+ * SkeletonVideoList - Skeleton for video list in workspace dashboard
+ * 
+ * Renders multiple SkeletonVideoListItem components in a list/table layout.
+ * Matches the workspace page video list layout with column headers.
+ * 
+ * @validates Requirements 29.1, 29.2, 29.4
+ * 
+ * @example
+ * // Default list with 10 items
+ * <SkeletonVideoList />
+ * 
+ * @example
+ * // Custom count
+ * <SkeletonVideoList count={6} />
+ */
+export interface SkeletonVideoListProps {
+    /** Number of skeleton items to render */
+    count?: number;
+    /** Additional className */
+    className?: string;
+}
+
+export function SkeletonVideoList({ count = 10, className }: SkeletonVideoListProps) {
+    return (
+        <div
+            className={cn("rounded-lg border overflow-hidden", className)}
+            role="status"
+            aria-label="Loading videos"
+        >
+            {/* Column Headers */}
+            <div className="grid grid-cols-[80px_1fr_140px_140px_100px_100px] gap-6 px-6 py-3 text-xs font-semibold text-muted-foreground uppercase tracking-wider bg-muted/20 border-b">
+                <div>Thumbnail</div>
+                <div>Description</div>
+                <div className="hidden sm:block text-center">Source</div>
+                <div className="hidden md:block text-center">Video type</div>
+                <div className="hidden lg:block text-center">Ratio</div>
+                <div className="text-right">Actions</div>
+            </div>
+
+            {/* Video Rows */}
+            <div className="divide-y">
+                {Array.from({ length: count }).map((_, index) => (
+                    <SkeletonVideoListItem key={`video-skeleton-${index}`} />
+                ))}
+            </div>
+        </div>
+    );
+}
+
+/**
  * SkeletonVideoGridItem - Skeleton for video grid items in workspace dashboard
  * 
  * Matches the layout of video cards in the workspace page grid view.
@@ -627,13 +735,13 @@ export function SkeletonVideoGridItem({ className }: SkeletonVideoGridItemProps)
 /**
  * SkeletonVideoGrid - Skeleton for video grid in workspace dashboard
  * 
- * Renders multiple SkeletonVideoGridItem components in a responsive grid layout.
- * Matches the workspace page video grid layout.
+ * Renders multiple SkeletonVideoListItem components in a list/table layout.
+ * Matches the workspace page video list layout.
  * 
  * @validates Requirements 29.1, 29.2, 29.4
  * 
  * @example
- * // Default grid with 10 items
+ * // Default list with 10 items
  * <SkeletonVideoGrid />
  * 
  * @example
@@ -648,20 +756,7 @@ export interface SkeletonVideoGridProps {
 }
 
 export function SkeletonVideoGrid({ count = 10, className }: SkeletonVideoGridProps) {
-    return (
-        <div
-            className={cn(
-                "grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5",
-                className
-            )}
-            role="status"
-            aria-label="Loading videos"
-        >
-            {Array.from({ length: count }).map((_, index) => (
-                <SkeletonVideoGridItem key={`video-skeleton-${index}`} />
-            ))}
-        </div>
-    );
+    return <SkeletonVideoList count={count} className={className} />;
 }
 
 // Re-export the base Skeleton for convenience
