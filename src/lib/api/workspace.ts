@@ -7,7 +7,7 @@ export interface Workspace {
   slug: string;
   description: string | null;
   logo?: string | null;
-  plan?: "free" | "pro" | "agency";
+  plan?: "free" | "starter" | "pro" | "pro-plus" | "agency";
   billingCycle?: "monthly" | "annual" | null;
   ownerId?: string;
   role: "owner" | "admin" | "member";

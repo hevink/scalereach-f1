@@ -138,11 +138,13 @@ function ConfirmDialog({
   );
 }
 
-function InviteMemberDialog({ workspaceId }: { workspaceId: string }) {
+function InviteMemberDialog({ workspaceId, workspacePlan }: { workspaceId: string; workspacePlan: string }) {
   const [open, setOpen] = useState(false);
   const [email, setEmail] = useState("");
   const [role, setRole] = useState("member");
   const createInvitation = useCreateInvitation();
+
+  const isAllowedPlan = workspacePlan === "starter" || workspacePlan === "pro" || workspacePlan === "pro-plus";
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -157,7 +159,10 @@ function InviteMemberDialog({ workspaceId }: { workspaceId: string }) {
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger render={<Button size="sm" />}>
+      <DialogTrigger
+        render={<Button size="sm" disabled={!isAllowedPlan} />}
+        title={!isAllowedPlan ? "Upgrade to Starter or Pro plan to invite members" : undefined}
+      >
         <IconUserPlus className="size-4 mr-2" />
         Invite Member
       </DialogTrigger>
@@ -582,8 +587,31 @@ export default function MembersPage({ params }: { params: Promise<{ "workspace-s
             Manage who has access to this workspace.
           </p>
         </div>
-        {canManageMembers && <InviteMemberDialog workspaceId={workspace.id} />}
+        {canManageMembers && <InviteMemberDialog workspaceId={workspace.id} workspacePlan={workspace.plan} />}
       </div>
+
+      {canManageMembers && workspace.plan === "free" && (
+        <Card className="bg-muted/50 border-primary/20">
+          <CardContent className="pt-6">
+            <div className="flex items-start gap-3">
+              <div className="flex size-10 shrink-0 items-center justify-center rounded-full bg-primary/10">
+                <IconUserPlus className="size-5 text-primary" />
+              </div>
+              <div className="flex-1">
+                <h3 className="font-medium mb-1">Invite team members</h3>
+                <p className="text-sm text-muted-foreground mb-3">
+                  Upgrade to Starter or Pro plan to collaborate with your team. Invite members, assign roles, and work together on your videos.
+                </p>
+                <Button size="sm" asChild>
+                  <a href={`/${slug}/pricing`}>
+                    Upgrade Plan
+                  </a>
+                </Button>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       <Card className="bg-transparent">
         <CardHeader>

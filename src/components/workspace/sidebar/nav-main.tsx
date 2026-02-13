@@ -84,7 +84,7 @@ export function NavMain({ currentSlug, workspaceId }: NavMainProps) {
       title: "Minute Usage",
       url: `/${currentSlug}/credits`,
       icon: IconClock,
-      iconFilled: IconClock,
+      matchPath: (p: string) => p.includes("/credits"),
     },
   ];
 
@@ -194,7 +194,7 @@ export function NavMain({ currentSlug, workspaceId }: NavMainProps) {
           <SidebarMenu>
             {toolsItems.map((item) => {
               const active = isActive(item);
-              const IconComponent = active ? item.iconFilled : item.icon;
+              const IconComponent = item.icon;
               return (
                 <SidebarMenuItem key={item.title}>
                   <SidebarMenuButton
@@ -202,13 +202,7 @@ export function NavMain({ currentSlug, workspaceId }: NavMainProps) {
                     onClick={() => router.push(item.url)}
                     tooltip={item.title}
                   >
-                    <IconComponent
-                      className={
-                        active
-                          ? "fill-current text-muted-foreground contrast-200"
-                          : ""
-                      }
-                    />
+                    <IconComponent />
                     <span className="font-[490] text-[13px]">{item.title}</span>
                   </SidebarMenuButton>
                 </SidebarMenuItem>

@@ -207,7 +207,7 @@ export function VideoCard({
                             </>
                         ) : (
                             <>
-                                <IconFile className="size-3.5" />
+                                <img src="/file-color-blue-icon.svg" alt="" className="size-3.5" />
                                 <span>Upload</span>
                             </>
                         )}
@@ -271,6 +271,7 @@ export function VideoCard({
                                         e.stopPropagation();
                                         window.open(video.sourceUrl!, "_blank");
                                     }}
+                                    className="cursor-pointer"
                                 >
                                     <IconExternalLink className="size-4 mr-2" />
                                     Open on YouTube
@@ -284,7 +285,7 @@ export function VideoCard({
                                             e.stopPropagation();
                                             setShowDeleteDialog(true);
                                         }}
-                                        className="text-destructive focus:text-destructive"
+                                        className="cursor-pointer"
                                     >
                                         <IconTrash className="size-4 mr-2" />
                                         Delete
