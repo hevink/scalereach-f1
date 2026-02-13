@@ -39,21 +39,6 @@ interface Plan {
 }
 
 const plans: Record<string, Plan> = {
-    starter: {
-        name: "Starter",
-        description: "Unlock access to all powerful features",
-        monthly: 12,
-        annually: 10,
-        features: [
-            "1800 Minutes/Year (or 200/Month)",
-            "Without Watermark",
-            "Up to 2h File Length",
-            "Up to 4GB File Size Upload",
-            "Storage Limit: 6 Months",
-            "Unlimited Editing",
-        ],
-        featured: false,
-    },
     pro: {
         name: "Pro",
         badge: "Super offer",
@@ -69,6 +54,21 @@ const plans: Record<string, Plan> = {
             "Unlimited Editing",
         ],
         featured: true,
+    },
+    starter: {
+        name: "Starter",
+        description: "Unlock access to all powerful features",
+        monthly: 12,
+        annually: 10,
+        features: [
+            "1800 Minutes/Year (or 200/Month)",
+            "Without Watermark",
+            "Up to 2h File Length",
+            "Up to 4GB File Size Upload",
+            "Storage Limit: 6 Months",
+            "Unlimited Editing",
+        ],
+        featured: false,
     },
 };
 
