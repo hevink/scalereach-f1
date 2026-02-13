@@ -42,7 +42,7 @@ const plans: Record<string, Plan> = {
         monthly: 18,
         annually: 12.5,
         features: [
-            "3600 Minutes/Year (or 300/Month)",
+            "500 Minutes/Month",
             "Without Watermark",
             "Up to 3h File Length",
             "Up to 4GB File Size Upload",
@@ -57,7 +57,7 @@ const plans: Record<string, Plan> = {
         monthly: 12,
         annually: 10,
         features: [
-            "1800 Minutes/Year (or 200/Month)",
+            "200 Minutes/Month",
             "Without Watermark",
             "Up to 2h File Length",
             "Up to 4GB File Size Upload",
@@ -163,19 +163,31 @@ function PricingCard({
             </motion.button>
 
             <ul role="list" className="space-y-3 text-sm">
-                {plan.features.map((feature, i) => (
-                    <motion.li
-                        key={feature}
-                        initial={{ opacity: 0, x: -10 }}
-                        whileInView={{ opacity: 1, x: 0 }}
-                        viewport={{ once: true }}
-                        transition={{ duration: 0.3, delay: i * 0.05 }}
-                        className="group flex items-center gap-2 first:font-medium"
-                    >
-                        <Check className="text-muted-foreground size-3 group-first:hidden" strokeWidth={3.5} />
-                        {feature}
-                    </motion.li>
-                ))}
+                {plan.features.map((feature, i) => {
+                    // Replace minutes text based on period for Pro and Starter plans
+                    let displayFeature = feature;
+                    if (period === "annually") {
+                        if (planKey === "pro" && feature === "500 Minutes/Month") {
+                            displayFeature = "6000 Minutes/Year";
+                        } else if (planKey === "starter" && feature === "200 Minutes/Month") {
+                            displayFeature = "1800 Minutes/Year";
+                        }
+                    }
+
+                    return (
+                        <motion.li
+                            key={feature}
+                            initial={{ opacity: 0, x: -10 }}
+                            whileInView={{ opacity: 1, x: 0 }}
+                            viewport={{ once: true }}
+                            transition={{ duration: 0.3, delay: i * 0.05 }}
+                            className="group flex items-center gap-2 first:font-medium"
+                        >
+                            <Check className="text-muted-foreground size-3 group-first:hidden" strokeWidth={3.5} />
+                            {displayFeature}
+                        </motion.li>
+                    );
+                })}
             </ul>
         </motion.div>
     );
