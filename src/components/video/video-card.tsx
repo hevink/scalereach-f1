@@ -12,6 +12,9 @@ import {
     DropdownMenuItem,
     DropdownMenuSeparator,
     DropdownMenuTrigger,
+    DropdownMenuSub,
+    DropdownMenuSubContent,
+    DropdownMenuSubTrigger,
 } from "@/components/ui/dropdown-menu";
 import {
     Dialog,
@@ -32,6 +35,7 @@ import {
     AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { cn } from "@/lib/utils";
+import { downloadVideoTranscript } from "@/lib/api/subtitle";
 import {
     IconFile,
     IconLoader2,
@@ -41,6 +45,8 @@ import {
     IconPencil,
     IconCopy,
     IconExternalLink,
+    IconDownload,
+    IconChevronRight,
 } from "@tabler/icons-react";
 
 interface VideoCardProps {
@@ -276,6 +282,52 @@ export function VideoCard({
                                     <IconExternalLink className="size-4 mr-2" />
                                     Open on YouTube
                                 </DropdownMenuItem>
+                            )}
+                            {video.status === "completed" && (
+                                <DropdownMenuSub>
+                                    <DropdownMenuSubTrigger className="cursor-pointer">
+                                        <IconDownload className="size-4 mr-2" />
+                                        Download Transcript
+                                    </DropdownMenuSubTrigger>
+                                    <DropdownMenuSubContent>
+                                        <DropdownMenuItem
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                downloadVideoTranscript(video.id, 'srt');
+                                            }}
+                                            className="cursor-pointer"
+                                        >
+                                            SRT Format
+                                        </DropdownMenuItem>
+                                        <DropdownMenuItem
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                downloadVideoTranscript(video.id, 'vtt');
+                                            }}
+                                            className="cursor-pointer"
+                                        >
+                                            VTT Format
+                                        </DropdownMenuItem>
+                                        <DropdownMenuItem
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                downloadVideoTranscript(video.id, 'txt');
+                                            }}
+                                            className="cursor-pointer"
+                                        >
+                                            Text Format
+                                        </DropdownMenuItem>
+                                        <DropdownMenuItem
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                downloadVideoTranscript(video.id, 'json');
+                                            }}
+                                            className="cursor-pointer"
+                                        >
+                                            JSON Format
+                                        </DropdownMenuItem>
+                                    </DropdownMenuSubContent>
+                                </DropdownMenuSub>
                             )}
                             {onDelete && (
                                 <>
