@@ -310,6 +310,7 @@ interface ExportDialogProps {
     onExportError: (error: string) => void;
     onReset: () => void;
     isExporting: boolean;
+    hasProAccess?: boolean;
 }
 
 function ExportDialog({
@@ -325,6 +326,7 @@ function ExportDialog({
     onExportError,
     onReset,
     isExporting,
+    hasProAccess,
 }: ExportDialogProps) {
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
@@ -358,6 +360,7 @@ function ExportDialog({
                             userCredits={userCredits}
                             disabled={isExporting}
                             captionStyleId={captionStyleId}
+                            hasProAccess={hasProAccess}
                         />
                     )}
                 </div>
@@ -1253,6 +1256,7 @@ export default function ClipEditorPage({ params }: ClipEditorPageProps) {
                 onExportError={handleExportError}
                 onReset={() => setActiveExportId(null)}
                 isExporting={initiateExport.isPending}
+                hasProAccess={workspace?.plan === "starter" || workspace?.plan === "pro"}
             />
 
             {/* Keyboard Shortcuts Modal */}
