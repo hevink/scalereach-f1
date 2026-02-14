@@ -90,6 +90,11 @@ export interface SubmitVideoWithConfigRequest {
     enableCaptions?: boolean;
     enableEmojis?: boolean;
     enableIntroTitle?: boolean;
+    // Split-Screen Options
+    enableSplitScreen?: boolean;
+    splitScreenBgVideoId?: string | null;
+    splitScreenBgCategoryId?: string | null;
+    splitRatio?: number;
   };
 }
 

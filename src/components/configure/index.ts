@@ -6,3 +6,4 @@ export { AspectRatioSelector } from "./aspect-ratio-selector";
 export { VideoConfigForm } from "./video-config-form";
 export { ClipTypeSelector } from "./clip-type-selector";
 export { ClipDurationSelector } from "./clip-duration-selector";
+export { SplitScreenSection } from "./split-screen-section";

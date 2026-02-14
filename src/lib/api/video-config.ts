@@ -41,6 +41,11 @@ export interface VideoConfigInput {
   enableCaptions?: boolean;
   enableEmojis?: boolean;
   enableIntroTitle?: boolean;
+  // Split-Screen Options
+  enableSplitScreen?: boolean;
+  splitScreenBgVideoId?: string | null;
+  splitScreenBgCategoryId?: string | null;
+  splitRatio?: number;
 }
 
 export interface VideoConfig extends VideoConfigInput {
@@ -150,4 +155,9 @@ export const DEFAULT_VIDEO_CONFIG: VideoConfigInput = {
   enableCaptions: true,
   enableEmojis: false,
   enableIntroTitle: false,
+  // Split-Screen Options
+  enableSplitScreen: false,
+  splitScreenBgVideoId: null,
+  splitScreenBgCategoryId: null,
+  splitRatio: 50,
 };

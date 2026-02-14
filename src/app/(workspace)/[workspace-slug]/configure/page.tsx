@@ -38,6 +38,7 @@ import { AspectRatioSelector } from "@/components/configure/aspect-ratio-selecto
 import { TimeframeSelector } from "@/components/configure/timeframe-selector";
 import { ClipTypeSelector } from "@/components/configure/clip-type-selector";
 import { ClipDurationSelector } from "@/components/configure/clip-duration-selector";
+import { SplitScreenSection } from "@/components/configure/split-screen-section";
 import { YouTubeIcon } from "@/components/icons/youtube-icon";
 import { InsufficientMinutesModal } from "@/components/upload/insufficient-minutes-modal";
 import {
@@ -161,6 +162,10 @@ export default function ConfigurePage() {
                 enableCaptions: config.enableCaptions,
                 enableEmojis: config.enableEmojis,
                 enableIntroTitle: config.enableIntroTitle,
+                enableSplitScreen: config.enableSplitScreen,
+                splitScreenBgVideoId: config.splitScreenBgVideoId,
+                splitScreenBgCategoryId: config.splitScreenBgCategoryId,
+                splitRatio: config.splitRatio,
             });
         },
         onSuccess: (result) => {
@@ -214,6 +219,10 @@ export default function ConfigurePage() {
                 enableCaptions: config.enableCaptions,
                 enableEmojis: config.enableEmojis,
                 enableIntroTitle: config.enableIntroTitle,
+                enableSplitScreen: config.enableSplitScreen,
+                splitScreenBgVideoId: config.splitScreenBgVideoId,
+                splitScreenBgCategoryId: config.splitScreenBgCategoryId,
+                splitRatio: config.splitRatio,
             });
         },
         onSuccess: (result) => {
@@ -581,7 +590,7 @@ export default function ConfigurePage() {
                                                 <AspectRatioSelector
                                                     value={config.aspectRatio ?? "9:16"}
                                                     onChange={(ratio) => updateConfig({ aspectRatio: ratio })}
-                                                    disabled={isSubmitting}
+                                                    disabled={isSubmitting || (config.enableSplitScreen ?? false)}
                                                 />
                                             </div>
                                         </div>
@@ -636,6 +645,14 @@ export default function ConfigurePage() {
                                                 checked={config.enableCaptions ?? true}
                                                 onCheckedChange={(checked) => updateConfig({ enableCaptions: checked })}
                                                 disabled={isSubmitting}
+                                            />
+                                        </div>
+                                        <div className="border-t pt-3">
+                                            <SplitScreenSection
+                                                config={config}
+                                                onChange={updateConfig}
+                                                disabled={isSubmitting}
+                                                userPlan={workspace?.plan || "free"}
                                             />
                                         </div>
                                     </div>
