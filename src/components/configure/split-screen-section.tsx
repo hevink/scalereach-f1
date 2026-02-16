@@ -44,23 +44,12 @@ function VideoCard({
     onSelect: (id: string) => void;
 }) {
     const [imgError, setImgError] = useState(false);
-    const [gifSrc, setGifSrc] = useState<string | null>(null);
 
     return (
         <button
             type="button"
             onClick={() => onSelect(video.id)}
             disabled={disabled}
-            onMouseEnter={() => {
-                // Load GIF on hover to trigger animation from start
-                if (video.thumbnailUrl && !gifSrc) {
-                    setGifSrc(video.thumbnailUrl + "?t=" + Date.now());
-                }
-            }}
-            onMouseLeave={() => {
-                // Clear GIF to stop animation
-                setGifSrc(null);
-            }}
             className={cn(
                 "relative rounded-xl border-2 overflow-hidden transition-all aspect-auto",
                 isSelected
@@ -69,28 +58,13 @@ function VideoCard({
             )}
         >
             {video.thumbnailUrl && !imgError ? (
-                <>
-                    {/* Static placeholder - always loaded */}
-                    <img
-                        src={video.thumbnailUrl}
-                        alt={video.displayName}
-                        className={cn(
-                            "w-full h-full object-cover transition-opacity",
-                            gifSrc ? "opacity-0" : "opacity-100"
-                        )}
-                        onError={() => setImgError(true)}
-                        style={{ imageRendering: "crisp-edges" }}
-                    />
-                    {/* Animated GIF - only loaded on hover */}
-                    {gifSrc && (
-                        <img
-                            src={gifSrc}
-                            alt={video.displayName}
-                            className="absolute inset-0 w-full h-full object-cover"
-                            onError={() => setImgError(true)}
-                        />
-                    )}
-                </>
+                <img
+                    src={video.thumbnailUrl}
+                    alt={video.displayName}
+                    className="w-full h-full object-cover"
+                    onError={() => setImgError(true)}
+                    style={{ imageRendering: "crisp-edges" }}
+                />
             ) : (
                 <div className="w-full h-full bg-muted flex items-center justify-center text-xs text-muted-foreground px-1 text-center">
                     {video.displayName}
