@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { IconLayoutRows, IconLock, IconArrowUp } from "@tabler/icons-react";
 import { Switch } from "@/components/ui/switch";
@@ -9,7 +9,8 @@ import { Badge } from "@/components/ui/badge";
 import { Slider } from "@/components/ui/slider";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
-import { backgroundVideoApi, type BackgroundCategory, type BackgroundVideo } from "@/lib/api/background-video";
+import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from "@/components/ui/carousel";
+import { backgroundVideoApi, type BackgroundVideo, type BackgroundCategory } from "@/lib/api/background-video";
 import type { VideoConfigInput } from "@/lib/api/video-config";
 import { cn } from "@/lib/utils";
 
@@ -43,26 +44,53 @@ function VideoCard({
     onSelect: (id: string) => void;
 }) {
     const [imgError, setImgError] = useState(false);
+    const [gifSrc, setGifSrc] = useState<string | null>(null);
 
     return (
         <button
             type="button"
             onClick={() => onSelect(video.id)}
             disabled={disabled}
+            onMouseEnter={() => {
+                // Load GIF on hover to trigger animation from start
+                if (video.thumbnailUrl && !gifSrc) {
+                    setGifSrc(video.thumbnailUrl + "?t=" + Date.now());
+                }
+            }}
+            onMouseLeave={() => {
+                // Clear GIF to stop animation
+                setGifSrc(null);
+            }}
             className={cn(
-                "relative rounded-xl border-2 overflow-hidden transition-all aspect-9/16",
+                "relative rounded-xl border-2 overflow-hidden transition-all aspect-auto",
                 isSelected
                     ? "border-primary ring-2 ring-primary/40 shadow-lg shadow-primary/20"
                     : "border-border/50 hover:border-border hover:ring-1 hover:ring-primary/20"
             )}
         >
             {video.thumbnailUrl && !imgError ? (
-                <img
-                    src={video.thumbnailUrl}
-                    alt={video.displayName}
-                    className="w-full h-full object-cover"
-                    onError={() => setImgError(true)}
-                />
+                <>
+                    {/* Static placeholder - always loaded */}
+                    <img
+                        src={video.thumbnailUrl}
+                        alt={video.displayName}
+                        className={cn(
+                            "w-full h-full object-cover transition-opacity",
+                            gifSrc ? "opacity-0" : "opacity-100"
+                        )}
+                        onError={() => setImgError(true)}
+                        style={{ imageRendering: "crisp-edges" }}
+                    />
+                    {/* Animated GIF - only loaded on hover */}
+                    {gifSrc && (
+                        <img
+                            src={gifSrc}
+                            alt={video.displayName}
+                            className="absolute inset-0 w-full h-full object-cover"
+                            onError={() => setImgError(true)}
+                        />
+                    )}
+                </>
             ) : (
                 <div className="w-full h-full bg-muted flex items-center justify-center text-xs text-muted-foreground px-1 text-center">
                     {video.displayName}
@@ -91,9 +119,8 @@ function VideoCard({
 export function SplitScreenSection({ config, onChange, disabled, userPlan }: SplitScreenSectionProps) {
     const isFreePlan = userPlan === "free";
     const isEnabled = config.enableSplitScreen ?? false;
-    const [selectedCategoryId, setSelectedCategoryId] = useState<string | null>(
-        config.splitScreenBgCategoryId ?? null
-    );
+    const [selectedCategorySlug, setSelectedCategorySlug] = useState<string | null>(null);
+    const VIDEOS_PER_PAGE = 8; // 4 columns x 2 rows
 
     const { data: categories = [], isLoading: categoriesLoading } = useQuery({
         queryKey: ["background-categories"],
@@ -102,19 +129,33 @@ export function SplitScreenSection({ config, onChange, disabled, userPlan }: Spl
         staleTime: 1000 * 60 * 10,
     });
 
-    const { data: videos = [], isLoading: videosLoading } = useQuery({
-        queryKey: ["background-videos", selectedCategoryId],
-        queryFn: () => backgroundVideoApi.listVideosByCategory(selectedCategoryId!),
-        enabled: !!selectedCategoryId && isEnabled,
+    const { data: allVideos = [], isLoading: videosLoading } = useQuery({
+        queryKey: ["background-videos-all"],
+        queryFn: backgroundVideoApi.listAllVideos,
+        enabled: isEnabled && !isFreePlan,
         staleTime: 1000 * 60 * 5,
     });
 
-    // Sync selectedCategoryId with config
-    useEffect(() => {
-        if (config.splitScreenBgCategoryId !== selectedCategoryId) {
-            setSelectedCategoryId(config.splitScreenBgCategoryId ?? null);
+    // Filter videos by selected category
+    const filteredVideos = useMemo(() => {
+        if (!selectedCategorySlug) return allVideos;
+        const category = categories.find((c) => c.slug === selectedCategorySlug);
+        if (!category) return allVideos;
+        return allVideos.filter((v) => v.categoryId === category.id);
+    }, [allVideos, selectedCategorySlug, categories]);
+
+    // Group videos into pages (8 per page)
+    const videoPages = useMemo(() => {
+        const pages = [];
+        for (let i = 0; i < filteredVideos.length; i += VIDEOS_PER_PAGE) {
+            pages.push(filteredVideos.slice(i, i + VIDEOS_PER_PAGE));
         }
-    }, [config.splitScreenBgCategoryId]);
+        return pages;
+    }, [filteredVideos]);
+
+    const handleCategoryFilter = (slug: string | null) => {
+        setSelectedCategorySlug(slug);
+    };
 
     const handleToggle = (checked: boolean) => {
         if (isFreePlan) return;
@@ -125,16 +166,11 @@ export function SplitScreenSection({ config, onChange, disabled, userPlan }: Spl
         });
     };
 
-    const handleCategorySelect = (categoryId: string) => {
-        setSelectedCategoryId(categoryId);
-        onChange({
-            splitScreenBgCategoryId: categoryId,
-            splitScreenBgVideoId: null, // Reset video selection when category changes
-        });
-    };
-
     const handleVideoSelect = (videoId: string) => {
-        onChange({ splitScreenBgVideoId: videoId });
+        onChange({
+            splitScreenBgVideoId: videoId,
+            splitScreenBgCategoryId: null, // Clear category since we're not using it
+        });
     };
 
     const handleRatioChange = (value: number | readonly number[]) => {
@@ -191,70 +227,90 @@ export function SplitScreenSection({ config, onChange, disabled, userPlan }: Spl
                         Aspect ratio locked to 9:16 for split-screen mode
                     </p>
 
-                    {/* Category Selection */}
+                    {/* Video Grid */}
                     <div className="space-y-2.5">
-                        <Label className="text-sm font-medium">Background Category</Label>
-                        {categoriesLoading ? (
-                            <div className="grid grid-cols-4 gap-2">
-                                {Array.from({ length: 8 }).map((_, i) => (
-                                    <Skeleton key={i} className="h-16 rounded-lg" />
-                                ))}
-                            </div>
-                        ) : (
-                            <div className="grid grid-cols-4 gap-2">
-                                {categories.map((cat) => (
+                        <Label className="text-sm font-medium">Background Video</Label>
+
+                        {/* Category Filter Chips */}
+                        {!categoriesLoading && categories.length > 0 && (
+                            <div className="flex flex-wrap gap-2">
+                                <button
+                                    type="button"
+                                    onClick={() => handleCategoryFilter(null)}
+                                    disabled={disabled}
+                                    className={cn(
+                                        "px-3 py-1.5 rounded-full text-xs font-medium transition-all",
+                                        selectedCategorySlug === null
+                                            ? "bg-primary text-primary-foreground shadow-sm"
+                                            : "bg-muted text-muted-foreground hover:bg-muted/80"
+                                    )}
+                                >
+                                    All
+                                </button>
+                                {categories.map((category) => (
                                     <button
-                                        key={cat.id}
+                                        key={category.id}
                                         type="button"
-                                        onClick={() => handleCategorySelect(cat.id)}
+                                        onClick={() => handleCategoryFilter(category.slug)}
                                         disabled={disabled}
                                         className={cn(
-                                            "flex flex-col items-center gap-1 rounded-lg border p-2.5 text-xs transition-all hover:bg-muted/50",
-                                            selectedCategoryId === cat.id
-                                                ? "border-primary bg-primary/5 ring-1 ring-primary/20"
-                                                : "border-border"
+                                            "px-3 py-1.5 rounded-full text-xs font-medium transition-all flex items-center gap-1.5",
+                                            selectedCategorySlug === category.slug
+                                                ? "bg-primary text-primary-foreground shadow-sm"
+                                                : "bg-muted text-muted-foreground hover:bg-muted/80"
                                         )}
                                     >
-                                        <span className="text-lg">{CATEGORY_EMOJIS[cat.slug] ?? "🎬"}</span>
-                                        <span className="font-medium truncate w-full text-center">{cat.displayName}</span>
+                                        <span>{CATEGORY_EMOJIS[category.slug] ?? "🎬"}</span>
+                                        <span>{category.displayName}</span>
                                     </button>
                                 ))}
                             </div>
                         )}
-                    </div>
 
-                    {/* Video Grid (shown when category selected) */}
-                    {selectedCategoryId && (
-                        <div className="space-y-2.5">
-                            <Label className="text-sm font-medium">Background Video</Label>
-                            {videosLoading ? (
-                                <div className="grid grid-cols-3 gap-2">
-                                    {Array.from({ length: 6 }).map((_, i) => (
-                                        <Skeleton key={i} className="aspect-video rounded-lg" />
-                                    ))}
-                                </div>
-                            ) : videos.length === 0 ? (
-                                <p className="text-sm text-muted-foreground py-4 text-center">
-                                    No videos in this category yet. A random one will be picked automatically.
-                                </p>
-                            ) : (
-                                <div className="grid grid-cols-4 gap-2.5">
-                                    {videos.map((video) => (
-                                        <VideoCard
-                                            key={video.id}
-                                            video={video}
-                                            isSelected={config.splitScreenBgVideoId === video.id}
-                                            disabled={disabled}
-                                            onSelect={handleVideoSelect}
-                                        />
-                                    ))}
-                                </div>
-                            )}
-                            <p className="text-xs text-muted-foreground">
-                                Leave unselected for a random background from this category.
+                        {videosLoading ? (
+                            <div className="grid grid-cols-4 gap-2.5">
+                                {Array.from({ length: 8 }).map((_, i) => (
+                                    <Skeleton key={i} className="aspect-9/16 rounded-lg" />
+                                ))}
+                            </div>
+                        ) : filteredVideos.length === 0 ? (
+                            <p className="text-sm text-muted-foreground py-4 text-center">
+                                No background videos available{selectedCategorySlug ? " in this category" : ""}.
                             </p>
-                        </div>
-                    )}
+                        ) : (
+                            <Carousel
+                                opts={{
+                                    align: "start",
+                                    loop: false,
+                                }}
+                                className="w-full"
+                            >
+                                <CarouselContent>
+                                    {videoPages.map((page, pageIndex) => (
+                                        <CarouselItem key={pageIndex}>
+                                            <div className="grid grid-cols-4 gap-2.5">
+                                                {page.map((video) => (
+                                                    <VideoCard
+                                                        key={video.id}
+                                                        video={video}
+                                                        isSelected={config.splitScreenBgVideoId === video.id}
+                                                        disabled={disabled}
+                                                        onSelect={handleVideoSelect}
+                                                    />
+                                                ))}
+                                            </div>
+                                        </CarouselItem>
+                                    ))}
+                                </CarouselContent>
+                                {videoPages.length > 1 && (
+                                    <>
+                                        <CarouselPrevious className="left-0 -translate-x-1/2" />
+                                        <CarouselNext className="right-0 translate-x-1/2" />
+                                    </>
+                                )}
+                            </Carousel>
+                        )}
+                    </div>
 
                     {/* Split Ratio Slider */}
                     <div className="space-y-3">

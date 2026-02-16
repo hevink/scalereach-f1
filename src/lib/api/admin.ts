@@ -137,6 +137,102 @@ export interface CreditTransactionsResponse {
   totalPages: number;
 }
 
+export interface AdminVideo {
+  id: string;
+  title: string | null;
+  status: string;
+  sourceType: string;
+  sourceUrl: string | null;
+  duration: number | null;
+  fileSize: number | null;
+  mimeType: string | null;
+  errorMessage: string | null;
+  creditsUsed: number;
+  thumbnailUrl: string | null;
+  createdAt: string;
+  updatedAt: string;
+  userName: string | null;
+  userEmail: string | null;
+  userId: string;
+  workspaceName: string | null;
+  workspaceSlug: string | null;
+  projectName: string | null;
+  clipCount: number;
+}
+
+export interface AdminVideosResponse {
+  videos: AdminVideo[];
+  total: number;
+  page: number;
+  limit: number;
+  totalPages: number;
+}
+
+export interface AdminVideoDetail {
+  video: AdminVideo & {
+    storageKey: string | null;
+    storageUrl: string | null;
+    transcript: string | null;
+    transcriptLanguage: string | null;
+    transcriptConfidence: number | null;
+    regenerationCount: number;
+    minutesConsumed: number;
+    metadata: any;
+    projectId: string | null;
+    workspaceId: string | null;
+  };
+  config: {
+    clipModel: string;
+    genre: string;
+    clipDurationMin: number;
+    clipDurationMax: number;
+    language: string | null;
+    aspectRatio: string;
+    enableSplitScreen: boolean;
+    splitRatio: number;
+    enableCaptions: boolean;
+    enableWatermark: boolean;
+    enableEmojis: boolean;
+    enableIntroTitle: boolean;
+    captionTemplateId: string;
+    clipType: string;
+    customPrompt: string | null;
+  } | null;
+  clips: {
+    total: number;
+    detected: number;
+    generating: number;
+    ready: number;
+    failed: number;
+    items: Array<{
+      id: string;
+      title: string | null;
+      score: number;
+      status: string;
+      duration: number | null;
+      startTime: number;
+      endTime: number;
+      errorMessage: string | null;
+    }>;
+  };
+}
+
+export interface AdminVideoAnalytics {
+  statusDistribution: Array<{ status: string; count: number }>;
+  sourceTypeDistribution: Array<{ sourceType: string; count: number }>;
+  avgProcessingTime: number;
+  errorRate: number;
+  dailyVideos: Array<{ date: string; total: number; completed: number; failed: number }>;
+}
+
+export interface AdminVideoFilters {
+  status?: string;
+  sourceType?: string;
+  search?: string;
+  dateFrom?: string;
+  dateTo?: string;
+}
+
 export const adminApi = {
   // Dashboard stats
   getStats: async () => {
@@ -219,6 +315,33 @@ export const adminApi = {
     const response = await api.get<CreditTransactionsResponse>(
       `/api/admin/transactions?page=${page}&limit=${limit}`
     );
+    return response.data;
+  },
+
+  // Video management
+  getVideos: async (page = 1, limit = 20, filters: AdminVideoFilters = {}) => {
+    const params = new URLSearchParams({ page: String(page), limit: String(limit) });
+    if (filters.status) params.set("status", filters.status);
+    if (filters.sourceType) params.set("sourceType", filters.sourceType);
+    if (filters.search) params.set("search", filters.search);
+    if (filters.dateFrom) params.set("dateFrom", filters.dateFrom);
+    if (filters.dateTo) params.set("dateTo", filters.dateTo);
+    const response = await api.get<AdminVideosResponse>(`/api/admin/videos?${params.toString()}`);
+    return response.data;
+  },
+
+  getVideoDetail: async (videoId: string) => {
+    const response = await api.get<AdminVideoDetail>(`/api/admin/videos/${videoId}`);
+    return response.data;
+  },
+
+  getVideoAnalytics: async (days = 30) => {
+    const response = await api.get<AdminVideoAnalytics>(`/api/admin/videos/analytics?days=${days}`);
+    return response.data;
+  },
+
+  retryVideo: async (videoId: string) => {
+    const response = await api.post(`/api/admin/videos/${videoId}/retry`);
     return response.data;
   },
 };

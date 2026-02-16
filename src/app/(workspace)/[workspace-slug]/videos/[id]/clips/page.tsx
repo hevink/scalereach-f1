@@ -20,6 +20,7 @@ import {
     IconCalendar,
     IconFileText,
     IconWand,
+    IconLayoutRows,
 } from "@tabler/icons-react";
 
 import { Button } from "@/components/ui/button";
@@ -30,6 +31,8 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/comp
 import { useVideo, useVideoStatus } from "@/hooks/useVideo";
 import { useClipsByVideo, useToggleFavorite } from "@/hooks/useClips";
 import { useWorkspaceBySlug } from "@/hooks/useWorkspace";
+import { useQuery } from "@tanstack/react-query";
+import { videoConfigApi } from "@/lib/api/video-config";
 import { cn } from "@/lib/utils";
 import { analytics } from "@/lib/analytics";
 import type { ClipResponse } from "@/lib/api/clips";
@@ -591,6 +594,14 @@ export default function VideoClipsPage({ params }: VideoClipsPageProps) {
         data: workspace,
     } = useWorkspaceBySlug(slug);
 
+    const {
+        data: configData,
+    } = useQuery({
+        queryKey: ["video-config", videoId],
+        queryFn: () => videoConfigApi.getConfig(videoId),
+        enabled: !!videoId,
+    });
+
     const toggleFavorite = useToggleFavorite();
 
     const handleBack = useCallback(() => {
@@ -655,7 +666,8 @@ export default function VideoClipsPage({ params }: VideoClipsPageProps) {
 
     // Derive metadata for tags
     const sourceType = video.sourceType === "youtube" ? "YouTube" : "Local file";
-    const aspectRatio = "9:16"; // Default, could come from video config
+    const aspectRatio = configData?.config?.aspectRatio || "9:16";
+    const hasSplitScreen = configData?.config?.enableSplitScreen || false;
 
     return (
         <div className="flex h-full flex-col bg-background">
@@ -703,6 +715,12 @@ export default function VideoClipsPage({ params }: VideoClipsPageProps) {
                         <IconAspectRatio className="size-3" />
                         {aspectRatio}
                     </Badge>
+                    {hasSplitScreen && (
+                        <Badge variant="outline" className="gap-1.5 text-primary border-primary/30 bg-primary/5">
+                            <IconLayoutRows className="size-3" />
+                            Split Screen
+                        </Badge>
+                    )}
                     <Badge variant="outline" className="gap-1.5">
                         <IconFlame className="size-3" />
                         Viral Clips

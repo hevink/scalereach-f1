@@ -29,16 +29,18 @@ import { AdminOverviewCharts } from "@/components/admin/admin-overview-charts";
 import { AdminUsersTable } from "@/components/admin/admin-users-table";
 import { AdminWorkspacesTable } from "@/components/admin/admin-workspaces-table";
 import { AdminPaymentsTable } from "@/components/admin/admin-payments-table";
+import { AdminVideosTable } from "@/components/admin/admin-videos-table";
 import { format, subDays } from "date-fns";
 import { DateRange } from "react-day-picker";
 import { cn } from "@/lib/utils";
 
-type AdminView = "overview" | "users" | "workspaces" | "payments";
+type AdminView = "overview" | "users" | "workspaces" | "payments" | "videos";
 
 const navItems = [
     { id: "overview" as const, label: "Overview", icon: IconHome },
     { id: "users" as const, label: "Users", icon: IconUsers },
     { id: "workspaces" as const, label: "Workspaces", icon: IconBuildingCommunity },
+    { id: "videos" as const, label: "Videos", icon: IconVideo },
     { id: "payments" as const, label: "Payments", icon: IconCreditCard },
 ];
 
@@ -287,6 +289,8 @@ export default function AdminDashboard() {
                 return <AdminWorkspacesTable />;
             case "payments":
                 return <AdminPaymentsTable dateRange={dateRange} />;
+            case "videos":
+                return <AdminVideosTable dateRange={dateRange} />;
             default:
                 return <OverviewContent dateRange={dateRange} />;
         }
@@ -298,6 +302,7 @@ export default function AdminDashboard() {
             case "users": return "Users";
             case "workspaces": return "Workspaces";
             case "payments": return "Payments & Credits";
+            case "videos": return "Videos";
             default: return "Overview";
         }
     };
@@ -316,10 +321,11 @@ export default function AdminDashboard() {
                             {activeView === "users" && "Manage all users on the platform"}
                             {activeView === "workspaces" && "View and manage workspaces"}
                             {activeView === "payments" && "Credit transactions and payment history"}
+                            {activeView === "videos" && "Video processing and analytics"}
                         </p>
                     </div>
 
-                    {(activeView === "overview" || activeView === "payments") && (
+                    {(activeView === "overview" || activeView === "payments" || activeView === "videos") && (
                         <DateRangePicker
                             dateRange={dateRange}
                             onDateRangeChange={setDateRange}

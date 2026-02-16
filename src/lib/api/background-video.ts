@@ -29,6 +29,11 @@ export const backgroundVideoApi = {
     return response.data.data;
   },
 
+  listAllVideos: async (): Promise<BackgroundVideo[]> => {
+    const response = await api.get<{ success: boolean; data: BackgroundVideo[] }>("/api/backgrounds/videos");
+    return response.data.data;
+  },
+
   listVideosByCategory: async (categoryId: string): Promise<BackgroundVideo[]> => {
     const response = await api.get<{ success: boolean; data: BackgroundVideo[] }>(`/api/backgrounds/categories/${categoryId}`);
     return response.data.data;

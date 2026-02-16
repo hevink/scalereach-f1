@@ -1,7 +1,7 @@
 "use client";
 
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { adminApi } from "@/lib/api/admin";
+import { adminApi, AdminVideoFilters } from "@/lib/api/admin";
 
 export function useAdminStats() {
   return useQuery({
@@ -121,5 +121,43 @@ export function useCreditTransactions(page = 1, limit = 50) {
     queryKey: ["admin", "credit-transactions", page, limit],
     queryFn: () => adminApi.getCreditTransactions(page, limit),
     staleTime: 30 * 1000,
+  });
+}
+
+export function useAdminVideos(page = 1, limit = 20, filters: AdminVideoFilters = {}) {
+  return useQuery({
+    queryKey: ["admin", "videos", page, limit, filters],
+    queryFn: () => adminApi.getVideos(page, limit, filters),
+    staleTime: 30 * 1000,
+  });
+}
+
+export function useAdminVideoDetail(videoId: string | null) {
+  return useQuery({
+    queryKey: ["admin", "video-detail", videoId],
+    queryFn: () => adminApi.getVideoDetail(videoId!),
+    staleTime: 15 * 1000,
+    enabled: !!videoId,
+  });
+}
+
+export function useAdminVideoAnalytics(days = 30) {
+  return useQuery({
+    queryKey: ["admin", "video-analytics", days],
+    queryFn: () => adminApi.getVideoAnalytics(days),
+    staleTime: 60 * 1000,
+  });
+}
+
+export function useRetryVideo() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (videoId: string) => adminApi.retryVideo(videoId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["admin", "videos"] });
+      queryClient.invalidateQueries({ queryKey: ["admin", "video-detail"] });
+      queryClient.invalidateQueries({ queryKey: ["admin", "video-analytics"] });
+    },
   });
 }
