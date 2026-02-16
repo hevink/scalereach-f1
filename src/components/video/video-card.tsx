@@ -76,6 +76,7 @@ export function VideoCard({
     const [newTitle, setNewTitle] = useState(video.title || "");
     const [isDeleting, setIsDeleting] = useState(false);
     const [isRenaming, setIsRenaming] = useState(false);
+    const [copySuccess, setCopySuccess] = useState(false);
 
     const formatDuration = (seconds: number): string => {
         const mins = Math.floor(seconds / 60);
@@ -140,6 +141,17 @@ export function VideoCard({
     const handleDuplicate = () => {
         if (onDuplicate) {
             onDuplicate(video.id);
+        }
+    };
+
+    const handleCopyYouTubeLink = async () => {
+        if (!video.sourceUrl) return;
+        try {
+            await navigator.clipboard.writeText(video.sourceUrl);
+            setCopySuccess(true);
+            setTimeout(() => setCopySuccess(false), 2000);
+        } catch (err) {
+            console.error('Failed to copy link:', err);
         }
     };
 
@@ -272,16 +284,30 @@ export function VideoCard({
                                 </DropdownMenuItem>
                             )}
                             {video.sourceType === "youtube" && video.sourceUrl && (
-                                <DropdownMenuItem
-                                    onClick={(e) => {
-                                        e.stopPropagation();
-                                        window.open(video.sourceUrl!, "_blank");
-                                    }}
-                                    className="cursor-pointer"
-                                >
-                                    <IconExternalLink className="size-4 mr-2" />
-                                    Open on YouTube
-                                </DropdownMenuItem>
+                                <>
+                                    <DropdownMenuItem
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            window.open(video.sourceUrl!, "_blank");
+                                        }}
+                                        className="cursor-pointer"
+                                    >
+                                        <IconExternalLink className="size-4 mr-2" />
+                                        Open on YouTube
+                                    </DropdownMenuItem>
+                                    {process.env.NODE_ENV === 'development' && (
+                                        <DropdownMenuItem
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                handleCopyYouTubeLink();
+                                            }}
+                                            className="cursor-pointer"
+                                        >
+                                            <IconCopy className="size-4 mr-2" />
+                                            {copySuccess ? "Copied!" : "Copy YT Link"}
+                                        </DropdownMenuItem>
+                                    )}
+                                </>
                             )}
                             {video.status === "completed" && (
                                 <DropdownMenuSub>
