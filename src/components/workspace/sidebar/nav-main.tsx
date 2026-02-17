@@ -4,7 +4,6 @@ import {
   IconVideo,
   IconVideoFilled,
   IconScissors,
-  IconDownload,
   IconStar,
   IconStarFilled,
   IconClock,
@@ -71,12 +70,7 @@ export function NavMain({ currentSlug, workspaceId }: NavMainProps) {
       iconFilled: IconStarFilled,
       matchPath: () => searchParams.get("favorites") === "true",
     },
-    {
-      title: "Exports",
-      url: `/${currentSlug}/exports`,
-      icon: IconDownload,
-      iconFilled: IconDownload,
-    },
+
   ];
 
   const toolsItems = [

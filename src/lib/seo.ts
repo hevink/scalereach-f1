@@ -192,10 +192,6 @@ export const pageMetadata = {
       description: "Organize your video content into projects.",
       noIndex: true,
     }),
-    exports: constructMetadata({
-      title: "Exports - ScaleReach",
-      description: "Download and manage your exported video clips.",
-      noIndex: true,
-    }),
+
   },
 };
