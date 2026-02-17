@@ -60,14 +60,14 @@ export function NavFooter({ currentSlug }: NavFooterProps) {
       title: "Get Help",
       icon: IconHelp,
       onClick: () => {
-        // TODO: Open help center
+        window.open("mailto:hevin@scalereach.ai?subject=Help%20Request", "_blank");
       },
     },
     {
       title: "Report Issue",
       icon: IconAlertTriangle,
       onClick: () => {
-        // TODO: Open issue reporter
+        window.open("mailto:hevin@scalereach.ai?subject=Bug%20Report", "_blank");
       },
     },
   ];

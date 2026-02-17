@@ -204,7 +204,7 @@ export default function AllClipsPage({ params, searchParams }: AllClipsPageProps
     const router = useRouter();
     const showFavoritesOnly = favorites === "true";
 
-    const [sortBy, setSortBy] = useState<"score" | "duration" | "createdAt">("score");
+    const [sortBy, setSortBy] = useState<"score" | "duration" | "createdAt">("createdAt");
 
     const { data: workspace } = useWorkspaceBySlug(slug);
     const { data: videos, isLoading: videosLoading } = useMyVideos(workspace?.id || "", !!workspace?.id);
@@ -229,18 +229,10 @@ export default function AllClipsPage({ params, searchParams }: AllClipsPageProps
     const clips9 = useClipsByVideo(videoIds[9] || "");
 
     // Collect all clips
-    const allClipsData = [
-        clips0.data || [],
-        clips1.data || [],
-        clips2.data || [],
-        clips3.data || [],
-        clips4.data || [],
-        clips5.data || [],
-        clips6.data || [],
-        clips7.data || [],
-        clips8.data || [],
-        clips9.data || [],
-    ].flat();
+    const clipsQueries = [clips0, clips1, clips2, clips3, clips4, clips5, clips6, clips7, clips8, clips9];
+    const clipsLoading = videoIds.length > 0 && clipsQueries.some((q, i) => i < videoIds.length && q.isLoading);
+
+    const allClipsData = clipsQueries.map(q => q.data || []).flat();
 
     // Filter and sort
     let allClips = showFavoritesOnly
@@ -314,7 +306,7 @@ export default function AllClipsPage({ params, searchParams }: AllClipsPageProps
         }
     };
 
-    if (videosLoading) {
+    if (videosLoading || clipsLoading) {
         return (
             <div className="flex h-full items-center justify-center">
                 <IconLoader2 className="size-8 animate-spin text-muted-foreground" />
