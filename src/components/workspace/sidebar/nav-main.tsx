@@ -1,13 +1,11 @@
 "use client";
 
 import {
-  IconVideo,
-  IconVideoFilled,
-  IconScissors,
-  IconStar,
-  IconStarFilled,
-  IconClock,
-} from "@tabler/icons-react";
+  HugeVideoIcon,
+  HugeScissorIcon,
+  HugeStarIcon,
+  HugeClockIcon,
+} from "@/components/icons/huge-icons";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import {
   SidebarGroup,
@@ -40,8 +38,8 @@ export function NavMain({ currentSlug, workspaceId }: NavMainProps) {
     {
       title: "Videos",
       url: `/${currentSlug}`,
-      icon: IconVideo,
-      iconFilled: IconVideoFilled,
+      icon: HugeVideoIcon,
+      iconFilled: HugeVideoIcon,
       exact: true,
       badge: videos?.length,
     },
@@ -59,15 +57,15 @@ export function NavMain({ currentSlug, workspaceId }: NavMainProps) {
     {
       title: "All Clips",
       url: `/${currentSlug}/clips`,
-      icon: IconScissors,
-      iconFilled: IconScissors,
+      icon: HugeScissorIcon,
+      iconFilled: HugeScissorIcon,
       matchPath: (p: string) => p.includes("/clips") && !searchParams.get("favorites"),
     },
     {
       title: "Favorites",
       url: `/${currentSlug}/clips?favorites=true`,
-      icon: IconStar,
-      iconFilled: IconStarFilled,
+      icon: HugeStarIcon,
+      iconFilled: HugeStarIcon,
       matchPath: () => searchParams.get("favorites") === "true",
     },
 
@@ -77,7 +75,7 @@ export function NavMain({ currentSlug, workspaceId }: NavMainProps) {
     {
       title: "Minute Usage",
       url: `/${currentSlug}/credits`,
-      icon: IconClock,
+      icon: HugeClockIcon,
       matchPath: (p: string) => p.includes("/credits"),
     },
   ];
@@ -138,7 +136,7 @@ export function NavMain({ currentSlug, workspaceId }: NavMainProps) {
                   onClick={() => router.push(`/${currentSlug}?filter=processing`)}
                   tooltip="Processing Queue"
                 >
-                  <IconClock className="animate-pulse text-amber-500" />
+                  <HugeClockIcon className="animate-pulse text-amber-500" />
                   <span className="font-[490] text-[13px]">In Progress</span>
                 </SidebarMenuButton>
                 <SidebarMenuBadge className="bg-amber-500/10 text-amber-600">

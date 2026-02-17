@@ -1,14 +1,13 @@
 "use client";
 
 import {
-  IconAlertTriangle,
-  IconHelp,
-  IconSettings,
-  IconSettingsFilled,
-  IconSparkles,
-  IconClock,
-  IconKeyboard,
-} from "@tabler/icons-react";
+  HugeSettingsIcon,
+  HugeSparklesIcon,
+  HugeClockIcon,
+  HugeHelpIcon,
+  HugeAlertIcon,
+  HugeKeyboardIcon,
+} from "@/components/icons/huge-icons";
 import { usePathname, useRouter } from "next/navigation";
 import {
   SidebarMenu,
@@ -43,7 +42,7 @@ export function NavFooter({ currentSlug }: NavFooterProps) {
   const footerItems = [
     {
       title: "Settings",
-      icon: isSettingsActive ? IconSettingsFilled : IconSettings,
+      icon: isSettingsActive ? HugeSettingsIcon : HugeSettingsIcon,
       onClick: () => {
         router.push(settingsUrl);
       },
@@ -51,21 +50,21 @@ export function NavFooter({ currentSlug }: NavFooterProps) {
     },
     {
       title: "Shortcuts",
-      icon: IconKeyboard,
+      icon: HugeKeyboardIcon,
       onClick: () => {
         openShortcutsHelp();
       },
     },
     {
       title: "Get Help",
-      icon: IconHelp,
+      icon: HugeHelpIcon,
       onClick: () => {
         window.open("mailto:hevin@scalereach.ai?subject=Help%20Request", "_blank");
       },
     },
     {
       title: "Report Issue",
-      icon: IconAlertTriangle,
+      icon: HugeAlertIcon,
       onClick: () => {
         window.open("mailto:hevin@scalereach.ai?subject=Bug%20Report", "_blank");
       },
@@ -83,7 +82,7 @@ export function NavFooter({ currentSlug }: NavFooterProps) {
             isLowMinutes && "text-amber-600 dark:text-amber-500"
           )}
         >
-          <IconClock className={cn(isLowMinutes && "text-amber-500")} />
+          <HugeClockIcon className={cn(isLowMinutes && "text-amber-500")} />
           <span className="font-[490] text-[13px]">Minutes</span>
         </SidebarMenuButton>
         <SidebarMenuBadge
@@ -104,7 +103,7 @@ export function NavFooter({ currentSlug }: NavFooterProps) {
           onClick={() => router.push(`/${currentSlug}/pricing`)}
           className="bg-linear-to-r from-primary/10 to-primary/5 hover:from-primary/20 hover:to-primary/10 border border-primary/20"
         >
-          <IconSparkles className="text-primary" />
+          <HugeSparklesIcon className="text-primary" />
           <span className="font-[490] text-[13px] text-primary">Upgrade</span>
         </SidebarMenuButton>
       </SidebarMenuItem>

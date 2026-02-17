@@ -1,19 +1,19 @@
 "use client";
 
 import { useState } from "react";
+import { IconLoader2 } from "@tabler/icons-react";
+import { HugeiconsIcon } from "@hugeicons/react";
 import {
-    IconLoader2,
-    IconHeartFilled,
-    IconHeart,
-    IconDownload,
-    IconEdit,
-    IconShare2,
-    IconSparkles,
-    IconVideo,
-    IconFlame,
-    IconFileText,
-    IconWand,
-} from "@tabler/icons-react";
+    Download04Icon,
+    Edit02Icon,
+    Share01Icon,
+    SparklesIcon,
+    Video01Icon,
+    FireIcon,
+    SubtitleIcon,
+    MagicWand01Icon,
+    FavouriteIcon,
+} from "@hugeicons/core-free-icons";
 
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -74,7 +74,7 @@ export function ClipCard({ clip, index, onEdit, onFavorite, onDownload, onShare,
                                         clip.viralityScore >= 70 ? "bg-amber-500/15 text-amber-500" :
                                             "bg-zinc-500/15 text-zinc-400"
                                 )}>
-                                    <IconFlame className="size-3.5" />
+                                    <HugeiconsIcon icon={FireIcon} size={14} color="currentColor" />
                                     {clip.viralityScore}
                                 </div>
                             </TooltipTrigger>
@@ -112,7 +112,7 @@ export function ClipCard({ clip, index, onEdit, onFavorite, onDownload, onShare,
                                 />
                             ) : (
                                 <div className="flex h-full w-full items-center justify-center">
-                                    <IconVideo className="size-12 text-muted-foreground/30" />
+                                    <HugeiconsIcon icon={Video01Icon} size={48} color="#a1a1aa" />
                                 </div>
                             )}
                         </div>
@@ -123,11 +123,11 @@ export function ClipCard({ clip, index, onEdit, onFavorite, onDownload, onShare,
                         <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as "transcript" | "description")}>
                             <TabsList className="mb-3">
                                 <TabsTrigger value="transcript" className="gap-1.5">
-                                    <IconFileText className="size-4" />
+                                    <HugeiconsIcon icon={SubtitleIcon} size={16} color="currentColor" />
                                     Transcript
                                 </TabsTrigger>
                                 <TabsTrigger value="description" className="gap-1.5">
-                                    <IconWand className="size-4" />
+                                    <HugeiconsIcon icon={MagicWand01Icon} size={16} color="currentColor" />
                                     Why This Goes Viral
                                 </TabsTrigger>
                             </TabsList>
@@ -203,7 +203,7 @@ export function ClipCard({ clip, index, onEdit, onFavorite, onDownload, onShare,
                             onClick={() => onDownload(clip)}
                             disabled={!clip.storageUrl || isGenerating}
                         >
-                            <IconDownload className="size-4" />
+                            <HugeiconsIcon icon={Download04Icon} size={16} color="currentColor" />
                             Download
                         </Button>
 
@@ -220,7 +220,7 @@ export function ClipCard({ clip, index, onEdit, onFavorite, onDownload, onShare,
                                 }
                             }}
                         >
-                            <IconSparkles className="size-4" />
+                            <HugeiconsIcon icon={SparklesIcon} size={16} color="currentColor" />
                             Remove watermark
                         </Button>
 
@@ -237,7 +237,7 @@ export function ClipCard({ clip, index, onEdit, onFavorite, onDownload, onShare,
                             }}
                             disabled={isGenerating}
                         >
-                            <IconEdit className="size-4" />
+                            <HugeiconsIcon icon={Edit02Icon} size={16} color="currentColor" />
                             Edit
                         </Button>
                     </div>
@@ -252,11 +252,7 @@ export function ClipCard({ clip, index, onEdit, onFavorite, onDownload, onShare,
                             )}
                             onClick={(e) => onFavorite(e, clip.id)}
                         >
-                            {clip.favorited ? (
-                                <IconHeartFilled className="size-5" />
-                            ) : (
-                                <IconHeart className="size-5" />
-                            )}
+                            <HugeiconsIcon icon={FavouriteIcon} size={20} color={clip.favorited ? "#ef4444" : "currentColor"} />
                         </Button>
 
                         <Button
@@ -265,7 +261,7 @@ export function ClipCard({ clip, index, onEdit, onFavorite, onDownload, onShare,
                             className="size-9"
                             onClick={() => onShare(clip)}
                         >
-                            <IconShare2 className="size-5" />
+                            <HugeiconsIcon icon={Share01Icon} size={20} color="currentColor" />
                         </Button>
                     </div>
                 </div>
