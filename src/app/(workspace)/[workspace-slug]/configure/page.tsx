@@ -150,8 +150,8 @@ export default function ConfigurePage() {
                 skipClipping: config.skipClipping,
                 clipModel: config.clipModel,
                 genre: config.genre,
-                clipDurationMin: config.clipDurationMin || 30,
-                clipDurationMax: config.clipDurationMax || 60,
+                clipDurationMin: config.clipDurationMin ?? 0,
+                clipDurationMax: config.clipDurationMax ?? 0,
                 timeframeStart: config.timeframeStart ?? 0,
                 timeframeEnd: config.timeframeEnd ?? null,
                 language: config.language,
@@ -207,8 +207,8 @@ export default function ConfigurePage() {
                 skipClipping: config.skipClipping,
                 clipModel: config.clipModel,
                 genre: config.genre,
-                clipDurationMin: config.clipDurationMin || 30,
-                clipDurationMax: config.clipDurationMax || 60,
+                clipDurationMin: config.clipDurationMin ?? 0,
+                clipDurationMax: config.clipDurationMax ?? 0,
                 timeframeStart: config.timeframeStart ?? 0,
                 timeframeEnd: config.timeframeEnd ?? null,
                 language: config.language,
@@ -653,6 +653,7 @@ export default function ConfigurePage() {
                                                 onChange={updateConfig}
                                                 disabled={isSubmitting}
                                                 userPlan={workspace?.plan || "free"}
+                                                workspaceSlug={workspaceSlug}
                                             />
                                         </div>
                                     </div>

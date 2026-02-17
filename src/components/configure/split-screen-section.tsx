@@ -6,9 +6,9 @@ import { IconLayoutRows, IconLock, IconArrowUp } from "@tabler/icons-react";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
+import { UpgradeDialog } from "@/components/pricing/upgrade-dialog";
 import { Slider } from "@/components/ui/slider";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from "@/components/ui/carousel";
 import { backgroundVideoApi, type BackgroundVideo, type BackgroundCategory } from "@/lib/api/background-video";
 import type { VideoConfigInput } from "@/lib/api/video-config";
@@ -19,6 +19,7 @@ interface SplitScreenSectionProps {
     onChange: (updates: Partial<VideoConfigInput>) => void;
     disabled?: boolean;
     userPlan: string;
+    workspaceSlug: string;
 }
 
 const CATEGORY_EMOJIS: Record<string, string> = {
@@ -90,9 +91,10 @@ function VideoCard({
     );
 }
 
-export function SplitScreenSection({ config, onChange, disabled, userPlan }: SplitScreenSectionProps) {
+export function SplitScreenSection({ config, onChange, disabled, userPlan, workspaceSlug }: SplitScreenSectionProps) {
     const isFreePlan = userPlan === "free";
     const isEnabled = config.enableSplitScreen ?? false;
+    const [showUpgradeDialog, setShowUpgradeDialog] = useState(false);
     const [selectedCategorySlug, setSelectedCategorySlug] = useState<string | null>(null);
     const VIDEOS_PER_PAGE = 8; // 4 columns x 2 rows
 
@@ -132,7 +134,10 @@ export function SplitScreenSection({ config, onChange, disabled, userPlan }: Spl
     };
 
     const handleToggle = (checked: boolean) => {
-        if (isFreePlan) return;
+        if (isFreePlan) {
+            setShowUpgradeDialog(true);
+            return;
+        }
         onChange({
             enableSplitScreen: checked,
             // Force 9:16 when enabling split-screen
@@ -160,22 +165,19 @@ export function SplitScreenSection({ config, onChange, disabled, userPlan }: Spl
         <div className="space-y-4">
             {/* Toggle */}
             <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                    <IconLayoutRows className="size-5 text-muted-foreground" />
+                <div className="flex items-center gap-2.5">
+                    <IconLayoutRows className="size-4 text-muted-foreground" />
                     <div className="flex items-center gap-2">
-                        <Label className="text-base font-medium">Split Screen</Label>
+                        <span className="text-sm">Split Screen</span>
                         {isFreePlan && (
-                            <Tooltip>
-                                <TooltipTrigger asChild>
-                                    <Badge variant="secondary" className="gap-1 cursor-default">
-                                        <IconLock className="size-3" />
-                                        Starter
-                                    </Badge>
-                                </TooltipTrigger>
-                                <TooltipContent>
-                                    Upgrade to Starter to unlock Split Screen
-                                </TooltipContent>
-                            </Tooltip>
+                            <Badge
+                                variant="secondary"
+                                className="gap-1 cursor-pointer"
+                                onClick={() => setShowUpgradeDialog(true)}
+                            >
+                                <IconLock className="size-3" />
+                                Starter
+                            </Badge>
                         )}
                     </div>
                 </div>
@@ -187,7 +189,10 @@ export function SplitScreenSection({ config, onChange, disabled, userPlan }: Spl
             </div>
 
             {isFreePlan && (
-                <p className="text-xs text-muted-foreground pl-8">
+                <p
+                    className="text-xs text-muted-foreground pl-8 cursor-pointer hover:text-foreground transition-colors"
+                    onClick={() => setShowUpgradeDialog(true)}
+                >
                     Add engaging background videos like Subway Surfer, Minecraft, and more to boost retention.
                 </p>
             )}
@@ -307,6 +312,16 @@ export function SplitScreenSection({ config, onChange, disabled, userPlan }: Spl
                         </div>
                     </div>
                 </div>
+            )}
+
+            {isFreePlan && (
+                <UpgradeDialog
+                    open={showUpgradeDialog}
+                    onOpenChange={setShowUpgradeDialog}
+                    workspaceSlug={workspaceSlug}
+                    feature="Split Screen"
+                    description="Add engaging background videos like Subway Surfer, Minecraft, and more to boost retention."
+                />
             )}
         </div>
     );
