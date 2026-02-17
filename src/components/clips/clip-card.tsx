@@ -35,7 +35,7 @@ export interface ClipCardProps {
     index: number;
     onEdit: (clipId: string) => void;
     onFavorite: (e: React.MouseEvent, clipId: string) => void;
-    onDownload: (clip: ClipResponse) => void;
+    onDownload: (clip: ClipResponse) => void | Promise<void>;
     onShare: (clip: ClipResponse) => void;
     userPlan: "free" | "starter" | "pro" | "agency";
     workspaceSlug: string;
@@ -53,6 +53,7 @@ const PLATFORM_CONFIG: Record<RecommendedPlatform, { icon: React.ElementType; la
 export function ClipCard({ clip, index, onEdit, onFavorite, onDownload, onShare, userPlan, workspaceSlug }: ClipCardProps) {
     const [activeTab, setActiveTab] = useState<"transcript" | "description">("transcript");
     const [upgradeFeature, setUpgradeFeature] = useState<string | null>(null);
+    const [isDownloading, setIsDownloading] = useState(false);
     const isGenerating = clip.status === "generating" || clip.status === "detected";
     const isFreePlan = userPlan === "free";
 
@@ -200,11 +201,22 @@ export function ClipCard({ clip, index, onEdit, onFavorite, onDownload, onShare,
                         <Button
                             size="sm"
                             className="gap-1.5 sm:gap-2 h-8 sm:h-9 px-2.5 sm:px-3"
-                            onClick={() => onDownload(clip)}
-                            disabled={!clip.storageUrl || isGenerating}
+                            onClick={async () => {
+                                setIsDownloading(true);
+                                try {
+                                    await onDownload(clip);
+                                } finally {
+                                    setIsDownloading(false);
+                                }
+                            }}
+                            disabled={!clip.storageUrl || isGenerating || isDownloading}
                         >
-                            <HugeiconsIcon icon={Download04Icon} size={16} color="currentColor" />
-                            <span className="hidden sm:inline">Download</span>
+                            {isDownloading ? (
+                                <IconLoader2 className="size-4 animate-spin" />
+                            ) : (
+                                <HugeiconsIcon icon={Download04Icon} size={16} color="currentColor" />
+                            )}
+                            <span className="hidden sm:inline">{isDownloading ? "Downloading..." : "Download"}</span>
                         </Button>
 
                         {isFreePlan && (
