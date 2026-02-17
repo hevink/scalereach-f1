@@ -176,7 +176,7 @@ export function SplitScreenSection({ config, onChange, disabled, userPlan, works
                                 onClick={() => setShowUpgradeDialog(true)}
                             >
                                 <IconLock className="size-3" />
-                                Starter
+                                Upgrade
                             </Badge>
                         )}
                     </div>
