@@ -47,27 +47,26 @@ function VideoClipsLoading() {
     return (
         <div className="flex h-full flex-col bg-background">
             {/* Header Skeleton */}
-            <div className="border-b px-6 py-4">
+            <div className="border-b px-4 sm:px-6 py-3 sm:py-4">
                 <div className="flex items-start justify-between">
-                    <div className="flex items-start gap-3">
-                        <Skeleton className="size-9 rounded-md shrink-0 mt-0.5" />
+                    <div className="flex items-start gap-2 sm:gap-3">
+                        <Skeleton className="size-8 sm:size-9 rounded-md shrink-0 mt-0.5" />
                         <div>
-                            <Skeleton className="h-7 w-96 mb-2" />
+                            <Skeleton className="h-6 sm:h-7 w-48 sm:w-96 mb-2" />
                             <Skeleton className="h-4 w-24" />
                         </div>
                     </div>
                 </div>
-                <div className="flex flex-wrap items-center gap-2 mt-3 ml-11">
+                <div className="flex flex-wrap items-center gap-1.5 sm:gap-2 mt-2 sm:mt-3 ml-10 sm:ml-11">
                     <Skeleton className="h-6 w-24 rounded-full" />
                     <Skeleton className="h-6 w-20 rounded-full" />
                     <Skeleton className="h-6 w-16 rounded-full" />
                     <Skeleton className="h-6 w-24 rounded-full" />
-                    <Skeleton className="h-6 w-32 rounded-full" />
                 </div>
             </div>
 
             {/* Clips Skeleton */}
-            <div className="flex-1 overflow-auto p-6 flex justify-center">
+            <div className="flex-1 overflow-auto p-4 sm:p-6 flex justify-center">
                 <div className="space-y-6 max-w-4xl w-full">
                     {Array.from({ length: 3 }).map((_, i) => (
                         <div key={i} className="rounded-xl border bg-card overflow-hidden">
@@ -398,23 +397,23 @@ export default function VideoClipsPage({ params }: VideoClipsPageProps) {
     return (
         <div className="flex h-full flex-col bg-background">
             {/* Header */}
-            <div className="border-b px-6 py-4">
-                <div className="flex items-start justify-between">
-                    <div className="flex items-start gap-3">
+            <div className="border-b px-4 sm:px-6 py-3 sm:py-4">
+                <div className="flex items-start justify-between gap-2">
+                    <div className="flex items-start gap-2 sm:gap-3 min-w-0">
                         <Button
                             variant="ghost"
                             size="icon"
                             onClick={handleBack}
-                            className="mt-0.5"
+                            className="mt-0.5 shrink-0 size-8 sm:size-9"
                             aria-label="Go back"
                         >
-                            <IconArrowLeft className="size-5" />
+                            <IconArrowLeft className="size-4 sm:size-5" />
                         </Button>
-                        <div>
-                            <h1 className="text-xl font-semibold">
+                        <div className="min-w-0">
+                            <h1 className="text-base sm:text-xl font-semibold truncate">
                                 {video.title || "Untitled Video"}
                             </h1>
-                            <p className="text-sm text-muted-foreground mt-0.5">
+                            <p className="text-xs sm:text-sm text-muted-foreground mt-0.5">
                                 {formatDate(video.createdAt)}
                             </p>
                         </div>
@@ -422,37 +421,39 @@ export default function VideoClipsPage({ params }: VideoClipsPageProps) {
 
                     {/* Share Button */}
                     {workspace && (
-                        <ShareManager
-                            videoId={videoId}
-                            workspaceSlug={slug}
-                            clipCount={clips?.length || 0}
-                            userPlan={workspace.plan as "free" | "starter" | "pro"}
-                        />
+                        <div className="shrink-0">
+                            <ShareManager
+                                videoId={videoId}
+                                workspaceSlug={slug}
+                                clipCount={clips?.length || 0}
+                                userPlan={workspace.plan as "free" | "starter" | "pro"}
+                            />
+                        </div>
                     )}
                 </div>
 
                 {/* Tags */}
-                <div className="flex flex-wrap items-center gap-2 mt-3 ml-11">
-                    <Badge variant="outline" className="gap-1.5">
+                <div className="flex flex-wrap items-center gap-1.5 sm:gap-2 mt-2 sm:mt-3 ml-10 sm:ml-11">
+                    <Badge variant="outline" className="gap-1.5 text-[11px] sm:text-xs">
                         <IconFile className="size-3" />
                         {sourceType}
                     </Badge>
-                    <Badge variant="outline" className="gap-1.5">
+                    <Badge variant="outline" className="gap-1.5 text-[11px] sm:text-xs">
                         <IconAspectRatio className="size-3" />
                         {aspectRatio}
                     </Badge>
                     {hasSplitScreen && (
-                        <Badge variant="outline" className="gap-1.5 text-primary border-primary/30 bg-primary/5">
+                        <Badge variant="outline" className="gap-1.5 text-[11px] sm:text-xs text-primary border-primary/30 bg-primary/5">
                             <IconLayoutRows className="size-3" />
                             Split Screen
                         </Badge>
                     )}
-                    <Badge variant="outline" className="gap-1.5">
+                    <Badge variant="outline" className="gap-1.5 text-[11px] sm:text-xs">
                         <IconFlame className="size-3" />
                         Viral Clips
                     </Badge>
                     {video.createdAt && (
-                        <Badge variant="outline" className="gap-1.5 text-primary border-primary/30">
+                        <Badge variant="outline" className="gap-1.5 text-[11px] sm:text-xs text-primary border-primary/30">
                             <IconCalendar className="size-3" />
                             Expires: {formatDate(new Date(new Date(video.createdAt).getTime() + 30 * 24 * 60 * 60 * 1000).toISOString())}
                         </Badge>
@@ -461,7 +462,7 @@ export default function VideoClipsPage({ params }: VideoClipsPageProps) {
             </div>
 
             {/* Clips List */}
-            <div className="flex-1 overflow-auto p-6 flex flex-col justify-center items-center">
+            <div className="flex-1 overflow-auto p-4 sm:p-6 flex flex-col justify-center items-center">
                 {!clips || clips.length === 0 ? (
                     <NoClips
                         videoTitle={video.title || "this video"}
