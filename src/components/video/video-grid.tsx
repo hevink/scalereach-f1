@@ -92,13 +92,13 @@ export function VideoGrid({
             role="list"
             aria-label="Video list"
         >
-            {/* Column Headers */}
-            <div className="grid grid-cols-[80px_1fr_140px_140px_100px_100px] gap-6 px-6 py-3 text-xs font-semibold text-muted-foreground uppercase tracking-wider bg-muted/20 border-b">
+            {/* Column Headers - hidden on mobile, shown as table on md+ */}
+            <div className="hidden md:grid md:grid-cols-[80px_1fr_140px_100px] lg:grid-cols-[80px_1fr_140px_140px_100px] xl:grid-cols-[80px_1fr_140px_140px_100px_100px] gap-6 px-6 py-3 text-xs font-semibold text-muted-foreground uppercase tracking-wider bg-muted/20 border-b">
                 <div>Thumbnail</div>
                 <div>Description</div>
-                <div className="hidden sm:block text-center">Source</div>
-                <div className="hidden md:block text-center">Video type</div>
-                <div className="hidden lg:block text-center">Ratio</div>
+                <div className="text-center">Source</div>
+                <div className="hidden lg:block text-center">Video type</div>
+                <div className="hidden xl:block text-center">Ratio</div>
                 <div className="text-right">Actions</div>
             </div>
 

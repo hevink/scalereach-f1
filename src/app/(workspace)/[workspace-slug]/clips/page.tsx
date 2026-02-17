@@ -140,10 +140,10 @@ export default function AllClipsPage({ params, searchParams }: AllClipsPageProps
     return (
         <div className="flex h-full flex-col bg-background">
             {/* Header */}
-            <div className="flex items-center justify-between border-b px-6 py-4">
-                <div className="flex items-center gap-3">
-                    <IconScissors className="size-6" />
-                    <h1 className="text-xl font-semibold">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b px-4 sm:px-6 py-3 sm:py-4">
+                <div className="flex items-center gap-2 sm:gap-3">
+                    <IconScissors className="size-5 sm:size-6" />
+                    <h1 className="text-lg sm:text-xl font-semibold">
                         {showFavoritesOnly ? "Favorite Clips" : "All Clips"}
                     </h1>
                     <Badge variant="secondary">{allClips.length}</Badge>
@@ -154,7 +154,7 @@ export default function AllClipsPage({ params, searchParams }: AllClipsPageProps
                         value={showFavoritesOnly ? "favorites" : "all"}
                         onValueChange={handleFilterChange}
                     >
-                        <SelectTrigger className="w-[140px]">
+                        <SelectTrigger className="w-[120px] sm:w-[140px]">
                             <IconFilter className="mr-2 size-4" />
                             <SelectValue />
                         </SelectTrigger>
@@ -173,7 +173,7 @@ export default function AllClipsPage({ params, searchParams }: AllClipsPageProps
                         value={sortBy}
                         onValueChange={(v) => setSortBy(v as typeof sortBy)}
                     >
-                        <SelectTrigger className="w-[140px]">
+                        <SelectTrigger className="w-[120px] sm:w-[140px]">
                             <SelectValue placeholder="Sort by" />
                         </SelectTrigger>
                         <SelectContent>
@@ -186,7 +186,7 @@ export default function AllClipsPage({ params, searchParams }: AllClipsPageProps
             </div>
 
             {/* Clips List */}
-            <div className="flex-1 overflow-auto p-6 flex justify-center">
+            <div className="flex-1 overflow-auto p-4 sm:p-6 flex justify-center">
                 {allClips.length === 0 ? (
                     <div className="flex items-center justify-center h-full">
                         <EmptyState

@@ -59,8 +59,8 @@ export function ClipCard({ clip, index, onEdit, onFavorite, onDownload, onShare,
     return (
         <div className="rounded-xl border bg-card overflow-hidden">
             {/* Clip Title */}
-            <div className="px-5 py-3 border-b bg-muted/30 flex items-center justify-between">
-                <h3 className="font-semibold text-base">
+            <div className="px-4 sm:px-5 py-3 border-b bg-muted/30 flex items-center justify-between">
+                <h3 className="font-semibold text-sm sm:text-base truncate mr-2">
                     <span className="text-muted-foreground">#{index + 1}</span>{" "}
                     {clip.title}
                 </h3>
@@ -87,11 +87,11 @@ export function ClipCard({ clip, index, onEdit, onFavorite, onDownload, onShare,
             </div>
 
             {/* Content */}
-            <div className="p-4">
+            <div className="p-3 sm:p-4">
                 <div className="flex flex-col lg:flex-row gap-4 lg:items-start">
                     {/* Video Preview */}
                     <div className="shrink-0">
-                        <div className="relative w-full lg:w-[230px] h-[400px] rounded-lg overflow-hidden bg-black">
+                        <div className="relative w-full lg:w-[230px] h-[300px] sm:h-[400px] rounded-lg overflow-hidden bg-black">
                             {isGenerating ? (
                                 <div className="flex h-full w-full flex-col items-center justify-center gap-2">
                                     <IconLoader2 className="size-8 animate-spin text-primary" />
@@ -195,8 +195,8 @@ export function ClipCard({ clip, index, onEdit, onFavorite, onDownload, onShare,
                 </div>
 
                 {/* Action Buttons */}
-                <div className="flex items-center justify-between mt-4 pt-4 border-t">
-                    <div className="flex items-center gap-2">
+                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 mt-4 pt-4 border-t">
+                    <div className="flex flex-wrap items-center gap-2">
                         <Button
                             size="sm"
                             className="gap-2"
@@ -204,7 +204,7 @@ export function ClipCard({ clip, index, onEdit, onFavorite, onDownload, onShare,
                             disabled={!clip.storageUrl || isGenerating}
                         >
                             <HugeiconsIcon icon={Download04Icon} size={16} color="currentColor" />
-                            Download
+                            <span className="hidden sm:inline">Download</span>
                         </Button>
 
                         <Button
@@ -221,7 +221,7 @@ export function ClipCard({ clip, index, onEdit, onFavorite, onDownload, onShare,
                             }}
                         >
                             <HugeiconsIcon icon={SparklesIcon} size={16} color="currentColor" />
-                            Remove watermark
+                            <span className="hidden sm:inline">Remove watermark</span>
                         </Button>
 
                         <Button
@@ -238,7 +238,7 @@ export function ClipCard({ clip, index, onEdit, onFavorite, onDownload, onShare,
                             disabled={isGenerating}
                         >
                             <HugeiconsIcon icon={Edit02Icon} size={16} color="currentColor" />
-                            Edit
+                            <span className="hidden sm:inline">Edit</span>
                         </Button>
                     </div>
 
