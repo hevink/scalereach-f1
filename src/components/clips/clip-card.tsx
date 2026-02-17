@@ -168,7 +168,7 @@ export function ClipCard({ clip, index, onEdit, onFavorite, onDownload, onShare,
 
                         {/* Platform Chips */}
                         {clip.recommendedPlatforms && clip.recommendedPlatforms.length > 0 && (
-                            <div className="flex flex-wrap items-center gap-2 mt-4">
+                            <div className="flex flex-wrap items-center gap-1.5 sm:gap-2 mt-3 sm:mt-4">
                                 <TooltipProvider>
                                     {clip.recommendedPlatforms.map((platform) => {
                                         const config = PLATFORM_CONFIG[platform];
@@ -177,9 +177,9 @@ export function ClipCard({ clip, index, onEdit, onFavorite, onDownload, onShare,
                                         return (
                                             <Tooltip key={platform}>
                                                 <TooltipTrigger asChild>
-                                                    <div className="flex items-center gap-1.5 rounded-full border bg-muted/40 px-3 py-1.5 cursor-default">
-                                                        <Icon className="size-4" />
-                                                        <span className="text-xs font-medium">{config.label}</span>
+                                                    <div className="flex items-center gap-1 sm:gap-1.5 rounded-full border bg-muted/40 px-2 sm:px-3 py-1 sm:py-1.5 cursor-default">
+                                                        <Icon className="size-3.5 sm:size-4" />
+                                                        <span className="text-[11px] sm:text-xs font-medium">{config.label}</span>
                                                     </div>
                                                 </TooltipTrigger>
                                                 <TooltipContent>
@@ -195,11 +195,11 @@ export function ClipCard({ clip, index, onEdit, onFavorite, onDownload, onShare,
                 </div>
 
                 {/* Action Buttons */}
-                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 mt-4 pt-4 border-t">
-                    <div className="flex flex-wrap items-center gap-2">
+                <div className="flex items-center justify-between gap-2 mt-4 pt-4 border-t">
+                    <div className="flex items-center gap-1.5 sm:gap-2">
                         <Button
                             size="sm"
-                            className="gap-2"
+                            className="gap-1.5 sm:gap-2 h-8 sm:h-9 px-2.5 sm:px-3"
                             onClick={() => onDownload(clip)}
                             disabled={!clip.storageUrl || isGenerating}
                         >
@@ -210,7 +210,7 @@ export function ClipCard({ clip, index, onEdit, onFavorite, onDownload, onShare,
                         <Button
                             size="sm"
                             variant="outline"
-                            className="gap-2"
+                            className="gap-1.5 sm:gap-2 h-8 sm:h-9 px-2.5 sm:px-3"
                             disabled={isGenerating}
                             onClick={() => {
                                 if (isFreePlan) {
@@ -227,7 +227,7 @@ export function ClipCard({ clip, index, onEdit, onFavorite, onDownload, onShare,
                         <Button
                             size="sm"
                             variant="outline"
-                            className="gap-2"
+                            className="gap-1.5 sm:gap-2 h-8 sm:h-9 px-2.5 sm:px-3"
                             onClick={() => {
                                 if (isFreePlan) {
                                     setUpgradeFeature("Edit");
@@ -242,26 +242,26 @@ export function ClipCard({ clip, index, onEdit, onFavorite, onDownload, onShare,
                         </Button>
                     </div>
 
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-1 sm:gap-2">
                         <Button
                             size="icon"
                             variant="ghost"
                             className={cn(
-                                "size-9",
+                                "size-8 sm:size-9",
                                 clip.favorited && "text-red-500 hover:text-red-600"
                             )}
                             onClick={(e) => onFavorite(e, clip.id)}
                         >
-                            <HugeiconsIcon icon={FavouriteIcon} size={20} color={clip.favorited ? "#ef4444" : "currentColor"} />
+                            <HugeiconsIcon icon={FavouriteIcon} size={18} color={clip.favorited ? "#ef4444" : "currentColor"} />
                         </Button>
 
                         <Button
                             size="icon"
                             variant="ghost"
-                            className="size-9"
+                            className="size-8 sm:size-9"
                             onClick={() => onShare(clip)}
                         >
-                            <HugeiconsIcon icon={Share01Icon} size={20} color="currentColor" />
+                            <HugeiconsIcon icon={Share01Icon} size={18} color="currentColor" />
                         </Button>
                     </div>
                 </div>
