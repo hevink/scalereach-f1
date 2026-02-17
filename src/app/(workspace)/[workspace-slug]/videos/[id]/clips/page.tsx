@@ -348,15 +348,23 @@ export default function VideoClipsPage({ params }: VideoClipsPageProps) {
         [toggleFavorite]
     );
 
-    const handleDownload = useCallback((clip: ClipResponse) => {
+    const handleDownload = useCallback(async (clip: ClipResponse) => {
         if (clip.storageUrl) {
             analytics.clipDownloaded(clip.id);
-            const link = document.createElement("a");
-            link.href = clip.storageUrl;
-            link.download = `${clip.title || "clip"}.mp4`;
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
+            try {
+                const response = await fetch(clip.storageUrl);
+                const blob = await response.blob();
+                const url = URL.createObjectURL(blob);
+                const link = document.createElement("a");
+                link.href = url;
+                link.download = `${clip.title || "clip"}.mp4`;
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                URL.revokeObjectURL(url);
+            } catch {
+                window.open(clip.storageUrl, "_blank");
+            }
         }
     }, []);
 
