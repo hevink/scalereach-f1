@@ -207,27 +207,23 @@ export function ClipCard({ clip, index, onEdit, onFavorite, onDownload, onShare,
                             <span className="hidden sm:inline">Download</span>
                         </Button>
 
-                        <Button
-                            size="sm"
-                            variant="outline"
-                            className="gap-1.5 sm:gap-2 h-8 sm:h-9 px-2.5 sm:px-3"
-                            disabled={isGenerating}
-                            onClick={() => {
-                                if (isFreePlan) {
-                                    setUpgradeFeature("Remove watermark");
-                                } else {
-                                    // TODO: handle remove watermark for paid users
-                                }
-                            }}
-                        >
-                            <HugeiconsIcon icon={SparklesIcon} size={16} color="currentColor" />
-                            <span className="hidden sm:inline">Remove watermark</span>
-                        </Button>
+                        {isFreePlan && (
+                            <Button
+                                size="sm"
+                                variant="outline"
+                                className="gap-1.5 sm:gap-2 h-8 sm:h-9 px-2.5 sm:px-3"
+                                disabled={isGenerating}
+                                onClick={() => setUpgradeFeature("Remove watermark")}
+                            >
+                                <HugeiconsIcon icon={SparklesIcon} size={16} color="currentColor" />
+                                <span className="hidden sm:inline">Remove watermark</span>
+                            </Button>
+                        )}
 
                         <Button
                             size="sm"
                             variant="outline"
-                            className="gap-1.5 sm:gap-2 h-8 sm:h-9 px-2.5 sm:px-3"
+                            className={cn("gap-1.5 sm:gap-2 h-8 sm:h-9 px-2.5 sm:px-3", isFreePlan && "opacity-50")}
                             onClick={() => {
                                 if (isFreePlan) {
                                     setUpgradeFeature("Edit");
@@ -252,7 +248,7 @@ export function ClipCard({ clip, index, onEdit, onFavorite, onDownload, onShare,
                             )}
                             onClick={(e) => onFavorite(e, clip.id)}
                         >
-                            <HugeiconsIcon icon={FavouriteIcon} size={18} color={clip.favorited ? "#ef4444" : "currentColor"} />
+                            <HugeiconsIcon icon={FavouriteIcon} size={18} color={clip.favorited ? "#ef4444" : "currentColor"} fill={clip.favorited ? "#ef4444" : "none"} />
                         </Button>
 
                         <Button
