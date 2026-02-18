@@ -13,6 +13,7 @@ import {
     SubtitleIcon,
     MagicWand01Icon,
     FavouriteIcon,
+    Calendar01Icon,
 } from "@hugeicons/core-free-icons";
 
 import { Button } from "@/components/ui/button";
@@ -29,6 +30,7 @@ import {
     TwitterIcon,
     FacebookIcon,
 } from "@/components/icons/platform-icons";
+import { SchedulePostModal } from "@/components/social/SchedulePostModal";
 
 export interface ClipCardProps {
     clip: ClipResponse;
@@ -39,6 +41,7 @@ export interface ClipCardProps {
     onShare: (clip: ClipResponse) => void;
     userPlan: "free" | "starter" | "pro" | "agency";
     workspaceSlug: string;
+    workspaceId?: string;
 }
 
 const PLATFORM_CONFIG: Record<RecommendedPlatform, { icon: React.ElementType; label: string; tooltip: string }> = {
@@ -50,10 +53,11 @@ const PLATFORM_CONFIG: Record<RecommendedPlatform, { icon: React.ElementType; la
     facebook_reels: { icon: FacebookIcon, label: "FB Reels", tooltip: "Facebook Reels" },
 };
 
-export function ClipCard({ clip, index, onEdit, onFavorite, onDownload, onShare, userPlan, workspaceSlug }: ClipCardProps) {
+export function ClipCard({ clip, index, onEdit, onFavorite, onDownload, onShare, userPlan, workspaceSlug, workspaceId }: ClipCardProps) {
     const [activeTab, setActiveTab] = useState<"transcript" | "description">("transcript");
     const [upgradeFeature, setUpgradeFeature] = useState<string | null>(null);
     const [isDownloading, setIsDownloading] = useState(false);
+    const [scheduleOpen, setScheduleOpen] = useState(false);
     const isGenerating = clip.status === "generating" || clip.status === "detected";
     const isFreePlan = userPlan === "free";
 
@@ -248,6 +252,19 @@ export function ClipCard({ clip, index, onEdit, onFavorite, onDownload, onShare,
                             <HugeiconsIcon icon={Edit02Icon} size={16} color="currentColor" />
                             <span className="hidden sm:inline">Edit</span>
                         </Button>
+
+                        {workspaceId && clip.storageUrl && (
+                            <Button
+                                size="sm"
+                                variant="outline"
+                                className="gap-1.5 sm:gap-2 h-8 sm:h-9 px-2.5 sm:px-3"
+                                disabled={isGenerating}
+                                onClick={() => setScheduleOpen(true)}
+                            >
+                                <HugeiconsIcon icon={Calendar01Icon} size={16} color="currentColor" />
+                                <span className="hidden sm:inline">Post</span>
+                            </Button>
+                        )}
                     </div>
 
                     <div className="flex items-center gap-1 sm:gap-2">
@@ -284,6 +301,17 @@ export function ClipCard({ clip, index, onEdit, onFavorite, onDownload, onShare,
                 workspaceSlug={workspaceSlug}
                 feature={upgradeFeature || ""}
             />
+
+            {/* Schedule Post Modal */}
+            {workspaceId && scheduleOpen && (
+                <SchedulePostModal
+                    open={scheduleOpen}
+                    onOpenChange={setScheduleOpen}
+                    clip={clip}
+                    workspaceId={workspaceId}
+                    workspaceSlug={workspaceSlug}
+                />
+            )}
         </div>
     );
 }

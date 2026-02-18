@@ -12,6 +12,7 @@ import {
     AlertCircleIcon,
     KeyboardIcon,
     FavouriteIcon,
+    Share01Icon,
 } from "@hugeicons/core-free-icons";
 
 type IconProps = { className?: string };
@@ -60,4 +61,8 @@ export function HugeKeyboardIcon({ className }: IconProps) {
 
 export function HugeFavouriteIcon({ className }: IconProps) {
     return <HugeiconsIcon icon={FavouriteIcon} size={sizeFromClass(className)} className={className} />;
+}
+
+export function HugeSocialIcon({ className }: IconProps) {
+    return <HugeiconsIcon icon={Share01Icon} size={sizeFromClass(className)} className={className} />;
 }

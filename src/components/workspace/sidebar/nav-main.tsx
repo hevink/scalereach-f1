@@ -5,6 +5,7 @@ import {
   HugeScissorIcon,
   HugeStarIcon,
   HugeClockIcon,
+  HugeSocialIcon,
 } from "@/components/icons/huge-icons";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import {
@@ -72,6 +73,12 @@ export function NavMain({ currentSlug, workspaceId }: NavMainProps) {
   ];
 
   const toolsItems = [
+    {
+      title: "Social",
+      url: `/${currentSlug}/social`,
+      icon: HugeSocialIcon,
+      matchPath: (p: string) => p.includes("/social"),
+    },
     {
       title: "Minute Usage",
       url: `/${currentSlug}/credits`,
