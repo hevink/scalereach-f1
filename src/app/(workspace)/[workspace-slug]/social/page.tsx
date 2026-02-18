@@ -17,6 +17,7 @@ const PLATFORMS = [
   { id: "instagram", label: "Instagram" },
   { id: "youtube", label: "YouTube Shorts" },
   { id: "twitter", label: "Twitter / X" },
+  { id: "linkedin", label: "LinkedIn" },
 ];
 
 const STATUS_COLORS: Record<string, string> = {
