@@ -15,9 +15,11 @@ import {
     IconLayoutRows,
 } from "@tabler/icons-react";
 
+import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
+import { Progress } from "@/components/ui/progress";
 import { useVideo, useVideoStatus } from "@/hooks/useVideo";
 import { useClipsByVideo, useToggleFavorite } from "@/hooks/useClips";
 import { useWorkspaceBySlug } from "@/hooks/useWorkspace";
@@ -173,68 +175,115 @@ interface NoClipsProps {
     videoTitle: string;
     videoStatus: string;
     videoCreatedAt: string;
+    thumbnailUrl?: string | null;
 }
 
-function NoClips({ videoTitle, videoStatus, videoCreatedAt }: NoClipsProps) {
-    // Calculate time elapsed since video creation (in minutes)
-    const timeElapsedMinutes = (Date.now() - new Date(videoCreatedAt).getTime()) / (1000 * 60);
+function ProcessingCard({ icon, title, description, thumbnailUrl, step, totalSteps }: {
+    icon: React.ReactNode;
+    title: string;
+    description: string;
+    thumbnailUrl?: string | null;
+    step: number;
+    totalSteps: number;
+}) {
+    const progress = (step / totalSteps) * 100;
 
-    // If video has been processing for more than 5 minutes and still no clips, show "No Clips Found"
+    return (
+        <div className="w-full max-w-lg mx-auto">
+            <div className="overflow-hidden rounded-xl border bg-card shadow-sm">
+                {/* Thumbnail */}
+                {thumbnailUrl && (
+                    <div className="relative aspect-video w-full overflow-hidden bg-muted">
+                        <Image
+                            src={thumbnailUrl}
+                            alt="Video thumbnail"
+                            fill
+                            className="object-cover opacity-80"
+                            unoptimized
+                        />
+                        <div className="absolute inset-0 bg-linear-to-t from-card via-card/40 to-transparent" />
+                        <div className="absolute bottom-3 left-3 right-3 flex items-center justify-center">
+                            {icon}
+                        </div>
+                    </div>
+                )}
+
+                {/* Content */}
+                <div className="p-5 space-y-3">
+                    {!thumbnailUrl && (
+                        <div className="flex justify-center mb-1">{icon}</div>
+                    )}
+                    <div className="text-center">
+                        <h3 className="font-semibold text-base">{title}</h3>
+                        <p className="mt-1 text-sm text-muted-foreground">{description}</p>
+                    </div>
+
+                    {/* Progress */}
+                    <div className="space-y-1.5">
+                        <Progress value={progress} className="h-1.5" />
+                        <p className="text-xs text-muted-foreground text-center">
+                            Step {step} of {totalSteps}
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    );
+}
+
+function NoClips({ videoTitle, videoStatus, videoCreatedAt, thumbnailUrl }: NoClipsProps) {
+    const timeElapsedMinutes = (Date.now() - new Date(videoCreatedAt).getTime()) / (1000 * 60);
     const hasTimedOut = timeElapsedMinutes > 5;
 
     if (videoStatus === "downloading" && !hasTimedOut) {
         return (
-            <div className="flex flex-col items-center justify-center gap-4 rounded-lg border bg-muted/30 p-8">
-                <IconLoader2 className="size-8 animate-spin text-primary" />
-                <div className="text-center">
-                    <h3 className="font-medium">Downloading Video</h3>
-                    <p className="mt-1 text-sm text-muted-foreground">
-                        Downloading &quot;{videoTitle}&quot; from YouTube...
-                    </p>
-                </div>
-            </div>
+            <ProcessingCard
+                icon={<IconLoader2 className="size-8 animate-spin text-primary" />}
+                title="Downloading Video"
+                description={`Downloading "${videoTitle}" from YouTube...`}
+                thumbnailUrl={thumbnailUrl}
+                step={1}
+                totalSteps={4}
+            />
         );
     }
 
     if (videoStatus === "uploading" && !hasTimedOut) {
         return (
-            <div className="flex flex-col items-center justify-center gap-4 rounded-lg border bg-muted/30 p-8">
-                <IconLoader2 className="size-8 animate-spin text-primary" />
-                <div className="text-center">
-                    <h3 className="font-medium">Uploading Video</h3>
-                    <p className="mt-1 text-sm text-muted-foreground">
-                        Uploading video to storage...
-                    </p>
-                </div>
-            </div>
+            <ProcessingCard
+                icon={<IconLoader2 className="size-8 animate-spin text-primary" />}
+                title="Uploading Video"
+                description="Uploading video to storage..."
+                thumbnailUrl={thumbnailUrl}
+                step={2}
+                totalSteps={4}
+            />
         );
     }
 
     if (videoStatus === "transcribing" && !hasTimedOut) {
         return (
-            <div className="flex flex-col items-center justify-center gap-4 rounded-lg border bg-muted/30 p-8">
-                <IconLoader2 className="size-8 animate-spin text-primary" />
-                <div className="text-center">
-                    <h3 className="font-medium">Transcribing Audio</h3>
-                    <p className="mt-1 text-sm text-muted-foreground">
-                        Converting speech to text for &quot;{videoTitle}&quot;...
-                    </p>
-                </div>
-            </div>
+            <ProcessingCard
+                icon={<IconLoader2 className="size-8 animate-spin text-primary" />}
+                title="Transcribing Audio"
+                description={`Converting speech to text for "${videoTitle}"...`}
+                thumbnailUrl={thumbnailUrl}
+                step={3}
+                totalSteps={4}
+            />
         );
     }
 
     if ((videoStatus === "analyzing" || videoStatus === "processing") && !hasTimedOut) {
         return (
-            <div className="flex flex-col items-center justify-center gap-4 rounded-lg border bg-muted/30 p-8">
-                <IconLoader2 className="size-8 animate-spin text-primary" />
-                <div className="text-center">
-                    <h3 className="font-medium">Detecting Viral Clips</h3>
-                    <p className="mt-1 text-sm text-muted-foreground">
-                        AI is analyzing &quot;{videoTitle}&quot; for viral moments. This may take a few minutes.
-                    </p>
-                </div>
-            </div>
+            <ProcessingCard
+                icon={<IconLoader2 className="size-8 animate-spin text-primary" />}
+                title="Detecting Viral Clips"
+                description={`AI is analyzing "${videoTitle}" for viral moments. This may take a few minutes.`}
+                thumbnailUrl={thumbnailUrl}
+                step={4}
+                totalSteps={4}
+            />
         );
     }
 
@@ -256,19 +305,17 @@ function NoClips({ videoTitle, videoStatus, videoCreatedAt }: NoClipsProps) {
 
     if (videoStatus === "pending" && !hasTimedOut) {
         return (
-            <div className="flex flex-col items-center justify-center gap-4 rounded-lg border bg-muted/30 p-8">
-                <IconClock className="size-8 text-muted-foreground" />
-                <div className="text-center">
-                    <h3 className="font-medium">Queued for Processing</h3>
-                    <p className="mt-1 text-sm text-muted-foreground">
-                        &quot;{videoTitle}&quot; is waiting in the queue. Processing will start soon.
-                    </p>
-                </div>
-            </div>
+            <ProcessingCard
+                icon={<IconClock className="size-8 text-muted-foreground" />}
+                title="Queued for Processing"
+                description={`"${videoTitle}" is waiting in the queue. Processing will start soon.`}
+                thumbnailUrl={thumbnailUrl}
+                step={0}
+                totalSteps={4}
+            />
         );
     }
 
-    // Default: Show "No Clips Found" for completed videos or timed-out processing
     return (
         <div className="flex flex-col items-center justify-center gap-4 rounded-lg border bg-muted/30 p-8">
             <IconVideo className="size-8 text-muted-foreground" />
@@ -476,6 +523,7 @@ export default function VideoClipsPage({ params }: VideoClipsPageProps) {
                         videoTitle={video.title || "this video"}
                         videoStatus={video.status}
                         videoCreatedAt={video.createdAt}
+                        thumbnailUrl={video.thumbnailUrl || (video.metadata?.thumbnail as string) || null}
                     />
                 ) : (
                     <div className="space-y-6 max-w-4xl">
