@@ -538,6 +538,7 @@ export default function VideoClipsPage({ params }: VideoClipsPageProps) {
                                 onShare={handleShare}
                                 userPlan={(workspace?.plan as "free" | "starter" | "pro" | "agency") || "free"}
                                 workspaceSlug={slug}
+                                workspaceId={workspace?.id}
                             />
                         ))}
                     </div>

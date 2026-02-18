@@ -229,6 +229,7 @@ export default function AllClipsPage({ params, searchParams }: AllClipsPageProps
                                 onShare={handleShare}
                                 userPlan={userPlan}
                                 workspaceSlug={slug}
+                                workspaceId={workspace?.id}
                             />
                         ))}
                     </div>
