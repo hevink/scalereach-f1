@@ -11,6 +11,7 @@ import {
     IconSparkles,
     IconX,
     IconSubtask,
+    IconLanguage,
 } from "@tabler/icons-react";
 
 import { cn } from "@/lib/utils";
@@ -25,7 +26,7 @@ import {
 // Types
 // ============================================================================
 
-export type ToolbarPanel = "ai-enhance" | "captions" | "upload" | "brand" | "broll" | "transitions" | "music" | "ai" | null;
+export type ToolbarPanel = "ai-enhance" | "captions" | "upload" | "brand" | "broll" | "transitions" | "music" | "ai" | "translate" | null;
 
 export interface EditorToolbarProps {
     /** Currently active panel */
@@ -34,6 +35,8 @@ export interface EditorToolbarProps {
     onPanelChange: (panel: ToolbarPanel) => void;
     /** Content to show in the captions panel */
     captionsPanel?: ReactNode;
+    /** Content to show in the translate panel */
+    translatePanel?: ReactNode;
     /** Additional class names */
     className?: string;
 }
@@ -52,6 +55,7 @@ interface ToolbarItem {
 const TOOLBAR_ITEMS: ToolbarItem[] = [
     { id: "ai-enhance" as ToolbarPanel, icon: IconSparkles, label: "AI enhance", disabled: true },
     { id: "captions", icon: IconTextCaption, label: "Captions" },
+    { id: "translate", icon: IconLanguage, label: "Translate" },
     { id: "upload", icon: IconUpload, label: "Upload", disabled: true },
     { id: "brand", icon: IconPalette, label: "Brand template", disabled: true },
     { id: "broll", icon: IconMovie, label: "B-Roll", disabled: true },
@@ -138,6 +142,7 @@ export function EditorToolbar({
     activePanel,
     onPanelChange,
     captionsPanel,
+    translatePanel,
     className,
 }: EditorToolbarProps) {
     const handleItemClick = (itemId: ToolbarPanel) => {
@@ -164,7 +169,8 @@ export function EditorToolbar({
                     />
                     <div className="flex-1 overflow-auto p-4">
                         {activePanel === "captions" && captionsPanel}
-                        {activePanel !== "captions" && (
+                        {activePanel === "translate" && translatePanel}
+                        {activePanel !== "captions" && activePanel !== "translate" && (
                             <div className="flex flex-col items-center justify-center h-full text-center text-zinc-500">
                                 <p className="text-sm">Coming soon</p>
                             </div>

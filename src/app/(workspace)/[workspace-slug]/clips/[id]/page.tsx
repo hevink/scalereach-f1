@@ -28,6 +28,7 @@ import type { ToolbarPanel } from "@/components/clips/editor-toolbar";
 import { AdvancedTimeline } from "@/components/clips/advanced-timeline";
 import { KeyboardShortcutsModal, useKeyboardShortcutsModal } from "@/components/clips/keyboard-shortcuts-modal";
 import { CaptionPanelTabs } from "@/components/captions/caption-panel-tabs";
+import { TranslationPanel } from "@/components/translation/translation-panel";
 import { VideoCanvasEditor, type VideoCanvasEditorRef } from "@/components/video/video-canvas-editor";
 import { TranscriptParagraphView } from "@/components/transcript/transcript-paragraph-view";
 import { ExportOptions } from "@/components/export/export-options";
@@ -1223,6 +1224,14 @@ export default function ClipEditorPage({ params }: ClipEditorPageProps) {
                             presets={presets}
                             selectedPresetId={currentPresetId}
                             onPresetSelect={handlePresetSelect}
+                        />
+                    ),
+
+                    /* Right Panel: Translation Panel */
+                    translatePanel: (
+                        <TranslationPanel
+                            videoId={clip.videoId ?? ""}
+                            sourceLanguage={video?.transcriptLanguage ?? undefined}
                         />
                     ),
 
