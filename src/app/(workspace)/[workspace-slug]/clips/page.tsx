@@ -7,6 +7,8 @@ import {
     IconLoader2,
     IconHeart,
     IconFilter,
+    IconCalendar,
+    IconArrowRight,
 } from "@tabler/icons-react";
 
 import { Badge } from "@/components/ui/badge";
@@ -218,6 +220,26 @@ export default function AllClipsPage({ params, searchParams }: AllClipsPageProps
                     </div>
                 ) : (
                     <div className="space-y-6 max-w-4xl w-full">
+                        {/* Schedule nudge banner */}
+                        <div className="flex items-center justify-between gap-4 rounded-xl border border-primary/20 bg-primary/5 px-4 py-3">
+                            <div className="flex items-center gap-3">
+                                <div className="flex size-8 shrink-0 items-center justify-center rounded-full bg-primary/10">
+                                    <IconCalendar className="size-4 text-primary" />
+                                </div>
+                                <p className="text-sm text-foreground">
+                                    Ready to grow? Schedule your clips to TikTok, Instagram, YouTube Shorts & more.
+                                </p>
+                            </div>
+                            <button
+                                type="button"
+                                onClick={() => router.push(`/${slug}/social`)}
+                                className="flex shrink-0 items-center gap-1.5 rounded-full bg-primary px-3 py-1.5 text-xs font-medium text-primary-foreground hover:bg-primary/90 transition-colors"
+                            >
+                                Schedule
+                                <IconArrowRight className="size-3" />
+                            </button>
+                        </div>
+
                         {allClips.map((clip, index) => (
                             <ClipCard
                                 key={clip.id}

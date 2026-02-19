@@ -39,6 +39,8 @@ export function NavFooter({ currentSlug }: NavFooterProps) {
   const minutesTotal = minutesData?.minutesTotal ?? 0;
   const isLowMinutes = minutesTotal > 0 && (minutesRemaining / minutesTotal) < 0.2;
 
+  const isFree = workspace?.plan === "free";
+
   const footerItems = [
     {
       title: "Settings",
@@ -95,6 +97,21 @@ export function NavFooter({ currentSlug }: NavFooterProps) {
           {minutesRemaining} min
         </SidebarMenuBadge>
       </SidebarMenuItem>
+
+      {/* Free plan upgrade nudge */}
+      {isFree && (
+        <SidebarMenuItem>
+          <div
+            onClick={() => router.push(`/${currentSlug}/pricing`)}
+            className="cursor-pointer mx-1 mb-1 rounded-lg border border-primary/20 bg-primary/5 px-3 py-2.5 hover:bg-primary/10 transition-colors"
+          >
+            <p className="text-xs font-semibold text-primary mb-0.5">Unlock more minutes</p>
+            <p className="text-[11px] text-muted-foreground leading-relaxed">
+              500 min/month, no watermark, longer videos.
+            </p>
+          </div>
+        </SidebarMenuItem>
+      )}
 
       {/* Upgrade Button - Links to pricing page */}
       <SidebarMenuItem>

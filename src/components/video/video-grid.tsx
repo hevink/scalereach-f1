@@ -41,44 +41,56 @@ export function VideoGrid({
 
     // Show empty state when no videos
     if (videos.length === 0) {
+        const steps = [
+            {
+                num: "1",
+                icon: <IconUpload className="size-4 text-primary" />,
+                title: "Upload or paste a YouTube link",
+                desc: "Drop any video file or paste a YouTube URL above.",
+            },
+            {
+                num: "2",
+                icon: <IconVideo className="size-4 text-primary" />,
+                title: "AI generates your clips",
+                desc: "ScaleReach finds the best moments and adds captions automatically.",
+            },
+            {
+                num: "3",
+                icon: (
+                    <svg className="size-4 text-primary" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/>
+                        <line x1="8.59" x2="15.42" y1="13.51" y2="17.49"/><line x1="15.41" x2="8.59" y1="6.51" y2="10.49"/>
+                    </svg>
+                ),
+                title: "Schedule & post everywhere",
+                desc: "Publish to TikTok, Instagram, YouTube Shorts, and more in one click.",
+            },
+        ];
+
         return (
             <div className={cn(
-                "flex flex-col items-center justify-center py-16 px-4 text-center",
-                "rounded-2xl border-2 border-dashed bg-muted/30",
+                "flex flex-col items-center py-12 px-4",
+                "rounded-2xl border-2 border-dashed bg-muted/20",
                 className
             )}>
-                {/* Illustration */}
-                <div className="relative mb-6">
-                    <div className="flex size-20 items-center justify-center rounded-2xl bg-muted">
-                        <IconVideo className="size-10 text-muted-foreground" />
-                    </div>
-                    <div className="absolute -bottom-2 -right-2 flex size-8 items-center justify-center rounded-full bg-primary/10 border-2 border-background">
-                        <IconUpload className="size-4 text-primary" />
-                    </div>
-                </div>
-
-                {/* Text */}
-                <h3 className="text-lg font-semibold mb-2">
-                    No videos yet
-                </h3>
-                <p className="text-sm text-muted-foreground max-w-sm mb-6">
-                    Upload your first video or paste a YouTube link above to start creating viral clips with AI.
+                <h3 className="text-lg font-semibold mb-1">No videos yet</h3>
+                <p className="text-sm text-muted-foreground mb-8 text-center max-w-xs">
+                    Paste a YouTube link or upload a file above to get started.
                 </p>
 
-                {/* Features hint */}
-                <div className="flex flex-wrap justify-center gap-3 text-xs text-muted-foreground">
-                    <span className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-muted/50">
-                        <span className="size-1.5 rounded-full bg-primary" />
-                        AI clip detection
-                    </span>
-                    <span className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-muted/50">
-                        <span className="size-1.5 rounded-full bg-primary" />
-                        Auto captions
-                    </span>
-                    <span className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-muted/50">
-                        <span className="size-1.5 rounded-full bg-primary" />
-                        One-click export
-                    </span>
+                <div className="flex flex-col sm:flex-row gap-4 w-full max-w-2xl">
+                    {steps.map((step, i) => (
+                        <div key={step.num} className="flex flex-1 flex-col gap-2 rounded-xl border bg-card p-4">
+                            <div className="flex items-center gap-2">
+                                <div className="flex size-6 shrink-0 items-center justify-center rounded-full bg-primary/10 text-xs font-bold text-primary">
+                                    {step.num}
+                                </div>
+                                {step.icon}
+                            </div>
+                            <p className="text-sm font-medium">{step.title}</p>
+                            <p className="text-xs text-muted-foreground leading-relaxed">{step.desc}</p>
+                        </div>
+                    ))}
                 </div>
             </div>
         );

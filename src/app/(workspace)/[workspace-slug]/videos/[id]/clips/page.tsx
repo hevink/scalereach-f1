@@ -526,7 +526,26 @@ export default function VideoClipsPage({ params }: VideoClipsPageProps) {
                         thumbnailUrl={video.thumbnailUrl || (video.metadata?.thumbnail as string) || null}
                     />
                 ) : (
-                    <div className="space-y-6 max-w-4xl">
+                    <div className="space-y-6 max-w-4xl w-full">
+                        {/* Schedule nudge — shown when clips are ready */}
+                        <div className="flex items-center justify-between gap-4 rounded-xl border border-primary/20 bg-primary/5 px-4 py-3">
+                            <div className="flex items-center gap-3">
+                                <div className="flex size-8 shrink-0 items-center justify-center rounded-full bg-primary/10">
+                                    <IconCalendar className="size-4 text-primary" />
+                                </div>
+                                <p className="text-sm text-foreground">
+                                    Your clips are ready — schedule them to TikTok, Instagram, YouTube Shorts & more.
+                                </p>
+                            </div>
+                            <Button
+                                size="sm"
+                                onClick={() => router.push(`/${slug}/social`)}
+                                className="shrink-0 rounded-full"
+                            >
+                                Schedule now
+                            </Button>
+                        </div>
+
                         {clips.map((clip, index) => (
                             <ClipCard
                                 key={clip.id}
