@@ -224,7 +224,7 @@ export function CreditUsageTable({ workspaceSlug }: CreditUsageTableProps) {
                                 </div>
                                 <div className="min-w-0">
                                     {isLong ? (
-                                        <TooltipProvider delayDuration={300}>
+                                        <TooltipProvider>
                                             <Tooltip>
                                                 <TooltipTrigger asChild>
                                                     <p className="text-sm text-foreground/90 leading-snug truncate cursor-default">

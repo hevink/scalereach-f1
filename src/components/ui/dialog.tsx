@@ -78,7 +78,7 @@ function DialogContent({
   );
 }
 
-function DialogHeader({ className, ...props }: React.ComponentProps<"div">) {
+function DialogHeader({ className, ...props }: React.HTMLAttributes<HTMLDivElement>) {
   return (
     <div
       className={cn("flex flex-col gap-2", className)}
@@ -93,7 +93,7 @@ function DialogFooter({
   showCloseButton = false,
   children,
   ...props
-}: React.ComponentProps<"div"> & {
+}: React.HTMLAttributes<HTMLDivElement> & {
   showCloseButton?: boolean;
 }) {
   return (

@@ -25,7 +25,7 @@ function ButtonGroup({
   className,
   orientation,
   ...props
-}: React.ComponentProps<"fieldset"> &
+}: React.FieldsetHTMLAttributes<HTMLFieldSetElement> &
   VariantProps<typeof buttonGroupVariants>) {
   return (
     <fieldset

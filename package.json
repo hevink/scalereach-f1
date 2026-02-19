@@ -90,5 +90,9 @@
   "trustedDependencies": [
     "sharp",
     "unrs-resolver"
-  ]
+  ],
+  "overrides": {
+    "@types/react": "^19",
+    "@types/react-dom": "^19"
+  }
 }

@@ -1,7 +1,7 @@
 import { IconLoader } from "@tabler/icons-react";
 import { cn } from "@/lib/utils";
 
-function Spinner({ className, ...props }: React.ComponentProps<"svg">) {
+function Spinner({ className, ...props }: React.SVGProps<SVGSVGElement>) {
   return (
     <IconLoader
       aria-label="Loading"

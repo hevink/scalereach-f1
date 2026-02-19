@@ -25,6 +25,7 @@ interface VideoConfigFormProps {
     isLoading?: boolean;
     isSaving?: boolean;
     userPlan?: string;
+    workspaceSlug?: string;
     onSubmit: () => void;
     onSaveAsDefault: () => void;
 }
@@ -37,6 +38,7 @@ export function VideoConfigForm({
     isLoading = false,
     isSaving = false,
     userPlan = "free",
+    workspaceSlug = "",
     onSubmit,
     onSaveAsDefault,
 }: VideoConfigFormProps) {
@@ -155,6 +157,7 @@ export function VideoConfigForm({
                                 onChange={onChange}
                                 disabled={isDisabled}
                                 userPlan={userPlan}
+                                workspaceSlug={workspaceSlug}
                             />
 
                             {/* Emojis Toggle - disabled for now */}

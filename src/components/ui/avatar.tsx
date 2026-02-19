@@ -54,7 +54,7 @@ function AvatarFallback({
   );
 }
 
-function AvatarBadge({ className, ...props }: React.ComponentProps<"span">) {
+function AvatarBadge({ className, ...props }: React.HTMLAttributes<HTMLSpanElement>) {
   return (
     <span
       className={cn(
@@ -70,7 +70,7 @@ function AvatarBadge({ className, ...props }: React.ComponentProps<"span">) {
   );
 }
 
-function AvatarGroup({ className, ...props }: React.ComponentProps<"div">) {
+function AvatarGroup({ className, ...props }: React.HTMLAttributes<HTMLDivElement>) {
   return (
     <div
       className={cn(
@@ -86,7 +86,7 @@ function AvatarGroup({ className, ...props }: React.ComponentProps<"div">) {
 function AvatarGroupCount({
   className,
   ...props
-}: React.ComponentProps<"div">) {
+}: React.HTMLAttributes<HTMLDivElement>) {
   return (
     <div
       className={cn(

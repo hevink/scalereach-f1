@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
 
-function InputGroup({ className, ...props }: React.ComponentProps<"fieldset">) {
+function InputGroup({ className, ...props }: React.FieldsetHTMLAttributes<HTMLFieldSetElement>) {
   return (
     <fieldset
       className={cn(
@@ -131,7 +131,7 @@ function InputGroupText({ className, ...props }: React.ComponentProps<"span">) {
 function InputGroupInput({
   className,
   ...props
-}: React.ComponentProps<"input">) {
+}: React.InputHTMLAttributes<HTMLInputElement>) {
   return (
     <Input
       className={cn(

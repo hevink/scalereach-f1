@@ -68,7 +68,7 @@ function DrawerContent({
   );
 }
 
-function DrawerHeader({ className, ...props }: React.ComponentProps<"div">) {
+function DrawerHeader({ className, ...props }: React.HTMLAttributes<HTMLDivElement>) {
   return (
     <div
       className={cn(
@@ -81,7 +81,7 @@ function DrawerHeader({ className, ...props }: React.ComponentProps<"div">) {
   );
 }
 
-function DrawerFooter({ className, ...props }: React.ComponentProps<"div">) {
+function DrawerFooter({ className, ...props }: React.HTMLAttributes<HTMLDivElement>) {
   return (
     <div
       className={cn("mt-auto flex flex-col gap-2 p-4", className)}

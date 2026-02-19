@@ -63,7 +63,7 @@ function AlertDialogContent({
 function AlertDialogHeader({
   className,
   ...props
-}: React.ComponentProps<"div">) {
+}: React.HTMLAttributes<HTMLDivElement>) {
   return (
     <div
       className={cn(
@@ -79,7 +79,7 @@ function AlertDialogHeader({
 function AlertDialogFooter({
   className,
   ...props
-}: React.ComponentProps<"div">) {
+}: React.HTMLAttributes<HTMLDivElement>) {
   return (
     <div
       className={cn(
@@ -95,7 +95,7 @@ function AlertDialogFooter({
 function AlertDialogMedia({
   className,
   ...props
-}: React.ComponentProps<"div">) {
+}: React.HTMLAttributes<HTMLDivElement>) {
   return (
     <div
       className={cn(

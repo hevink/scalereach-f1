@@ -47,7 +47,7 @@ function PopoverContent({
   );
 }
 
-function PopoverHeader({ className, ...props }: React.ComponentProps<"div">) {
+function PopoverHeader({ className, ...props }: React.HTMLAttributes<HTMLDivElement>) {
   return (
     <div
       className={cn("flex flex-col gap-1 text-sm", className)}
