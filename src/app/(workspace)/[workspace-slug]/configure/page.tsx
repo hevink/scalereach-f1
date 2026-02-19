@@ -30,7 +30,8 @@ import { useValidateYouTubeUrl, useVideo } from "@/hooks/useVideo";
 import { useWorkspaceBySlug } from "@/hooks/useWorkspace";
 import { usePlanLimits } from "@/hooks/usePlanLimits";
 import { videoApi } from "@/lib/api/video";
-import { videoConfigApi, DEFAULT_VIDEO_CONFIG, type VideoConfigInput } from "@/lib/api/video-config";
+import { videoConfigApi, DEFAULT_VIDEO_CONFIG, type VideoConfigInput, type CaptionTemplate } from "@/lib/api/video-config";
+import { HoverCard, HoverCardTrigger, HoverCardContent } from "@/components/ui/hover-card";
 import { toast } from "sonner";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import type { VideoInfo } from "@/lib/api/video";
@@ -70,6 +71,62 @@ function formatDuration(seconds: number): string {
         return `${hrs}:${mins.toString().padStart(2, "0")}:${secs.toString().padStart(2, "0")}`;
     }
     return `${mins}:${secs.toString().padStart(2, "0")}`;
+}
+
+function CaptionPreviewPopup({ template }: { template: CaptionTemplate }) {
+    const style = template.style;
+    const words = ["THE", "QUICK", "BROWN", "FOX", "JUMPS"];
+    const [activeWord, setActiveWord] = useState(0);
+    const isBoxHighlight = style.backgroundOpacity > 50;
+
+    useEffect(() => {
+        const interval = setInterval(() => {
+            setActiveWord((prev) => (prev + 1) % words.length);
+        }, 550);
+        return () => clearInterval(interval);
+    }, []);
+
+    return (
+        <div className="space-y-2">
+            <p className="text-xs font-semibold">{template.name}</p>
+            <div className="mx-auto w-28 aspect-[9/16] relative rounded-lg overflow-hidden bg-slate-800 flex items-end justify-center pb-4">
+                <img
+                    alt=""
+                    aria-hidden="true"
+                    className="absolute inset-0 size-full object-cover opacity-50 pointer-events-none"
+                    src="https://images.pexels.com/photos/2310713/pexels-photo-2310713.jpeg"
+                />
+                <div className="absolute inset-0 bg-gradient-to-b from-black/10 to-black/40" aria-hidden="true" />
+                <div className="relative z-10 flex flex-wrap justify-center gap-x-1 gap-y-0.5 px-2 text-center">
+                    {words.map((word, i) => (
+                        <span
+                            key={word}
+                            className="font-bold leading-tight"
+                            style={{
+                                fontFamily: style.fontFamily || "Inter",
+                                fontSize: "11px",
+                                color: i === activeWord && style.highlightEnabled
+                                    ? style.highlightColor
+                                    : style.textColor,
+                                textShadow: style.shadow ? "1px 1px 2px rgba(0,0,0,0.9)" : "none",
+                                WebkitTextStroke: style.outline
+                                    ? `0.5px ${style.outlineColor || "#000"}`
+                                    : undefined,
+                                backgroundColor: i === activeWord && isBoxHighlight
+                                    ? style.highlightColor
+                                    : undefined,
+                                padding: isBoxHighlight ? "1px 3px" : undefined,
+                                borderRadius: isBoxHighlight ? "2px" : undefined,
+                            }}
+                        >
+                            {word}
+                        </span>
+                    ))}
+                </div>
+            </div>
+            <p className="text-[10px] text-muted-foreground text-center">Words highlight as spoken</p>
+        </div>
+    );
 }
 
 export default function ConfigurePage() {
@@ -522,44 +579,52 @@ export default function ConfigurePage() {
                                                                     {pageTemplates.map((template) => {
                                                                         const isSelected = (config.captionTemplateId ?? "classic") === template.id;
                                                                         return (
-                                                                            <button
-                                                                                key={template.id}
-                                                                                onClick={() => updateConfig({ captionTemplateId: template.id })}
-                                                                                disabled={isSubmitting}
-                                                                                className={cn(
-                                                                                    "relative flex flex-col items-center justify-center rounded-lg border p-2 pb-4 h-[72px] transition-all",
-                                                                                    "bg-muted/50 border-border",
-                                                                                    "hover:bg-muted hover:border-primary/50 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-primary",
-                                                                                    isSelected && "ring-1 ring-primary bg-muted border-primary",
-                                                                                    isSubmitting && "opacity-50 cursor-not-allowed"
-                                                                                )}
-                                                                            >
-                                                                                <div className="flex flex-col items-center justify-center">
-                                                                                    <span
-                                                                                        className="text-[9px] font-bold leading-tight"
-                                                                                        style={{
-                                                                                            fontFamily: template.style?.fontFamily || "Inter",
-                                                                                            color: template.style?.textColor || "#FFFFFF",
-                                                                                            textShadow: template.style?.shadow ? "1px 1px 2px rgba(0,0,0,0.8)" : "none",
-                                                                                        }}
-                                                                                    >
-                                                                                        TO GET
-                                                                                    </span>
-                                                                                    <span
-                                                                                        className="text-[9px] font-bold leading-tight"
-                                                                                        style={{
-                                                                                            fontFamily: template.style?.fontFamily || "Inter",
-                                                                                            color: template.style?.highlightColor || template.style?.textColor || "#00FF00",
-                                                                                            textShadow: template.style?.shadow ? "1px 1px 2px rgba(0,0,0,0.8)" : "none",
-                                                                                        }}
-                                                                                    >
-                                                                                        STARTED
-                                                                                    </span>
-                                                                                </div>
-                                                                                <span className="absolute bottom-0.5 text-[8px] text-muted-foreground truncate max-w-full px-1">
-                                                                                    {template.name}
-                                                                                </span>
-                                                                            </button>
+                                                                            <HoverCard key={template.id}>
+                                                                                <HoverCardTrigger
+                                                                                    render={
+                                                                                        <button
+                                                                                            onClick={() => updateConfig({ captionTemplateId: template.id })}
+                                                                                            disabled={isSubmitting}
+                                                                                            className={cn(
+                                                                                                "relative flex flex-col items-center justify-center rounded-lg border p-2 pb-4 h-[72px] transition-all",
+                                                                                                "bg-muted/50 border-border",
+                                                                                                "hover:bg-muted hover:border-primary/50 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-primary",
+                                                                                                isSelected && "ring-1 ring-primary bg-muted border-primary",
+                                                                                                isSubmitting && "opacity-50 cursor-not-allowed"
+                                                                                            )}
+                                                                                        >
+                                                                                            <div className="flex flex-col items-center justify-center">
+                                                                                                <span
+                                                                                                    className="text-[9px] font-bold leading-tight"
+                                                                                                    style={{
+                                                                                                        fontFamily: template.style?.fontFamily || "Inter",
+                                                                                                        color: template.style?.textColor || "#FFFFFF",
+                                                                                                        textShadow: template.style?.shadow ? "1px 1px 2px rgba(0,0,0,0.8)" : "none",
+                                                                                                    }}
+                                                                                                >
+                                                                                                    TO GET
+                                                                                                </span>
+                                                                                                <span
+                                                                                                    className="text-[9px] font-bold leading-tight"
+                                                                                                    style={{
+                                                                                                        fontFamily: template.style?.fontFamily || "Inter",
+                                                                                                        color: template.style?.highlightColor || template.style?.textColor || "#00FF00",
+                                                                                                        textShadow: template.style?.shadow ? "1px 1px 2px rgba(0,0,0,0.8)" : "none",
+                                                                                                    }}
+                                                                                                >
+                                                                                                    STARTED
+                                                                                                </span>
+                                                                                            </div>
+                                                                                            <span className="absolute bottom-0.5 text-[8px] text-muted-foreground truncate max-w-full px-1">
+                                                                                                {template.name}
+                                                                                            </span>
+                                                                                        </button>
+                                                                                    }
+                                                                                />
+                                                                                <HoverCardContent side="top" className="w-36 p-3">
+                                                                                    <CaptionPreviewPopup template={template} />
+                                                                                </HoverCardContent>
+                                                                            </HoverCard>
                                                                         );
                                                                     })}
                                                                 </div>
