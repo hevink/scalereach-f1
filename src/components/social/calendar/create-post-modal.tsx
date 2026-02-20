@@ -3,8 +3,11 @@
 import { useState, useEffect } from "react";
 import { format } from "date-fns";
 import { useQuery } from "@tanstack/react-query";
-import { IconCheck, IconFlame, IconClock, IconX, IconVideo } from "@tabler/icons-react";
+import { IconCheck, IconFlame, IconClock, IconX, IconVideo, IconCalendar } from "@tabler/icons-react";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Calendar } from "@/components/ui/calendar";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -58,6 +61,9 @@ const PLATFORM_ICONS: Record<string, React.ElementType> = {
   linkedin: LinkedInIcon,
 };
 
+const HOURS = Array.from({ length: 24 }, (_, i) => String(i).padStart(2, "0"));
+const MINUTES = ["00", "15", "30", "45"];
+
 function PlatformChip({ platform }: { platform: string }) {
   const Icon = PLATFORM_ICONS[platform];
   const label = PLATFORM_LABELS[platform] ?? platform;
@@ -87,13 +93,7 @@ function hooksToHashtags(hooks: string[] | null): string[] {
 
 function ClipThumbnail({ clip }: { clip: WorkspaceClip }) {
   if (clip.thumbnailUrl) {
-    return (
-      <img
-        src={clip.thumbnailUrl}
-        alt={clip.title || ""}
-        className="absolute inset-0 size-full object-cover"
-      />
-    );
+    return <img src={clip.thumbnailUrl} alt={clip.title || ""} className="absolute inset-0 size-full object-cover" />;
   }
   if (clip.storageUrl) {
     return (
@@ -103,9 +103,7 @@ function ClipThumbnail({ clip }: { clip: WorkspaceClip }) {
         preload="metadata"
         muted
         playsInline
-        onLoadedMetadata={(e) => {
-          (e.currentTarget as HTMLVideoElement).currentTime = 1;
-        }}
+        onLoadedMetadata={(e) => { (e.currentTarget as HTMLVideoElement).currentTime = 1; }}
       />
     );
   }
@@ -129,7 +127,10 @@ export function CreatePostFromCalendarModal({ workspaceId }: Props) {
   const [caption, setCaption] = useState("");
   const [hashtags, setHashtags] = useState<string[]>([]);
   const [hashtagInput, setHashtagInput] = useState("");
-  const [scheduledAt, setScheduledAt] = useState("");
+  const [selectedDate, setSelectedDate] = useState<Date | undefined>(undefined);
+  const [selectedHour, setSelectedHour] = useState("12");
+  const [selectedMinute, setSelectedMinute] = useState("00");
+  const [calendarOpen, setCalendarOpen] = useState(false);
 
   useEffect(() => {
     if (createModalDate) {
@@ -139,7 +140,9 @@ export function CreatePostFromCalendarModal({ workspaceId }: Props) {
       setCaption("");
       setHashtags([]);
       setHashtagInput("");
-      setScheduledAt(format(createModalDate, "yyyy-MM-dd'T'HH:mm"));
+      setSelectedDate(createModalDate);
+      setSelectedHour(String(createModalDate.getHours()).padStart(2, "0"));
+      setSelectedMinute("00");
     }
   }, [createModalDate]);
 
@@ -149,6 +152,14 @@ export function CreatePostFromCalendarModal({ workspaceId }: Props) {
       setHashtags(hooksToHashtags(selectedClip.hooks));
     }
   }, [selectedClip]);
+
+  const scheduledAt = selectedDate
+    ? (() => {
+        const d = new Date(selectedDate);
+        d.setHours(parseInt(selectedHour), parseInt(selectedMinute), 0, 0);
+        return d.toISOString();
+      })()
+    : "";
 
   const { data: clips = [], isLoading: loadingClips } = useQuery({
     queryKey: ["social", "workspace-clips", workspaceId],
@@ -265,37 +276,28 @@ export function CreatePostFromCalendarModal({ workspaceId }: Props) {
                           : "border-border hover:border-primary/50 hover:shadow-sm"
                       )}
                     >
-                      {/* Thumbnail */}
                       <div className="relative aspect-[3/4] w-full overflow-hidden rounded-t-xl bg-muted/30">
                         <ClipThumbnail clip={clip} />
-
-                        {/* Bottom overlay — score + duration */}
-                        <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent px-2 pb-2 pt-8">
+                        <div className="absolute inset-x-0 bottom-0 bg-linear-to-t from-black/80 via-black/20 to-transparent px-2 pb-2 pt-8">
                           <div className="flex items-center justify-between">
                             {clip.score > 0 ? (
                               <span className="flex items-center gap-0.5 text-[11px] font-bold text-amber-400 drop-shadow">
-                                <IconFlame size={11} />
-                                {clip.score}
+                                <IconFlame size={11} />{clip.score}
                               </span>
                             ) : <span />}
                             {clip.duration && (
                               <span className="flex items-center gap-0.5 rounded bg-black/50 px-1 py-0.5 text-[10px] text-white/80 backdrop-blur-sm">
-                                <IconClock size={10} />
-                                {formatDuration(clip.duration)}
+                                <IconClock size={10} />{formatDuration(clip.duration)}
                               </span>
                             )}
                           </div>
                         </div>
-
-                        {/* Selected checkmark */}
                         {isSelected && (
                           <div className="absolute right-2 top-2 flex size-5 items-center justify-center rounded-full bg-primary shadow-lg">
                             <IconCheck size={11} className="text-primary-foreground" strokeWidth={3} />
                           </div>
                         )}
                       </div>
-
-                      {/* Title + platform chips */}
                       <div className={cn(
                         "flex flex-col gap-1 overflow-hidden rounded-b-xl p-2 transition-colors duration-150",
                         isSelected ? "bg-primary/5" : "bg-card group-hover:bg-muted/20"
@@ -336,7 +338,7 @@ export function CreatePostFromCalendarModal({ workspaceId }: Props) {
           <div className="flex divide-x">
             {/* Left: clip preview */}
             <div className="flex w-44 shrink-0 flex-col gap-2.5 p-4">
-              <div className="relative aspect-[9/16] w-full overflow-hidden rounded-xl bg-muted/40">
+              <div className="relative aspect-9/16 w-full overflow-hidden rounded-xl bg-muted/40">
                 <ClipThumbnail clip={selectedClip} />
               </div>
               <p className="line-clamp-3 text-xs font-medium leading-snug text-foreground">
@@ -362,33 +364,40 @@ export function CreatePostFromCalendarModal({ workspaceId }: Props) {
             <div className="flex flex-1 flex-col gap-4 overflow-y-auto p-5 max-h-[540px]">
               {/* Account */}
               <div className="flex flex-col gap-2">
-                <Label className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
-                  Post to
-                </Label>
+                <Label className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">Post to</Label>
                 {accounts.length === 0 ? (
                   <p className="text-xs text-muted-foreground">No connected accounts. Connect one from the Social page.</p>
                 ) : (
-                  <div className="flex flex-wrap gap-1.5">
+                  <div className="flex flex-col gap-1.5">
                     {accounts.map((acc) => {
                       const Icon = PLATFORM_ICONS[acc.platform];
+                      const isSelected = selectedAccountId === acc.id;
                       return (
                         <button
                           key={acc.id}
                           type="button"
                           onClick={() => setSelectedAccountId(acc.id)}
                           className={cn(
-                            "flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs font-medium transition-all",
-                            selectedAccountId === acc.id
-                              ? "border-primary bg-primary text-primary-foreground shadow-sm"
-                              : "border-border bg-muted/30 hover:border-primary/50"
+                            "flex items-center gap-3 rounded-xl border px-3 py-2.5 text-sm transition-all text-left",
+                            isSelected
+                              ? "border-primary bg-primary/5 shadow-sm"
+                              : "border-border bg-muted/20 hover:border-primary/40 hover:bg-muted/40"
                           )}
                         >
                           {Icon && (
-                            <span className={cn("flex size-4 items-center justify-center rounded-full p-0.5", PLATFORM_COLORS[acc.platform] || "bg-muted")}>
-                              <Icon className="size-2.5" />
+                            <span className={cn("flex size-7 shrink-0 items-center justify-center rounded-lg p-1", PLATFORM_COLORS[acc.platform] || "bg-muted")}>
+                              <Icon className="size-4" />
                             </span>
                           )}
-                          {acc.accountName}
+                          <div className="min-w-0 flex-1">
+                            <p className="truncate text-xs font-semibold">{acc.accountName}</p>
+                            <p className="text-[11px] text-muted-foreground">{PLATFORM_LABELS[acc.platform] || acc.platform}</p>
+                          </div>
+                          {isSelected && (
+                            <span className="flex size-5 shrink-0 items-center justify-center rounded-full bg-primary text-primary-foreground">
+                              <IconCheck size={11} strokeWidth={3} />
+                            </span>
+                          )}
                         </button>
                       );
                     })}
@@ -396,25 +405,68 @@ export function CreatePostFromCalendarModal({ workspaceId }: Props) {
                 )}
               </div>
 
-              {/* Date/time */}
-              <div className="flex flex-col gap-1.5">
-                <Label className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
-                  Date & Time
-                </Label>
-                <Input
-                  type="datetime-local"
-                  value={scheduledAt}
-                  onChange={(e) => setScheduledAt(e.target.value)}
-                  min={new Date().toISOString().slice(0, 16)}
-                  className="text-sm"
-                />
+              {/* Date & Time — combined in one row */}
+              <div className="flex flex-col gap-2">
+                <Label className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">Date & Time</Label>
+                <div className="flex items-center gap-2">
+                  {/* Date */}
+                  <Popover open={calendarOpen} onOpenChange={setCalendarOpen}>
+                    <PopoverTrigger
+                      className={cn(
+                        "flex flex-1 items-center gap-2 rounded-md border border-input bg-background px-3 py-2 text-sm font-normal transition-colors hover:bg-accent hover:text-accent-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+                        !selectedDate && "text-muted-foreground"
+                      )}
+                    >
+                      <IconCalendar size={14} />
+                      {selectedDate ? format(selectedDate, "MMM d, yyyy") : "Pick date"}
+                    </PopoverTrigger>
+                    <PopoverContent className="w-auto p-0" align="start">
+                      <Calendar
+                        mode="single"
+                        selected={selectedDate}
+                        onSelect={(d) => { setSelectedDate(d); setCalendarOpen(false); }}
+                        disabled={(d) => d < new Date(new Date().setHours(0, 0, 0, 0))}
+                        initialFocus
+                      />
+                    </PopoverContent>
+                  </Popover>
+
+                  {/* Time */}
+                  <div className="flex items-center gap-1 shrink-0">
+                    <IconClock size={14} className="text-muted-foreground" />
+                    <Select value={selectedHour} onValueChange={(v) => v && setSelectedHour(v)}>
+                      <SelectTrigger className="w-20 text-sm">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent className="max-h-48">
+                        {HOURS.map((h) => (
+                          <SelectItem key={h} value={h}>{h}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <span className="text-muted-foreground font-medium">:</span>
+                    <Select value={selectedMinute} onValueChange={(v) => v && setSelectedMinute(v)}>
+                      <SelectTrigger className="w-20 text-sm">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {MINUTES.map((m) => (
+                          <SelectItem key={m} value={m}>{m}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+                {selectedDate && (
+                  <p className="text-xs text-muted-foreground">
+                    Scheduled for {format(selectedDate, "PPP")} at {selectedHour}:{selectedMinute}
+                  </p>
+                )}
               </div>
 
               {/* Caption */}
               <div className="flex flex-col gap-1.5">
-                <Label className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
-                  Caption
-                </Label>
+                <Label className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">Caption</Label>
                 <Textarea
                   value={caption}
                   onChange={(e) => setCaption(e.target.value)}
@@ -426,22 +478,13 @@ export function CreatePostFromCalendarModal({ workspaceId }: Props) {
 
               {/* Hashtags */}
               <div className="flex flex-col gap-2">
-                <Label className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
-                  Hashtags
-                </Label>
+                <Label className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">Hashtags</Label>
                 {hashtags.length > 0 && (
                   <div className="flex flex-wrap gap-1.5">
                     {hashtags.map((tag) => (
-                      <span
-                        key={tag}
-                        className="flex items-center gap-1 rounded-full bg-primary/10 px-2.5 py-1 text-[11px] font-medium text-primary"
-                      >
+                      <span key={tag} className="flex items-center gap-1 rounded-full bg-primary/10 px-2.5 py-1 text-[11px] font-medium text-primary">
                         #{tag}
-                        <button
-                          type="button"
-                          onClick={() => setHashtags((p) => p.filter((t) => t !== tag))}
-                          className="opacity-60 hover:opacity-100"
-                        >
+                        <button type="button" onClick={() => setHashtags((p) => p.filter((t) => t !== tag))} className="opacity-60 hover:opacity-100">
                           <IconX size={10} />
                         </button>
                       </span>
@@ -456,9 +499,7 @@ export function CreatePostFromCalendarModal({ workspaceId }: Props) {
                     className="text-sm"
                     onKeyDown={(e) => e.key === "Enter" && (e.preventDefault(), addHashtag())}
                   />
-                  <Button type="button" variant="outline" size="sm" onClick={() => addHashtag()}>
-                    Add
-                  </Button>
+                  <Button type="button" variant="outline" size="sm" onClick={() => addHashtag()}>Add</Button>
                 </div>
               </div>
 
