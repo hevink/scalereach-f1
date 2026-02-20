@@ -89,7 +89,7 @@ function CaptionPreviewPopup({ template }: { template: CaptionTemplate }) {
     return (
         <div className="space-y-2">
             <p className="text-xs font-semibold">{template.name}</p>
-            <div className="relative rounded-lg overflow-hidden bg-slate-800 h-20 flex items-end justify-center pb-3">
+            <div className="relative rounded-lg overflow-hidden bg-slate-800 h-28 flex items-end justify-center pb-3">
                 <img
                     alt=""
                     aria-hidden="true"
