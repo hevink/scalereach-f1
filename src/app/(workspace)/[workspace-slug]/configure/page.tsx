@@ -129,9 +129,10 @@ function CaptionPreviewPopup({ template }: { template: CaptionTemplate }) {
                             style={{
                                 fontFamily: style.fontFamily || "Inter",
                                 fontSize: "20px",
+                                textTransform: (style.textTransform as React.CSSProperties["textTransform"]) || "uppercase",
                                 textShadow: style.shadow ? "1px 1px 3px rgba(0,0,0,0.9)" : "none",
                                 WebkitTextStroke: style.outline
-                                    ? `0.5px ${style.outlineColor || "#000"}`
+                                    ? `${(style.outlineWidth || 2) * 0.1}px ${style.outlineColor || "#000"}`
                                     : undefined,
                                 backgroundColor: i === activeWord && isBoxHighlight
                                     ? style.highlightColor
