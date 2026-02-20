@@ -89,34 +89,34 @@ function CaptionPreviewPopup({ template }: { template: CaptionTemplate }) {
     return (
         <div className="space-y-2">
             <p className="text-xs font-semibold">{template.name}</p>
-            <div className="mx-auto w-28 aspect-[9/16] relative rounded-lg overflow-hidden bg-slate-800 flex items-end justify-center pb-4">
+            <div className="relative rounded-lg overflow-hidden bg-slate-800 h-20 flex items-end justify-center pb-3">
                 <img
                     alt=""
                     aria-hidden="true"
                     className="absolute inset-0 size-full object-cover opacity-50 pointer-events-none"
                     src="https://images.pexels.com/photos/2310713/pexels-photo-2310713.jpeg"
                 />
-                <div className="absolute inset-0 bg-gradient-to-b from-black/10 to-black/40" aria-hidden="true" />
-                <div className="relative z-10 flex flex-wrap justify-center gap-x-1 gap-y-0.5 px-2 text-center">
+                <div className="absolute inset-0 bg-linear-to-b from-black/10 to-black/50" aria-hidden="true" />
+                <div className="relative z-10 flex flex-wrap justify-center gap-x-1.5 gap-y-0.5 px-3 text-center">
                     {words.map((word, i) => (
                         <span
                             key={word}
                             className="font-bold leading-tight"
                             style={{
                                 fontFamily: style.fontFamily || "Inter",
-                                fontSize: "11px",
+                                fontSize: "20px",
                                 color: i === activeWord && style.highlightEnabled
                                     ? style.highlightColor
                                     : style.textColor,
-                                textShadow: style.shadow ? "1px 1px 2px rgba(0,0,0,0.9)" : "none",
+                                textShadow: style.shadow ? "1px 1px 3px rgba(0,0,0,0.9)" : "none",
                                 WebkitTextStroke: style.outline
                                     ? `0.5px ${style.outlineColor || "#000"}`
                                     : undefined,
                                 backgroundColor: i === activeWord && isBoxHighlight
                                     ? style.highlightColor
                                     : undefined,
-                                padding: isBoxHighlight ? "1px 3px" : undefined,
-                                borderRadius: isBoxHighlight ? "2px" : undefined,
+                                padding: isBoxHighlight ? "1px 4px" : undefined,
+                                borderRadius: isBoxHighlight ? "3px" : undefined,
                             }}
                         >
                             {word}
