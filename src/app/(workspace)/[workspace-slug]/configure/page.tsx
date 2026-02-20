@@ -75,16 +75,38 @@ function formatDuration(seconds: number): string {
 
 function CaptionPreviewPopup({ template }: { template: CaptionTemplate }) {
     const style = template.style;
-    const words = ["THE", "QUICK", "BROWN", "FOX", "JUMPS"];
+    const words = ["YOUR", "CONTENT", "GOES", "VIRAL"];
     const [activeWord, setActiveWord] = useState(0);
     const isBoxHighlight = style.backgroundOpacity > 50;
+    const animation = (style.animation as string) || "karaoke";
 
     useEffect(() => {
         const interval = setInterval(() => {
             setActiveWord((prev) => (prev + 1) % words.length);
-        }, 550);
+        }, 600);
         return () => clearInterval(interval);
     }, []);
+
+    const getAnimate = (i: number) => {
+        const isActive = i === activeWord;
+        const highlightColor = style.highlightEnabled ? style.highlightColor : style.textColor;
+        if (animation === "bounce") {
+            return { scale: isActive ? 1.35 : 1, color: isActive ? highlightColor : style.textColor };
+        }
+        if (animation === "fade") {
+            return { opacity: isActive ? 1 : 0.35, color: isActive ? highlightColor : style.textColor };
+        }
+        if (animation === "word-by-word") {
+            return { opacity: i <= activeWord ? 1 : 0.15, color: isActive ? highlightColor : style.textColor };
+        }
+        // karaoke
+        return { color: isActive ? highlightColor : style.textColor };
+    };
+
+    const getTransition = () => {
+        if (animation === "bounce") return { type: "spring" as const, stiffness: 400, damping: 15 };
+        return { duration: 0.15 };
+    };
 
     return (
         <div className="space-y-2">
@@ -99,15 +121,14 @@ function CaptionPreviewPopup({ template }: { template: CaptionTemplate }) {
                 <div className="absolute inset-0 bg-linear-to-b from-black/10 to-black/50" aria-hidden="true" />
                 <div className="relative z-10 flex flex-wrap justify-center gap-x-1.5 gap-y-0.5 px-3 text-center">
                     {words.map((word, i) => (
-                        <span
+                        <motion.span
                             key={word}
-                            className="font-bold leading-tight"
+                            className="font-bold leading-tight inline-block"
+                            animate={getAnimate(i)}
+                            transition={getTransition()}
                             style={{
                                 fontFamily: style.fontFamily || "Inter",
                                 fontSize: "20px",
-                                color: i === activeWord && style.highlightEnabled
-                                    ? style.highlightColor
-                                    : style.textColor,
                                 textShadow: style.shadow ? "1px 1px 3px rgba(0,0,0,0.9)" : "none",
                                 WebkitTextStroke: style.outline
                                     ? `0.5px ${style.outlineColor || "#000"}`
@@ -120,11 +141,11 @@ function CaptionPreviewPopup({ template }: { template: CaptionTemplate }) {
                             }}
                         >
                             {word}
-                        </span>
+                        </motion.span>
                     ))}
                 </div>
             </div>
-            <p className="text-[10px] text-muted-foreground text-center">Words highlight as spoken</p>
+            <p className="text-[10px] text-muted-foreground text-center capitalize">{animation} animation</p>
         </div>
     );
 }
