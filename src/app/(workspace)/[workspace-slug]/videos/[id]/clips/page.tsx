@@ -427,7 +427,10 @@ export default function VideoClipsPage({ params }: VideoClipsPageProps) {
         }
     }, []);
 
-    if (videoLoading || clipsLoading) {
+    // Video just completed but clips haven't loaded yet — avoid flashing "No Clips Found"
+    const isWaitingForClips = video?.status === "completed" && (!clips || clips.length === 0);
+
+    if (videoLoading || clipsLoading || isWaitingForClips) {
         return <VideoClipsLoading />;
     }
 
