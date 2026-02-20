@@ -12,16 +12,12 @@ import {
   IconSend,
   IconHash,
   IconLoader2,
-  IconClock,
 } from "@tabler/icons-react";
-import { format } from "date-fns";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Calendar } from "@/components/ui/calendar";
+import { DateTimePicker } from "@/components/ui/datetime-picker";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
 import { useSocialAccounts } from "@/hooks/useSocialAccounts";
 import { useSchedulePost } from "@/hooks/useScheduledPosts";
@@ -42,9 +38,6 @@ const PLATFORM_META: Record<string, { label: string; icon: React.ReactNode; colo
   twitter:   { label: "Twitter / X", icon: <IconBrandTwitter size={13} />,   color: "text-white", bg: "bg-sky-500" },
 };
 
-const HOURS = Array.from({ length: 24 }, (_, i) => String(i).padStart(2, "0"));
-const MINUTES = ["00", "15", "30", "45"];
-
 export function SchedulePostModal({
   open,
   onOpenChange,
@@ -56,21 +49,10 @@ export function SchedulePostModal({
   const [hashtagInput, setHashtagInput] = useState("");
   const [hashtags, setHashtags] = useState<string[]>([]);
   const [postType, setPostType] = useState<"immediate" | "scheduled">("scheduled");
-  const [selectedDate, setSelectedDate] = useState<Date | undefined>(undefined);
-  const [selectedHour, setSelectedHour] = useState("12");
-  const [selectedMinute, setSelectedMinute] = useState("00");
-  const [calendarOpen, setCalendarOpen] = useState(false);
+  const [scheduledDate, setScheduledDate] = useState<Date | undefined>(undefined);
 
   const { data: accounts = [], isLoading } = useSocialAccounts(workspaceId);
   const schedulePost = useSchedulePost(workspaceId);
-
-  const scheduledAt = selectedDate
-    ? (() => {
-        const d = new Date(selectedDate);
-        d.setHours(parseInt(selectedHour), parseInt(selectedMinute), 0, 0);
-        return d.toISOString();
-      })()
-    : "";
 
   function addHashtag() {
     const tag = hashtagInput.trim().replace(/^#/, "");
@@ -87,17 +69,20 @@ export function SchedulePostModal({
       postType,
       caption,
       hashtags,
-      scheduledAt: postType === "scheduled" ? scheduledAt : undefined,
+      scheduledAt: postType === "scheduled" ? scheduledDate?.toISOString() : undefined,
     });
     onOpenChange(false);
   }
 
   const selectedAccount = accounts.find((a) => a.id === selectedAccountId);
-  const canSubmit = !!selectedAccountId && !schedulePost.isPending && (postType === "immediate" || !!scheduledAt);
+  const canSubmit =
+    !!selectedAccountId &&
+    !schedulePost.isPending &&
+    (postType === "immediate" || !!scheduledDate);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl gap-0 p-0 overflow-hidden [&>button]:hidden">
+      <DialogContent className="max-w-3xl gap-0 p-0 overflow-hidden [&>button]:hidden">
         {/* Header */}
         <div className="flex items-center justify-between border-b px-5 py-4">
           <div>
@@ -174,8 +159,17 @@ export function SchedulePostModal({
                               : "border-border bg-muted/20 hover:border-primary/40 hover:bg-muted/40"
                           )}
                         >
-                          <span className={cn("flex size-7 shrink-0 items-center justify-center rounded-lg", meta?.bg || "bg-muted", meta?.color || "")}>
-                            {meta?.icon || acc.platform[0].toUpperCase()}
+                          <span className="relative flex size-9 shrink-0 items-center justify-center rounded-full overflow-hidden bg-muted">
+                            {acc.avatarUrl ? (
+                              <img src={acc.avatarUrl} alt={acc.accountName} className="size-full object-cover" />
+                            ) : (
+                              <span className={cn("flex size-full items-center justify-center rounded-full", meta?.bg || "bg-muted", meta?.color || "")}>
+                                {meta?.icon || acc.platform[0].toUpperCase()}
+                              </span>
+                            )}
+                            <span className={cn("absolute bottom-0 right-0 flex size-3.5 items-center justify-center rounded-full border border-background", meta?.bg || "bg-muted", meta?.color || "")}>
+                              {meta?.icon ? <span className="scale-75">{meta.icon}</span> : null}
+                            </span>
                           </span>
                           <div className="min-w-0 flex-1">
                             <p className="truncate text-xs font-semibold">{acc.accountName}</p>
@@ -216,63 +210,13 @@ export function SchedulePostModal({
                 </div>
 
                 {postType === "scheduled" && (
-                  <div className="flex flex-col gap-2">
-                    <div className="flex items-center gap-2">
-                      {/* Date */}
-                      <Popover open={calendarOpen} onOpenChange={setCalendarOpen}>
-                        <PopoverTrigger
-                          className={cn(
-                            "flex flex-1 items-center gap-2 rounded-md border border-input bg-background px-3 py-2 text-sm font-normal transition-colors hover:bg-accent hover:text-accent-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
-                            !selectedDate && "text-muted-foreground"
-                          )}
-                        >
-                          <IconCalendar size={14} />
-                          {selectedDate ? format(selectedDate, "MMM d, yyyy") : "Pick date"}
-                        </PopoverTrigger>
-                        <PopoverContent className="w-auto p-0" align="start">
-                          <Calendar
-                            mode="single"
-                            selected={selectedDate}
-                            onSelect={(d) => { setSelectedDate(d); setCalendarOpen(false); }}
-                            disabled={(d) => d < new Date(new Date().setHours(0, 0, 0, 0))}
-                            initialFocus
-                          />
-                        </PopoverContent>
-                      </Popover>
-
-                      {/* Time */}
-                      <div className="flex items-center gap-1 shrink-0">
-                        <IconClock size={14} className="text-muted-foreground" />
-                        <Select value={selectedHour} onValueChange={(v) => v && setSelectedHour(v)}>
-                          <SelectTrigger className="w-20 text-sm">
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent className="max-h-48">
-                            {HOURS.map((h) => (
-                              <SelectItem key={h} value={h}>{h}</SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                        <span className="text-muted-foreground font-medium">:</span>
-                        <Select value={selectedMinute} onValueChange={(v) => v && setSelectedMinute(v)}>
-                          <SelectTrigger className="w-20 text-sm">
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {MINUTES.map((m) => (
-                              <SelectItem key={m} value={m}>{m}</SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                      </div>
-                    </div>
-
-                    {selectedDate && (
-                      <p className="text-xs text-muted-foreground">
-                        Scheduled for {format(selectedDate, "PPP")} at {selectedHour}:{selectedMinute}
-                      </p>
-                    )}
-                  </div>
+                  <DateTimePicker
+                    value={scheduledDate}
+                    onChange={setScheduledDate}
+                    granularity="minute"
+                    placeholder="Pick date & time"
+                    disablePast
+                  />
                 )}
               </div>
 

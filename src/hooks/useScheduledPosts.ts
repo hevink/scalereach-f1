@@ -10,6 +10,11 @@ export function useScheduledPosts(
     queryKey: ["social", "posts", workspaceId, filters],
     queryFn: () => socialApi.listPosts(workspaceId!, filters),
     enabled: !!workspaceId,
+    refetchInterval: (query) => {
+      const posts = query.state.data;
+      const hasInFlight = Array.isArray(posts) && posts.some((p) => p.status === "pending" || p.status === "posting");
+      return hasInFlight ? 3000 : false;
+    },
   });
 }
 
