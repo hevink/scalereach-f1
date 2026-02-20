@@ -157,7 +157,7 @@ export default function RootLayout({
         <QueryProvider>
           <PostHogProvider>
             <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
-              <TooltipProvider delay={400}>
+              <TooltipProvider>
                 <Toaster position="bottom-center" />
                 <main className="root">{children}</main>
               </TooltipProvider>
