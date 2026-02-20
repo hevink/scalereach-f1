@@ -527,6 +527,16 @@ export default function VideoClipsPage({ params }: VideoClipsPageProps) {
                     />
                 ) : (
                     <div className="space-y-6 max-w-4xl w-full">
+                        {/* Clips still generating banner */}
+                        {clips.some(c => c.status === "generating" || c.status === "detected") && (
+                            <div className="flex items-center gap-3 rounded-xl border border-amber-500/20 bg-amber-500/5 px-4 py-3">
+                                <IconLoader2 className="size-4 shrink-0 animate-spin text-amber-500" />
+                                <p className="text-sm text-foreground">
+                                    Some clips are still being generated. This page will update automatically.
+                                </p>
+                            </div>
+                        )}
+
                         {/* Schedule nudge — shown when clips are ready */}
                         <div className="flex items-center justify-between gap-4 rounded-xl border border-primary/20 bg-primary/5 px-4 py-3">
                             <div className="flex items-center gap-3">
