@@ -124,12 +124,17 @@ function CaptionOverlay({ caption, style, currentTime, scaleFactor }: CaptionOve
 
     // Build text shadow style - match ASS rendering with stronger shadow
     const outlineWidth = Math.round((style.outlineWidth ?? 3) * scaleFactor);
+    const glowColor = style.glowColor || style.textColor || "#FFFFFF";
+    const glowIntensity = style.glowIntensity ?? 8;
+    const glowShadow = style.glowEnabled
+        ? `, 0 0 ${glowIntensity}px ${glowColor}, 0 0 ${glowIntensity * 2}px ${glowColor}, 0 0 ${glowIntensity * 3}px ${glowColor}`
+        : "";
     const textShadow = style.shadow
         ? `0 0 ${outlineWidth}px ${style.outlineColor || "#000000"},
            0 0 ${outlineWidth * 2}px ${style.outlineColor || "#000000"},
-           2px 2px 4px rgba(0, 0, 0, 0.9)`
+           2px 2px 4px rgba(0, 0, 0, 0.9)${glowShadow}`
         : `0 0 ${outlineWidth}px ${style.outlineColor || "#000000"},
-           0 0 ${outlineWidth * 2}px ${style.outlineColor || "#000000"}`;
+           0 0 ${outlineWidth * 2}px ${style.outlineColor || "#000000"}${glowShadow}`;
 
     // Build background color with opacity
     const backgroundColor = style.backgroundColor

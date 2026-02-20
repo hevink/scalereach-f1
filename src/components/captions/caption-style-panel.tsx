@@ -9,6 +9,7 @@ import {
   IconLayoutNavbar,
   IconLayoutNavbarCollapse,
   IconShadow,
+  IconSparkles,
   IconTypography,
 } from "@tabler/icons-react";
 import type { ReactNode } from "react";
@@ -658,6 +659,26 @@ export function CaptionStylePanel({
             label="Outline Color"
             onChange={(color) => updateStyle("outlineColor", color)}
             value={localStyle.outlineColor || "#000000"}
+          />
+        )}
+
+        {/* Glow Toggle */}
+        <SwitchField
+          checked={localStyle.glowEnabled ?? false}
+          description="Add a glowing bloom effect around text"
+          disabled={disabled}
+          icon={<IconSparkles className="size-4" />}
+          label="Text Glow"
+          onChange={(checked) => updateStyle("glowEnabled", checked)}
+        />
+
+        {/* Glow Color (shown when glow is enabled) */}
+        {localStyle.glowEnabled && (
+          <ColorPicker
+            disabled={disabled}
+            label="Glow Color"
+            onChange={(color) => updateStyle("glowColor", color)}
+            value={localStyle.glowColor || localStyle.textColor || "#FFFFFF"}
           />
         )}
       </div>
