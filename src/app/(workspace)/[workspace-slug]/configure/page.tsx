@@ -628,7 +628,7 @@ export default function ConfigurePage() {
                                                                                         </button>
                                                                                     }
                                                                                 />
-                                                                                <HoverCardContent side="top" className="w-36 p-3">
+                                                                                <HoverCardContent side="right" className="w-52 p-3">
                                                                                     <CaptionPreviewPopup template={template} />
                                                                                 </HoverCardContent>
                                                                             </HoverCard>
