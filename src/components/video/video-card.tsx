@@ -379,6 +379,7 @@ export function VideoCard({
                                 <>
                                     <DropdownMenuSeparator />
                                     <DropdownMenuItem
+                                        onSelect={(e) => e.preventDefault()}
                                         onClick={(e) => {
                                             e.stopPropagation();
                                             setShowDeleteDialog(true);
