@@ -321,6 +321,13 @@ export default function ConfigurePage() {
                     setValidationState("valid");
                     setVideoInfo(result.videoInfo);
                     setErrorMessage(null);
+                    // Auto-populate language from video metadata
+                    if (result.videoInfo.language) {
+                        const baseLang = result.videoInfo.language.split("-")[0];
+                        if (baseLang && baseLang in SUPPORTED_LANGUAGES && baseLang !== "auto") {
+                            updateConfig({ language: baseLang as SupportedLanguageCode });
+                        }
+                    }
                 } else {
                     setValidationState("invalid");
                     setVideoInfo(null);
@@ -670,7 +677,9 @@ export default function ConfigurePage() {
                                                 disabled={isSubmitting}
                                             >
                                                 <SelectTrigger className="w-48">
-                                                    <SelectValue placeholder="Select language" />
+                                                    <SelectValue placeholder="Select language">
+                                                        {SUPPORTED_LANGUAGES[(config.language ?? "auto") as SupportedLanguageCode]}
+                                                    </SelectValue>
                                                 </SelectTrigger>
                                                 <SelectContent>
                                                     {Object.entries(SUPPORTED_LANGUAGES).map(([code, name]) => (

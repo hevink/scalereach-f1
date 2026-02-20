@@ -7,6 +7,8 @@ export interface VideoInfo {
   thumbnail: string;
   channelName: string;
   description: string;
+  /** BCP-47 language code from YouTube metadata (e.g. "hi", "en") */
+  language?: string;
 }
 
 /**
