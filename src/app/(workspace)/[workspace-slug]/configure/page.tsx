@@ -104,10 +104,11 @@ function CaptionPreviewPopup({ template }: { template: CaptionTemplate }) {
                     {words.map((word, i) => (
                         <span
                             key={word}
-                            className="font-bold leading-tight inline-block"
+                            className="leading-tight inline-block"
                             style={{
                                 fontFamily: style.fontFamily || "Inter",
                                 fontSize: "20px",
+                                fontWeight: 900,
                                 textTransform: (style.textTransform as React.CSSProperties["textTransform"]) || "uppercase",
                                 color: isActive(i) ? highlightColor : style.textColor,
                                 textShadow: style.shadow ? "1px 1px 3px rgba(0,0,0,0.9)" : "none",
