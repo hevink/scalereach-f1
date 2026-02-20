@@ -75,7 +75,7 @@ function formatDuration(seconds: number): string {
 
 function CaptionPreviewPopup({ template }: { template: CaptionTemplate }) {
     const style = template.style;
-    const words = ["TO", "GET", "STARTED"];
+    const words = ["YOUR", "CONTENT", "GOES", "VIRAL"];
     const [activeWord, setActiveWord] = useState(0);
     const isBoxHighlight = style.backgroundOpacity > 50;
 

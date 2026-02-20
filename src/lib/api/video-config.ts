@@ -94,6 +94,13 @@ export interface CaptionTemplate {
     shadow: boolean;
     outline: boolean;
     outlineColor?: string;
+    outlineWidth?: number;
+    highlightScale?: number;
+    textTransform?: "none" | "uppercase";
+    wordsPerLine?: number;
+    glowEnabled?: boolean;
+    glowColor?: string;
+    glowIntensity?: number;
   };
   preview: string;
   previewThumbnail?: string;
