@@ -73,6 +73,33 @@ function formatDuration(seconds: number): string {
     return `${mins}:${secs.toString().padStart(2, "0")}`;
 }
 
+// Maps template fontFamily names to their CSS variable and max available weight
+const FONT_MAP: Record<string, { variable: string; weight: number }> = {
+    "Bebas Neue":        { variable: "--font-bebas-neue",        weight: 400 },
+    "Anton":             { variable: "--font-anton",             weight: 400 },
+    "Bangers":           { variable: "--font-bangers",           weight: 400 },
+    "Titan One":         { variable: "--font-titan-one",         weight: 400 },
+    "Righteous":         { variable: "--font-righteous",         weight: 400 },
+    "Russo One":         { variable: "--font-russo-one",         weight: 400 },
+    "Black Ops One":     { variable: "--font-black-ops-one",     weight: 400 },
+    "Permanent Marker":  { variable: "--font-permanent-marker",  weight: 400 },
+    "Lilita One":        { variable: "--font-lilita-one",        weight: 400 },
+    "Montserrat":        { variable: "--font-montserrat",        weight: 800 },
+    "Poppins":           { variable: "--font-poppins",           weight: 800 },
+    "Oswald":            { variable: "--font-oswald",            weight: 700 },
+    "Lexend":            { variable: "--font-lexend",            weight: 800 },
+    "Inter":             { variable: "--font-inter",             weight: 700 },
+    "Libre Baskerville": { variable: "--font-libre-baskerville", weight: 700 },
+};
+
+function getFontStyle(fontFamily: string): { fontFamily: string; fontWeight: number } {
+    const entry = FONT_MAP[fontFamily];
+    if (entry) {
+        return { fontFamily: `var(${entry.variable})`, fontWeight: entry.weight };
+    }
+    return { fontFamily, fontWeight: 700 };
+}
+
 function CaptionPreviewPopup({ template }: { template: CaptionTemplate }) {
     const style = template.style;
     const words = ["YOUR", "CONTENT", "GOES", "VIRAL"];
@@ -106,9 +133,8 @@ function CaptionPreviewPopup({ template }: { template: CaptionTemplate }) {
                             key={word}
                             className="leading-tight inline-block"
                             style={{
-                                fontFamily: style.fontFamily || "Inter",
+                                ...getFontStyle(style.fontFamily || "Inter"),
                                 fontSize: "20px",
-                                fontWeight: 900,
                                 textTransform: (style.textTransform as React.CSSProperties["textTransform"]) || "uppercase",
                                 color: isActive(i) ? highlightColor : style.textColor,
                                 textShadow: style.shadow ? "1px 1px 3px rgba(0,0,0,0.9)" : "none",
