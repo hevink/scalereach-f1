@@ -629,9 +629,10 @@ export default function ConfigurePage() {
                                                                                         >
                                                                                             <div className="flex flex-col items-center justify-center">
                                                                                                 <span
-                                                                                                    className="text-[9px] font-bold leading-tight"
+                                                                                                    className="text-[9px] leading-tight"
                                                                                                     style={{
-                                                                                                        fontFamily: template.style?.fontFamily || "Inter",
+                                                                                                        ...getFontStyle(template.style?.fontFamily || "Inter"),
+                                                                                                        textTransform: (template.style?.textTransform as React.CSSProperties["textTransform"]) || "uppercase",
                                                                                                         color: template.style?.textColor || "#FFFFFF",
                                                                                                         textShadow: template.style?.shadow ? "1px 1px 2px rgba(0,0,0,0.8)" : "none",
                                                                                                     }}
@@ -639,9 +640,10 @@ export default function ConfigurePage() {
                                                                                                     TO GET
                                                                                                 </span>
                                                                                                 <span
-                                                                                                    className="text-[9px] font-bold leading-tight"
+                                                                                                    className="text-[9px] leading-tight"
                                                                                                     style={{
-                                                                                                        fontFamily: template.style?.fontFamily || "Inter",
+                                                                                                        ...getFontStyle(template.style?.fontFamily || "Inter"),
+                                                                                                        textTransform: (template.style?.textTransform as React.CSSProperties["textTransform"]) || "uppercase",
                                                                                                         color: template.style?.highlightColor || template.style?.textColor || "#00FF00",
                                                                                                         textShadow: template.style?.shadow ? "1px 1px 2px rgba(0,0,0,0.8)" : "none",
                                                                                                     }}
