@@ -217,52 +217,54 @@ export function SchedulePostModal({
 
                 {postType === "scheduled" && (
                   <div className="flex flex-col gap-2">
-                    {/* Date picker */}
-                    <Popover open={calendarOpen} onOpenChange={setCalendarOpen}>
-                      <PopoverTrigger
-                        className={cn(
-                          "flex w-full items-center justify-start gap-2 rounded-md border border-input bg-background px-3 py-2 text-sm font-normal ring-offset-background transition-colors hover:bg-accent hover:text-accent-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
-                          !selectedDate && "text-muted-foreground"
-                        )}
-                      >
-                        <IconCalendar size={15} />
-                        {selectedDate ? format(selectedDate, "PPP") : "Pick a date"}
-                      </PopoverTrigger>
-                      <PopoverContent className="w-auto p-0" align="start">
-                        <Calendar
-                          mode="single"
-                          selected={selectedDate}
-                          onSelect={(d) => { setSelectedDate(d); setCalendarOpen(false); }}
-                          disabled={(d) => d < new Date(new Date().setHours(0, 0, 0, 0))}
-                          initialFocus
-                        />
-                      </PopoverContent>
-                    </Popover>
-
-                    {/* Time picker */}
                     <div className="flex items-center gap-2">
-                      <IconClock size={15} className="shrink-0 text-muted-foreground" />
-                      <Select value={selectedHour} onValueChange={(v) => v && setSelectedHour(v)}>
-                        <SelectTrigger className="flex-1 text-sm">
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent className="max-h-48">
-                          {HOURS.map((h) => (
-                            <SelectItem key={h} value={h}>{h}:00</SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                      <span className="text-muted-foreground">:</span>
-                      <Select value={selectedMinute} onValueChange={(v) => v && setSelectedMinute(v)}>
-                        <SelectTrigger className="flex-1 text-sm">
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {MINUTES.map((m) => (
-                            <SelectItem key={m} value={m}>{m}</SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
+                      {/* Date */}
+                      <Popover open={calendarOpen} onOpenChange={setCalendarOpen}>
+                        <PopoverTrigger
+                          className={cn(
+                            "flex flex-1 items-center gap-2 rounded-md border border-input bg-background px-3 py-2 text-sm font-normal transition-colors hover:bg-accent hover:text-accent-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+                            !selectedDate && "text-muted-foreground"
+                          )}
+                        >
+                          <IconCalendar size={14} />
+                          {selectedDate ? format(selectedDate, "MMM d, yyyy") : "Pick date"}
+                        </PopoverTrigger>
+                        <PopoverContent className="w-auto p-0" align="start">
+                          <Calendar
+                            mode="single"
+                            selected={selectedDate}
+                            onSelect={(d) => { setSelectedDate(d); setCalendarOpen(false); }}
+                            disabled={(d) => d < new Date(new Date().setHours(0, 0, 0, 0))}
+                            initialFocus
+                          />
+                        </PopoverContent>
+                      </Popover>
+
+                      {/* Time */}
+                      <div className="flex items-center gap-1 shrink-0">
+                        <IconClock size={14} className="text-muted-foreground" />
+                        <Select value={selectedHour} onValueChange={(v) => v && setSelectedHour(v)}>
+                          <SelectTrigger className="w-20 text-sm">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent className="max-h-48">
+                            {HOURS.map((h) => (
+                              <SelectItem key={h} value={h}>{h}</SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        <span className="text-muted-foreground font-medium">:</span>
+                        <Select value={selectedMinute} onValueChange={(v) => v && setSelectedMinute(v)}>
+                          <SelectTrigger className="w-20 text-sm">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {MINUTES.map((m) => (
+                              <SelectItem key={m} value={m}>{m}</SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
                     </div>
 
                     {selectedDate && (
