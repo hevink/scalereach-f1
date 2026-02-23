@@ -6,7 +6,7 @@ import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { cn } from "@/lib/utils";
 
-function FieldSet({ className, ...props }: React.FieldsetHTMLAttributes<HTMLFieldSetElement>) {
+function FieldSet({ className, ...props }: React.HTMLAttributes<HTMLFieldSetElement>) {
   return (
     <fieldset
       className={cn(
@@ -23,7 +23,7 @@ function FieldLegend({
   className,
   variant = "legend",
   ...props
-}: React.ComponentProps<"legend"> & { variant?: "legend" | "label" }) {
+}: React.HTMLAttributes<HTMLLegendElement> & { variant?: "legend" | "label" }) {
   return (
     <legend
       className={cn(
@@ -72,7 +72,7 @@ function Field({
   className,
   orientation = "vertical",
   ...props
-}: React.FieldsetHTMLAttributes<HTMLFieldSetElement> & VariantProps<typeof fieldVariants>) {
+}: React.HTMLAttributes<HTMLFieldSetElement> & VariantProps<typeof fieldVariants>) {
   return (
     <fieldset
       className={cn(fieldVariants({ orientation }), className)}
@@ -126,7 +126,7 @@ function FieldTitle({ className, ...props }: React.HTMLAttributes<HTMLDivElement
   );
 }
 
-function FieldDescription({ className, ...props }: React.ComponentProps<"p">) {
+function FieldDescription({ className, ...props }: React.HTMLAttributes<HTMLParagraphElement>) {
   return (
     <p
       className={cn(
