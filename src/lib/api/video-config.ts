@@ -43,7 +43,8 @@ export interface VideoConfigInput {
   enableIntroTitle?: boolean;
   // Split-Screen Options
   enableSplitScreen?: boolean;
-  splitScreenBgVideoId?: string | null;
+  splitScreenBgVideoId?: string | null;       // legacy single (kept for compat)
+  splitScreenBgVideoIds?: string[] | null;    // multi-select
   splitScreenBgCategoryId?: string | null;
   splitRatio?: number;
 }
@@ -165,6 +166,7 @@ export const DEFAULT_VIDEO_CONFIG: VideoConfigInput = {
   // Split-Screen Options
   enableSplitScreen: false,
   splitScreenBgVideoId: null,
+  splitScreenBgVideoIds: null,
   splitScreenBgCategoryId: null,
   splitRatio: 50,
 };

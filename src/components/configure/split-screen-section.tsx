@@ -146,9 +146,15 @@ export function SplitScreenSection({ config, onChange, disabled, userPlan, works
     };
 
     const handleVideoSelect = (videoId: string) => {
+        const current = config.splitScreenBgVideoIds ?? [];
+        const isSelected = current.includes(videoId);
+        const updated = isSelected
+            ? current.filter((id) => id !== videoId)
+            : [...current, videoId];
         onChange({
-            splitScreenBgVideoId: videoId,
-            splitScreenBgCategoryId: null, // Clear category since we're not using it
+            splitScreenBgVideoIds: updated.length > 0 ? updated : null,
+            splitScreenBgVideoId: null, // clear legacy field
+            splitScreenBgCategoryId: null,
         });
     };
 
@@ -209,6 +215,9 @@ export function SplitScreenSection({ config, onChange, disabled, userPlan, works
                     {/* Video Grid */}
                     <div className="space-y-2.5">
                         <Label className="text-sm font-medium">Background Video</Label>
+                        <p className="text-xs text-muted-foreground">
+                            Select one or more — each clip gets a random pick from your selection. Leave all unselected for fully random.
+                        </p>
 
                         {/* Category Filter Chips */}
                         {!categoriesLoading && categories.length > 0 && (
@@ -272,7 +281,7 @@ export function SplitScreenSection({ config, onChange, disabled, userPlan, works
                                                     <VideoCard
                                                         key={video.id}
                                                         video={video}
-                                                        isSelected={config.splitScreenBgVideoId === video.id}
+                                                        isSelected={(config.splitScreenBgVideoIds ?? []).includes(video.id)}
                                                         disabled={disabled}
                                                         onSelect={handleVideoSelect}
                                                     />
