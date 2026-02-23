@@ -158,7 +158,7 @@ export default function RootLayout({
           <PostHogProvider>
             <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
               <TooltipProvider>
-                <Toaster position="bottom-center" />
+                <Toaster richColors position="bottom-center" />
                 <main className="root">{children}</main>
               </TooltipProvider>
             </ThemeProvider>
