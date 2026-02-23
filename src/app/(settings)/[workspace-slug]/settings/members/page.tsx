@@ -587,7 +587,7 @@ export default function MembersPage({ params }: { params: Promise<{ "workspace-s
             Manage who has access to this workspace.
           </p>
         </div>
-        {canManageMembers && <InviteMemberDialog workspaceId={workspace.id} workspacePlan={workspace.plan} />}
+        {canManageMembers && <InviteMemberDialog workspaceId={workspace.id} workspacePlan={workspace.plan || "free"} />}
       </div>
 
       {canManageMembers && workspace.plan === "free" && (
@@ -602,10 +602,8 @@ export default function MembersPage({ params }: { params: Promise<{ "workspace-s
                 <p className="text-sm text-muted-foreground mb-3">
                   Upgrade to Starter or Pro plan to collaborate with your team. Invite members, assign roles, and work together on your videos.
                 </p>
-                <Button size="sm" asChild>
-                  <a href={`/${slug}/pricing`}>
-                    Upgrade Plan
-                  </a>
+                <Button size="sm" render={<a href={`/${slug}/pricing`} />}>
+                  Upgrade Plan
                 </Button>
               </div>
             </div>

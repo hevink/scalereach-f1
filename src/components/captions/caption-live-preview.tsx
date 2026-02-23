@@ -53,14 +53,19 @@ export function CaptionLivePreview({
   const position = style.position || "bottom";
   const outlineWidth = style.outlineWidth ?? 3;
   const highlightScale = (style.highlightScale ?? 110) / 100;
+  const glowColor = style.glowColor || style.textColor || "#FFFFFF";
+  const glowIntensity = style.glowIntensity ?? 8;
+  const glowShadow = style.glowEnabled
+    ? `, 0 0 ${glowIntensity}px ${glowColor}, 0 0 ${glowIntensity * 2}px ${glowColor}, 0 0 ${glowIntensity * 3}px ${glowColor}`
+    : "";
 
   // Build text shadow to match ASS rendering
   const textShadow = style.shadow
     ? `0 0 ${outlineWidth}px ${style.outlineColor || "#000000"},
        0 0 ${outlineWidth * 2}px ${style.outlineColor || "#000000"},
-       2px 2px 4px rgba(0, 0, 0, 0.9)`
+       2px 2px 4px rgba(0, 0, 0, 0.9)${glowShadow}`
     : `0 0 ${outlineWidth}px ${style.outlineColor || "#000000"},
-       0 0 ${outlineWidth * 2}px ${style.outlineColor || "#000000"}`;
+       0 0 ${outlineWidth * 2}px ${style.outlineColor || "#000000"}${glowShadow}`;
 
   return (
     <div

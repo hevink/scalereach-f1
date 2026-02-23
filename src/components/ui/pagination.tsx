@@ -7,7 +7,7 @@ import type * as React from "react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
-function Pagination({ className, ...props }: React.ComponentProps<"nav">) {
+function Pagination({ className, ...props }: React.HTMLAttributes<HTMLElement>) {
   return (
     <nav
       aria-label="pagination"
@@ -21,7 +21,7 @@ function Pagination({ className, ...props }: React.ComponentProps<"nav">) {
 function PaginationContent({
   className,
   ...props
-}: React.ComponentProps<"ul">) {
+}: React.HTMLAttributes<HTMLUListElement>) {
   return (
     <ul
       className={cn("flex items-center gap-1", className)}
@@ -31,14 +31,14 @@ function PaginationContent({
   );
 }
 
-function PaginationItem({ ...props }: React.ComponentProps<"li">) {
+function PaginationItem({ ...props }: React.LiHTMLAttributes<HTMLLIElement>) {
   return <li data-slot="pagination-item" {...props} />;
 }
 
 type PaginationLinkProps = {
   isActive?: boolean;
 } & Pick<React.ComponentProps<typeof Button>, "size"> &
-  React.ComponentProps<"a">;
+  React.AnchorHTMLAttributes<HTMLAnchorElement>;
 
 function PaginationLink({
   className,
@@ -101,7 +101,7 @@ function PaginationNext({
 function PaginationEllipsis({
   className,
   ...props
-}: React.ComponentProps<"span">) {
+}: React.HTMLAttributes<HTMLSpanElement>) {
   return (
     <span
       aria-hidden

@@ -7,6 +7,8 @@ export interface VideoInfo {
   thumbnail: string;
   channelName: string;
   description: string;
+  /** BCP-47 language code from YouTube metadata (e.g. "hi", "en") */
+  language?: string;
 }
 
 /**
@@ -90,6 +92,11 @@ export interface SubmitVideoWithConfigRequest {
     enableCaptions?: boolean;
     enableEmojis?: boolean;
     enableIntroTitle?: boolean;
+    // Split-Screen Options
+    enableSplitScreen?: boolean;
+    splitScreenBgVideoId?: string | null;
+    splitScreenBgCategoryId?: string | null;
+    splitRatio?: number;
   };
 }
 

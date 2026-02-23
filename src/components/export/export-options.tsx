@@ -65,7 +65,7 @@ const RESOLUTION_OPTIONS: Array<{
 }> = [
     { value: "720p", label: "720p", shortLabel: "HD", description: "Good for social", sizeMultiplier: 1 },
     { value: "1080p", label: "1080p", shortLabel: "Full HD", description: "Recommended", recommended: true, sizeMultiplier: 2.25 },
-    { value: "4k", label: "4K", shortLabel: "Ultra HD", description: "Pro only", sizeMultiplier: 9, requiresPro: true },
+    { value: "4k", label: "4K", shortLabel: "Ultra HD", description: "Starter & Pro", sizeMultiplier: 9, requiresPro: true },
   ];
 
 const BASE_FILE_SIZE_MB = 15;
@@ -285,7 +285,7 @@ export function ExportOptions({
           <IconCrown className="mt-0.5 size-4 shrink-0 text-amber-500" />
           <div>
             <p className="text-sm font-medium text-amber-600 dark:text-amber-400">
-              4K requires Pro
+              4K requires Starter or Pro
             </p>
             <p className="mt-0.5 text-xs text-muted-foreground">
               Upgrade to unlock Ultra HD exports.

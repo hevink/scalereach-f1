@@ -4,7 +4,7 @@ import type * as React from "react";
 
 import { cn } from "@/lib/utils";
 
-function Label({ className, ...props }: React.ComponentProps<"label">) {
+function Label({ className, ...props }: React.LabelHTMLAttributes<HTMLLabelElement>) {
   return (
     // biome-ignore lint/a11y/noLabelWithoutControl: Generic component - association handled via htmlFor prop or by wrapping input
     <label

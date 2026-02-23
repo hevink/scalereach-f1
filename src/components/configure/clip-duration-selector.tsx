@@ -9,6 +9,7 @@ interface DurationOption {
 }
 
 const DURATION_OPTIONS: DurationOption[] = [
+    { label: "Auto", min: 0, max: 0 },
     { label: "0 - 30s", min: 5, max: 30 },
     { label: "30 - 60s", min: 30, max: 60 },
     { label: "1 - 2 min", min: 60, max: 120 },

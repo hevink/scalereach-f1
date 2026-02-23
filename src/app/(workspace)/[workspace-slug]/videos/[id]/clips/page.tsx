@@ -8,42 +8,27 @@ import {
     IconVideo,
     IconLoader2,
     IconClock,
-    IconHeartFilled,
-    IconHeart,
-    IconDownload,
-    IconEdit,
-    IconShare2,
-    IconSparkles,
     IconFile,
     IconAspectRatio,
     IconFlame,
     IconCalendar,
-    IconFileText,
-    IconWand,
+    IconLayoutRows,
 } from "@tabler/icons-react";
 
+import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { Progress } from "@/components/ui/progress";
 import { useVideo, useVideoStatus } from "@/hooks/useVideo";
 import { useClipsByVideo, useToggleFavorite } from "@/hooks/useClips";
 import { useWorkspaceBySlug } from "@/hooks/useWorkspace";
-import { cn } from "@/lib/utils";
+import { useQuery } from "@tanstack/react-query";
+import { videoConfigApi } from "@/lib/api/video-config";
 import { analytics } from "@/lib/analytics";
 import type { ClipResponse } from "@/lib/api/clips";
-import type { RecommendedPlatform } from "@/lib/api/clips";
 import { ShareManager } from "@/components/share/share-manager";
-import { UpgradeDialog } from "@/components/pricing/upgrade-dialog";
-import {
-    YouTubeIcon,
-    TikTokIcon,
-    InstagramIcon,
-    LinkedInIcon,
-    TwitterIcon,
-    FacebookIcon,
-} from "@/components/icons/platform-icons";
+import { ClipCard } from "@/components/clips/clip-card";
 
 interface VideoClipsPageProps {
     params: Promise<{ "workspace-slug": string; id: string }>;
@@ -64,27 +49,26 @@ function VideoClipsLoading() {
     return (
         <div className="flex h-full flex-col bg-background">
             {/* Header Skeleton */}
-            <div className="border-b px-6 py-4">
+            <div className="border-b px-4 sm:px-6 py-3 sm:py-4">
                 <div className="flex items-start justify-between">
-                    <div className="flex items-start gap-3">
-                        <Skeleton className="size-9 rounded-md shrink-0 mt-0.5" />
+                    <div className="flex items-start gap-2 sm:gap-3">
+                        <Skeleton className="size-8 sm:size-9 rounded-md shrink-0 mt-0.5" />
                         <div>
-                            <Skeleton className="h-7 w-96 mb-2" />
+                            <Skeleton className="h-6 sm:h-7 w-48 sm:w-96 mb-2" />
                             <Skeleton className="h-4 w-24" />
                         </div>
                     </div>
                 </div>
-                <div className="flex flex-wrap items-center gap-2 mt-3 ml-11">
+                <div className="flex flex-wrap items-center gap-1.5 sm:gap-2 mt-2 sm:mt-3 ml-10 sm:ml-11">
                     <Skeleton className="h-6 w-24 rounded-full" />
                     <Skeleton className="h-6 w-20 rounded-full" />
                     <Skeleton className="h-6 w-16 rounded-full" />
                     <Skeleton className="h-6 w-24 rounded-full" />
-                    <Skeleton className="h-6 w-32 rounded-full" />
                 </div>
             </div>
 
             {/* Clips Skeleton */}
-            <div className="flex-1 overflow-auto p-6 flex justify-center">
+            <div className="flex-1 overflow-auto p-4 sm:p-6 flex justify-center">
                 <div className="space-y-6 max-w-4xl w-full">
                     {Array.from({ length: 3 }).map((_, i) => (
                         <div key={i} className="rounded-xl border bg-card overflow-hidden">
@@ -191,68 +175,115 @@ interface NoClipsProps {
     videoTitle: string;
     videoStatus: string;
     videoCreatedAt: string;
+    thumbnailUrl?: string | null;
 }
 
-function NoClips({ videoTitle, videoStatus, videoCreatedAt }: NoClipsProps) {
-    // Calculate time elapsed since video creation (in minutes)
-    const timeElapsedMinutes = (Date.now() - new Date(videoCreatedAt).getTime()) / (1000 * 60);
+function ProcessingCard({ icon, title, description, thumbnailUrl, step, totalSteps }: {
+    icon: React.ReactNode;
+    title: string;
+    description: string;
+    thumbnailUrl?: string | null;
+    step: number;
+    totalSteps: number;
+}) {
+    const progress = (step / totalSteps) * 100;
 
-    // If video has been processing for more than 5 minutes and still no clips, show "No Clips Found"
+    return (
+        <div className="w-full max-w-lg mx-auto">
+            <div className="overflow-hidden rounded-xl border bg-card shadow-sm">
+                {/* Thumbnail */}
+                {thumbnailUrl && (
+                    <div className="relative aspect-video w-full overflow-hidden bg-muted">
+                        <Image
+                            src={thumbnailUrl}
+                            alt="Video thumbnail"
+                            fill
+                            className="object-cover opacity-80"
+                            unoptimized
+                        />
+                        <div className="absolute inset-0 bg-linear-to-t from-card via-card/40 to-transparent" />
+                        <div className="absolute bottom-3 left-3 right-3 flex items-center justify-center">
+                            {icon}
+                        </div>
+                    </div>
+                )}
+
+                {/* Content */}
+                <div className="p-5 space-y-3">
+                    {!thumbnailUrl && (
+                        <div className="flex justify-center mb-1">{icon}</div>
+                    )}
+                    <div className="text-center">
+                        <h3 className="font-semibold text-base">{title}</h3>
+                        <p className="mt-1 text-sm text-muted-foreground">{description}</p>
+                    </div>
+
+                    {/* Progress */}
+                    <div className="space-y-1.5">
+                        <Progress value={progress} className="h-1.5" />
+                        <p className="text-xs text-muted-foreground text-center">
+                            Step {step} of {totalSteps}
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    );
+}
+
+function NoClips({ videoTitle, videoStatus, videoCreatedAt, thumbnailUrl }: NoClipsProps) {
+    const timeElapsedMinutes = (Date.now() - new Date(videoCreatedAt).getTime()) / (1000 * 60);
     const hasTimedOut = timeElapsedMinutes > 5;
 
     if (videoStatus === "downloading" && !hasTimedOut) {
         return (
-            <div className="flex flex-col items-center justify-center gap-4 rounded-lg border bg-muted/30 p-8">
-                <IconLoader2 className="size-8 animate-spin text-primary" />
-                <div className="text-center">
-                    <h3 className="font-medium">Downloading Video</h3>
-                    <p className="mt-1 text-sm text-muted-foreground">
-                        Downloading &quot;{videoTitle}&quot; from YouTube...
-                    </p>
-                </div>
-            </div>
+            <ProcessingCard
+                icon={<IconLoader2 className="size-8 animate-spin text-primary" />}
+                title="Downloading Video"
+                description={`Downloading "${videoTitle}" from YouTube...`}
+                thumbnailUrl={thumbnailUrl}
+                step={1}
+                totalSteps={4}
+            />
         );
     }
 
     if (videoStatus === "uploading" && !hasTimedOut) {
         return (
-            <div className="flex flex-col items-center justify-center gap-4 rounded-lg border bg-muted/30 p-8">
-                <IconLoader2 className="size-8 animate-spin text-primary" />
-                <div className="text-center">
-                    <h3 className="font-medium">Uploading Video</h3>
-                    <p className="mt-1 text-sm text-muted-foreground">
-                        Uploading video to storage...
-                    </p>
-                </div>
-            </div>
+            <ProcessingCard
+                icon={<IconLoader2 className="size-8 animate-spin text-primary" />}
+                title="Uploading Video"
+                description="Uploading video to storage..."
+                thumbnailUrl={thumbnailUrl}
+                step={2}
+                totalSteps={4}
+            />
         );
     }
 
     if (videoStatus === "transcribing" && !hasTimedOut) {
         return (
-            <div className="flex flex-col items-center justify-center gap-4 rounded-lg border bg-muted/30 p-8">
-                <IconLoader2 className="size-8 animate-spin text-primary" />
-                <div className="text-center">
-                    <h3 className="font-medium">Transcribing Audio</h3>
-                    <p className="mt-1 text-sm text-muted-foreground">
-                        Converting speech to text for &quot;{videoTitle}&quot;...
-                    </p>
-                </div>
-            </div>
+            <ProcessingCard
+                icon={<IconLoader2 className="size-8 animate-spin text-primary" />}
+                title="Transcribing Audio"
+                description={`Converting speech to text for "${videoTitle}"...`}
+                thumbnailUrl={thumbnailUrl}
+                step={3}
+                totalSteps={4}
+            />
         );
     }
 
     if ((videoStatus === "analyzing" || videoStatus === "processing") && !hasTimedOut) {
         return (
-            <div className="flex flex-col items-center justify-center gap-4 rounded-lg border bg-muted/30 p-8">
-                <IconLoader2 className="size-8 animate-spin text-primary" />
-                <div className="text-center">
-                    <h3 className="font-medium">Detecting Viral Clips</h3>
-                    <p className="mt-1 text-sm text-muted-foreground">
-                        AI is analyzing &quot;{videoTitle}&quot; for viral moments. This may take a few minutes.
-                    </p>
-                </div>
-            </div>
+            <ProcessingCard
+                icon={<IconLoader2 className="size-8 animate-spin text-primary" />}
+                title="Detecting Viral Clips"
+                description={`AI is analyzing "${videoTitle}" for viral moments. This may take a few minutes.`}
+                thumbnailUrl={thumbnailUrl}
+                step={4}
+                totalSteps={4}
+            />
         );
     }
 
@@ -274,19 +305,17 @@ function NoClips({ videoTitle, videoStatus, videoCreatedAt }: NoClipsProps) {
 
     if (videoStatus === "pending" && !hasTimedOut) {
         return (
-            <div className="flex flex-col items-center justify-center gap-4 rounded-lg border bg-muted/30 p-8">
-                <IconClock className="size-8 text-muted-foreground" />
-                <div className="text-center">
-                    <h3 className="font-medium">Queued for Processing</h3>
-                    <p className="mt-1 text-sm text-muted-foreground">
-                        &quot;{videoTitle}&quot; is waiting in the queue. Processing will start soon.
-                    </p>
-                </div>
-            </div>
+            <ProcessingCard
+                icon={<IconClock className="size-8 text-muted-foreground" />}
+                title="Queued for Processing"
+                description={`"${videoTitle}" is waiting in the queue. Processing will start soon.`}
+                thumbnailUrl={thumbnailUrl}
+                step={0}
+                totalSteps={4}
+            />
         );
     }
 
-    // Default: Show "No Clips Found" for completed videos or timed-out processing
     return (
         <div className="flex flex-col items-center justify-center gap-4 rounded-lg border bg-muted/30 p-8">
             <IconVideo className="size-8 text-muted-foreground" />
@@ -296,260 +325,6 @@ function NoClips({ videoTitle, videoStatus, videoCreatedAt }: NoClipsProps) {
                     No viral clips were detected in this video. Try a video with more engaging content.
                 </p>
             </div>
-        </div>
-    );
-}
-
-interface ClipCardProps {
-    clip: ClipResponse;
-    index: number;
-    onEdit: (clipId: string) => void;
-    onFavorite: (e: React.MouseEvent, clipId: string) => void;
-    onDownload: (clip: ClipResponse) => void;
-    onShare: (clip: ClipResponse) => void;
-    userPlan: "free" | "starter" | "pro" | "agency";
-    workspaceSlug: string;
-}
-
-const PLATFORM_CONFIG: Record<RecommendedPlatform, { icon: React.ElementType; label: string; tooltip: string }> = {
-    youtube_shorts: { icon: YouTubeIcon, label: "YT Shorts", tooltip: "YouTube Shorts" },
-    instagram_reels: { icon: InstagramIcon, label: "Reels", tooltip: "Instagram Reels" },
-    tiktok: { icon: TikTokIcon, label: "TikTok", tooltip: "TikTok" },
-    linkedin: { icon: LinkedInIcon, label: "LinkedIn", tooltip: "LinkedIn" },
-    twitter: { icon: TwitterIcon, label: "Twitter/X", tooltip: "Twitter / X" },
-    facebook_reels: { icon: FacebookIcon, label: "FB Reels", tooltip: "Facebook Reels" },
-};
-
-function ClipCard({ clip, index, onEdit, onFavorite, onDownload, onShare, userPlan, workspaceSlug }: ClipCardProps) {
-    const [activeTab, setActiveTab] = useState<"transcript" | "description">("transcript");
-    const [upgradeFeature, setUpgradeFeature] = useState<string | null>(null);
-    const isGenerating = clip.status === "generating" || clip.status === "detected";
-    const isFreePlan = userPlan === "free";
-
-    return (
-        <div className="rounded-xl border bg-card overflow-hidden">
-            {/* Clip Title */}
-            <div className="px-5 py-3 border-b bg-muted/30 flex items-center justify-between">
-                <h3 className="font-semibold text-base">
-                    <span className="text-muted-foreground">#{index + 1}</span>{" "}
-                    {clip.title}
-                </h3>
-                <TooltipProvider>
-                    {clip.viralityScore != null && (
-                        <Tooltip>
-                            <TooltipTrigger asChild>
-                                <div className={cn(
-                                    "flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-semibold cursor-default",
-                                    clip.viralityScore >= 90 ? "bg-emerald-500/15 text-emerald-500" :
-                                        clip.viralityScore >= 70 ? "bg-amber-500/15 text-amber-500" :
-                                            "bg-zinc-500/15 text-zinc-400"
-                                )}>
-                                    <IconFlame className="size-3.5" />
-                                    {clip.viralityScore}
-                                </div>
-                            </TooltipTrigger>
-                            <TooltipContent>
-                                <p>Virality Score — {clip.viralityScore >= 90 ? "High potential" : clip.viralityScore >= 70 ? "Good potential" : "Moderate potential"}</p>
-                            </TooltipContent>
-                        </Tooltip>
-                    )}
-                </TooltipProvider>
-            </div>
-
-            {/* Content */}
-            <div className="p-4">
-                <div className="flex flex-col lg:flex-row gap-4 lg:items-start">
-                    {/* Video Preview */}
-                    <div className="shrink-0">
-                        <div className="relative w-full lg:w-[230px] h-[400px] rounded-lg overflow-hidden bg-black">
-                            {isGenerating ? (
-                                <div className="flex h-full w-full flex-col items-center justify-center gap-2">
-                                    <IconLoader2 className="size-8 animate-spin text-primary" />
-                                    <span className="text-xs text-muted-foreground">Generating clip...</span>
-                                </div>
-                            ) : clip.storageUrl ? (
-                                <video
-                                    src={clip.storageUrl}
-                                    poster={clip.thumbnailUrl}
-                                    className="h-full w-full object-contain"
-                                    controls
-                                />
-                            ) : clip.thumbnailUrl ? (
-                                <img
-                                    src={clip.thumbnailUrl}
-                                    alt={clip.title}
-                                    className="h-full w-full object-contain"
-                                />
-                            ) : (
-                                <div className="flex h-full w-full items-center justify-center">
-                                    <IconVideo className="size-12 text-muted-foreground/30" />
-                                </div>
-                            )}
-                        </div>
-                    </div>
-
-                    {/* Tabs Section */}
-                    <div className="h-full">
-                        <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as "transcript" | "description")}>
-                            <TabsList className="mb-3">
-                                <TabsTrigger value="transcript" className="gap-1.5">
-                                    <IconFileText className="size-4" />
-                                    Transcript
-                                </TabsTrigger>
-                                <TabsTrigger value="description" className="gap-1.5">
-                                    <IconWand className="size-4" />
-                                    Why This Goes Viral
-                                </TabsTrigger>
-                            </TabsList>
-
-                            <TabsContent value="transcript" className="mt-0 relative">
-                                <div className="max-h-[18rem] overflow-y-auto">
-                                    <p className="text-sm text-muted-foreground leading-relaxed pb-6">
-                                        {clip.transcript || "No transcript available."}
-                                    </p>
-                                </div>
-                                <div className="pointer-events-none absolute bottom-0 left-0 right-0 h-8 bg-gradient-to-t from-card to-transparent" />
-                            </TabsContent>
-
-                            <TabsContent value="description" className="mt-0 relative">
-                                <div className="max-h-[18rem] overflow-y-auto">
-                                    <div className="pb-6">
-                                        <p className="text-sm text-muted-foreground leading-relaxed">
-                                            {clip.viralityReason || "No auto-description available."}
-                                        </p>
-                                        {clip.hooks.length > 0 && (
-                                            <div className="mt-3 rounded-lg border bg-muted/30 p-3">
-                                                <p className="text-[11px] font-medium text-muted-foreground uppercase tracking-wider mb-2">Key Hooks</p>
-                                                <div className="grid grid-cols-2 gap-x-4 gap-y-2">
-                                                    {clip.hooks.map((hook, i) => (
-                                                        <div key={i} className="flex items-start gap-2">
-                                                            <span className="mt-1.5 size-1.5 rounded-full bg-emerald-500 shrink-0" />
-                                                            <span className="text-xs text-foreground/80 leading-snug">{hook}</span>
-                                                        </div>
-                                                    ))}
-                                                </div>
-                                            </div>
-                                        )}
-                                    </div>
-                                </div>
-                                <div className="pointer-events-none absolute bottom-0 left-0 right-0 h-8 bg-gradient-to-t from-card to-transparent" />
-                            </TabsContent>
-                        </Tabs>
-
-                        {/* Platform Chips */}
-                        {clip.recommendedPlatforms && clip.recommendedPlatforms.length > 0 && (
-                            <div className="flex flex-wrap items-center gap-2 mt-4">
-                                <TooltipProvider>
-                                    {clip.recommendedPlatforms.map((platform) => {
-                                        const config = PLATFORM_CONFIG[platform];
-                                        if (!config) return null;
-                                        const Icon = config.icon;
-                                        return (
-                                            <Tooltip key={platform}>
-                                                <TooltipTrigger asChild>
-                                                    <div className="flex items-center gap-1.5 rounded-full border bg-muted/40 px-3 py-1.5 cursor-default">
-                                                        <Icon className="size-4" />
-                                                        <span className="text-xs font-medium">{config.label}</span>
-                                                    </div>
-                                                </TooltipTrigger>
-                                                <TooltipContent>
-                                                    <p>Best for {config.tooltip}</p>
-                                                </TooltipContent>
-                                            </Tooltip>
-                                        );
-                                    })}
-                                </TooltipProvider>
-                            </div>
-                        )}
-                    </div>
-                </div>
-
-                {/* Action Buttons */}
-                <div className="flex items-center justify-between mt-4 pt-4 border-t">
-                    <div className="flex items-center gap-2">
-                        <Button
-                            size="sm"
-                            className="gap-2"
-                            onClick={() => onDownload(clip)}
-                            disabled={!clip.storageUrl || isGenerating}
-                        >
-                            <IconDownload className="size-4" />
-                            Download
-                        </Button>
-
-                        <Button
-                            size="sm"
-                            variant="outline"
-                            className="gap-2"
-                            disabled={isGenerating}
-                            onClick={() => {
-                                if (isFreePlan) {
-                                    setUpgradeFeature("Remove watermark");
-                                } else {
-                                    // TODO: handle remove watermark for paid users
-                                }
-                            }}
-                        >
-                            <IconSparkles className="size-4" />
-                            Remove watermark
-                        </Button>
-
-                        <Button
-                            size="sm"
-                            variant="outline"
-                            className="gap-2"
-                            onClick={() => {
-                                if (isFreePlan) {
-                                    setUpgradeFeature("Edit");
-                                } else {
-                                    onEdit(clip.id);
-                                }
-                            }}
-                            disabled={isGenerating}
-                        >
-                            <IconEdit className="size-4" />
-                            Edit
-                        </Button>
-                    </div>
-
-                    <div className="flex items-center gap-2">
-                        <Button
-                            size="icon"
-                            variant="ghost"
-                            className={cn(
-                                "size-9",
-                                clip.favorited && "text-red-500 hover:text-red-600"
-                            )}
-                            onClick={(e) => onFavorite(e, clip.id)}
-                        >
-                            {clip.favorited ? (
-                                <IconHeartFilled className="size-5" />
-                            ) : (
-                                <IconHeart className="size-5" />
-                            )}
-                        </Button>
-
-                        <Button
-                            size="icon"
-                            variant="ghost"
-                            className="size-9"
-                            onClick={() => onShare(clip)}
-                        >
-                            <IconShare2 className="size-5" />
-                        </Button>
-                    </div>
-                </div>
-            </div>
-
-            {/* Upgrade Dialog for free plan users */}
-            <UpgradeDialog
-                open={upgradeFeature !== null}
-                onOpenChange={(open) => {
-                    if (!open) setUpgradeFeature(null);
-                }}
-                workspaceSlug={workspaceSlug}
-                feature={upgradeFeature || ""}
-            />
         </div>
     );
 }
@@ -591,6 +366,14 @@ export default function VideoClipsPage({ params }: VideoClipsPageProps) {
         data: workspace,
     } = useWorkspaceBySlug(slug);
 
+    const {
+        data: configData,
+    } = useQuery({
+        queryKey: ["video-config", videoId],
+        queryFn: () => videoConfigApi.getConfig(videoId),
+        enabled: !!videoId,
+    });
+
     const toggleFavorite = useToggleFavorite();
 
     const handleBack = useCallback(() => {
@@ -612,15 +395,23 @@ export default function VideoClipsPage({ params }: VideoClipsPageProps) {
         [toggleFavorite]
     );
 
-    const handleDownload = useCallback((clip: ClipResponse) => {
+    const handleDownload = useCallback(async (clip: ClipResponse) => {
         if (clip.storageUrl) {
             analytics.clipDownloaded(clip.id);
-            const link = document.createElement("a");
-            link.href = clip.storageUrl;
-            link.download = `${clip.title || "clip"}.mp4`;
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
+            try {
+                const response = await fetch(clip.storageUrl);
+                const blob = await response.blob();
+                const url = URL.createObjectURL(blob);
+                const link = document.createElement("a");
+                link.href = url;
+                link.download = `${clip.title || "clip"}.mp4`;
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                URL.revokeObjectURL(url);
+            } catch {
+                window.open(clip.storageUrl, "_blank");
+            }
         }
     }, []);
 
@@ -636,7 +427,10 @@ export default function VideoClipsPage({ params }: VideoClipsPageProps) {
         }
     }, []);
 
-    if (videoLoading || clipsLoading) {
+    // Video just completed but clips haven't loaded yet — avoid flashing "No Clips Found"
+    const isWaitingForClips = video?.status === "completed" && (!clips || clips.length === 0);
+
+    if (videoLoading || clipsLoading || isWaitingForClips) {
         return <VideoClipsLoading />;
     }
 
@@ -655,28 +449,29 @@ export default function VideoClipsPage({ params }: VideoClipsPageProps) {
 
     // Derive metadata for tags
     const sourceType = video.sourceType === "youtube" ? "YouTube" : "Local file";
-    const aspectRatio = "9:16"; // Default, could come from video config
+    const aspectRatio = configData?.config?.aspectRatio || "9:16";
+    const hasSplitScreen = configData?.config?.enableSplitScreen || false;
 
     return (
         <div className="flex h-full flex-col bg-background">
             {/* Header */}
-            <div className="border-b px-6 py-4">
-                <div className="flex items-start justify-between">
-                    <div className="flex items-start gap-3">
+            <div className="border-b px-4 sm:px-6 py-3 sm:py-4">
+                <div className="flex items-start justify-between gap-2">
+                    <div className="flex items-start gap-2 sm:gap-3 min-w-0">
                         <Button
                             variant="ghost"
                             size="icon"
                             onClick={handleBack}
-                            className="mt-0.5"
+                            className="mt-0.5 shrink-0 size-8 sm:size-9"
                             aria-label="Go back"
                         >
-                            <IconArrowLeft className="size-5" />
+                            <IconArrowLeft className="size-4 sm:size-5" />
                         </Button>
-                        <div>
-                            <h1 className="text-xl font-semibold">
+                        <div className="min-w-0">
+                            <h1 className="text-base sm:text-xl font-semibold truncate">
                                 {video.title || "Untitled Video"}
                             </h1>
-                            <p className="text-sm text-muted-foreground mt-0.5">
+                            <p className="text-xs sm:text-sm text-muted-foreground mt-0.5">
                                 {formatDate(video.createdAt)}
                             </p>
                         </div>
@@ -684,31 +479,39 @@ export default function VideoClipsPage({ params }: VideoClipsPageProps) {
 
                     {/* Share Button */}
                     {workspace && (
-                        <ShareManager
-                            videoId={videoId}
-                            workspaceSlug={slug}
-                            clipCount={clips?.length || 0}
-                            userPlan={workspace.plan as "free" | "starter" | "pro"}
-                        />
+                        <div className="shrink-0">
+                            <ShareManager
+                                videoId={videoId}
+                                workspaceSlug={slug}
+                                clipCount={clips?.length || 0}
+                                userPlan={workspace.plan as "free" | "starter" | "pro"}
+                            />
+                        </div>
                     )}
                 </div>
 
                 {/* Tags */}
-                <div className="flex flex-wrap items-center gap-2 mt-3 ml-11">
-                    <Badge variant="outline" className="gap-1.5">
+                <div className="flex flex-wrap items-center gap-1.5 sm:gap-2 mt-2 sm:mt-3 ml-10 sm:ml-11">
+                    <Badge variant="outline" className="gap-1.5 text-[11px] sm:text-xs">
                         <IconFile className="size-3" />
                         {sourceType}
                     </Badge>
-                    <Badge variant="outline" className="gap-1.5">
+                    <Badge variant="outline" className="gap-1.5 text-[11px] sm:text-xs">
                         <IconAspectRatio className="size-3" />
                         {aspectRatio}
                     </Badge>
-                    <Badge variant="outline" className="gap-1.5">
+                    {hasSplitScreen && (
+                        <Badge variant="outline" className="gap-1.5 text-[11px] sm:text-xs text-primary border-primary/30 bg-primary/5">
+                            <IconLayoutRows className="size-3" />
+                            Split Screen
+                        </Badge>
+                    )}
+                    <Badge variant="outline" className="gap-1.5 text-[11px] sm:text-xs">
                         <IconFlame className="size-3" />
                         Viral Clips
                     </Badge>
                     {video.createdAt && (
-                        <Badge variant="outline" className="gap-1.5 text-primary border-primary/30">
+                        <Badge variant="outline" className="gap-1.5 text-[11px] sm:text-xs text-primary border-primary/30">
                             <IconCalendar className="size-3" />
                             Expires: {formatDate(new Date(new Date(video.createdAt).getTime() + 30 * 24 * 60 * 60 * 1000).toISOString())}
                         </Badge>
@@ -717,15 +520,45 @@ export default function VideoClipsPage({ params }: VideoClipsPageProps) {
             </div>
 
             {/* Clips List */}
-            <div className="flex-1 overflow-auto p-6 flex flex-col justify-center items-center">
+            <div className="flex-1 overflow-auto p-4 sm:p-6 flex flex-col justify-center items-center">
                 {!clips || clips.length === 0 ? (
                     <NoClips
                         videoTitle={video.title || "this video"}
                         videoStatus={video.status}
                         videoCreatedAt={video.createdAt}
+                        thumbnailUrl={video.thumbnailUrl || (video.metadata?.thumbnail as string) || null}
                     />
                 ) : (
-                    <div className="space-y-6 max-w-4xl">
+                    <div className="space-y-6 max-w-4xl w-full">
+                        {/* Clips still generating banner */}
+                        {clips.some(c => c.status === "generating" || c.status === "detected") && (
+                            <div className="flex items-center gap-3 rounded-xl border border-amber-500/20 bg-amber-500/5 px-4 py-3">
+                                <IconLoader2 className="size-4 shrink-0 animate-spin text-amber-500" />
+                                <p className="text-sm text-foreground">
+                                    Some clips are still being generated. This page will update automatically.
+                                </p>
+                            </div>
+                        )}
+
+                        {/* Schedule nudge — shown when clips are ready */}
+                        <div className="flex items-center justify-between gap-4 rounded-xl border border-primary/20 bg-primary/5 px-4 py-3">
+                            <div className="flex items-center gap-3">
+                                <div className="flex size-8 shrink-0 items-center justify-center rounded-full bg-primary/10">
+                                    <IconCalendar className="size-4 text-primary" />
+                                </div>
+                                <p className="text-sm text-foreground">
+                                    Your clips are ready — schedule them to TikTok, Instagram, YouTube Shorts & more.
+                                </p>
+                            </div>
+                            <Button
+                                size="sm"
+                                onClick={() => router.push(`/${slug}/social`)}
+                                className="shrink-0 rounded-full"
+                            >
+                                Schedule now
+                            </Button>
+                        </div>
+
                         {clips.map((clip, index) => (
                             <ClipCard
                                 key={clip.id}
@@ -737,6 +570,7 @@ export default function VideoClipsPage({ params }: VideoClipsPageProps) {
                                 onShare={handleShare}
                                 userPlan={(workspace?.plan as "free" | "starter" | "pro" | "agency") || "free"}
                                 workspaceSlug={slug}
+                                workspaceId={workspace?.id}
                             />
                         ))}
                     </div>

@@ -4,7 +4,7 @@ import { IconChevronRight, IconDots } from "@tabler/icons-react";
 import type * as React from "react";
 import { cn } from "@/lib/utils";
 
-function Breadcrumb({ className, ...props }: React.ComponentProps<"nav">) {
+function Breadcrumb({ className, ...props }: React.HTMLAttributes<HTMLElement>) {
   return (
     <nav
       aria-label="breadcrumb"
@@ -15,7 +15,7 @@ function Breadcrumb({ className, ...props }: React.ComponentProps<"nav">) {
   );
 }
 
-function BreadcrumbList({ className, ...props }: React.ComponentProps<"ol">) {
+function BreadcrumbList({ className, ...props }: React.OlHTMLAttributes<HTMLOListElement>) {
   return (
     <ol
       className={cn(
@@ -28,7 +28,7 @@ function BreadcrumbList({ className, ...props }: React.ComponentProps<"ol">) {
   );
 }
 
-function BreadcrumbItem({ className, ...props }: React.ComponentProps<"li">) {
+function BreadcrumbItem({ className, ...props }: React.LiHTMLAttributes<HTMLLIElement>) {
   return (
     <li
       className={cn("inline-flex items-center gap-1.5", className)}
@@ -58,7 +58,7 @@ function BreadcrumbLink({
   });
 }
 
-function BreadcrumbPage({ className, ...props }: React.ComponentProps<"span">) {
+function BreadcrumbPage({ className, ...props }: React.HTMLAttributes<HTMLSpanElement>) {
   return (
     <span
       aria-current="page"
@@ -74,7 +74,7 @@ function BreadcrumbSeparator({
   children,
   className,
   ...props
-}: React.ComponentProps<"li">) {
+}: React.LiHTMLAttributes<HTMLLIElement>) {
   return (
     <li
       aria-hidden="true"
@@ -91,7 +91,7 @@ function BreadcrumbSeparator({
 function BreadcrumbEllipsis({
   className,
   ...props
-}: React.ComponentProps<"span">) {
+}: React.HTMLAttributes<HTMLSpanElement>) {
   return (
     <span
       aria-hidden="true"

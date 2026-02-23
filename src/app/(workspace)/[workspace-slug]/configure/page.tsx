@@ -30,7 +30,8 @@ import { useValidateYouTubeUrl, useVideo } from "@/hooks/useVideo";
 import { useWorkspaceBySlug } from "@/hooks/useWorkspace";
 import { usePlanLimits } from "@/hooks/usePlanLimits";
 import { videoApi } from "@/lib/api/video";
-import { videoConfigApi, DEFAULT_VIDEO_CONFIG, type VideoConfigInput } from "@/lib/api/video-config";
+import { videoConfigApi, DEFAULT_VIDEO_CONFIG, type VideoConfigInput, type CaptionTemplate } from "@/lib/api/video-config";
+import { HoverCard, HoverCardTrigger, HoverCardContent } from "@/components/ui/hover-card";
 import { toast } from "sonner";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import type { VideoInfo } from "@/lib/api/video";
@@ -38,6 +39,7 @@ import { AspectRatioSelector } from "@/components/configure/aspect-ratio-selecto
 import { TimeframeSelector } from "@/components/configure/timeframe-selector";
 import { ClipTypeSelector } from "@/components/configure/clip-type-selector";
 import { ClipDurationSelector } from "@/components/configure/clip-duration-selector";
+import { SplitScreenSection } from "@/components/configure/split-screen-section";
 import { YouTubeIcon } from "@/components/icons/youtube-icon";
 import { InsufficientMinutesModal } from "@/components/upload/insufficient-minutes-modal";
 import {
@@ -69,6 +71,89 @@ function formatDuration(seconds: number): string {
         return `${hrs}:${mins.toString().padStart(2, "0")}:${secs.toString().padStart(2, "0")}`;
     }
     return `${mins}:${secs.toString().padStart(2, "0")}`;
+}
+
+// Maps template fontFamily names to their CSS variable and max available weight
+const FONT_MAP: Record<string, { variable: string; weight: number }> = {
+    "Bebas Neue":        { variable: "--font-bebas-neue",        weight: 400 },
+    "Anton":             { variable: "--font-anton",             weight: 400 },
+    "Bangers":           { variable: "--font-bangers",           weight: 400 },
+    "Titan One":         { variable: "--font-titan-one",         weight: 400 },
+    "Righteous":         { variable: "--font-righteous",         weight: 400 },
+    "Russo One":         { variable: "--font-russo-one",         weight: 400 },
+    "Black Ops One":     { variable: "--font-black-ops-one",     weight: 400 },
+    "Permanent Marker":  { variable: "--font-permanent-marker",  weight: 400 },
+    "Lilita One":        { variable: "--font-lilita-one",        weight: 400 },
+    "Montserrat":        { variable: "--font-montserrat",        weight: 800 },
+    "Poppins":           { variable: "--font-poppins",           weight: 800 },
+    "Oswald":            { variable: "--font-oswald",            weight: 700 },
+    "Lexend":            { variable: "--font-lexend",            weight: 800 },
+    "Inter":             { variable: "--font-inter",             weight: 700 },
+    "Libre Baskerville": { variable: "--font-libre-baskerville", weight: 700 },
+};
+
+function getFontStyle(fontFamily: string): { fontFamily: string; fontWeight: number } {
+    const entry = FONT_MAP[fontFamily];
+    if (entry) {
+        return { fontFamily: `var(${entry.variable})`, fontWeight: entry.weight };
+    }
+    return { fontFamily, fontWeight: 700 };
+}
+
+function CaptionPreviewPopup({ template }: { template: CaptionTemplate }) {
+    const style = template.style;
+    const words = ["YOUR", "CONTENT", "GOES", "VIRAL"];
+    const [activeWord, setActiveWord] = useState(0);
+    const isBoxHighlight = style.backgroundOpacity > 50;
+
+    useEffect(() => {
+        const interval = setInterval(() => {
+            setActiveWord((prev) => (prev + 1) % words.length);
+        }, 600);
+        return () => clearInterval(interval);
+    }, []);
+
+    const isActive = (i: number) => i === activeWord;
+    const highlightColor = style.highlightEnabled ? style.highlightColor : style.textColor;
+
+    return (
+        <div className="space-y-2">
+            <p className="text-xs font-semibold">{template.name}</p>
+            <div className="relative rounded-lg overflow-hidden bg-slate-800 h-28 flex items-end justify-center pb-3">
+                <img
+                    alt=""
+                    aria-hidden="true"
+                    className="absolute inset-0 size-full object-cover opacity-50 pointer-events-none"
+                    src="https://images.pexels.com/photos/2310713/pexels-photo-2310713.jpeg"
+                />
+                <div className="absolute inset-0 bg-linear-to-b from-black/10 to-black/50" aria-hidden="true" />
+                <div className="relative z-10 flex flex-wrap justify-center gap-x-1.5 gap-y-0.5 px-3 text-center">
+                    {words.map((word, i) => (
+                        <span
+                            key={word}
+                            className="leading-tight inline-block"
+                            style={{
+                                ...getFontStyle(style.fontFamily || "Inter"),
+                                fontSize: "20px",
+                                textTransform: (style.textTransform as React.CSSProperties["textTransform"]) || "uppercase",
+                                color: isActive(i) ? highlightColor : style.textColor,
+                                textShadow: style.shadow ? "1px 1px 3px rgba(0,0,0,0.9)" : "none",
+                                WebkitTextStroke: style.outline
+                                    ? `${(style.outlineWidth || 2) * 0.1}px ${style.outlineColor || "#000"}`
+                                    : undefined,
+                                backgroundColor: isActive(i) && isBoxHighlight ? style.highlightColor : undefined,
+                                padding: isBoxHighlight ? "1px 4px" : undefined,
+                                borderRadius: isBoxHighlight ? "3px" : undefined,
+                            }}
+                        >
+                            {word}
+                        </span>
+                    ))}
+                </div>
+            </div>
+            <p className="text-[10px] text-muted-foreground text-center">Words highlight as spoken</p>
+        </div>
+    );
 }
 
 export default function ConfigurePage() {
@@ -149,8 +234,8 @@ export default function ConfigurePage() {
                 skipClipping: config.skipClipping,
                 clipModel: config.clipModel,
                 genre: config.genre,
-                clipDurationMin: config.clipDurationMin || 30,
-                clipDurationMax: config.clipDurationMax || 60,
+                clipDurationMin: config.clipDurationMin ?? 0,
+                clipDurationMax: config.clipDurationMax ?? 0,
                 timeframeStart: config.timeframeStart ?? 0,
                 timeframeEnd: config.timeframeEnd ?? null,
                 language: config.language,
@@ -161,6 +246,10 @@ export default function ConfigurePage() {
                 enableCaptions: config.enableCaptions,
                 enableEmojis: config.enableEmojis,
                 enableIntroTitle: config.enableIntroTitle,
+                enableSplitScreen: config.enableSplitScreen,
+                splitScreenBgVideoId: config.splitScreenBgVideoId,
+                splitScreenBgCategoryId: config.splitScreenBgCategoryId,
+                splitRatio: config.splitRatio,
             });
         },
         onSuccess: (result) => {
@@ -202,8 +291,8 @@ export default function ConfigurePage() {
                 skipClipping: config.skipClipping,
                 clipModel: config.clipModel,
                 genre: config.genre,
-                clipDurationMin: config.clipDurationMin || 30,
-                clipDurationMax: config.clipDurationMax || 60,
+                clipDurationMin: config.clipDurationMin ?? 0,
+                clipDurationMax: config.clipDurationMax ?? 0,
                 timeframeStart: config.timeframeStart ?? 0,
                 timeframeEnd: config.timeframeEnd ?? null,
                 language: config.language,
@@ -214,6 +303,10 @@ export default function ConfigurePage() {
                 enableCaptions: config.enableCaptions,
                 enableEmojis: config.enableEmojis,
                 enableIntroTitle: config.enableIntroTitle,
+                enableSplitScreen: config.enableSplitScreen,
+                splitScreenBgVideoId: config.splitScreenBgVideoId,
+                splitScreenBgCategoryId: config.splitScreenBgCategoryId,
+                splitRatio: config.splitRatio,
             });
         },
         onSuccess: (result) => {
@@ -255,6 +348,13 @@ export default function ConfigurePage() {
                     setValidationState("valid");
                     setVideoInfo(result.videoInfo);
                     setErrorMessage(null);
+                    // Auto-populate language from video metadata
+                    if (result.videoInfo.language) {
+                        const baseLang = result.videoInfo.language.split("-")[0];
+                        if (baseLang && baseLang in SUPPORTED_LANGUAGES && baseLang !== "auto") {
+                            updateConfig({ language: baseLang as SupportedLanguageCode });
+                        }
+                    }
                 } else {
                     setValidationState("invalid");
                     setVideoInfo(null);
@@ -513,44 +613,54 @@ export default function ConfigurePage() {
                                                                     {pageTemplates.map((template) => {
                                                                         const isSelected = (config.captionTemplateId ?? "classic") === template.id;
                                                                         return (
-                                                                            <button
-                                                                                key={template.id}
-                                                                                onClick={() => updateConfig({ captionTemplateId: template.id })}
-                                                                                disabled={isSubmitting}
-                                                                                className={cn(
-                                                                                    "relative flex flex-col items-center justify-center rounded-lg border p-2 pb-4 h-[72px] transition-all",
-                                                                                    "bg-muted/50 border-border",
-                                                                                    "hover:bg-muted hover:border-primary/50 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-primary",
-                                                                                    isSelected && "ring-1 ring-primary bg-muted border-primary",
-                                                                                    isSubmitting && "opacity-50 cursor-not-allowed"
-                                                                                )}
-                                                                            >
-                                                                                <div className="flex flex-col items-center justify-center">
-                                                                                    <span
-                                                                                        className="text-[9px] font-bold leading-tight"
-                                                                                        style={{
-                                                                                            fontFamily: template.style?.fontFamily || "Inter",
-                                                                                            color: template.style?.textColor || "#FFFFFF",
-                                                                                            textShadow: template.style?.shadow ? "1px 1px 2px rgba(0,0,0,0.8)" : "none",
-                                                                                        }}
-                                                                                    >
-                                                                                        TO GET
-                                                                                    </span>
-                                                                                    <span
-                                                                                        className="text-[9px] font-bold leading-tight"
-                                                                                        style={{
-                                                                                            fontFamily: template.style?.fontFamily || "Inter",
-                                                                                            color: template.style?.highlightColor || template.style?.textColor || "#00FF00",
-                                                                                            textShadow: template.style?.shadow ? "1px 1px 2px rgba(0,0,0,0.8)" : "none",
-                                                                                        }}
-                                                                                    >
-                                                                                        STARTED
-                                                                                    </span>
-                                                                                </div>
-                                                                                <span className="absolute bottom-0.5 text-[8px] text-muted-foreground truncate max-w-full px-1">
-                                                                                    {template.name}
-                                                                                </span>
-                                                                            </button>
+                                                                            <HoverCard key={template.id}>
+                                                                                <HoverCardTrigger
+                                                                                    render={
+                                                                                        <button
+                                                                                            onClick={() => updateConfig({ captionTemplateId: template.id })}
+                                                                                            disabled={isSubmitting}
+                                                                                            className={cn(
+                                                                                                "relative flex flex-col items-center justify-center rounded-lg border p-2 pb-4 h-[72px] transition-all",
+                                                                                                "bg-muted/50 border-border",
+                                                                                                "hover:bg-muted hover:border-primary/50 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-primary",
+                                                                                                isSelected && "ring-1 ring-primary bg-muted border-primary",
+                                                                                                isSubmitting && "opacity-50 cursor-not-allowed"
+                                                                                            )}
+                                                                                        >
+                                                                                            <div className="flex flex-col items-center justify-center">
+                                                                                                <span
+                                                                                                    className="text-[9px] leading-tight"
+                                                                                                    style={{
+                                                                                                        ...getFontStyle(template.style?.fontFamily || "Inter"),
+                                                                                                        textTransform: (template.style?.textTransform as React.CSSProperties["textTransform"]) || "uppercase",
+                                                                                                        color: template.style?.textColor || "#FFFFFF",
+                                                                                                        textShadow: template.style?.shadow ? "1px 1px 2px rgba(0,0,0,0.8)" : "none",
+                                                                                                    }}
+                                                                                                >
+                                                                                                    TO GET
+                                                                                                </span>
+                                                                                                <span
+                                                                                                    className="text-[9px] leading-tight"
+                                                                                                    style={{
+                                                                                                        ...getFontStyle(template.style?.fontFamily || "Inter"),
+                                                                                                        textTransform: (template.style?.textTransform as React.CSSProperties["textTransform"]) || "uppercase",
+                                                                                                        color: template.style?.highlightColor || template.style?.textColor || "#00FF00",
+                                                                                                        textShadow: template.style?.shadow ? "1px 1px 2px rgba(0,0,0,0.8)" : "none",
+                                                                                                    }}
+                                                                                                >
+                                                                                                    STARTED
+                                                                                                </span>
+                                                                                            </div>
+                                                                                            <span className="absolute bottom-0.5 text-[8px] text-muted-foreground truncate max-w-full px-1">
+                                                                                                {template.name}
+                                                                                            </span>
+                                                                                        </button>
+                                                                                    }
+                                                                                />
+                                                                                <HoverCardContent side="right" className="w-52 p-3">
+                                                                                    <CaptionPreviewPopup template={template} />
+                                                                                </HoverCardContent>
+                                                                            </HoverCard>
                                                                         );
                                                                     })}
                                                                 </div>
@@ -581,7 +691,7 @@ export default function ConfigurePage() {
                                                 <AspectRatioSelector
                                                     value={config.aspectRatio ?? "9:16"}
                                                     onChange={(ratio) => updateConfig({ aspectRatio: ratio })}
-                                                    disabled={isSubmitting}
+                                                    disabled={isSubmitting || (config.enableSplitScreen ?? false)}
                                                 />
                                             </div>
                                         </div>
@@ -596,7 +706,9 @@ export default function ConfigurePage() {
                                                 disabled={isSubmitting}
                                             >
                                                 <SelectTrigger className="w-48">
-                                                    <SelectValue placeholder="Select language" />
+                                                    <SelectValue placeholder="Select language">
+                                                        {SUPPORTED_LANGUAGES[(config.language ?? "auto") as SupportedLanguageCode]}
+                                                    </SelectValue>
                                                 </SelectTrigger>
                                                 <SelectContent>
                                                     {Object.entries(SUPPORTED_LANGUAGES).map(([code, name]) => (
@@ -636,6 +748,15 @@ export default function ConfigurePage() {
                                                 checked={config.enableCaptions ?? true}
                                                 onCheckedChange={(checked) => updateConfig({ enableCaptions: checked })}
                                                 disabled={isSubmitting}
+                                            />
+                                        </div>
+                                        <div className="border-t pt-3">
+                                            <SplitScreenSection
+                                                config={config}
+                                                onChange={updateConfig}
+                                                disabled={isSubmitting}
+                                                userPlan={workspace?.plan || "free"}
+                                                workspaceSlug={workspaceSlug}
                                             />
                                         </div>
                                     </div>

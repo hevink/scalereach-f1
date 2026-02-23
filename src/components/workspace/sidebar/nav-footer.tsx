@@ -1,14 +1,13 @@
 "use client";
 
 import {
-  IconAlertTriangle,
-  IconHelp,
-  IconSettings,
-  IconSettingsFilled,
-  IconSparkles,
-  IconClock,
-  IconKeyboard,
-} from "@tabler/icons-react";
+  HugeSettingsIcon,
+  HugeSparklesIcon,
+  HugeClockIcon,
+  HugeHelpIcon,
+  HugeAlertIcon,
+  HugeKeyboardIcon,
+} from "@/components/icons/huge-icons";
 import { usePathname, useRouter } from "next/navigation";
 import {
   SidebarMenu,
@@ -40,10 +39,12 @@ export function NavFooter({ currentSlug }: NavFooterProps) {
   const minutesTotal = minutesData?.minutesTotal ?? 0;
   const isLowMinutes = minutesTotal > 0 && (minutesRemaining / minutesTotal) < 0.2;
 
+  const isFree = workspace?.plan === "free";
+
   const footerItems = [
     {
       title: "Settings",
-      icon: isSettingsActive ? IconSettingsFilled : IconSettings,
+      icon: isSettingsActive ? HugeSettingsIcon : HugeSettingsIcon,
       onClick: () => {
         router.push(settingsUrl);
       },
@@ -51,23 +52,23 @@ export function NavFooter({ currentSlug }: NavFooterProps) {
     },
     {
       title: "Shortcuts",
-      icon: IconKeyboard,
+      icon: HugeKeyboardIcon,
       onClick: () => {
         openShortcutsHelp();
       },
     },
     {
       title: "Get Help",
-      icon: IconHelp,
+      icon: HugeHelpIcon,
       onClick: () => {
-        // TODO: Open help center
+        window.open("mailto:hevin@scalereach.ai?subject=Help%20Request", "_blank");
       },
     },
     {
       title: "Report Issue",
-      icon: IconAlertTriangle,
+      icon: HugeAlertIcon,
       onClick: () => {
-        // TODO: Open issue reporter
+        window.open("mailto:hevin@scalereach.ai?subject=Bug%20Report", "_blank");
       },
     },
   ];
@@ -83,7 +84,7 @@ export function NavFooter({ currentSlug }: NavFooterProps) {
             isLowMinutes && "text-amber-600 dark:text-amber-500"
           )}
         >
-          <IconClock className={cn(isLowMinutes && "text-amber-500")} />
+          <HugeClockIcon className={cn(isLowMinutes && "text-amber-500")} />
           <span className="font-[490] text-[13px]">Minutes</span>
         </SidebarMenuButton>
         <SidebarMenuBadge
@@ -97,6 +98,21 @@ export function NavFooter({ currentSlug }: NavFooterProps) {
         </SidebarMenuBadge>
       </SidebarMenuItem>
 
+      {/* Free plan upgrade nudge */}
+      {isFree && (
+        <SidebarMenuItem>
+          <div
+            onClick={() => router.push(`/${currentSlug}/pricing`)}
+            className="cursor-pointer mx-1 mb-1 rounded-lg border border-primary/20 bg-primary/5 px-3 py-2.5 hover:bg-primary/10 transition-colors"
+          >
+            <p className="text-xs font-semibold text-primary mb-0.5">Unlock more minutes</p>
+            <p className="text-[11px] text-muted-foreground leading-relaxed">
+              500 min/month, no watermark, longer videos.
+            </p>
+          </div>
+        </SidebarMenuItem>
+      )}
+
       {/* Upgrade Button - Links to pricing page */}
       <SidebarMenuItem>
         <SidebarMenuButton
@@ -104,7 +120,7 @@ export function NavFooter({ currentSlug }: NavFooterProps) {
           onClick={() => router.push(`/${currentSlug}/pricing`)}
           className="bg-linear-to-r from-primary/10 to-primary/5 hover:from-primary/20 hover:to-primary/10 border border-primary/20"
         >
-          <IconSparkles className="text-primary" />
+          <HugeSparklesIcon className="text-primary" />
           <span className="font-[490] text-[13px] text-primary">Upgrade</span>
         </SidebarMenuButton>
       </SidebarMenuItem>

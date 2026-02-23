@@ -1,4 +1,4 @@
-import { useWorkspace } from "./useWorkspace";
+import { useWorkspaceBySlug } from "./useWorkspace";
 
 /**
  * Plan limits interface for frontend display
@@ -19,7 +19,7 @@ export interface PlanLimits {
  * @returns Plan limits for the workspace
  */
 export function usePlanLimits(workspaceSlug: string): PlanLimits {
-  const { data: workspace } = useWorkspace(workspaceSlug);
+  const { data: workspace } = useWorkspaceBySlug(workspaceSlug);
   const plan = workspace?.plan || "free";
   
   return getPlanLimits(plan);

@@ -41,6 +41,12 @@ export interface VideoConfigInput {
   enableCaptions?: boolean;
   enableEmojis?: boolean;
   enableIntroTitle?: boolean;
+  // Split-Screen Options
+  enableSplitScreen?: boolean;
+  splitScreenBgVideoId?: string | null;       // legacy single (kept for compat)
+  splitScreenBgVideoIds?: string[] | null;    // multi-select
+  splitScreenBgCategoryId?: string | null;
+  splitRatio?: number;
 }
 
 export interface VideoConfig extends VideoConfigInput {
@@ -89,6 +95,13 @@ export interface CaptionTemplate {
     shadow: boolean;
     outline: boolean;
     outlineColor?: string;
+    outlineWidth?: number;
+    highlightScale?: number;
+    textTransform?: "none" | "uppercase";
+    wordsPerLine?: number;
+    glowEnabled?: boolean;
+    glowColor?: string;
+    glowIntensity?: number;
   };
   preview: string;
   previewThumbnail?: string;
@@ -134,8 +147,8 @@ export const DEFAULT_VIDEO_CONFIG: VideoConfigInput = {
   skipClipping: false,
   clipModel: "ClipBasic",
   genre: "Auto",
-  clipDurationMin: 30,
-  clipDurationMax: 60,
+  clipDurationMin: 0,
+  clipDurationMax: 0,
   timeframeStart: 0,
   timeframeEnd: null,
   language: "auto", // Auto-detect by default
@@ -150,4 +163,10 @@ export const DEFAULT_VIDEO_CONFIG: VideoConfigInput = {
   enableCaptions: true,
   enableEmojis: false,
   enableIntroTitle: false,
+  // Split-Screen Options
+  enableSplitScreen: false,
+  splitScreenBgVideoId: null,
+  splitScreenBgVideoIds: null,
+  splitScreenBgCategoryId: null,
+  splitRatio: 50,
 };

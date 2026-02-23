@@ -12,6 +12,7 @@ import { ClipSettingsPanel } from "./clip-settings-panel";
 import { TimeframeSelector } from "./timeframe-selector";
 import { CaptionTemplateGrid } from "./caption-template-grid";
 import { AspectRatioSelector } from "./aspect-ratio-selector";
+import { SplitScreenSection } from "./split-screen-section";
 import type { VideoConfigInput, CaptionTemplate } from "@/lib/api/video-config";
 import { useState } from "react";
 import { cn } from "@/lib/utils";
@@ -23,6 +24,8 @@ interface VideoConfigFormProps {
     videoDuration: number;
     isLoading?: boolean;
     isSaving?: boolean;
+    userPlan?: string;
+    workspaceSlug?: string;
     onSubmit: () => void;
     onSaveAsDefault: () => void;
 }
@@ -34,6 +37,8 @@ export function VideoConfigForm({
     videoDuration,
     isLoading = false,
     isSaving = false,
+    userPlan = "free",
+    workspaceSlug = "",
     onSubmit,
     onSaveAsDefault,
 }: VideoConfigFormProps) {
@@ -145,6 +150,16 @@ export function VideoConfigForm({
                                 />
                             </div>
 
+                            {/* Split Screen */}
+                            <Separator />
+                            <SplitScreenSection
+                                config={config}
+                                onChange={onChange}
+                                disabled={isDisabled}
+                                userPlan={userPlan}
+                                workspaceSlug={workspaceSlug}
+                            />
+
                             {/* Emojis Toggle - disabled for now */}
                             {/* <div className="flex items-center justify-between">
                                 <div className="flex items-center gap-3">
@@ -187,7 +202,7 @@ export function VideoConfigForm({
                     <AspectRatioSelector
                         value={config.aspectRatio ?? "9:16"}
                         onChange={(ratio) => onChange({ aspectRatio: ratio })}
-                        disabled={isDisabled}
+                        disabled={isDisabled || (config.enableSplitScreen ?? false)}
                     />
 
                     <Separator />

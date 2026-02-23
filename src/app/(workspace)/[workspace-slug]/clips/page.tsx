@@ -5,20 +5,14 @@ import { useRouter } from "next/navigation";
 import {
     IconScissors,
     IconLoader2,
-    IconHeartFilled,
     IconHeart,
     IconFilter,
-    IconDownload,
-    IconEdit,
-    IconShare2,
-    IconSparkles,
-    IconVideo,
+    IconCalendar,
+    IconArrowRight,
 } from "@tabler/icons-react";
 
-import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { EmptyState } from "@/components/ui/empty-state";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
     Select,
     SelectContent,
@@ -29,173 +23,13 @@ import {
 import { useMyVideos } from "@/hooks/useVideo";
 import { useClipsByVideo, useToggleFavorite } from "@/hooks/useClips";
 import { useWorkspaceBySlug } from "@/hooks/useWorkspace";
-import { cn } from "@/lib/utils";
 import { analytics } from "@/lib/analytics";
 import type { ClipResponse } from "@/lib/api/clips";
+import { ClipCard } from "@/components/clips/clip-card";
 
 interface AllClipsPageProps {
     params: Promise<{ "workspace-slug": string }>;
     searchParams: Promise<{ favorites?: string }>;
-}
-
-interface ClipCardProps {
-    clip: ClipResponse;
-    index: number;
-    onEdit: (clipId: string) => void;
-    onFavorite: (e: React.MouseEvent, clipId: string) => void;
-    onDownload: (clip: ClipResponse) => void;
-    onShare: (clip: ClipResponse) => void;
-}
-
-function ClipCard({ clip, index, onEdit, onFavorite, onDownload, onShare }: ClipCardProps) {
-    const [activeTab, setActiveTab] = useState<"transcript" | "description">("transcript");
-    const isGenerating = clip.status === "generating" || clip.status === "detected";
-
-    return (
-        <div className="rounded-xl border bg-card overflow-hidden">
-            {/* Clip Title */}
-            <div className="px-5 py-3 border-b bg-muted/30">
-                <h3 className="font-semibold text-base">
-                    <span className="text-muted-foreground">#{index + 1}</span>{" "}
-                    {clip.title}
-                </h3>
-            </div>
-
-            {/* Content */}
-            <div className="p-4">
-                <div className="flex flex-col lg:flex-row gap-4 lg:items-start">
-                    {/* Video Preview */}
-                    <div className="shrink-0">
-                        <div className="relative w-full lg:w-[230px] h-[400px] rounded-lg overflow-hidden bg-black">
-                            {isGenerating ? (
-                                <div className="flex h-full w-full flex-col items-center justify-center gap-2">
-                                    <IconLoader2 className="size-8 animate-spin text-primary" />
-                                    <span className="text-xs text-muted-foreground">Generating clip...</span>
-                                </div>
-                            ) : clip.storageUrl ? (
-                                <video
-                                    src={clip.storageUrl}
-                                    poster={clip.thumbnailUrl}
-                                    className="h-full w-full object-cover"
-                                    controls
-                                />
-                            ) : clip.thumbnailUrl ? (
-                                <img
-                                    src={clip.thumbnailUrl}
-                                    alt={clip.title}
-                                    className="h-full w-full object-cover"
-                                />
-                            ) : (
-                                <div className="flex h-full w-full items-center justify-center">
-                                    <IconVideo className="size-12 text-muted-foreground/30" />
-                                </div>
-                            )}
-                        </div>
-                    </div>
-
-                    {/* Tabs Section */}
-                    <div className="h-full">
-                        <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as "transcript" | "description")}>
-                            <TabsList className="mb-3">
-                                <TabsTrigger value="transcript" className="gap-1.5">
-                                    <span className="size-2 rounded-full bg-green-500" />
-                                    Transcript
-                                </TabsTrigger>
-                                <TabsTrigger value="description" className="gap-1.5">
-                                    <span className="size-2 rounded-full bg-muted-foreground" />
-                                    Auto-Description
-                                </TabsTrigger>
-                            </TabsList>
-
-                            <TabsContent value="transcript" className="mt-0">
-                                <p className="text-sm text-muted-foreground leading-relaxed">
-                                    {clip.transcript || "No transcript available."}
-                                </p>
-                            </TabsContent>
-
-                            <TabsContent value="description" className="mt-0">
-                                <p className="text-sm text-muted-foreground leading-relaxed">
-                                    {clip.viralityReason || "No auto-description available."}
-                                </p>
-                                {clip.hooks.length > 0 && (
-                                    <div className="mt-3 flex flex-wrap gap-1.5">
-                                        {clip.hooks.map((hook, i) => (
-                                            <Badge key={i} variant="secondary" className="text-xs">
-                                                {hook}
-                                            </Badge>
-                                        ))}
-                                    </div>
-                                )}
-                            </TabsContent>
-                        </Tabs>
-                    </div>
-                </div>
-
-                {/* Action Buttons */}
-                <div className="flex items-center justify-between mt-4 pt-4 border-t">
-                    <div className="flex items-center gap-2">
-                        <Button
-                            size="sm"
-                            className="gap-2"
-                            onClick={() => onDownload(clip)}
-                            disabled={!clip.storageUrl || isGenerating}
-                        >
-                            <IconDownload className="size-4" />
-                            Download
-                        </Button>
-
-                        <Button
-                            size="sm"
-                            variant="outline"
-                            className="gap-2"
-                            disabled={isGenerating}
-                        >
-                            <IconSparkles className="size-4" />
-                            Remove watermark
-                        </Button>
-
-                        <Button
-                            size="sm"
-                            variant="outline"
-                            className="gap-2"
-                            onClick={() => onEdit(clip.id)}
-                            disabled={isGenerating}
-                        >
-                            <IconEdit className="size-4" />
-                            Edit
-                        </Button>
-                    </div>
-
-                    <div className="flex items-center gap-2">
-                        <Button
-                            size="icon"
-                            variant="ghost"
-                            className={cn(
-                                "size-9",
-                                clip.favorited && "text-red-500 hover:text-red-600"
-                            )}
-                            onClick={(e) => onFavorite(e, clip.id)}
-                        >
-                            {clip.favorited ? (
-                                <IconHeartFilled className="size-5" />
-                            ) : (
-                                <IconHeart className="size-5" />
-                            )}
-                        </Button>
-
-                        <Button
-                            size="icon"
-                            variant="ghost"
-                            className="size-9"
-                            onClick={() => onShare(clip)}
-                        >
-                            <IconShare2 className="size-5" />
-                        </Button>
-                    </div>
-                </div>
-            </div>
-        </div>
-    );
 }
 
 export default function AllClipsPage({ params, searchParams }: AllClipsPageProps) {
@@ -204,7 +38,7 @@ export default function AllClipsPage({ params, searchParams }: AllClipsPageProps
     const router = useRouter();
     const showFavoritesOnly = favorites === "true";
 
-    const [sortBy, setSortBy] = useState<"score" | "duration" | "createdAt">("score");
+    const [sortBy, setSortBy] = useState<"score" | "duration" | "createdAt">("createdAt");
 
     const { data: workspace } = useWorkspaceBySlug(slug);
     const { data: videos, isLoading: videosLoading } = useMyVideos(workspace?.id || "", !!workspace?.id);
@@ -212,11 +46,8 @@ export default function AllClipsPage({ params, searchParams }: AllClipsPageProps
 
     // Get completed videos
     const completedVideos = videos?.filter((v) => v.status === "completed") || [];
-
-    // Get video IDs in a stable way
     const videoIds = useMemo(() => completedVideos.map(v => v.id), [completedVideos]);
 
-    // Fetch clips for each video - call hooks unconditionally
     const clips0 = useClipsByVideo(videoIds[0] || "");
     const clips1 = useClipsByVideo(videoIds[1] || "");
     const clips2 = useClipsByVideo(videoIds[2] || "");
@@ -228,21 +59,10 @@ export default function AllClipsPage({ params, searchParams }: AllClipsPageProps
     const clips8 = useClipsByVideo(videoIds[8] || "");
     const clips9 = useClipsByVideo(videoIds[9] || "");
 
-    // Collect all clips
-    const allClipsData = [
-        clips0.data || [],
-        clips1.data || [],
-        clips2.data || [],
-        clips3.data || [],
-        clips4.data || [],
-        clips5.data || [],
-        clips6.data || [],
-        clips7.data || [],
-        clips8.data || [],
-        clips9.data || [],
-    ].flat();
+    const clipsQueries = [clips0, clips1, clips2, clips3, clips4, clips5, clips6, clips7, clips8, clips9];
+    const clipsLoading = videoIds.length > 0 && clipsQueries.some((q, i) => i < videoIds.length && q.isLoading);
+    const allClipsData = clipsQueries.map(q => q.data || []).flat();
 
-    // Filter and sort
     let allClips = showFavoritesOnly
         ? allClipsData.filter((clip) => clip.favorited)
         : allClipsData;
@@ -265,7 +85,6 @@ export default function AllClipsPage({ params, searchParams }: AllClipsPageProps
             e.stopPropagation();
             toggleFavorite.mutate(clipId, {
                 onSuccess: () => {
-                    // Refetch all clip queries to update the UI
                     clips0.refetch();
                     clips1.refetch();
                     clips2.refetch();
@@ -282,26 +101,31 @@ export default function AllClipsPage({ params, searchParams }: AllClipsPageProps
         [toggleFavorite, clips0, clips1, clips2, clips3, clips4, clips5, clips6, clips7, clips8, clips9]
     );
 
-    const handleDownload = useCallback((clip: ClipResponse) => {
+    const handleDownload = useCallback(async (clip: ClipResponse) => {
         if (clip.storageUrl) {
             analytics.clipDownloaded(clip.id);
-            const link = document.createElement("a");
-            link.href = clip.storageUrl;
-            link.download = `${clip.title || "clip"}.mp4`;
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
+            try {
+                const response = await fetch(clip.storageUrl);
+                const blob = await response.blob();
+                const url = URL.createObjectURL(blob);
+                const link = document.createElement("a");
+                link.href = url;
+                link.download = `${clip.title || "clip"}.mp4`;
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                URL.revokeObjectURL(url);
+            } catch {
+                // Fallback: open in new tab
+                window.open(clip.storageUrl, "_blank");
+            }
         }
     }, []);
 
     const handleShare = useCallback((clip: ClipResponse) => {
         if (navigator.share && clip.storageUrl) {
-            navigator.share({
-                title: clip.title,
-                url: clip.storageUrl,
-            });
+            navigator.share({ title: clip.title, url: clip.storageUrl });
         } else {
-            // Fallback: copy to clipboard
             navigator.clipboard.writeText(clip.storageUrl || "");
         }
     }, []);
@@ -314,7 +138,7 @@ export default function AllClipsPage({ params, searchParams }: AllClipsPageProps
         }
     };
 
-    if (videosLoading) {
+    if (videosLoading || clipsLoading) {
         return (
             <div className="flex h-full items-center justify-center">
                 <IconLoader2 className="size-8 animate-spin text-muted-foreground" />
@@ -322,13 +146,15 @@ export default function AllClipsPage({ params, searchParams }: AllClipsPageProps
         );
     }
 
+    const userPlan = (workspace?.plan || "free") as "free" | "starter" | "pro" | "agency";
+
     return (
         <div className="flex h-full flex-col bg-background">
             {/* Header */}
-            <div className="flex items-center justify-between border-b px-6 py-4">
-                <div className="flex items-center gap-3">
-                    <IconScissors className="size-6" />
-                    <h1 className="text-xl font-semibold">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b px-4 sm:px-6 py-3 sm:py-4">
+                <div className="flex items-center gap-2 sm:gap-3">
+                    <IconScissors className="size-5 sm:size-6" />
+                    <h1 className="text-lg sm:text-xl font-semibold">
                         {showFavoritesOnly ? "Favorite Clips" : "All Clips"}
                     </h1>
                     <Badge variant="secondary">{allClips.length}</Badge>
@@ -339,7 +165,7 @@ export default function AllClipsPage({ params, searchParams }: AllClipsPageProps
                         value={showFavoritesOnly ? "favorites" : "all"}
                         onValueChange={handleFilterChange}
                     >
-                        <SelectTrigger className="w-[140px]">
+                        <SelectTrigger className="w-[120px] sm:w-[140px]">
                             <IconFilter className="mr-2 size-4" />
                             <SelectValue />
                         </SelectTrigger>
@@ -358,7 +184,7 @@ export default function AllClipsPage({ params, searchParams }: AllClipsPageProps
                         value={sortBy}
                         onValueChange={(v) => setSortBy(v as typeof sortBy)}
                     >
-                        <SelectTrigger className="w-[140px]">
+                        <SelectTrigger className="w-[120px] sm:w-[140px]">
                             <SelectValue placeholder="Sort by" />
                         </SelectTrigger>
                         <SelectContent>
@@ -371,7 +197,7 @@ export default function AllClipsPage({ params, searchParams }: AllClipsPageProps
             </div>
 
             {/* Clips List */}
-            <div className="flex-1 overflow-auto p-6 flex justify-center">
+            <div className="flex-1 overflow-auto p-4 sm:p-6 flex justify-center">
                 {allClips.length === 0 ? (
                     <div className="flex items-center justify-center h-full">
                         <EmptyState
@@ -394,6 +220,26 @@ export default function AllClipsPage({ params, searchParams }: AllClipsPageProps
                     </div>
                 ) : (
                     <div className="space-y-6 max-w-4xl w-full">
+                        {/* Schedule nudge banner */}
+                        <div className="flex items-center justify-between gap-4 rounded-xl border border-primary/20 bg-primary/5 px-4 py-3">
+                            <div className="flex items-center gap-3">
+                                <div className="flex size-8 shrink-0 items-center justify-center rounded-full bg-primary/10">
+                                    <IconCalendar className="size-4 text-primary" />
+                                </div>
+                                <p className="text-sm text-foreground">
+                                    Ready to grow? Schedule your clips to TikTok, Instagram, YouTube Shorts & more.
+                                </p>
+                            </div>
+                            <button
+                                type="button"
+                                onClick={() => router.push(`/${slug}/social`)}
+                                className="flex shrink-0 items-center gap-1.5 rounded-full bg-primary px-3 py-1.5 text-xs font-medium text-primary-foreground hover:bg-primary/90 transition-colors"
+                            >
+                                Schedule
+                                <IconArrowRight className="size-3" />
+                            </button>
+                        </div>
+
                         {allClips.map((clip, index) => (
                             <ClipCard
                                 key={clip.id}
@@ -403,6 +249,9 @@ export default function AllClipsPage({ params, searchParams }: AllClipsPageProps
                                 onFavorite={handleFavorite}
                                 onDownload={handleDownload}
                                 onShare={handleShare}
+                                userPlan={userPlan}
+                                workspaceSlug={slug}
+                                workspaceId={workspace?.id}
                             />
                         ))}
                     </div>

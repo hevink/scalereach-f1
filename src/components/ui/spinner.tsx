@@ -1,9 +1,11 @@
 import { IconLoader } from "@tabler/icons-react";
 import { cn } from "@/lib/utils";
 
-function Spinner({ className, ...props }: React.ComponentProps<"svg">) {
+const IconLoaderEl = IconLoader as React.ElementType;
+
+function Spinner({ className, ...props }: React.SVGProps<SVGSVGElement>) {
   return (
-    <IconLoader
+    <IconLoaderEl
       aria-label="Loading"
       className={cn("size-4 animate-spin", className)}
       role="status"

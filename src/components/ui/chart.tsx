@@ -40,7 +40,7 @@ function ChartContainer({
   children,
   config,
   ...props
-}: React.ComponentProps<"div"> & {
+}: React.HTMLAttributes<HTMLDivElement> & {
   config: ChartConfig
   children: React.ComponentProps<
     typeof RechartsPrimitive.ResponsiveContainer
@@ -114,7 +114,7 @@ type TooltipPayloadItem = {
   fill?: string
 }
 
-interface ChartTooltipContentProps extends React.ComponentProps<"div"> {
+interface ChartTooltipContentProps extends React.HTMLAttributes<HTMLDivElement> {
   active?: boolean
   payload?: TooltipPayloadItem[]
   label?: string | number
@@ -277,7 +277,7 @@ type LegendPayloadItem = {
   color?: string
 }
 
-interface ChartLegendContentProps extends React.ComponentProps<"div"> {
+interface ChartLegendContentProps extends React.HTMLAttributes<HTMLDivElement> {
   payload?: LegendPayloadItem[]
   verticalAlign?: "top" | "bottom" | "middle"
   hideIcon?: boolean

@@ -1,9 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
-import { Check } from "lucide-react";
+import { Check, Loader2 } from "lucide-react";
 import {
     Dialog,
     DialogContent,
@@ -13,6 +12,9 @@ import {
 import { Button } from "@/components/ui/button";
 import { IconAlertCircle } from "@tabler/icons-react";
 import { cn } from "@/lib/utils";
+import { creditsApi } from "@/lib/api/credits";
+import { useWorkspaceBySlug } from "@/hooks/useWorkspace";
+import { toast } from "sonner";
 
 interface UpgradeDialogProps {
     open: boolean;
@@ -32,6 +34,8 @@ interface Plan {
     features: string[];
     featured: boolean;
     badge?: string;
+    dodoProductIdMonthly: string;
+    dodoProductIdYearly: string;
 }
 
 const plans: Record<string, Plan> = {
@@ -50,6 +54,8 @@ const plans: Record<string, Plan> = {
             "Unlimited Editing",
         ],
         featured: true,
+        dodoProductIdMonthly: "pdt_0NY6llF7a0oFiFsaeVOW7",
+        dodoProductIdYearly: "pdt_0NY6lyuXXpnq6BWWOeDTy",
     },
     starter: {
         name: "Starter",
@@ -65,6 +71,8 @@ const plans: Record<string, Plan> = {
             "Unlimited Editing",
         ],
         featured: false,
+        dodoProductIdMonthly: "pdt_0NY6k5d7b4MxSsVM7KzEV",
+        dodoProductIdYearly: "pdt_0NY6kJuPXxJUv7SFNbQOB",
     },
 };
 
@@ -97,14 +105,20 @@ function PricingCard({
     period,
     index,
     onSelect,
+    isLoading,
+    loadingPlanId,
 }: {
     planKey: string;
     plan: Plan;
     period: BillingPeriod;
     index: number;
-    onSelect: (planId: string) => void;
+    onSelect: (planId: string, productId: string) => void;
+    isLoading: boolean;
+    loadingPlanId: string | null;
 }) {
     const price = period === "monthly" ? plan.monthly : plan.annually;
+    const productId = period === "annually" ? plan.dodoProductIdYearly : plan.dodoProductIdMonthly;
+    const isThisLoading = isLoading && loadingPlanId === planKey;
 
     return (
         <motion.div
@@ -153,13 +167,21 @@ function PricingCard({
             <motion.button
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
-                onClick={() => onSelect(planKey)}
-                className={`cursor-pointer inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium transition-colors h-9 px-4 py-2 w-full ${plan.featured
+                onClick={() => onSelect(planKey, productId)}
+                disabled={isLoading}
+                className={`cursor-pointer inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium transition-colors h-9 px-4 py-2 w-full disabled:opacity-50 disabled:cursor-not-allowed ${plan.featured
                     ? "shadow-md border-[0.5px] border-white/10 shadow-black/15 bg-primary text-primary-foreground hover:bg-primary/90"
                     : "shadow-sm shadow-black/15 border border-transparent bg-card ring-1 ring-foreground/10 hover:bg-muted/50"
                     }`}
             >
-                Upgrade to {plan.name}
+                {isThisLoading ? (
+                    <>
+                        <Loader2 className="size-4 animate-spin" />
+                        Processing...
+                    </>
+                ) : (
+                    `Upgrade to ${plan.name}`
+                )}
             </motion.button>
 
             <ul role="list" className="space-y-3 text-sm">
@@ -216,12 +238,38 @@ export function UpgradeDialog({
     feature,
     description,
 }: UpgradeDialogProps) {
-    const router = useRouter();
+    const { data: workspace } = useWorkspaceBySlug(workspaceSlug);
     const [period, setPeriod] = useState<BillingPeriod>("annually");
+    const [isLoading, setIsLoading] = useState(false);
+    const [loadingPlanId, setLoadingPlanId] = useState<string | null>(null);
 
-    const handleUpgrade = (planKey: string) => {
-        router.push(`/${workspaceSlug}/pricing?plan=${planKey}`);
-        onOpenChange(false);
+    const handleUpgrade = async (planKey: string, productId: string) => {
+        if (!workspace?.id) {
+            toast.error("Workspace not found");
+            return;
+        }
+
+        setIsLoading(true);
+        setLoadingPlanId(planKey);
+
+        try {
+            const response = await creditsApi.createCheckout(workspace.id, productId, {
+                isSubscription: true,
+                successUrl: `${window.location.origin}/checkout/success?workspace=${workspaceSlug}`,
+                cancelUrl: `${window.location.origin}/checkout/cancel?workspace=${workspaceSlug}`,
+            });
+
+            if (response.checkoutUrl) {
+                window.location.href = response.checkoutUrl;
+            } else {
+                throw new Error("No checkout URL received");
+            }
+        } catch (error: any) {
+            console.error("Checkout error:", error);
+            toast.error(error.response?.data?.error || "Failed to create checkout. Please try again.");
+            setIsLoading(false);
+            setLoadingPlanId(null);
+        }
     };
 
     const featureKey = feature.toLowerCase();
@@ -305,6 +353,8 @@ export function UpgradeDialog({
                                         period={period}
                                         index={index}
                                         onSelect={handleUpgrade}
+                                        isLoading={isLoading}
+                                        loadingPlanId={loadingPlanId}
                                     />
                                 ))}
                             </div>
