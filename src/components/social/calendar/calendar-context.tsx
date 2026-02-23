@@ -15,6 +15,10 @@ interface ICalendarContext {
   createModalDate: Date | null;
   openCreateModal: (date: Date) => void;
   closeCreateModal: () => void;
+  // Edit modal
+  editPost: ScheduledPost | null;
+  openEditModal: (post: ScheduledPost) => void;
+  closeEditModal: () => void;
 }
 
 const CalendarContext = createContext({} as ICalendarContext);
@@ -29,6 +33,7 @@ export function CalendarProvider({
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [view, setView] = useState<TCalendarView>("month");
   const [createModalDate, setCreateModalDate] = useState<Date | null>(null);
+  const [editPost, setEditPost] = useState<ScheduledPost | null>(null);
 
   return (
     <CalendarContext.Provider
@@ -41,6 +46,9 @@ export function CalendarProvider({
         createModalDate,
         openCreateModal: (date) => setCreateModalDate(date),
         closeCreateModal: () => setCreateModalDate(null),
+        editPost,
+        openEditModal: (post) => setEditPost(post),
+        closeEditModal: () => setEditPost(null),
       }}
     >
       {children}

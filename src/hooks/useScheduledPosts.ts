@@ -45,3 +45,18 @@ export function useCancelPost(workspaceId: string | undefined) {
     },
   });
 }
+
+export function useUpdatePost(workspaceId: string | undefined) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, ...payload }: { id: string; caption?: string; hashtags?: string[]; scheduledAt?: string }) =>
+      socialApi.updatePost(id, payload),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["social", "posts", workspaceId] });
+      toast.success("Post updated");
+    },
+    onError: (error: Error) => {
+      toast.error(error.message || "Failed to update post");
+    },
+  });
+}

@@ -104,6 +104,11 @@ export const socialApi = {
     return res.data;
   },
 
+  updatePost: async (id: string, payload: { caption?: string; hashtags?: string[]; scheduledAt?: string }) => {
+    const res = await api.patch<ScheduledPost>(`/api/social/posts/${id}`, payload);
+    return res.data;
+  },
+
   listWorkspaceClips: async (workspaceId: string) => {
     const res = await api.get<WorkspaceClip[]>("/api/social/clips", {
       params: { workspaceId },

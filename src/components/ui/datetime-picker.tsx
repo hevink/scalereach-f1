@@ -2,11 +2,11 @@
 
 import * as React from "react";
 import { useImperativeHandle, useRef } from "react";
-import { format } from "date-fns";
-import { IconCalendar, IconClock } from "@tabler/icons-react";
+import { format, isToday, isTomorrow } from "date-fns";
+import { IconCalendar, IconClock, IconChevronLeft, IconChevronRight, IconCheck } from "@tabler/icons-react";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
-import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
 // ─── Helpers ────────────────────────────────────────────────────────────────
@@ -44,6 +44,12 @@ function setDateByType(date: Date, value: string, type: TimePickerType) {
   else if (type === "minutes") d.setMinutes(parseInt(getValidMinSec(value), 10));
   else d.setSeconds(parseInt(getValidMinSec(value), 10));
   return d;
+}
+
+function formatRelativeDate(date: Date): string {
+  if (isToday(date)) return `Today at ${format(date, "h:mm a")}`;
+  if (isTomorrow(date)) return `Tomorrow at ${format(date, "h:mm a")}`;
+  return format(date, "MMM d 'at' h:mm a");
 }
 
 // ─── TimePickerInput ─────────────────────────────────────────────────────────
@@ -90,7 +96,7 @@ const TimePickerInput = React.forwardRef<HTMLInputElement, TimePickerInputProps>
     };
 
     return (
-      <Input
+      <input
         ref={ref}
         type="tel"
         inputMode="decimal"
@@ -98,7 +104,7 @@ const TimePickerInput = React.forwardRef<HTMLInputElement, TimePickerInputProps>
         onChange={(e) => e.preventDefault()}
         onKeyDown={handleKeyDown}
         className={cn(
-          "w-12 text-center font-mono text-sm tabular-nums caret-transparent focus:bg-accent focus:text-accent-foreground [&::-webkit-inner-spin-button]:appearance-none",
+          "w-10 rounded-md bg-muted/60 py-1.5 text-center font-mono text-sm tabular-nums caret-transparent outline-none transition-colors focus:bg-primary focus:text-primary-foreground hover:bg-muted",
           className
         )}
         {...props}
@@ -124,44 +130,84 @@ export const TimePicker = React.forwardRef<{ hourRef: HTMLInputElement | null },
 
     useImperativeHandle(ref, () => ({ hourRef: hourRef.current }), []);
 
+    // Quick time presets
+    const presets = [
+      { label: "Morning", hour: 9, minute: 0 },
+      { label: "Noon", hour: 12, minute: 0 },
+      { label: "Evening", hour: 18, minute: 0 },
+      { label: "Night", hour: 21, minute: 0 },
+    ];
+
+    const applyPreset = (hour: number, minute: number) => {
+      const d = date ? new Date(date) : new Date();
+      d.setHours(hour, minute, 0, 0);
+      onChange?.(d);
+    };
+
     return (
-      <div className="flex items-center justify-center gap-1">
-        <label htmlFor="tp-hour" className="cursor-pointer">
+      <div className="flex flex-col gap-3">
+        {/* Time inputs */}
+        <div className="flex items-center justify-center gap-1.5">
           <IconClock className="size-4 text-muted-foreground" />
-        </label>
-        <TimePickerInput
-          id="tp-hour"
-          picker="hours"
-          date={date}
-          ref={hourRef}
-          onDateChange={onChange}
-          onRightFocus={() => minuteRef.current?.focus()}
-        />
-        {(granularity === "minute" || granularity === "second") && (
-          <>
-            <span className="text-muted-foreground font-medium">:</span>
+          <div className="flex items-center gap-1">
             <TimePickerInput
-              picker="minutes"
+              id="tp-hour"
+              picker="hours"
               date={date}
-              ref={minuteRef}
+              ref={hourRef}
               onDateChange={onChange}
-              onLeftFocus={() => hourRef.current?.focus()}
-              onRightFocus={() => secondRef.current?.focus()}
+              onRightFocus={() => minuteRef.current?.focus()}
             />
-          </>
-        )}
-        {granularity === "second" && (
-          <>
-            <span className="text-muted-foreground font-medium">:</span>
-            <TimePickerInput
-              picker="seconds"
-              date={date}
-              ref={secondRef}
-              onDateChange={onChange}
-              onLeftFocus={() => minuteRef.current?.focus()}
-            />
-          </>
-        )}
+            <span className="text-muted-foreground font-bold text-base">:</span>
+            {(granularity === "minute" || granularity === "second") && (
+              <TimePickerInput
+                picker="minutes"
+                date={date}
+                ref={minuteRef}
+                onDateChange={onChange}
+                onLeftFocus={() => hourRef.current?.focus()}
+                onRightFocus={() => secondRef.current?.focus()}
+              />
+            )}
+            {granularity === "second" && (
+              <>
+                <span className="text-muted-foreground font-bold text-base">:</span>
+                <TimePickerInput
+                  picker="seconds"
+                  date={date}
+                  ref={secondRef}
+                  onDateChange={onChange}
+                  onLeftFocus={() => minuteRef.current?.focus()}
+                />
+              </>
+            )}
+          </div>
+          <span className="text-xs text-muted-foreground ml-1">
+            {date ? format(date, "a") : "AM"}
+          </span>
+        </div>
+
+        {/* Quick presets */}
+        <div className="grid grid-cols-4 gap-1.5">
+          {presets.map((p) => {
+            const isActive = date?.getHours() === p.hour && date?.getMinutes() === p.minute;
+            return (
+              <button
+                key={p.label}
+                type="button"
+                onClick={() => applyPreset(p.hour, p.minute)}
+                className={cn(
+                  "rounded-md px-2 py-1 text-[11px] font-medium transition-colors",
+                  isActive
+                    ? "bg-primary text-primary-foreground"
+                    : "bg-muted/60 text-muted-foreground hover:bg-muted hover:text-foreground"
+                )}
+              >
+                {p.label}
+              </button>
+            );
+          })}
+        </div>
       </div>
     );
   }
@@ -191,65 +237,128 @@ export function DateTimePicker({
   className,
   disablePast = false,
 }: DateTimePickerProps) {
-    const [month, setMonth] = React.useState<Date>(value ?? new Date());
-    const [open, setOpen] = React.useState(false);
+  const [month, setMonth] = React.useState<Date>(value ?? new Date());
+  const [open, setOpen] = React.useState(false);
+  const [draft, setDraft] = React.useState<Date | undefined>(value);
 
-    React.useEffect(() => {
-      if (value) setMonth(value);
-    }, [value]);
+  // Sync draft when value changes externally
+  React.useEffect(() => {
+    setDraft(value);
+    if (value) setMonth(value);
+  }, [value]);
 
-    const fmt = displayFormat ?? (granularity === "day" ? "PPP" : granularity === "hour" ? "PPP HH:00" : granularity === "second" ? "PPP HH:mm:ss" : "PPP HH:mm");
+  const fmt = displayFormat ?? (granularity === "day" ? "PPP" : "PPP HH:mm");
 
-    const handleDaySelect = (day: Date | undefined) => {
-      if (!day) return;
-      const d = new Date(day);
-      d.setHours(month.getHours(), month.getMinutes(), month.getSeconds());
+  const handleDaySelect = (day: Date | undefined) => {
+    if (!day) return;
+    const d = new Date(day);
+    d.setHours(draft?.getHours() ?? 12, draft?.getMinutes() ?? 0, 0, 0);
+    setDraft(d);
+    setMonth(d);
+    if (granularity === "day") {
       onChange?.(d);
-      setMonth(d);
-      if (granularity === "day") setOpen(false);
-    };
+      setOpen(false);
+    }
+  };
 
-    const handleMonthChange = (newMonth: Date) => {
-      const d = new Date(newMonth);
-      d.setHours(month.getHours(), month.getMinutes(), month.getSeconds());
-      setMonth(d);
-    };
+  const handleTimeChange = (d: Date | undefined) => {
+    if (!d) return;
+    setDraft(d);
+    setMonth(d);
+  };
 
-    const handleTimeChange = (d: Date | undefined) => {
-      if (!d) return;
-      onChange?.(d);
-      setMonth(d);
-    };
+  const handleConfirm = () => {
+    onChange?.(draft);
+    setOpen(false);
+  };
 
-    return (
-      <Popover open={open} onOpenChange={setOpen}>
-        <PopoverTrigger
-          disabled={disabled}
-          className={cn(
-            "flex w-full items-center gap-2 rounded-md border border-input bg-background px-3 py-2 text-sm font-normal transition-colors hover:bg-accent hover:text-accent-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50",
-            !value && "text-muted-foreground",
-            className
-          )}
-        >
-          <IconCalendar className="size-4 shrink-0" />
-          {value ? format(value, fmt) : <span>{placeholder}</span>}
-        </PopoverTrigger>
-        <PopoverContent className="w-auto p-0" align="start">
+  const handleClear = () => {
+    setDraft(undefined);
+    onChange?.(undefined);
+    setOpen(false);
+  };
+
+  return (
+    <Popover open={open} onOpenChange={(o) => {
+      setOpen(o);
+      // Reset draft to current value when closing without confirming
+      if (!o) setDraft(value);
+    }}>
+      <PopoverTrigger
+        disabled={disabled}
+        className={cn(
+          "flex w-full items-center gap-2.5 rounded-xl border border-input bg-background px-3.5 py-2.5 text-sm font-normal transition-all hover:bg-accent hover:text-accent-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50",
+          value ? "text-foreground" : "text-muted-foreground",
+          className
+        )}
+      >
+        <IconCalendar className="size-4 shrink-0 text-muted-foreground" />
+        <span className="flex-1 text-left">
+          {value ? formatRelativeDate(value) : placeholder}
+        </span>
+        {value && (
+          <span className="rounded-md bg-primary/10 px-1.5 py-0.5 text-[10px] font-semibold text-primary">
+            {format(value, "MMM d")}
+          </span>
+        )}
+      </PopoverTrigger>
+
+      <PopoverContent className="w-auto p-0 shadow-xl" align="start" sideOffset={6}>
+        <div className="flex flex-col">
+          {/* Calendar */}
           <Calendar
             mode="single"
-            selected={value}
+            selected={draft}
             month={month}
             onSelect={handleDaySelect}
-            onMonthChange={handleMonthChange}
+            onMonthChange={(m) => {
+              const d = new Date(m);
+              d.setHours(draft?.getHours() ?? 12, draft?.getMinutes() ?? 0, 0, 0);
+              setMonth(d);
+            }}
             captionLayout="dropdown"
             disabled={disablePast ? (d) => d < new Date(new Date().setHours(0, 0, 0, 0)) : undefined}
+            className="rounded-t-lg"
           />
+
+          {/* Time picker */}
           {granularity !== "day" && (
-            <div className="border-t p-3">
-              <TimePicker date={month} onChange={handleTimeChange} granularity={granularity} />
+            <div className="border-t px-4 py-3">
+              <p className="mb-2.5 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+                Time
+              </p>
+              <TimePicker date={draft ?? month} onChange={handleTimeChange} granularity={granularity} />
             </div>
           )}
-        </PopoverContent>
-      </Popover>
-    );
+
+          {/* Footer */}
+          <div className="flex items-center justify-between border-t bg-muted/30 px-3 py-2.5">
+            <button
+              type="button"
+              onClick={handleClear}
+              className="text-xs text-muted-foreground hover:text-foreground transition-colors"
+            >
+              Clear
+            </button>
+            <div className="flex items-center gap-2">
+              {draft && (
+                <span className="text-xs text-muted-foreground">
+                  {format(draft, "MMM d, h:mm a")}
+                </span>
+              )}
+              <Button
+                size="sm"
+                onClick={handleConfirm}
+                disabled={!draft}
+                className="h-7 gap-1.5 px-3 text-xs"
+              >
+                <IconCheck size={12} strokeWidth={3} />
+                Confirm
+              </Button>
+            </div>
+          </div>
+        </div>
+      </PopoverContent>
+    </Popover>
+  );
 }

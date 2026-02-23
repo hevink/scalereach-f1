@@ -3,15 +3,13 @@
 import { useState, useEffect } from "react";
 import { format } from "date-fns";
 import { useQuery } from "@tanstack/react-query";
-import { IconCheck, IconFlame, IconClock, IconX, IconVideo, IconCalendar } from "@tabler/icons-react";
+import { IconCheck, IconFlame, IconClock, IconX, IconVideo } from "@tabler/icons-react";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Calendar } from "@/components/ui/calendar";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
+import { DateTimePicker } from "@/components/ui/datetime-picker";
 import { cn } from "@/lib/utils";
 import { socialApi, type WorkspaceClip } from "@/lib/api/social";
 import { useSocialAccounts } from "@/hooks/useSocialAccounts";
@@ -60,9 +58,6 @@ const PLATFORM_ICONS: Record<string, React.ElementType> = {
   twitter: TwitterIcon,
   linkedin: LinkedInIcon,
 };
-
-const HOURS = Array.from({ length: 24 }, (_, i) => String(i).padStart(2, "0"));
-const MINUTES = ["00", "15", "30", "45"];
 
 function PlatformChip({ platform }: { platform: string }) {
   const Icon = PLATFORM_ICONS[platform];
@@ -127,10 +122,7 @@ export function CreatePostFromCalendarModal({ workspaceId }: Props) {
   const [caption, setCaption] = useState("");
   const [hashtags, setHashtags] = useState<string[]>([]);
   const [hashtagInput, setHashtagInput] = useState("");
-  const [selectedDate, setSelectedDate] = useState<Date | undefined>(undefined);
-  const [selectedHour, setSelectedHour] = useState("12");
-  const [selectedMinute, setSelectedMinute] = useState("00");
-  const [calendarOpen, setCalendarOpen] = useState(false);
+  const [scheduledDate, setScheduledDate] = useState<Date | undefined>(undefined);
 
   useEffect(() => {
     if (createModalDate) {
@@ -140,9 +132,7 @@ export function CreatePostFromCalendarModal({ workspaceId }: Props) {
       setCaption("");
       setHashtags([]);
       setHashtagInput("");
-      setSelectedDate(createModalDate);
-      setSelectedHour(String(createModalDate.getHours()).padStart(2, "0"));
-      setSelectedMinute("00");
+      setScheduledDate(createModalDate);
     }
   }, [createModalDate]);
 
@@ -153,13 +143,7 @@ export function CreatePostFromCalendarModal({ workspaceId }: Props) {
     }
   }, [selectedClip]);
 
-  const scheduledAt = selectedDate
-    ? (() => {
-        const d = new Date(selectedDate);
-        d.setHours(parseInt(selectedHour), parseInt(selectedMinute), 0, 0);
-        return d.toISOString();
-      })()
-    : "";
+  const scheduledAt = scheduledDate?.toISOString() ?? "";
 
   const { data: clips = [], isLoading: loadingClips } = useQuery({
     queryKey: ["social", "workspace-clips", workspaceId],
@@ -405,63 +389,16 @@ export function CreatePostFromCalendarModal({ workspaceId }: Props) {
                 )}
               </div>
 
-              {/* Date & Time — combined in one row */}
+              {/* Date & Time */}
               <div className="flex flex-col gap-2">
                 <Label className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">Date & Time</Label>
-                <div className="flex items-center gap-2">
-                  {/* Date */}
-                  <Popover open={calendarOpen} onOpenChange={setCalendarOpen}>
-                    <PopoverTrigger
-                      className={cn(
-                        "flex flex-1 items-center gap-2 rounded-md border border-input bg-background px-3 py-2 text-sm font-normal transition-colors hover:bg-accent hover:text-accent-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
-                        !selectedDate && "text-muted-foreground"
-                      )}
-                    >
-                      <IconCalendar size={14} />
-                      {selectedDate ? format(selectedDate, "MMM d, yyyy") : "Pick date"}
-                    </PopoverTrigger>
-                    <PopoverContent className="w-auto p-0" align="start">
-                      <Calendar
-                        mode="single"
-                        selected={selectedDate}
-                        onSelect={(d) => { setSelectedDate(d); setCalendarOpen(false); }}
-                        disabled={(d) => d < new Date(new Date().setHours(0, 0, 0, 0))}
-                        initialFocus
-                      />
-                    </PopoverContent>
-                  </Popover>
-
-                  {/* Time */}
-                  <div className="flex items-center gap-1 shrink-0">
-                    <IconClock size={14} className="text-muted-foreground" />
-                    <Select value={selectedHour} onValueChange={(v) => v && setSelectedHour(v)}>
-                      <SelectTrigger className="w-20 text-sm">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent className="max-h-48">
-                        {HOURS.map((h) => (
-                          <SelectItem key={h} value={h}>{h}</SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    <span className="text-muted-foreground font-medium">:</span>
-                    <Select value={selectedMinute} onValueChange={(v) => v && setSelectedMinute(v)}>
-                      <SelectTrigger className="w-20 text-sm">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {MINUTES.map((m) => (
-                          <SelectItem key={m} value={m}>{m}</SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                </div>
-                {selectedDate && (
-                  <p className="text-xs text-muted-foreground">
-                    Scheduled for {format(selectedDate, "PPP")} at {selectedHour}:{selectedMinute}
-                  </p>
-                )}
+                <DateTimePicker
+                  value={scheduledDate}
+                  onChange={setScheduledDate}
+                  granularity="minute"
+                  placeholder="Pick date & time"
+                  disablePast
+                />
               </div>
 
               {/* Caption */}

@@ -32,10 +32,10 @@ interface SchedulePostModalProps {
 }
 
 const PLATFORM_META: Record<string, { label: string; icon: React.ReactNode; color: string; bg: string }> = {
-  tiktok:    { label: "TikTok",      icon: <IconBrandTiktok size={13} />,    color: "text-white", bg: "bg-black" },
-  instagram: { label: "Instagram",   icon: <IconBrandInstagram size={13} />, color: "text-white", bg: "bg-gradient-to-br from-purple-500 to-pink-500" },
-  youtube:   { label: "YouTube",     icon: <IconBrandYoutube size={13} />,   color: "text-white", bg: "bg-red-500" },
-  twitter:   { label: "Twitter / X", icon: <IconBrandTwitter size={13} />,   color: "text-white", bg: "bg-sky-500" },
+  tiktok: { label: "TikTok", icon: <IconBrandTiktok size={13} />, color: "text-white", bg: "bg-black" },
+  instagram: { label: "Instagram", icon: <IconBrandInstagram size={13} />, color: "text-white", bg: "bg-gradient-to-br from-purple-500 to-pink-500" },
+  youtube: { label: "YouTube", icon: <IconBrandYoutube size={13} />, color: "text-white", bg: "bg-red-500" },
+  twitter: { label: "Twitter / X", icon: <IconBrandTwitter size={13} />, color: "text-white", bg: "bg-sky-500" },
 };
 
 export function SchedulePostModal({
@@ -47,7 +47,12 @@ export function SchedulePostModal({
   const [selectedAccountId, setSelectedAccountId] = useState("");
   const [caption, setCaption] = useState(clip.title || "");
   const [hashtagInput, setHashtagInput] = useState("");
-  const [hashtags, setHashtags] = useState<string[]>([]);
+  const [hashtags, setHashtags] = useState<string[]>(() =>
+    (clip.hooks || [])
+      .flatMap((h) => h.toLowerCase().replace(/[^a-z0-9\s]/g, "").split(/\s+/))
+      .filter((w) => w.length > 3)
+      .slice(0, 6)
+  );
   const [postType, setPostType] = useState<"immediate" | "scheduled">("scheduled");
   const [scheduledDate, setScheduledDate] = useState<Date | undefined>(undefined);
 
@@ -82,7 +87,7 @@ export function SchedulePostModal({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-3xl gap-0 p-0 overflow-hidden [&>button]:hidden">
+      <DialogContent className="!max-w-3xl gap-0 p-0 overflow-hidden [&>button]:hidden">
         {/* Header */}
         <div className="flex items-center justify-between border-b px-5 py-4">
           <div>
@@ -247,8 +252,8 @@ export function SchedulePostModal({
                     ))}
                   </div>
                 )}
-                <div className="flex gap-2">
-                  <div className="relative flex-1">
+                <div className="flex flex-col gap-2">
+                  <div className="relative">
                     <IconHash size={13} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
                     <Input
                       value={hashtagInput}
@@ -258,7 +263,7 @@ export function SchedulePostModal({
                       onKeyDown={(e) => e.key === "Enter" && (e.preventDefault(), addHashtag())}
                     />
                   </div>
-                  <Button type="button" variant="outline" size="sm" onClick={addHashtag} className="shrink-0">
+                  <Button type="button" variant="outline" className="w-full" onClick={addHashtag}>
                     Add
                   </Button>
                 </div>

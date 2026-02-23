@@ -11,15 +11,20 @@ interface PostBadgeProps {
 }
 
 export function PostBadge({ post, compact = false }: PostBadgeProps) {
-  const { setSelectedDate, setView } = useCalendarContext();
+  const { setSelectedDate, setView, openEditModal } = useCalendarContext();
   const styles = POST_STATUS_STYLES[post.status] ?? POST_STATUS_STYLES.pending;
   const postDate = getPostDate(post);
   const platformLabel = PLATFORM_LABELS[post.platform] ?? post.platform;
+  const isEditable = post.status === "pending";
 
   const handleClick = (e: React.MouseEvent) => {
     e.stopPropagation();
-    setSelectedDate(postDate);
-    setView("day");
+    if (isEditable) {
+      openEditModal(post);
+    } else {
+      setSelectedDate(postDate);
+      setView("day");
+    }
   };
 
   if (compact) {
@@ -50,6 +55,9 @@ export function PostBadge({ post, compact = false }: PostBadgeProps) {
           <span className={`size-2 shrink-0 rounded-full ${styles.dot}`} />
           <span className="font-semibold truncate">{platformLabel}</span>
           <span className="text-[11px] opacity-70 capitalize">{post.status}</span>
+          {isEditable && (
+            <span className="ml-auto text-[10px] opacity-50 hover:opacity-100">Edit</span>
+          )}
         </div>
         {post.caption && (
           <p className="truncate text-xs opacity-80">{post.caption}</p>
