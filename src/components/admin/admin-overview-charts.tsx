@@ -42,6 +42,8 @@ import {
     IconClock,
     IconCoin,
     IconLoader,
+    IconCpu,
+    IconVideo,
 } from "@tabler/icons-react";
 
 const userGrowthConfig: ChartConfig = {
@@ -402,6 +404,53 @@ function CreditUsageChart({ days }: { days: number }) {
     );
 }
 
+const ENCODING_ROWS = [
+    { res: "720p", pixels: "1x", cpu: 20, color: "bg-green-500", encode: "15-25s", label: "Low" },
+    { res: "1080p", pixels: "2x", cpu: 45, color: "bg-yellow-500", encode: "35-60s", label: "Medium" },
+    { res: "1440p", pixels: "4x", cpu: 70, color: "bg-orange-500", encode: "70-100s", label: "High" },
+    { res: "4K", pixels: "8x", cpu: 95, color: "bg-red-500", encode: "150-250s", label: "Max" },
+];
+
+function EncodingImpactCard() {
+    return (
+        <Card>
+            <CardHeader className="pb-3">
+                <div className="flex items-center gap-2">
+                    <IconCpu className="h-5 w-5 text-muted-foreground" />
+                    <div>
+                        <CardTitle>Encoding CPU Impact</CardTitle>
+                        <CardDescription>Per resolution on t3.large · veryfast preset · 1 min clip</CardDescription>
+                    </div>
+                </div>
+            </CardHeader>
+            <CardContent className="space-y-3">
+                {ENCODING_ROWS.map((row) => (
+                    <div key={row.res} className="space-y-1">
+                        <div className="flex items-center justify-between text-sm">
+                            <div className="flex items-center gap-2">
+                                <span className="font-medium w-12">{row.res}</span>
+                                <Badge variant="outline" className="text-xs h-5">{row.pixels} pixels</Badge>
+                                <Badge variant="outline" className="text-xs h-5">{row.encode}</Badge>
+                            </div>
+                            <div className="flex items-center gap-2">
+                                <span className={`text-xs font-medium ${row.label === "Low" ? "text-green-600" :
+                                    row.label === "Medium" ? "text-yellow-600" :
+                                        row.label === "High" ? "text-orange-600" : "text-red-600"
+                                    }`}>{row.label}</span>
+                                <span className="text-xs text-muted-foreground w-8 text-right">{row.cpu}%</span>
+                            </div>
+                        </div>
+                        <Progress value={row.cpu} className={`h-1.5 [&>div]:${row.color}`} />
+                    </div>
+                ))}
+                <p className="text-xs text-muted-foreground pt-1 border-t">
+                    2 concurrent 4K jobs = both vCPUs at 100% · queue backs up fast
+                </p>
+            </CardContent>
+        </Card>
+    );
+}
+
 export function AdminOverviewCharts({ days = 30 }: { days?: number }) {
     return (
         <div className="grid gap-6">
@@ -461,8 +510,8 @@ export function AdminOverviewCharts({ days = 30 }: { days?: number }) {
                 </Card>
             </div>
 
-            {/* System Health & Credit Analytics */}
-            <div className="grid gap-6 lg:grid-cols-2">
+            {/* System Health, Credit Analytics & Encoding Impact */}
+            <div className="grid gap-6 lg:grid-cols-3">
                 <Card>
                     <CardHeader>
                         <div className="flex items-center gap-2">
@@ -492,6 +541,8 @@ export function AdminOverviewCharts({ days = 30 }: { days?: number }) {
                         <CreditUsageChart days={days} />
                     </CardContent>
                 </Card>
+
+                <EncodingImpactCard />
             </div>
         </div>
     );
