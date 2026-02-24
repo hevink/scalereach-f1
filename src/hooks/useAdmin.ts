@@ -161,3 +161,21 @@ export function useRetryVideo() {
     },
   });
 }
+
+export function useAdminUserVideos(userId: string | null, page = 1, limit = 20) {
+  return useQuery({
+    queryKey: ["admin", "user-videos", userId, page, limit],
+    queryFn: () => adminApi.getUserVideos(userId!, page, limit),
+    enabled: !!userId,
+    staleTime: 30 * 1000,
+  });
+}
+
+export function useAdminUserClips(userId: string | null, page = 1, limit = 20) {
+  return useQuery({
+    queryKey: ["admin", "user-clips", userId, page, limit],
+    queryFn: () => adminApi.getUserClips(userId!, page, limit),
+    enabled: !!userId,
+    staleTime: 30 * 1000,
+  });
+}

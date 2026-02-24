@@ -43,10 +43,13 @@ import {
     IconSearch,
     IconMail,
     IconDownload,
+    IconEye,
 } from "@tabler/icons-react";
 import { useAdminUsers, useUpdateUserRole, useDeleteUser } from "@/hooks/useAdmin";
 import { formatDistanceToNow, format } from "date-fns";
 import { toast } from "sonner";
+import { AdminUserDetail } from "./admin-user-detail";
+import type { AdminUser } from "@/lib/api/admin";
 
 export function AdminUsersTable() {
     const [page, setPage] = useState(1);
@@ -54,6 +57,7 @@ export function AdminUsersTable() {
     const [searchQuery, setSearchQuery] = useState("");
     const [roleFilter, setRoleFilter] = useState<string>("all");
     const [statusFilter, setStatusFilter] = useState<string>("all");
+    const [selectedUser, setSelectedUser] = useState<AdminUser | null>(null);
     const { data, isLoading } = useAdminUsers(page, 50);
     const updateRole = useUpdateUserRole();
     const deleteUser = useDeleteUser();
@@ -259,6 +263,11 @@ export function AdminUsersTable() {
                                                 <DropdownMenuContent align="end">
                                                     <DropdownMenuLabel>Actions</DropdownMenuLabel>
                                                     <DropdownMenuSeparator />
+                                                    <DropdownMenuItem onClick={() => setSelectedUser(user)}>
+                                                        <IconEye className="mr-2 h-4 w-4" />
+                                                        View Videos & Clips
+                                                    </DropdownMenuItem>
+                                                    <DropdownMenuSeparator />
                                                     {user.role === "admin" ? (
                                                         <DropdownMenuItem onClick={() => handleRoleChange(user.id, "user")}>
                                                             <IconShieldOff className="mr-2 h-4 w-4" />
@@ -339,6 +348,13 @@ export function AdminUsersTable() {
                     </AlertDialogFooter>
                 </AlertDialogContent>
             </AlertDialog>
+
+            {/* User Detail Dialog */}
+            <AdminUserDetail
+                user={selectedUser}
+                open={!!selectedUser}
+                onClose={() => setSelectedUser(null)}
+            />
         </>
     );
 }

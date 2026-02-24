@@ -233,6 +233,59 @@ export interface AdminVideoFilters {
   dateTo?: string;
 }
 
+export interface AdminUserVideo {
+  id: string;
+  title: string | null;
+  status: string;
+  sourceType: string;
+  sourceUrl: string | null;
+  duration: number | null;
+  fileSize: number | null;
+  errorMessage: string | null;
+  creditsUsed: number;
+  thumbnailUrl: string | null;
+  createdAt: string;
+  updatedAt: string;
+  workspaceName: string | null;
+  workspaceSlug: string | null;
+  projectName: string | null;
+  clipCount: number;
+}
+
+export interface AdminUserVideosResponse {
+  videos: AdminUserVideo[];
+  total: number;
+  page: number;
+  limit: number;
+  totalPages: number;
+}
+
+export interface AdminUserClip {
+  id: string;
+  title: string | null;
+  status: string;
+  viralityScore: number | null;
+  startTime: number | null;
+  endTime: number | null;
+  duration: number | null;
+  aspectRatio: string | null;
+  quality: string | null;
+  storageUrl: string | null;
+  thumbnailUrl: string | null;
+  createdAt: string;
+  videoTitle: string | null;
+  videoId: string;
+  workspaceName: string | null;
+}
+
+export interface AdminUserClipsResponse {
+  clips: AdminUserClip[];
+  total: number;
+  page: number;
+  limit: number;
+  totalPages: number;
+}
+
 export const adminApi = {
   // Dashboard stats
   getStats: async () => {
@@ -342,6 +395,17 @@ export const adminApi = {
 
   retryVideo: async (videoId: string) => {
     const response = await api.post(`/api/admin/videos/${videoId}/retry`);
+    return response.data;
+  },
+
+  // User videos & clips
+  getUserVideos: async (userId: string, page = 1, limit = 20) => {
+    const response = await api.get<AdminUserVideosResponse>(`/api/admin/users/${userId}/videos?page=${page}&limit=${limit}`);
+    return response.data;
+  },
+
+  getUserClips: async (userId: string, page = 1, limit = 20) => {
+    const response = await api.get<AdminUserClipsResponse>(`/api/admin/users/${userId}/clips?page=${page}&limit=${limit}`);
     return response.data;
   },
 };
