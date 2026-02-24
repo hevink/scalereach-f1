@@ -166,7 +166,7 @@ export function VideoConfigForm({
                                 <>
                                     <Separator />
                                     <BackgroundStyleSelector
-                                        value={config.backgroundStyle ?? "blur"}
+                                        value={config.backgroundStyle ?? "black"}
                                         onChange={(style) => onChange({ backgroundStyle: style })}
                                         disabled={isDisabled}
                                     />

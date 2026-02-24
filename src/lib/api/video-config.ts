@@ -172,5 +172,5 @@ export const DEFAULT_VIDEO_CONFIG: VideoConfigInput = {
   splitScreenBgCategoryId: null,
   splitRatio: 50,
   // Background Style
-  backgroundStyle: "blur",
+  backgroundStyle: "black",
 };

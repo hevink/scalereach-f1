@@ -10,7 +10,6 @@ import {
     IconSparkles,
     IconArrowLeft,
     IconUpload,
-    IconSubtask,
     IconLanguage,
     IconRefresh,
 } from "@tabler/icons-react";
@@ -580,13 +579,20 @@ export default function ConfigurePage() {
                                         />
                                     </div>
 
-                                    {/* Caption Style */}
+                                    {/* Captions */}
                                     <div className="rounded-xl border bg-card p-4 space-y-3">
-                                        <div>
-                                            <h3 className="font-semibold text-sm">Caption Style</h3>
-                                            <p className="text-muted-foreground text-xs">Choose how captions appear on your clips</p>
+                                        <div className="flex items-center justify-between">
+                                            <div>
+                                                <h3 className="font-semibold text-sm">Captions</h3>
+                                                <p className="text-muted-foreground text-xs">Add captions to your clips and choose a style</p>
+                                            </div>
+                                            <Switch
+                                                checked={config.enableCaptions ?? true}
+                                                onCheckedChange={(checked) => updateConfig({ enableCaptions: checked })}
+                                                disabled={isSubmitting}
+                                            />
                                         </div>
-                                        {templatesError ? (
+                                        {!(config.enableCaptions ?? true) ? null : templatesError ? (
                                             <div role="alert" className="flex flex-col items-center gap-2 rounded-lg border border-dashed p-4">
                                                 <IconAlertCircle className="size-6 text-muted-foreground" aria-hidden="true" />
                                                 <p className="text-muted-foreground text-xs">Failed to load caption templates</p>
@@ -739,21 +745,10 @@ export default function ConfigurePage() {
                                         </div>
                                     )}
 
-                                    {/* Editing Options */}
+                                    {/* Layout Options */}
                                     <div className="rounded-xl border bg-card p-4 space-y-2">
-                                        <h3 className="font-semibold text-sm">Editing Options</h3>
-                                        <div className="flex items-center justify-between py-2">
-                                            <div className="flex items-center gap-2.5">
-                                                <IconSubtask className="size-4 text-muted-foreground" />
-                                                <span className="text-sm">Captions</span>
-                                            </div>
-                                            <Switch
-                                                checked={config.enableCaptions ?? true}
-                                                onCheckedChange={(checked) => updateConfig({ enableCaptions: checked })}
-                                                disabled={isSubmitting}
-                                            />
-                                        </div>
-                                        <div className="border-t pt-3">
+                                        <h3 className="font-semibold text-sm">Layout Options</h3>
+                                        <div className="pt-1">
                                             <SplitScreenSection
                                                 config={config}
                                                 onChange={updateConfig}
@@ -764,9 +759,9 @@ export default function ConfigurePage() {
                                         </div>
                                         {/* Background Style - for vertical (9:16) non-split-screen clips */}
                                         {config.aspectRatio === "9:16" && !config.enableSplitScreen && (
-                                            <div className="border-t pt-3">
+                                            <div className="border-t pt-3 mt-1">
                                                 <BackgroundStyleSelector
-                                                    value={config.backgroundStyle ?? "blur"}
+                                                    value={config.backgroundStyle ?? "black"}
                                                     onChange={(style) => updateConfig({ backgroundStyle: style })}
                                                     disabled={isSubmitting}
                                                     userPlan={workspace?.plan || "free"}
