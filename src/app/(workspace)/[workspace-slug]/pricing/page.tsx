@@ -509,6 +509,50 @@ export default function WorkspacePricingPage() {
                     </div>
                 </div>
 
+                {/* FAQ */}
+                <motion.div
+                    initial={{ opacity: 0, y: 20 }}
+                    whileInView={{ opacity: 1, y: 0 }}
+                    viewport={{ once: true }}
+                    transition={{ duration: 0.5 }}
+                    className="mt-20"
+                >
+                    <h2 className="text-2xl font-bold text-center mb-8">Frequently asked questions</h2>
+                    <div className="grid gap-4 max-w-2xl mx-auto">
+                        {[
+                            {
+                                q: "Do my minutes expire?",
+                                a: "Free plan minutes expire after 60 days from account creation. Paid plan (Starter & Pro) minutes reset every month and never expire while your subscription is active.",
+                            },
+                            {
+                                q: "What happens to my videos when storage expires?",
+                                a: "Videos are automatically deleted from our servers after the storage period ends — 14 days for Free, 3 months for Starter, and 6 months for Pro. Download your clips before then.",
+                            },
+                            {
+                                q: "Can I upgrade or downgrade anytime?",
+                                a: "Yes. You can switch plans at any time. Upgrades take effect immediately. Downgrades apply at the end of your current billing cycle.",
+                            },
+                            {
+                                q: "What counts as a minute?",
+                                a: "1 minute of video processed = 1 minute deducted. A 10-minute YouTube video costs 10 minutes. Regenerating clips costs additional minutes.",
+                            },
+                            {
+                                q: "What is the watermark on the Free plan?",
+                                a: "Free plan clips include a small ScaleReach watermark in the corner. Upgrade to Starter or Pro to remove it.",
+                            },
+                            {
+                                q: "Do unused monthly minutes roll over?",
+                                a: "No. Monthly minutes reset at the start of each billing cycle and do not roll over.",
+                            },
+                        ].map(({ q, a }) => (
+                            <div key={q} className="rounded-lg border bg-card p-5">
+                                <p className="font-medium text-sm">{q}</p>
+                                <p className="text-muted-foreground text-sm mt-1.5">{a}</p>
+                            </div>
+                        ))}
+                    </div>
+                </motion.div>
+
                 {/* Footer */}
                 <p className="text-center text-sm text-muted-foreground mt-12">
                     Need more?{" "}
