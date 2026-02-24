@@ -56,6 +56,8 @@ export function SchedulePostModal({
   const [postType, setPostType] = useState<"immediate" | "scheduled">("scheduled");
   const [scheduledDate, setScheduledDate] = useState<Date | undefined>(undefined);
 
+  const [submitAttempted, setSubmitAttempted] = useState(false);
+
   const { data: accounts = [], isLoading } = useSocialAccounts(workspaceId);
   const schedulePost = useSchedulePost(workspaceId);
 
@@ -66,7 +68,9 @@ export function SchedulePostModal({
   }
 
   async function handleSubmit() {
+    setSubmitAttempted(true);
     if (!selectedAccountId) return;
+    if (postType === "scheduled" && !scheduledDate) return;
     await schedulePost.mutateAsync({
       workspaceId,
       clipId: clip.id,
@@ -190,6 +194,9 @@ export function SchedulePostModal({
                     })}
                   </div>
                 )}
+                {submitAttempted && !selectedAccountId && accounts.length > 0 && (
+                  <p className="text-xs text-red-500">Please select an account to post to</p>
+                )}
               </div>
 
               {/* When to post */}
@@ -222,6 +229,9 @@ export function SchedulePostModal({
                     placeholder="Pick date & time"
                     disablePast
                   />
+                )}
+                {submitAttempted && postType === "scheduled" && !scheduledDate && (
+                  <p className="text-xs text-red-500">Please pick a date and time</p>
                 )}
               </div>
 
@@ -277,7 +287,7 @@ export function SchedulePostModal({
                   Posting to <span className="font-medium text-foreground">{selectedAccount.accountName}</span> on <span className="font-medium text-foreground">{PLATFORM_META[selectedAccount.platform]?.label || selectedAccount.platform}</span>
                 </p>
               )}
-              <Button className="w-full gap-2" onClick={handleSubmit} disabled={!canSubmit}>
+              <Button className="w-full gap-2" onClick={handleSubmit} disabled={schedulePost.isPending}>
                 {schedulePost.isPending ? (
                   <><IconLoader2 size={15} className="animate-spin" /> Scheduling...</>
                 ) : postType === "immediate" ? (
