@@ -683,6 +683,21 @@ export default function ConfigurePage() {
                                         )}
                                     </div>
 
+                                    {/* Auto Hook / Intro Title */}
+                                    <div className="rounded-xl border bg-card p-4">
+                                        <div className="flex items-center justify-between">
+                                            <div>
+                                                <h3 className="font-semibold text-sm">Auto Hook</h3>
+                                                <p className="text-muted-foreground text-xs">AI-generated hook text overlay in the first 3 seconds to grab attention</p>
+                                            </div>
+                                            <Switch
+                                                checked={config.enableIntroTitle ?? true}
+                                                onCheckedChange={(checked) => updateConfig({ enableIntroTitle: checked })}
+                                                disabled={isSubmitting}
+                                            />
+                                        </div>
+                                    </div>
+
                                     {/* Aspect Ratio, Language & Clip Duration - inline rows */}
                                     <div className="rounded-xl border bg-card divide-y">
                                         <div className="flex items-center justify-between gap-4 px-4 py-3">

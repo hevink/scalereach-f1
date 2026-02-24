@@ -164,7 +164,7 @@ export const DEFAULT_VIDEO_CONFIG: VideoConfigInput = {
   // Editing Options
   enableCaptions: true,
   enableEmojis: false,
-  enableIntroTitle: false,
+  enableIntroTitle: true,
   // Split-Screen Options
   enableSplitScreen: false,
   splitScreenBgVideoId: null,
