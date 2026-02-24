@@ -40,6 +40,7 @@ export function useClipsByVideo(videoId: string, filters?: Partial<ClipFilters>)
       return hasGeneratingClips(query.state.data) ? 5000 : false;
     },
     refetchIntervalInBackground: false,
+    refetchOnWindowFocus: true,
   });
 }
 

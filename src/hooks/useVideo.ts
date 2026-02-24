@@ -128,6 +128,7 @@ export function useVideoStatus(id: string, enabled = true) {
     enabled: !!id && enabled,
     retry: 3,
     retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000),
+    refetchOnWindowFocus: true,
     refetchInterval: (query) => {
       const data = query.state.data as VideoStatusResponse | undefined;
 
