@@ -97,6 +97,7 @@ export interface SubmitVideoWithConfigRequest {
     splitScreenBgVideoId?: string | null;
     splitScreenBgCategoryId?: string | null;
     splitRatio?: number;
+    backgroundStyle?: string;
   };
 }
 

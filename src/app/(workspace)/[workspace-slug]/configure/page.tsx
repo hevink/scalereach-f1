@@ -769,6 +769,8 @@ export default function ConfigurePage() {
                                                     value={config.backgroundStyle ?? "blur"}
                                                     onChange={(style) => updateConfig({ backgroundStyle: style })}
                                                     disabled={isSubmitting}
+                                                    userPlan={workspace?.plan || "free"}
+                                                    workspaceSlug={workspaceSlug}
                                                 />
                                             </div>
                                         )}
