@@ -55,6 +55,7 @@ interface VideoCardProps {
     onDuplicate?: (videoId: string) => void;
     className?: string;
     workspaceSlug?: string;
+    isDeleting?: boolean;
 }
 
 /**
@@ -68,11 +69,12 @@ export function VideoCard({
     onRename,
     onDuplicate,
     className,
+    isDeleting = false,
 }: VideoCardProps) {
     const [showDeleteDialog, setShowDeleteDialog] = useState(false);
     const [showRenameDialog, setShowRenameDialog] = useState(false);
     const [newTitle, setNewTitle] = useState(video.title || "");
-    const [isDeleting, setIsDeleting] = useState(false);
+    const [isDeletingLocal, setIsDeletingLocal] = useState(false);
     const [isRenaming, setIsRenaming] = useState(false);
     const [copySuccess, setCopySuccess] = useState(false);
 
@@ -116,11 +118,11 @@ export function VideoCard({
 
     const handleDelete = async () => {
         if (!onDelete) return;
-        setIsDeleting(true);
+        setIsDeletingLocal(true);
         try {
             await onDelete(video.id);
         } finally {
-            setIsDeleting(false);
+            setIsDeletingLocal(false);
             setShowDeleteDialog(false);
         }
     };
@@ -417,13 +419,13 @@ export function VideoCard({
                         </AlertDialogDescription>
                     </AlertDialogHeader>
                     <AlertDialogFooter>
-                        <AlertDialogCancel disabled={isDeleting}>Cancel</AlertDialogCancel>
+                        <AlertDialogCancel disabled={isDeletingLocal || isDeleting}>Cancel</AlertDialogCancel>
                         <AlertDialogAction
                             onClick={handleDelete}
-                            disabled={isDeleting}
+                            disabled={isDeletingLocal || isDeleting}
                             className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
                         >
-                            {isDeleting ? (
+                            {(isDeletingLocal || isDeleting) ? (
                                 <>
                                     <IconLoader2 className="size-4 mr-2 animate-spin" />
                                     Deleting...

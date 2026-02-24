@@ -1,5 +1,6 @@
 "use client";
 
+import { useState, useCallback } from "react";
 import { VideoLite } from "@/lib/api/video";
 import { VideoCard } from "./video-card";
 import { SkeletonVideoGrid } from "@/components/ui/skeletons";
@@ -34,6 +35,21 @@ export function VideoGrid({
     isLoading = false,
     className,
 }: VideoGridProps) {
+    const [deletingIds, setDeletingIds] = useState<Set<string>>(new Set());
+
+    const handleDelete = useCallback(async (videoId: string) => {
+        if (!onDeleteVideo) return;
+        setDeletingIds((prev) => new Set(prev).add(videoId));
+        try {
+            await onDeleteVideo(videoId);
+        } finally {
+            setDeletingIds((prev) => {
+                const next = new Set(prev);
+                next.delete(videoId);
+                return next;
+            });
+        }
+    }, [onDeleteVideo]);
     // Show skeleton loading state
     if (isLoading) {
         return <SkeletonVideoGrid count={10} className={className} />;
@@ -58,8 +74,8 @@ export function VideoGrid({
                 num: "3",
                 icon: (
                     <svg className="size-4 text-primary" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                        <circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/>
-                        <line x1="8.59" x2="15.42" y1="13.51" y2="17.49"/><line x1="15.41" x2="8.59" y1="6.51" y2="10.49"/>
+                        <circle cx="18" cy="5" r="3" /><circle cx="6" cy="12" r="3" /><circle cx="18" cy="19" r="3" />
+                        <line x1="8.59" x2="15.42" y1="13.51" y2="17.49" /><line x1="15.41" x2="8.59" y1="6.51" y2="10.49" />
                     </svg>
                 ),
                 title: "Schedule & post everywhere",
@@ -120,13 +136,18 @@ export function VideoGrid({
                     <div
                         key={video.id}
                         role="listitem"
+                        className={cn(
+                            "transition-opacity duration-300",
+                            deletingIds.has(video.id) && "opacity-40 pointer-events-none"
+                        )}
                     >
                         <VideoCard
                             video={video}
                             onClick={() => onVideoClick(video.id)}
-                            onDelete={onDeleteVideo}
+                            onDelete={onDeleteVideo ? handleDelete : undefined}
                             onRename={onRenameVideo}
                             onDuplicate={onDuplicateVideo}
+                            isDeleting={deletingIds.has(video.id)}
                         />
                     </div>
                 ))}
