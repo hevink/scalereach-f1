@@ -13,6 +13,7 @@ import { TimeframeSelector } from "./timeframe-selector";
 import { CaptionTemplateGrid } from "./caption-template-grid";
 import { AspectRatioSelector } from "./aspect-ratio-selector";
 import { SplitScreenSection } from "./split-screen-section";
+import { BackgroundStyleSelector } from "./background-style-selector";
 import type { VideoConfigInput, CaptionTemplate } from "@/lib/api/video-config";
 import { useState } from "react";
 import { cn } from "@/lib/utils";
@@ -159,6 +160,18 @@ export function VideoConfigForm({
                                 userPlan={userPlan}
                                 workspaceSlug={workspaceSlug}
                             />
+
+                            {/* Background Style - only for vertical non-split-screen */}
+                            {config.aspectRatio === "9:16" && !config.enableSplitScreen && (
+                                <>
+                                    <Separator />
+                                    <BackgroundStyleSelector
+                                        value={config.backgroundStyle ?? "blur"}
+                                        onChange={(style) => onChange({ backgroundStyle: style })}
+                                        disabled={isDisabled}
+                                    />
+                                </>
+                            )}
 
                             {/* Emojis Toggle - disabled for now */}
                             {/* <div className="flex items-center justify-between">

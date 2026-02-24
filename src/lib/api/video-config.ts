@@ -47,6 +47,8 @@ export interface VideoConfigInput {
   splitScreenBgVideoIds?: string[] | null;    // multi-select
   splitScreenBgCategoryId?: string | null;
   splitRatio?: number;
+  // Background Style (for vertical non-split-screen clips)
+  backgroundStyle?: "blur" | "black" | "white";
 }
 
 export interface VideoConfig extends VideoConfigInput {
@@ -169,4 +171,6 @@ export const DEFAULT_VIDEO_CONFIG: VideoConfigInput = {
   splitScreenBgVideoIds: null,
   splitScreenBgCategoryId: null,
   splitRatio: 50,
+  // Background Style
+  backgroundStyle: "blur",
 };
