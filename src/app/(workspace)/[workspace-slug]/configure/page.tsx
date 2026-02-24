@@ -40,6 +40,7 @@ import { TimeframeSelector } from "@/components/configure/timeframe-selector";
 import { ClipTypeSelector } from "@/components/configure/clip-type-selector";
 import { ClipDurationSelector } from "@/components/configure/clip-duration-selector";
 import { SplitScreenSection } from "@/components/configure/split-screen-section";
+import { BackgroundStyleSelector } from "@/components/configure/background-style-selector";
 import { YouTubeIcon } from "@/components/icons/youtube-icon";
 import { InsufficientMinutesModal } from "@/components/upload/insufficient-minutes-modal";
 import {
@@ -75,20 +76,20 @@ function formatDuration(seconds: number): string {
 
 // Maps template fontFamily names to their CSS variable and max available weight
 const FONT_MAP: Record<string, { variable: string; weight: number }> = {
-    "Bebas Neue":        { variable: "--font-bebas-neue",        weight: 400 },
-    "Anton":             { variable: "--font-anton",             weight: 400 },
-    "Bangers":           { variable: "--font-bangers",           weight: 400 },
-    "Titan One":         { variable: "--font-titan-one",         weight: 400 },
-    "Righteous":         { variable: "--font-righteous",         weight: 400 },
-    "Russo One":         { variable: "--font-russo-one",         weight: 400 },
-    "Black Ops One":     { variable: "--font-black-ops-one",     weight: 400 },
-    "Permanent Marker":  { variable: "--font-permanent-marker",  weight: 400 },
-    "Lilita One":        { variable: "--font-lilita-one",        weight: 400 },
-    "Montserrat":        { variable: "--font-montserrat",        weight: 800 },
-    "Poppins":           { variable: "--font-poppins",           weight: 800 },
-    "Oswald":            { variable: "--font-oswald",            weight: 700 },
-    "Lexend":            { variable: "--font-lexend",            weight: 800 },
-    "Inter":             { variable: "--font-inter",             weight: 700 },
+    "Bebas Neue": { variable: "--font-bebas-neue", weight: 400 },
+    "Anton": { variable: "--font-anton", weight: 400 },
+    "Bangers": { variable: "--font-bangers", weight: 400 },
+    "Titan One": { variable: "--font-titan-one", weight: 400 },
+    "Righteous": { variable: "--font-righteous", weight: 400 },
+    "Russo One": { variable: "--font-russo-one", weight: 400 },
+    "Black Ops One": { variable: "--font-black-ops-one", weight: 400 },
+    "Permanent Marker": { variable: "--font-permanent-marker", weight: 400 },
+    "Lilita One": { variable: "--font-lilita-one", weight: 400 },
+    "Montserrat": { variable: "--font-montserrat", weight: 800 },
+    "Poppins": { variable: "--font-poppins", weight: 800 },
+    "Oswald": { variable: "--font-oswald", weight: 700 },
+    "Lexend": { variable: "--font-lexend", weight: 800 },
+    "Inter": { variable: "--font-inter", weight: 700 },
     "Libre Baskerville": { variable: "--font-libre-baskerville", weight: 700 },
 };
 
@@ -250,6 +251,7 @@ export default function ConfigurePage() {
                 splitScreenBgVideoId: config.splitScreenBgVideoId,
                 splitScreenBgCategoryId: config.splitScreenBgCategoryId,
                 splitRatio: config.splitRatio,
+                backgroundStyle: config.backgroundStyle,
             });
         },
         onSuccess: (result) => {
@@ -307,6 +309,7 @@ export default function ConfigurePage() {
                 splitScreenBgVideoId: config.splitScreenBgVideoId,
                 splitScreenBgCategoryId: config.splitScreenBgCategoryId,
                 splitRatio: config.splitRatio,
+                backgroundStyle: config.backgroundStyle,
             });
         },
         onSuccess: (result) => {
@@ -759,6 +762,16 @@ export default function ConfigurePage() {
                                                 workspaceSlug={workspaceSlug}
                                             />
                                         </div>
+                                        {/* Background Style - for vertical (9:16) non-split-screen clips */}
+                                        {config.aspectRatio === "9:16" && !config.enableSplitScreen && (
+                                            <div className="border-t pt-3">
+                                                <BackgroundStyleSelector
+                                                    value={config.backgroundStyle ?? "blur"}
+                                                    onChange={(style) => updateConfig({ backgroundStyle: style })}
+                                                    disabled={isSubmitting}
+                                                />
+                                            </div>
+                                        )}
                                     </div>
 
                                     {/* Get Clips Button */}

@@ -161,8 +161,8 @@ export function VideoConfigForm({
                                 workspaceSlug={workspaceSlug}
                             />
 
-                            {/* Background Style - only for vertical non-split-screen */}
-                            {config.aspectRatio === "9:16" && !config.enableSplitScreen && (
+                            {/* Background Style - only for vertical (9:16) clips */}
+                            {config.aspectRatio === "9:16" && (
                                 <>
                                     <Separator />
                                     <BackgroundStyleSelector
