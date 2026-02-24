@@ -48,8 +48,7 @@ import {
 import { useAdminUsers, useUpdateUserRole, useDeleteUser } from "@/hooks/useAdmin";
 import { formatDistanceToNow, format } from "date-fns";
 import { toast } from "sonner";
-import { AdminUserDetail } from "./admin-user-detail";
-import type { AdminUser } from "@/lib/api/admin";
+import { useRouter } from "next/navigation";
 
 export function AdminUsersTable() {
     const [page, setPage] = useState(1);
@@ -57,7 +56,7 @@ export function AdminUsersTable() {
     const [searchQuery, setSearchQuery] = useState("");
     const [roleFilter, setRoleFilter] = useState<string>("all");
     const [statusFilter, setStatusFilter] = useState<string>("all");
-    const [selectedUser, setSelectedUser] = useState<AdminUser | null>(null);
+    const router = useRouter();
     const { data, isLoading } = useAdminUsers(page, 50);
     const updateRole = useUpdateUserRole();
     const deleteUser = useDeleteUser();
@@ -263,7 +262,7 @@ export function AdminUsersTable() {
                                                 <DropdownMenuContent align="end">
                                                     <DropdownMenuLabel>Actions</DropdownMenuLabel>
                                                     <DropdownMenuSeparator />
-                                                    <DropdownMenuItem onClick={() => setSelectedUser(user)}>
+                                                    <DropdownMenuItem onClick={() => router.push(`/admin/users/${user.id}`)}>
                                                         <IconEye className="mr-2 h-4 w-4" />
                                                         View Videos & Clips
                                                     </DropdownMenuItem>
@@ -348,13 +347,6 @@ export function AdminUsersTable() {
                     </AlertDialogFooter>
                 </AlertDialogContent>
             </AlertDialog>
-
-            {/* User Detail Dialog */}
-            <AdminUserDetail
-                user={selectedUser}
-                open={!!selectedUser}
-                onClose={() => setSelectedUser(null)}
-            />
         </>
     );
 }
