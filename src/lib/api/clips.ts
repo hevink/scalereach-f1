@@ -16,6 +16,7 @@ export interface ClipResponse {
   id: string;
   videoId: string;
   title: string;
+  introTitle?: string;
   startTime: number;
   endTime: number;
   duration: number;
@@ -226,6 +227,14 @@ export const clipsApi = {
    */
   getClipStatus: async (clipId: string): Promise<ClipStatusResponse> => {
     const response = await api.get<ClipStatusResponse>(`/api/clips/${clipId}/status`);
+    return response.data;
+  },
+
+  /**
+   * Update clip metadata (title, introTitle)
+   */
+  updateClip: async (clipId: string, data: { title?: string; introTitle?: string }): Promise<ClipResponse> => {
+    const response = await api.patch<ClipResponse>(`/api/clips/${clipId}`, data);
     return response.data;
   },
 };

@@ -37,6 +37,10 @@ export interface EditingLayoutProps {
         videoPlayer: ReactNode;
         /** Caption style panel component (shown in toolbar panel) */
         stylePanel: ReactNode;
+        /** AI Hook panel component (shown in toolbar panel) */
+        aiHookPanel?: ReactNode;
+        /** Clip Info panel component (shown in toolbar panel) */
+        clipInfoPanel?: ReactNode;
         /** Timeline editor component for the bottom row */
         timeline: ReactNode;
     };
@@ -147,6 +151,8 @@ function DesktopLayout({ children, header, onPanelResize, className, activeToolb
                     activePanel={activeToolbarPanel}
                     onPanelChange={setActiveToolbarPanel}
                     captionsPanel={children.stylePanel}
+                    aiHookPanel={children.aiHookPanel}
+                    clipInfoPanel={children.clipInfoPanel}
                 />
             </div>
 
@@ -219,6 +225,8 @@ function MobileLayout({ children, header, className, activeToolbarPanel: control
                     activePanel={activeToolbarPanel}
                     onPanelChange={setActiveToolbarPanel}
                     captionsPanel={children.stylePanel}
+                    aiHookPanel={children.aiHookPanel}
+                    clipInfoPanel={children.clipInfoPanel}
                 />
             </div>
 

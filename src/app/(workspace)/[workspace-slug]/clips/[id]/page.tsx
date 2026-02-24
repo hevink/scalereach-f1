@@ -32,7 +32,7 @@ import { VideoCanvasEditor, type VideoCanvasEditorRef } from "@/components/video
 import { TranscriptParagraphView } from "@/components/transcript/transcript-paragraph-view";
 import { ExportOptions } from "@/components/export/export-options";
 import { ExportProgress } from "@/components/export/export-progress";
-import { useClip, useUpdateClipBoundaries } from "@/hooks/useClips";
+import { useClip, useUpdateClipBoundaries, useUpdateClip } from "@/hooks/useClips";
 import { useVideo } from "@/hooks/useVideo";
 import { useCaptionStyle, useUpdateCaptionStyle, useUpdateCaptionText, useCaptionTemplates } from "@/hooks/useCaptions";
 import { useInitiateExport } from "@/hooks/useExport";
@@ -44,6 +44,8 @@ import { useKeyboardShortcuts, type KeyboardShortcut } from "@/hooks/useKeyboard
 import type { CaptionStyle, Caption, CaptionWord } from "@/lib/api/captions";
 import type { ExportOptions as ExportOptionsType } from "@/lib/api/export";
 import { analytics } from "@/lib/analytics";
+import { AiHookPanel } from "@/components/clips/ai-hook-panel";
+import { ClipInfoPanel } from "@/components/clips/clip-info-panel";
 import {
     Dialog,
     DialogContent,
@@ -491,6 +493,7 @@ export default function ClipEditorPage({ params }: ClipEditorPageProps) {
     const updateCaptionStyle = useUpdateCaptionStyle();
     const updateClipBoundaries = useUpdateClipBoundaries();
     const updateCaptionText = useUpdateCaptionText();
+    const updateClip = useUpdateClip();
     const initiateExport = useInitiateExport();
 
     // Convert words from API to Caption[] format for VIDEO OVERLAY
@@ -790,6 +793,12 @@ export default function ClipEditorPage({ params }: ClipEditorPageProps) {
         },
         [applyPreset]
     );
+
+    // Handle intro title update from AI Hook panel
+    const handleIntroTitleSave = useCallback((introTitle: string) => {
+        if (!clip) return;
+        updateClip.mutate({ clipId: clip.id, data: { introTitle } });
+    }, [clip, updateClip]);
 
     // Timeline boundary change handler
     const handleBoundaryChange = useCallback(
@@ -1224,6 +1233,20 @@ export default function ClipEditorPage({ params }: ClipEditorPageProps) {
                             selectedPresetId={currentPresetId}
                             onPresetSelect={handlePresetSelect}
                         />
+                    ),
+
+                    /* Right Panel: AI Hook Editor */
+                    aiHookPanel: (
+                        <AiHookPanel
+                            introTitle={clip.introTitle || ""}
+                            onSave={handleIntroTitleSave}
+                            isSaving={updateClip.isPending}
+                        />
+                    ),
+
+                    /* Right Panel: Clip Info */
+                    clipInfoPanel: (
+                        <ClipInfoPanel clip={clip} />
                     ),
 
                     /* Bottom Panel: Timeline Editor */

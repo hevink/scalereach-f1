@@ -3,14 +3,9 @@
 import { useState, type ReactNode } from "react";
 import {
     IconTextCaption,
-    IconUpload,
-    IconPalette,
-    IconMovie,
-    IconTransitionRight,
-    IconMusic,
     IconSparkles,
     IconX,
-    IconSubtask,
+    IconInfoCircle,
 } from "@tabler/icons-react";
 
 import { cn } from "@/lib/utils";
@@ -25,16 +20,14 @@ import {
 // Types
 // ============================================================================
 
-export type ToolbarPanel = "ai-enhance" | "captions" | "upload" | "brand" | "broll" | "transitions" | "music" | "ai" | null;
+export type ToolbarPanel = "captions" | "ai-hook" | "clip-info" | null;
 
 export interface EditorToolbarProps {
-    /** Currently active panel */
     activePanel: ToolbarPanel;
-    /** Callback when a panel is selected */
     onPanelChange: (panel: ToolbarPanel) => void;
-    /** Content to show in the captions panel */
     captionsPanel?: ReactNode;
-    /** Additional class names */
+    aiHookPanel?: ReactNode;
+    clipInfoPanel?: ReactNode;
     className?: string;
 }
 
@@ -45,19 +38,10 @@ interface ToolbarItem {
     disabled?: boolean;
 }
 
-// ============================================================================
-// Constants
-// ============================================================================
-
 const TOOLBAR_ITEMS: ToolbarItem[] = [
-    { id: "ai-enhance" as ToolbarPanel, icon: IconSparkles, label: "AI enhance", disabled: true },
     { id: "captions", icon: IconTextCaption, label: "Captions" },
-    { id: "upload", icon: IconUpload, label: "Upload", disabled: true },
-    { id: "brand", icon: IconPalette, label: "Brand template", disabled: true },
-    { id: "broll", icon: IconMovie, label: "B-Roll", disabled: true },
-    { id: "transitions", icon: IconTransitionRight, label: "Transitions", disabled: true },
-    { id: "music", icon: IconMusic, label: "Music", disabled: true },
-    { id: "ai", icon: IconSubtask, label: "AI hook", disabled: true },
+    { id: "ai-hook", icon: IconSparkles, label: "AI Hook" },
+    { id: "clip-info", icon: IconInfoCircle, label: "Clip Info" },
 ];
 
 // ============================================================================
@@ -128,24 +112,16 @@ function PanelHeader({ title, onClose }: PanelHeaderProps) {
 // EditorToolbar Component
 // ============================================================================
 
-/**
- * EditorToolbar - Vertical toolbar with expandable panels
- * 
- * Shows a vertical strip of tool icons on the right side.
- * Clicking an icon opens a panel with that tool's options.
- */
 export function EditorToolbar({
     activePanel,
     onPanelChange,
     captionsPanel,
+    aiHookPanel,
+    clipInfoPanel,
     className,
 }: EditorToolbarProps) {
     const handleItemClick = (itemId: ToolbarPanel) => {
-        if (activePanel === itemId) {
-            onPanelChange(null);
-        } else {
-            onPanelChange(itemId);
-        }
+        onPanelChange(activePanel === itemId ? null : itemId);
     };
 
     const getPanelTitle = (panel: ToolbarPanel): string => {
@@ -153,9 +129,15 @@ export function EditorToolbar({
         return item?.label || "";
     };
 
+    const getPanelContent = (panel: ToolbarPanel): ReactNode => {
+        if (panel === "captions") return captionsPanel;
+        if (panel === "ai-hook") return aiHookPanel;
+        if (panel === "clip-info") return clipInfoPanel;
+        return null;
+    };
+
     return (
         <div className={cn("flex h-full", className)}>
-            {/* Expandable Panel */}
             {activePanel && (
                 <div className="w-[280px] h-full border-l border-zinc-800 bg-zinc-900 flex flex-col animate-in slide-in-from-right-2">
                     <PanelHeader
@@ -163,17 +145,11 @@ export function EditorToolbar({
                         onClose={() => onPanelChange(null)}
                     />
                     <div className="flex-1 overflow-auto p-4">
-                        {activePanel === "captions" && captionsPanel}
-                        {activePanel !== "captions" && (
-                            <div className="flex flex-col items-center justify-center h-full text-center text-zinc-500">
-                                <p className="text-sm">Coming soon</p>
-                            </div>
-                        )}
+                        {getPanelContent(activePanel)}
                     </div>
                 </div>
             )}
 
-            {/* Toolbar Strip */}
             <div className="w-14 h-full border-l border-zinc-800 bg-zinc-900 flex flex-col items-center py-3 gap-2">
                 {TOOLBAR_ITEMS.map((item) => (
                     <ToolbarButton

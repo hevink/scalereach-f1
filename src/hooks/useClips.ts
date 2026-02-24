@@ -85,6 +85,24 @@ export function useUpdateClipBoundaries() {
 }
 
 /**
+ * Update clip metadata (title, introTitle)
+ */
+export function useUpdateClip() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({ clipId, data }: { clipId: string; data: { title?: string; introTitle?: string } }) =>
+      clipsApi.updateClip(clipId, data),
+    onSuccess: (updatedClip) => {
+      queryClient.setQueryData(clipKeys.byId(updatedClip.id), updatedClip);
+      queryClient.invalidateQueries({
+        queryKey: clipKeys.byVideo(updatedClip.videoId),
+      });
+    },
+  });
+}
+
+/**
  * Toggle favorite status of a clip with optimistic update
  * Requirements: 9.2, 30.1, 30.5
  */
