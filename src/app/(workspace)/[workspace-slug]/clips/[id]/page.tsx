@@ -34,7 +34,7 @@ import { ExportOptions } from "@/components/export/export-options";
 import { ExportProgress } from "@/components/export/export-progress";
 import { useClip, useUpdateClipBoundaries, useUpdateClip } from "@/hooks/useClips";
 import { useVideo } from "@/hooks/useVideo";
-import { useCaptionStyle, useUpdateCaptionStyle, useUpdateCaptionText, useCaptionTemplates } from "@/hooks/useCaptions";
+import { useCaptionStyle, useUpdateCaptionStyle, useCaptionTemplates } from "@/hooks/useCaptions";
 import { useInitiateExport } from "@/hooks/useExport";
 import { useMinutesBalance } from "@/hooks/useMinutes";
 import { useWorkspaceBySlug } from "@/hooks/useWorkspace";
@@ -42,6 +42,7 @@ import { savePageScrollPosition } from "@/hooks/useScrollPosition";
 import { useCaptionStylePresets } from "@/hooks/useCaptionStylePresets";
 import { useKeyboardShortcuts, type KeyboardShortcut } from "@/hooks/useKeyboardShortcuts";
 import type { CaptionStyle, Caption, CaptionWord } from "@/lib/api/captions";
+import { captionsApi } from "@/lib/api/captions";
 import type { ExportOptions as ExportOptionsType } from "@/lib/api/export";
 import { analytics } from "@/lib/analytics";
 import { AiHookPanel } from "@/components/clips/ai-hook-panel";
@@ -407,8 +408,9 @@ export default function ClipEditorPage({ params }: ClipEditorPageProps) {
     const [activeExportId, setActiveExportId] = useState<string | null>(null);
     const [exportDialogOpen, setExportDialogOpen] = useState(false);
     const [clipBoundaries, setClipBoundaries] = useState<{ start: number; end: number } | null>(null);
-    // Local captions state for optimistic UI updates during real-time editing
-    const [localCaptions, setLocalCaptions] = useState<Caption[] | null>(null);
+    // Local edited words — single source of truth for caption edits
+    // Both video overlay and transcript panel derive from this
+    const [localWords, setLocalWords] = useState<CaptionWord[] | null>(null);
     // Local transcript captions state (paragraph-grouped) for inline editing
     const [localTranscriptCaptions, setLocalTranscriptCaptions] = useState<Caption[] | null>(null);
     // Track unsaved changes
@@ -492,7 +494,6 @@ export default function ClipEditorPage({ params }: ClipEditorPageProps) {
     // Mutations
     const updateCaptionStyle = useUpdateCaptionStyle();
     const updateClipBoundaries = useUpdateClipBoundaries();
-    const updateCaptionText = useUpdateCaptionText();
     const updateClip = useUpdateClip();
     const initiateExport = useInitiateExport();
 
@@ -500,7 +501,7 @@ export default function ClipEditorPage({ params }: ClipEditorPageProps) {
     // Groups words into segments of max 5 words (matching backend ASS subtitle generation)
     // This is used for the video preview caption overlay
     const captionsForVideo = useMemo((): Caption[] => {
-        const words = captionData?.words;
+        const words = localWords ?? captionData?.words;
         if (!words || !Array.isArray(words) || words.length === 0) {
             return [];
         }
@@ -531,13 +532,13 @@ export default function ClipEditorPage({ params }: ClipEditorPageProps) {
             }
         }
         return segments;
-    }, [captionData?.words, captionStyle?.wordsPerLine]);
+    }, [localWords, captionData?.words, captionStyle?.wordsPerLine]);
 
     // Convert words from API to Caption[] format for TRANSCRIPT PANEL
     // Groups words into sentence-based paragraphs for better readability
     // This is used for the left panel transcript editor
     const captionsForTranscript = useMemo((): Caption[] => {
-        const words = captionData?.words;
+        const words = localWords ?? captionData?.words;
         if (!words || !Array.isArray(words) || words.length === 0) {
             return [];
         }
@@ -587,7 +588,7 @@ export default function ClipEditorPage({ params }: ClipEditorPageProps) {
             }
         }
         return segments;
-    }, [captionData?.words]);
+    }, [localWords, captionData?.words]);
 
     // Initialize caption style from fetched data
     useState(() => {
@@ -721,11 +722,18 @@ export default function ClipEditorPage({ params }: ClipEditorPageProps) {
 
     /**
      * Handle caption edit for real-time sync with video overlay
-     * Updates local captions state optimistically — saved only on explicit Save
+     * Updates the underlying words so both video overlay and transcript re-derive correctly
      */
     const handleCaptionEdit = useCallback((segmentId: string, newText: string) => {
-        // Update transcript captions (paragraph-grouped, used by transcript panel)
+        // Find the edited segment from transcript captions to get its time range
         const currentTranscript = localTranscriptCaptions ?? captionsForTranscript;
+        const editedSegment = currentTranscript.find((c: Caption) => c.id === segmentId);
+        if (!editedSegment) return;
+
+        // Save original text for undo history
+        setCaptionUndoState({ segmentId, text: editedSegment.text });
+
+        // Update transcript captions optimistically (paragraph-grouped)
         const updatedTranscript = currentTranscript.map((caption: Caption) => {
             if (caption.id === segmentId) {
                 return { ...caption, text: newText };
@@ -734,24 +742,40 @@ export default function ClipEditorPage({ params }: ClipEditorPageProps) {
         });
         setLocalTranscriptCaptions(updatedTranscript);
 
-        // Update video overlay captions too
-        const currentCaptions = localCaptions ?? captionsForVideo;
+        // Update the underlying words so video overlay re-derives with new text
+        const currentWords = localWords ?? captionData?.words ?? [];
+        const newWords = newText.split(/\s+/).filter(Boolean);
+        const segmentWordCount = editedSegment.words.length;
 
-        // Find the original text for undo history
-        const originalCaption = currentTranscript.find((caption: Caption) => caption.id === segmentId);
-        const originalText = originalCaption?.text ?? "";
-        setCaptionUndoState({ segmentId, text: originalText });
+        // Find the index of the first word in this segment
+        const firstWordStart = editedSegment.words[0]?.start ?? 0;
+        const lastWordEnd = editedSegment.words[segmentWordCount - 1]?.end ?? 0;
+        const startIdx = currentWords.findIndex(
+            (w) => w.start === firstWordStart
+        );
+        if (startIdx === -1) return;
 
-        const updatedCaptions = currentCaptions.map((caption: Caption) => {
-            if (caption.id === segmentId) {
-                return { ...caption, text: newText };
-            }
-            return caption;
-        });
-        setLocalCaptions(updatedCaptions);
+        // Build replacement words, distributing timing evenly across new word count
+        const totalDuration = lastWordEnd - firstWordStart;
+        const wordDuration = newWords.length > 0 ? totalDuration / newWords.length : 0;
+        const replacementWords: CaptionWord[] = newWords.map((word, i) => ({
+            id: `edited-${startIdx + i}`,
+            word,
+            start: firstWordStart + i * wordDuration,
+            end: firstWordStart + (i + 1) * wordDuration,
+            highlight: false,
+        }));
+
+        // Splice the new words in place of the old segment words
+        const updatedWords = [
+            ...currentWords.slice(0, startIdx),
+            ...replacementWords,
+            ...currentWords.slice(startIdx + segmentWordCount),
+        ];
+        setLocalWords(updatedWords);
 
         setHasUnsavedChanges(true);
-    }, [localCaptions, captionsForVideo, localTranscriptCaptions, captionsForTranscript, setCaptionUndoState]);
+    }, [localWords, captionData?.words, localTranscriptCaptions, captionsForTranscript, setCaptionUndoState]);
 
     /**
      * Handle manual style changes (not from preset selection)
@@ -837,22 +861,15 @@ export default function ClipEditorPage({ params }: ClipEditorPageProps) {
             saveLastUsedStyle(captionStyle, currentPresetId);
         }
 
-        // Save edited caption text if there are local changes
-        if (localCaptions && localCaptions.length > 0) {
-            // Compare local captions against server captions and save each changed segment
-            const serverCaptions = captionsForVideo;
-            for (const local of localCaptions) {
-                const server = serverCaptions.find((s: Caption) => s.id === local.id);
-                if (!server || server.text !== local.text) {
-                    promises.push(
-                        updateCaptionText.mutateAsync({
-                            clipId,
-                            captionId: local.id,
-                            text: local.text,
-                        })
-                    );
-                }
-            }
+        // Save edited caption words if there are local changes
+        if (localWords && localWords.length > 0) {
+            promises.push(
+                captionsApi.updateCaptionWords(clipId, localWords).then(() => {
+                    // Clear local words after successful save so we re-derive from server data
+                    setLocalWords(null);
+                    setLocalTranscriptCaptions(null);
+                })
+            );
         }
 
         // Save clip boundaries if there are changes
@@ -872,7 +889,7 @@ export default function ClipEditorPage({ params }: ClipEditorPageProps) {
 
         // Clear unsaved changes flag
         setHasUnsavedChanges(false);
-    }, [clipId, captionStyle, currentPresetId, clipBoundaries, localCaptions, captionsForVideo, updateCaptionStyle, updateClipBoundaries, updateCaptionText, saveLastUsedStyle]);
+    }, [clipId, captionStyle, currentPresetId, clipBoundaries, localWords, updateCaptionStyle, updateClipBoundaries, saveLastUsedStyle]);
 
     // Export handler
     const handleExport = useCallback(
@@ -950,18 +967,8 @@ export default function ClipEditorPage({ params }: ClipEditorPageProps) {
      */
     const handleUndo = useCallback(() => {
         if (!canUndo) return;
-
-        // Get the current captions before undo
-        const currentCaptions = localCaptions ?? captionsForVideo;
-
-        // Perform undo - this will update captionUndoState to the previous state
         undoCaptionEdit();
-
-        // The undo state now contains the previous caption state
-        // We need to apply it to the local captions
-        // Note: The state update from undoCaptionEdit is async, so we use the current state
-        // The effect below will handle applying the undone state
-    }, [canUndo, localCaptions, captionsForVideo, undoCaptionEdit]);
+    }, [canUndo, undoCaptionEdit]);
 
     /**
      * Handle redo action - restores the next caption text state
@@ -973,25 +980,19 @@ export default function ClipEditorPage({ params }: ClipEditorPageProps) {
 
     /**
      * Effect to apply undo/redo state changes to local captions
-     * When captionUndoState changes (from undo/redo), update the local captions
+     * When captionUndoState changes (from undo/redo), update the transcript captions
+     * Video overlay will re-derive automatically from localWords via captionsForVideo useMemo
      */
     useEffect(() => {
         if (captionUndoState === null) return;
 
         const { segmentId, text } = captionUndoState;
 
-        // Update video overlay captions
-        const currentCaptions = localCaptions ?? captionsForVideo;
-        const updatedCaptions = currentCaptions.map((caption: Caption) => {
-            if (caption.id === segmentId) {
-                return { ...caption, text };
-            }
-            return caption;
-        });
-        setLocalCaptions(updatedCaptions);
-
         // Update transcript captions
         const currentTranscript = localTranscriptCaptions ?? captionsForTranscript;
+        const editedSegment = currentTranscript.find((c: Caption) => c.id === segmentId);
+        if (!editedSegment) return;
+
         const updatedTranscript = currentTranscript.map((caption: Caption) => {
             if (caption.id === segmentId) {
                 return { ...caption, text };
@@ -1000,8 +1001,32 @@ export default function ClipEditorPage({ params }: ClipEditorPageProps) {
         });
         setLocalTranscriptCaptions(updatedTranscript);
 
+        // Also update localWords so video overlay re-derives
+        const currentWords = localWords ?? captionData?.words ?? [];
+        const newWords = text.split(/\s+/).filter(Boolean);
+        const firstWordStart = editedSegment.words[0]?.start ?? 0;
+        const lastWordEnd = editedSegment.words[editedSegment.words.length - 1]?.end ?? 0;
+        const startIdx = currentWords.findIndex((w) => w.start === firstWordStart);
+        if (startIdx !== -1) {
+            const totalDuration = lastWordEnd - firstWordStart;
+            const wordDuration = newWords.length > 0 ? totalDuration / newWords.length : 0;
+            const replacementWords: CaptionWord[] = newWords.map((word, i) => ({
+                id: `edited-${startIdx + i}`,
+                word,
+                start: firstWordStart + i * wordDuration,
+                end: firstWordStart + (i + 1) * wordDuration,
+                highlight: false,
+            }));
+            const updatedWords = [
+                ...currentWords.slice(0, startIdx),
+                ...replacementWords,
+                ...currentWords.slice(startIdx + editedSegment.words.length),
+            ];
+            setLocalWords(updatedWords);
+        }
+
         setHasUnsavedChanges(true);
-    }, [captionUndoState, localCaptions, captionsForVideo, localTranscriptCaptions, captionsForTranscript]);
+    }, [captionUndoState, localWords, captionData?.words, localTranscriptCaptions, captionsForTranscript]);
 
     /**
      * Global keyboard shortcuts for the editing screen
@@ -1129,15 +1154,15 @@ export default function ClipEditorPage({ params }: ClipEditorPageProps) {
     const thumbnailUrl = (video?.metadata?.thumbnail as string) || undefined;
     const videoDuration = video?.duration || clip.duration || 60;
 
-    // Captions for video overlay (5 words per line, matching backend)
-    const videoCaptions = localCaptions && localCaptions.length > 0 ? localCaptions : captionsForVideo;
+    // Captions for video overlay — derived from localWords (or server data) via captionsForVideo useMemo
+    const videoCaptions = captionsForVideo;
 
     // Captions for transcript panel (sentence-based paragraphs)
     const transcriptCaptions = localTranscriptCaptions ?? captionsForTranscript;
 
     // Determine if saving is in progress (includes caption text auto-save)
     // @validates Requirements 13.2 - Show saving indicator during save operations
-    const isSaving = updateCaptionStyle.isPending || updateClipBoundaries.isPending || updateCaptionText.isPending;
+    const isSaving = updateCaptionStyle.isPending || updateClipBoundaries.isPending;
 
     return (
         <>
