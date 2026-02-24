@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { IconClock } from "@tabler/icons-react";
+import { IconClock, IconPencil } from "@tabler/icons-react";
 
 import { cn } from "@/lib/utils";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -141,7 +141,7 @@ function InlineEditableSegment({
                     suppressContentEditableWarning
                     onBlur={saveEdit}
                     onKeyDown={handleKeyDown}
-                    className="text-[#FAFAFA] leading-relaxed text-sm outline-none ring-1 ring-primary/50 rounded px-1 py-0.5 bg-white/5"
+                    className="text-[#FAFAFA] leading-relaxed text-sm outline-none ring-1 ring-primary/50 rounded px-2 py-1 bg-white/5"
                 >
                     {displayText}
                 </p>
@@ -155,51 +155,71 @@ function InlineEditableSegment({
     // If text was edited, render plain text (words array is stale)
     if (wasEdited) {
         return (
-            <p
-                onDoubleClick={startEditing}
-                className={cn(
-                    "text-[#FAFAFA] leading-relaxed text-sm rounded px-1 py-0.5 transition-colors",
-                    editable && "hover:bg-white/5 cursor-text"
-                )}
-            >
-                {displayText}
-            </p>
+            <div className="group relative flex items-start gap-1">
+                <button
+                    onClick={startEditing}
+                    className="mt-1 shrink-0 opacity-0 group-hover:opacity-100 transition-opacity text-zinc-500 hover:text-white"
+                    aria-label="Edit caption"
+                >
+                    <IconPencil className="size-3.5" />
+                </button>
+                <p
+                    onDoubleClick={startEditing}
+                    className={cn(
+                        "text-[#FAFAFA] leading-relaxed text-sm rounded px-1 py-0.5 transition-colors flex-1",
+                        editable && "hover:bg-white/5 cursor-text"
+                    )}
+                >
+                    {displayText}
+                </p>
+            </div>
         );
     }
 
     return (
-        <p
-            onDoubleClick={startEditing}
-            className={cn(
-                "text-[#FAFAFA] leading-relaxed text-sm rounded px-1 py-0.5 transition-colors",
-                editable && "hover:bg-white/5 cursor-text"
+        <div className="group relative flex items-start gap-1">
+            {editable && (
+                <button
+                    onClick={startEditing}
+                    className="mt-1 shrink-0 opacity-0 group-hover:opacity-100 transition-opacity text-zinc-500 hover:text-white"
+                    aria-label="Edit caption"
+                >
+                    <IconPencil className="size-3.5" />
+                </button>
             )}
-        >
-            {segment.words.map((word, wordIdx) => {
-                const isCurrentWord =
-                    currentWordInfo?.segmentIndex === segIdx &&
-                    currentWordInfo?.wordIndex === wordIdx;
-                return (
-                    <span
-                        key={`${segment.id}-${wordIdx}`}
-                        ref={isCurrentWord ? currentWordRef : undefined}
-                        onClick={(e) => {
-                            e.stopPropagation();
-                            onWordClick?.(word);
-                        }}
-                        className={cn(
-                            "cursor-pointer transition-colors duration-200",
-                            highlightCurrent && isCurrentWord
-                                ? "bg-secondary rounded px-0.5 py-1"
-                                : "hover:text-gray-300"
-                        )}
-                        title={`${formatTimestamp(word.start)} - ${formatTimestamp(word.end)}`}
-                    >
-                        {word.word}{wordIdx < segment.words.length - 1 ? " " : ""}
-                    </span>
-                );
-            })}
-        </p>
+            <p
+                onDoubleClick={startEditing}
+                className={cn(
+                    "text-[#FAFAFA] leading-relaxed text-sm rounded px-1 py-0.5 transition-colors flex-1",
+                    editable && "hover:bg-white/5 cursor-text"
+                )}
+            >
+                {segment.words.map((word, wordIdx) => {
+                    const isCurrentWord =
+                        currentWordInfo?.segmentIndex === segIdx &&
+                        currentWordInfo?.wordIndex === wordIdx;
+                    return (
+                        <span
+                            key={`${segment.id}-${wordIdx}`}
+                            ref={isCurrentWord ? currentWordRef : undefined}
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                onWordClick?.(word);
+                            }}
+                            className={cn(
+                                "cursor-pointer transition-colors duration-200",
+                                highlightCurrent && isCurrentWord
+                                    ? "bg-secondary rounded px-0.5 py-1"
+                                    : "hover:text-gray-300"
+                            )}
+                            title={`${formatTimestamp(word.start)} - ${formatTimestamp(word.end)}`}
+                        >
+                            {word.word}{wordIdx < segment.words.length - 1 ? " " : ""}
+                        </span>
+                    );
+                })}
+            </p>
+        </div>
     );
 }
 
@@ -274,8 +294,18 @@ export function TranscriptParagraphView({
 
     return (
         <div className={cn("flex flex-col h-full overflow-hidden bg-black", className)}>
+            {/* Header */}
+            <div className="shrink-0 flex items-center justify-between px-6 pt-4 pb-2">
+                <h3 className="text-sm font-semibold text-zinc-300">Transcript</h3>
+                {editable && (
+                    <span className="text-[10px] text-zinc-500 flex items-center gap-1">
+                        <IconPencil className="size-3" />
+                        Click pencil or double-click to edit
+                    </span>
+                )}
+            </div>
             <ScrollArea className="flex-1 h-0">
-                <div ref={containerRef} className="mt-4 mx-6 pb-8 space-y-4">
+                <div ref={containerRef} className="mx-6 pb-8 space-y-4">
                     {segments.map((segment, segIdx) => (
                         <InlineEditableSegment
                             key={segment.id}
