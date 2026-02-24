@@ -162,6 +162,15 @@ export function useRetryVideo() {
   });
 }
 
+export function useAdminUserById(userId: string | null) {
+  return useQuery({
+    queryKey: ["admin", "user-by-id", userId],
+    queryFn: () => adminApi.getUserById(userId!),
+    enabled: !!userId,
+    staleTime: 60 * 1000,
+  });
+}
+
 export function useAdminUserVideos(userId: string | null, page = 1, limit = 20) {
   return useQuery({
     queryKey: ["admin", "user-videos", userId, page, limit],

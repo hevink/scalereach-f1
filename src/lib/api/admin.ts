@@ -399,6 +399,11 @@ export const adminApi = {
   },
 
   // User videos & clips
+  getUserById: async (userId: string) => {
+    const response = await api.get<AdminUser>(`/api/admin/users/${userId}`);
+    return response.data;
+  },
+
   getUserVideos: async (userId: string, page = 1, limit = 20) => {
     const response = await api.get<AdminUserVideosResponse>(`/api/admin/users/${userId}/videos?page=${page}&limit=${limit}`);
     return response.data;

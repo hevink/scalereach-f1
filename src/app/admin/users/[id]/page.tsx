@@ -20,7 +20,7 @@ import {
     IconChevronLeft,
     IconChevronRight,
 } from "@tabler/icons-react";
-import { useAdminUsers, useAdminUserVideos, useAdminUserClips } from "@/hooks/useAdmin";
+import { useAdminUserById, useAdminUserVideos, useAdminUserClips } from "@/hooks/useAdmin";
 import { formatDistanceToNow } from "date-fns";
 
 const STATUS_COLORS: Record<string, string> = {
@@ -216,9 +216,7 @@ function ClipsTab({ userId }: { userId: string }) {
 
 export default function AdminUserDetailPage() {
     const { id } = useParams<{ id: string }>();
-    const { data: usersData, isLoading } = useAdminUsers(1, 200);
-
-    const user = usersData?.users.find(u => u.id === id);
+    const { data: user, isLoading } = useAdminUserById(id);
 
     return (
         <div className="flex">

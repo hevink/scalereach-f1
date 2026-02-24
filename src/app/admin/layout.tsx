@@ -13,11 +13,12 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     const router = useRouter();
 
     useEffect(() => {
-        if (!isPending && !session) {
+        if (isPending) return; // wait for session to load
+        if (!session) {
             router.push("/login");
+            return;
         }
-        // Check if user is admin
-        if (!isPending && session && (session.user as any).role !== "admin") {
+        if ((session.user as any).role !== "admin") {
             router.push("/workspaces");
         }
     }, [session, isPending, router]);
