@@ -95,10 +95,10 @@ export function ClipCard({ clip, index, onEdit, onFavorite, onDownload, onShare,
             <div className="p-3 sm:p-4">
                 <div className="flex flex-col lg:flex-row gap-4 lg:items-start">
                     {/* Video Preview */}
-                    <div className="shrink-0">
-                        <div className="relative w-full lg:w-[230px] h-[300px] sm:h-[400px] rounded-lg overflow-hidden bg-black">
+                    <div className="shrink-0 w-full lg:w-[230px]">
+                        <div className="relative w-full aspect-[9/16] lg:h-[400px] lg:aspect-auto rounded-lg overflow-hidden bg-black">
                             {isGenerating ? (
-                                <div className="flex h-full w-full flex-col items-center justify-center gap-2">
+                                <div className="absolute inset-0 flex flex-col items-center justify-center gap-2">
                                     <IconLoader2 className="size-8 animate-spin text-primary" />
                                     <span className="text-xs text-muted-foreground">Generating clip...</span>
                                 </div>
@@ -106,17 +106,17 @@ export function ClipCard({ clip, index, onEdit, onFavorite, onDownload, onShare,
                                 <video
                                     src={clip.storageUrl}
                                     poster={clip.thumbnailUrl}
-                                    className="h-full w-full object-contain"
+                                    className="absolute inset-0 h-full w-full object-contain"
                                     controls
                                 />
                             ) : clip.thumbnailUrl ? (
                                 <img
                                     src={clip.thumbnailUrl}
                                     alt={clip.title}
-                                    className="h-full w-full object-contain"
+                                    className="absolute inset-0 h-full w-full object-contain"
                                 />
                             ) : (
-                                <div className="flex h-full w-full items-center justify-center">
+                                <div className="absolute inset-0 flex items-center justify-center">
                                     <HugeiconsIcon icon={Video01Icon} size={48} color="#a1a1aa" />
                                 </div>
                             )}

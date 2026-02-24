@@ -18,6 +18,7 @@ import {
 import {
     DropdownMenu,
     DropdownMenuContent,
+    DropdownMenuGroup,
     DropdownMenuItem,
     DropdownMenuLabel,
     DropdownMenuSeparator,
@@ -260,32 +261,34 @@ export function AdminUsersTable() {
                                                     </Button>
                                                 </DropdownMenuTrigger>
                                                 <DropdownMenuContent align="end">
-                                                    <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                                                    <DropdownMenuSeparator />
-                                                    <DropdownMenuItem onClick={() => router.push(`/admin/users/${user.id}`)}>
-                                                        <IconEye className="mr-2 h-4 w-4" />
-                                                        View Videos & Clips
-                                                    </DropdownMenuItem>
-                                                    <DropdownMenuSeparator />
-                                                    {user.role === "admin" ? (
-                                                        <DropdownMenuItem onClick={() => handleRoleChange(user.id, "user")}>
-                                                            <IconShieldOff className="mr-2 h-4 w-4" />
-                                                            Remove Admin
+                                                    <DropdownMenuGroup>
+                                                        <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                                                        <DropdownMenuSeparator />
+                                                        <DropdownMenuItem onClick={() => router.push(`/admin/users/${user.id}`)}>
+                                                            <IconEye className="mr-2 h-4 w-4" />
+                                                            View Videos & Clips
                                                         </DropdownMenuItem>
-                                                    ) : (
-                                                        <DropdownMenuItem onClick={() => handleRoleChange(user.id, "admin")}>
-                                                            <IconShieldCheck className="mr-2 h-4 w-4" />
-                                                            Make Admin
+                                                        <DropdownMenuSeparator />
+                                                        {user.role === "admin" ? (
+                                                            <DropdownMenuItem onClick={() => handleRoleChange(user.id, "user")}>
+                                                                <IconShieldOff className="mr-2 h-4 w-4" />
+                                                                Remove Admin
+                                                            </DropdownMenuItem>
+                                                        ) : (
+                                                            <DropdownMenuItem onClick={() => handleRoleChange(user.id, "admin")}>
+                                                                <IconShieldCheck className="mr-2 h-4 w-4" />
+                                                                Make Admin
+                                                            </DropdownMenuItem>
+                                                        )}
+                                                        <DropdownMenuSeparator />
+                                                        <DropdownMenuItem
+                                                            className="text-destructive"
+                                                            onClick={() => setDeleteUserId(user.id)}
+                                                        >
+                                                            <IconTrash className="mr-2 h-4 w-4" />
+                                                            Delete User
                                                         </DropdownMenuItem>
-                                                    )}
-                                                    <DropdownMenuSeparator />
-                                                    <DropdownMenuItem
-                                                        className="text-destructive"
-                                                        onClick={() => setDeleteUserId(user.id)}
-                                                    >
-                                                        <IconTrash className="mr-2 h-4 w-4" />
-                                                        Delete User
-                                                    </DropdownMenuItem>
+                                                    </DropdownMenuGroup>
                                                 </DropdownMenuContent>
                                             </DropdownMenu>
                                         </TableCell>

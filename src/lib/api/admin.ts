@@ -252,6 +252,30 @@ export interface AdminUserVideo {
   clipCount: number;
 }
 
+export interface AdminUserWorkspace {
+  id: string;
+  name: string;
+  slug: string;
+  plan: string;
+  billingCycle: string | null;
+  subscriptionId: string | null;
+  subscriptionStatus: string | null;
+  subscriptionRenewalDate: string | null;
+  subscriptionCancelledAt: string | null;
+  createdAt: string;
+  updatedAt: string;
+  memberRole: string;
+  creditsBalance: number;
+  lifetimeCredits: number;
+  minutesTotal: number;
+  minutesUsed: number;
+  minutesRemaining: number;
+  minutesResetDate: string | null;
+  editingOperationsUsed: number;
+  videoCount: number;
+  clipCount: number;
+}
+
 export interface AdminUserVideosResponse {
   videos: AdminUserVideo[];
   total: number;
@@ -401,6 +425,11 @@ export const adminApi = {
   // User videos & clips
   getUserById: async (userId: string) => {
     const response = await api.get<AdminUser>(`/api/admin/users/${userId}`);
+    return response.data;
+  },
+
+  getUserWorkspaces: async (userId: string) => {
+    const response = await api.get<AdminUserWorkspace[]>(`/api/admin/users/${userId}/workspaces`);
     return response.data;
   },
 

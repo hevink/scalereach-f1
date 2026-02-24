@@ -26,10 +26,15 @@ import {
     IconUser,
     IconMail,
     IconAt,
+    IconCreditCard,
+    IconBuildingStore,
+    IconRefresh,
+    IconAlertCircle,
+    IconCheck,
 } from "@tabler/icons-react";
-import { useAdminUserById, useAdminUserVideos, useAdminUserClips } from "@/hooks/useAdmin";
+import { useAdminUserById, useAdminUserVideos, useAdminUserClips, useAdminUserWorkspaces } from "@/hooks/useAdmin";
 import { formatDistanceToNow, format } from "date-fns";
-import { AdminUserVideo, AdminUserClip } from "@/lib/api/admin";
+import { AdminUserVideo, AdminUserClip, AdminUserWorkspace } from "@/lib/api/admin";
 
 const STATUS_COLORS: Record<string, string> = {
     completed: "bg-green-600",
@@ -161,6 +166,127 @@ function VideoRow({ video, allClips }: { video: AdminUserVideo; allClips: AdminU
     );
 }
 
+const PLAN_COLORS: Record<string, string> = {
+    free: "bg-gray-500",
+    starter: "bg-blue-600",
+    pro: "bg-purple-600",
+    "pro-plus": "bg-orange-600",
+};
+
+const SUB_STATUS_COLORS: Record<string, string> = {
+    active: "bg-green-600",
+    cancelled: "bg-red-600",
+    expired: "bg-red-600",
+    paused: "bg-yellow-600",
+};
+
+function WorkspacesSection({ workspaces }: { workspaces: AdminUserWorkspace[] }) {
+    if (!workspaces.length) {
+        return (
+            <div className="flex flex-col items-center justify-center py-10 text-muted-foreground gap-2">
+                <IconBuildingStore className="h-8 w-8 opacity-30" />
+                <p className="text-sm">No workspaces found</p>
+            </div>
+        );
+    }
+
+    return (
+        <div className="space-y-4">
+            {workspaces.map((ws) => (
+                <div key={ws.id} className="border rounded-lg p-4 space-y-4">
+                    {/* Workspace header */}
+                    <div className="flex items-start justify-between gap-4">
+                        <div>
+                            <div className="flex items-center gap-2 flex-wrap">
+                                <span className="font-semibold">{ws.name}</span>
+                                <Badge className={`${PLAN_COLORS[ws.plan] || "bg-gray-500"} text-white text-xs`}>
+                                    {ws.plan}
+                                </Badge>
+                                {ws.memberRole && (
+                                    <Badge variant="outline" className="text-xs">{ws.memberRole}</Badge>
+                                )}
+                                {ws.subscriptionStatus && (
+                                    <Badge className={`${SUB_STATUS_COLORS[ws.subscriptionStatus] || "bg-gray-500"} text-white text-xs`}>
+                                        {ws.subscriptionStatus}
+                                    </Badge>
+                                )}
+                            </div>
+                            <p className="text-xs text-muted-foreground mt-0.5">/{ws.slug}</p>
+                        </div>
+                        <div className="text-xs text-muted-foreground shrink-0">
+                            Created {format(new Date(ws.createdAt), "MMM d, yyyy")}
+                        </div>
+                    </div>
+
+                    {/* Subscription details */}
+                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-sm">
+                        <div className="space-y-0.5">
+                            <p className="text-xs text-muted-foreground">Billing Cycle</p>
+                            <p className="font-medium capitalize">{ws.billingCycle || "—"}</p>
+                        </div>
+                        <div className="space-y-0.5">
+                            <p className="text-xs text-muted-foreground">Subscription ID</p>
+                            <p className="font-mono text-xs truncate max-w-[140px]">{ws.subscriptionId || "—"}</p>
+                        </div>
+                        <div className="space-y-0.5">
+                            <p className="text-xs text-muted-foreground">Renewal Date</p>
+                            <p className="font-medium">
+                                {ws.subscriptionRenewalDate
+                                    ? format(new Date(ws.subscriptionRenewalDate), "MMM d, yyyy")
+                                    : "—"}
+                            </p>
+                        </div>
+                        <div className="space-y-0.5">
+                            <p className="text-xs text-muted-foreground">Cancelled At</p>
+                            <p className="font-medium">
+                                {ws.subscriptionCancelledAt
+                                    ? format(new Date(ws.subscriptionCancelledAt), "MMM d, yyyy")
+                                    : "—"}
+                            </p>
+                        </div>
+                    </div>
+
+                    {/* Credits & Minutes */}
+                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                        <div className="bg-muted/40 rounded-md p-3">
+                            <p className="text-xs text-muted-foreground flex items-center gap-1">
+                                <IconCreditCard className="h-3 w-3" /> Credits Balance
+                            </p>
+                            <p className="text-lg font-bold mt-0.5">{ws.creditsBalance.toLocaleString()}</p>
+                            <p className="text-xs text-muted-foreground">Lifetime: {ws.lifetimeCredits.toLocaleString()}</p>
+                        </div>
+                        <div className="bg-muted/40 rounded-md p-3">
+                            <p className="text-xs text-muted-foreground flex items-center gap-1">
+                                <IconClock className="h-3 w-3" /> Minutes Remaining
+                            </p>
+                            <p className="text-lg font-bold mt-0.5">{ws.minutesRemaining.toLocaleString()}</p>
+                            <p className="text-xs text-muted-foreground">of {ws.minutesTotal.toLocaleString()} total</p>
+                        </div>
+                        <div className="bg-muted/40 rounded-md p-3">
+                            <p className="text-xs text-muted-foreground flex items-center gap-1">
+                                <IconRefresh className="h-3 w-3" /> Minutes Used
+                            </p>
+                            <p className="text-lg font-bold mt-0.5">{ws.minutesUsed.toLocaleString()}</p>
+                            {ws.minutesResetDate && (
+                                <p className="text-xs text-muted-foreground">
+                                    Resets {format(new Date(ws.minutesResetDate), "MMM d")}
+                                </p>
+                            )}
+                        </div>
+                        <div className="bg-muted/40 rounded-md p-3">
+                            <p className="text-xs text-muted-foreground flex items-center gap-1">
+                                <IconVideo className="h-3 w-3" /> Content
+                            </p>
+                            <p className="text-lg font-bold mt-0.5">{ws.videoCount}</p>
+                            <p className="text-xs text-muted-foreground">{ws.clipCount} clips</p>
+                        </div>
+                    </div>
+                </div>
+            ))}
+        </div>
+    );
+}
+
 export default function AdminUserDetailPage() {
     const { id } = useParams<{ id: string }>();
     const [videoPage, setVideoPage] = useState(1);
@@ -170,6 +296,8 @@ export default function AdminUserDetailPage() {
     const { data: videosData, isLoading: videosLoading } = useAdminUserVideos(id, videoPage, 20);
     // Load all clips for this user to match against videos (load large batch)
     const { data: clipsData, isLoading: clipsLoading } = useAdminUserClips(id, 1, 200);
+    // Load workspaces with subscription data
+    const { data: workspacesData, isLoading: workspacesLoading } = useAdminUserWorkspaces(id);
 
     const allClips = clipsData?.clips ?? [];
     const videos = videosData?.videos ?? [];
@@ -182,10 +310,10 @@ export default function AdminUserDetailPage() {
     return (
         <div className="p-6 space-y-6 max-w-7xl mx-auto">
             {/* Back */}
-            <Link href="/admin">
+            <Link href="/admin/users">
                 <Button variant="ghost" size="sm" className="gap-2 -ml-2">
                     <IconArrowLeft className="h-4 w-4" />
-                    Back to Admin
+                    Back to Users
                 </Button>
             </Link>
 
@@ -286,6 +414,28 @@ export default function AdminUserDetailPage() {
                     </CardContent>
                 </Card>
             </div>
+
+            {/* Workspaces & Subscription */}
+            <Card>
+                <CardHeader>
+                    <CardTitle className="text-base flex items-center gap-2">
+                        <IconBuildingStore className="h-4 w-4" />
+                        Workspaces & Subscriptions
+                        {workspacesData && (
+                            <Badge variant="secondary" className="ml-1">{workspacesData.length}</Badge>
+                        )}
+                    </CardTitle>
+                </CardHeader>
+                <CardContent>
+                    {workspacesLoading ? (
+                        <div className="space-y-3">
+                            {[...Array(2)].map((_, i) => <Skeleton key={i} className="h-40 w-full" />)}
+                        </div>
+                    ) : (
+                        <WorkspacesSection workspaces={workspacesData ?? []} />
+                    )}
+                </CardContent>
+            </Card>
 
             {/* Videos + collapsible clips */}
             <Card>
