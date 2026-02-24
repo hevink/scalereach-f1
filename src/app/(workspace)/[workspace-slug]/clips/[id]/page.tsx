@@ -889,7 +889,7 @@ export default function ClipEditorPage({ params }: ClipEditorPageProps) {
                     clipId,
                     options: {
                         format: options.format as "mp4" | "mov",
-                        resolution: options.resolution as "720p" | "1080p" | "4k",
+                        resolution: options.resolution as "720p" | "1080p" | "2k" | "4k",
                         captionStyleId: currentPresetId ?? undefined,
                     },
                 },

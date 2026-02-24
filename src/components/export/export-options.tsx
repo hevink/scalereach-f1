@@ -65,7 +65,7 @@ const RESOLUTION_OPTIONS: Array<{
 }> = [
     { value: "720p", label: "720p", shortLabel: "HD", description: "Good for social", sizeMultiplier: 1 },
     { value: "1080p", label: "1080p", shortLabel: "Full HD", description: "Recommended", recommended: true, sizeMultiplier: 2.25 },
-    { value: "4k", label: "4K", shortLabel: "Ultra HD", description: "Starter & Pro", sizeMultiplier: 9, requiresPro: true },
+    { value: "2k", label: "4K", shortLabel: "Ultra HD", description: "Starter & Pro", sizeMultiplier: 5, requiresPro: true },
   ];
 
 const BASE_FILE_SIZE_MB = 15;

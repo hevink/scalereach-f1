@@ -4,7 +4,7 @@ import { BrandingOptions } from "./brand-kit";
 // Types based on design document
 
 export type ExportFormat = "mp4" | "mov";
-export type VideoResolution = "720p" | "1080p" | "4k";
+export type VideoResolution = "720p" | "1080p" | "2k" | "4k";
 export type ExportStatus = "queued" | "processing" | "completed" | "failed";
 export type BatchExportStatus = "processing" | "completed" | "partial" | "failed";
 
