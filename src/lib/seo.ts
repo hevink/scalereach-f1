@@ -101,7 +101,6 @@ export const pageMetadata = {
     title: "Login - ScaleReach",
     description:
       "Sign in to your ScaleReach account to create viral video clips from your long-form content.",
-    noIndex: true,
   }),
 
   signUp: constructMetadata({
