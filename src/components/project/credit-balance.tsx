@@ -228,7 +228,7 @@ export function CreditBalance({
         );
     }
 
-    const isUnlimited = plan === "agency";
+    const isUnlimited = plan === "agency" || minutesData.minutesRemaining === -1 || minutesData.minutesTotal === -1;
     const minutesRemaining = minutesData.minutesRemaining;
     const minutesTotal = minutesData.minutesTotal;
     const isLow = !isUnlimited && minutesTotal > 0 && (minutesRemaining / minutesTotal) < 0.2;
