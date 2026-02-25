@@ -78,7 +78,7 @@ const plans: Record<string, Plan> = {
             "Highest Queue Priority",
         ],
         featured: false,
-        dodoProductIdMonthly: "pdt_agency_monthly_placeholder",
+        dodoProductIdMonthly: "pdt_0NZFx5ffGwT1YxA1hGbe4",
         dodoProductIdYearly: "pdt_agency_yearly_placeholder",
     },
     starter: {
