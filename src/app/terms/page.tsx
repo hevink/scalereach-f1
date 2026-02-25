@@ -19,7 +19,7 @@ export default function TermsOfServicePage() {
             Terms of Service
           </h1>
           <p className="text-muted-foreground">
-            Last updated: [DATE]
+            Last updated: February 25, 2026
           </p>
         </div>
 
@@ -146,9 +146,31 @@ export default function TermsOfServicePage() {
             </p>
           </section>
 
+          {/* Google API & YouTube Integration */}
+          <section>
+            <h2 className="text-2xl font-semibold mb-4">7. Google API &amp; YouTube Integration</h2>
+            <p className="text-muted-foreground leading-relaxed">
+              ScaleReach integrates with YouTube and other Google services to allow you to publish content directly to your connected accounts. By connecting your Google/YouTube account, you agree to the following:
+            </p>
+            <ul className="list-disc list-inside text-muted-foreground space-y-2 mt-3">
+              <li>You authorize ScaleReach to access your YouTube channel for the purpose of uploading videos on your behalf</li>
+              <li>You are responsible for ensuring that any content published through ScaleReach complies with{" "}
+                <a href="https://www.youtube.com/t/terms" target="_blank" rel="noopener noreferrer" className="text-primary underline hover:text-primary/80">YouTube&apos;s Terms of Service</a>
+                {" "}and{" "}
+                <a href="https://www.youtube.com/howyoutubeworks/policies/community-guidelines/" target="_blank" rel="noopener noreferrer" className="text-primary underline hover:text-primary/80">Community Guidelines</a>
+              </li>
+              <li>ScaleReach&apos;s use of Google API data is subject to the{" "}
+                <a href="https://developers.google.com/terms/api-services-user-data-policy" target="_blank" rel="noopener noreferrer" className="text-primary underline hover:text-primary/80">Google API Services User Data Policy</a>
+              </li>
+              <li>You may revoke access at any time through your{" "}
+                <a href="https://myaccount.google.com/permissions" target="_blank" rel="noopener noreferrer" className="text-primary underline hover:text-primary/80">Google Account permissions</a>
+              </li>
+            </ul>
+          </section>
+
           {/* Acceptable Use */}
           <section>
-            <h2 className="text-2xl font-semibold mb-4">7. Acceptable Use Policy</h2>
+            <h2 className="text-2xl font-semibold mb-4">8. Acceptable Use Policy</h2>
             <p className="text-muted-foreground leading-relaxed">
               You agree not to use the Service to:
             </p>
@@ -168,7 +190,7 @@ export default function TermsOfServicePage() {
 
           {/* Service Availability */}
           <section>
-            <h2 className="text-2xl font-semibold mb-4">8. Service Availability and Limitations</h2>
+            <h2 className="text-2xl font-semibold mb-4">9. Service Availability and Limitations</h2>
             <p className="text-muted-foreground leading-relaxed">
               We strive to provide reliable and uninterrupted access to the Service. However, we do not guarantee that the Service will be available at all times or that it will be free from errors or interruptions. The Service may be subject to limitations, delays, and other problems inherent in the use of the internet and electronic communications.
             </p>
@@ -179,7 +201,7 @@ export default function TermsOfServicePage() {
 
           {/* Disclaimer of Warranties */}
           <section>
-            <h2 className="text-2xl font-semibold mb-4">9. Disclaimer of Warranties</h2>
+            <h2 className="text-2xl font-semibold mb-4">10. Disclaimer of Warranties</h2>
             <p className="text-muted-foreground leading-relaxed uppercase font-medium">
               THE SERVICE IS PROVIDED &quot;AS IS&quot; AND &quot;AS AVAILABLE&quot; WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO IMPLIED WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE, TITLE, AND NON-INFRINGEMENT.
             </p>
@@ -197,7 +219,7 @@ export default function TermsOfServicePage() {
 
           {/* Limitation of Liability */}
           <section>
-            <h2 className="text-2xl font-semibold mb-4">10. Limitation of Liability</h2>
+            <h2 className="text-2xl font-semibold mb-4">11. Limitation of Liability</h2>
             <p className="text-muted-foreground leading-relaxed uppercase font-medium">
               TO THE MAXIMUM EXTENT PERMITTED BY APPLICABLE LAW, SCALEREACH AND ITS OFFICERS, DIRECTORS, EMPLOYEES, AGENTS, AND AFFILIATES SHALL NOT BE LIABLE FOR ANY INDIRECT, INCIDENTAL, SPECIAL, CONSEQUENTIAL, OR PUNITIVE DAMAGES, INCLUDING BUT NOT LIMITED TO LOSS OF PROFITS, DATA, USE, GOODWILL, OR OTHER INTANGIBLE LOSSES, RESULTING FROM:
             </p>
@@ -214,7 +236,7 @@ export default function TermsOfServicePage() {
 
           {/* Indemnification */}
           <section>
-            <h2 className="text-2xl font-semibold mb-4">11. Indemnification</h2>
+            <h2 className="text-2xl font-semibold mb-4">12. Indemnification</h2>
             <p className="text-muted-foreground leading-relaxed">
               You agree to indemnify, defend, and hold harmless ScaleReach and its officers, directors, employees, agents, and affiliates from and against any and all claims, damages, obligations, losses, liabilities, costs, and expenses (including attorney&apos;s fees) arising from:
             </p>
@@ -229,7 +251,7 @@ export default function TermsOfServicePage() {
 
           {/* Termination */}
           <section>
-            <h2 className="text-2xl font-semibold mb-4">12. Termination</h2>
+            <h2 className="text-2xl font-semibold mb-4">13. Termination</h2>
             <p className="text-muted-foreground leading-relaxed">
               We may terminate or suspend your access to the Service immediately, without prior notice or liability, for any reason, including if you breach these Terms. Upon termination:
             </p>
@@ -242,9 +264,9 @@ export default function TermsOfServicePage() {
 
           {/* Governing Law */}
           <section>
-            <h2 className="text-2xl font-semibold mb-4">13. Governing Law and Dispute Resolution</h2>
+            <h2 className="text-2xl font-semibold mb-4">14. Governing Law and Dispute Resolution</h2>
             <p className="text-muted-foreground leading-relaxed">
-              These Terms shall be governed by and construed in accordance with the laws of [JURISDICTION], without regard to its conflict of law provisions. Any disputes arising out of or relating to these Terms or the Service shall be resolved through binding arbitration in accordance with the rules of [ARBITRATION BODY], except that either party may seek injunctive or other equitable relief in any court of competent jurisdiction.
+              These Terms shall be governed by and construed in accordance with the laws of the State of Delaware, United States, without regard to its conflict of law provisions. Any disputes arising out of or relating to these Terms or the Service shall be resolved through binding arbitration in accordance with the rules of the American Arbitration Association, except that either party may seek injunctive or other equitable relief in any court of competent jurisdiction.
             </p>
             <p className="text-muted-foreground leading-relaxed mt-4">
               You agree that any dispute resolution proceedings will be conducted only on an individual basis and not in a class, consolidated, or representative action.
@@ -253,7 +275,7 @@ export default function TermsOfServicePage() {
 
           {/* Modifications */}
           <section>
-            <h2 className="text-2xl font-semibold mb-4">14. Modifications to Terms</h2>
+            <h2 className="text-2xl font-semibold mb-4">15. Modifications to Terms</h2>
             <p className="text-muted-foreground leading-relaxed">
               We reserve the right to modify these Terms at any time. If we make material changes, we will notify you by email or by posting a notice on the Service prior to the changes becoming effective. Your continued use of the Service after the effective date of the revised Terms constitutes your acceptance of the changes.
             </p>
@@ -261,7 +283,7 @@ export default function TermsOfServicePage() {
 
           {/* Severability */}
           <section>
-            <h2 className="text-2xl font-semibold mb-4">15. Severability</h2>
+            <h2 className="text-2xl font-semibold mb-4">16. Severability</h2>
             <p className="text-muted-foreground leading-relaxed">
               If any provision of these Terms is held to be invalid or unenforceable, such provision shall be struck and the remaining provisions shall be enforced to the fullest extent under law.
             </p>
@@ -269,7 +291,7 @@ export default function TermsOfServicePage() {
 
           {/* Entire Agreement */}
           <section>
-            <h2 className="text-2xl font-semibold mb-4">16. Entire Agreement</h2>
+            <h2 className="text-2xl font-semibold mb-4">17. Entire Agreement</h2>
             <p className="text-muted-foreground leading-relaxed">
               These Terms, together with our Privacy Policy and any other legal notices published by us on the Service, constitute the entire agreement between you and ScaleReach regarding the Service and supersede all prior agreements and understandings.
             </p>
@@ -277,14 +299,14 @@ export default function TermsOfServicePage() {
 
           {/* Contact Information */}
           <section>
-            <h2 className="text-2xl font-semibold mb-4">17. Contact Us</h2>
+            <h2 className="text-2xl font-semibold mb-4">18. Contact Us</h2>
             <p className="text-muted-foreground leading-relaxed">
               If you have any questions about these Terms, please contact us at:
             </p>
             <div className="mt-4 p-6 bg-muted/50 rounded-lg">
               <p className="text-foreground font-medium">ScaleReach</p>
-              <p className="text-muted-foreground mt-2">Email: legal@scalereach.com</p>
-              <p className="text-muted-foreground">Support: support@scalereach.com</p>
+              <p className="text-muted-foreground mt-2">Email: legal@scalereach.ai</p>
+              <p className="text-muted-foreground">Support: support@scalereach.ai</p>
             </div>
           </section>
         </div>

@@ -19,7 +19,7 @@ export default function PrivacyPolicyPage() {
             Privacy Policy
           </h1>
           <p className="text-muted-foreground">
-            Last updated: [DATE]
+            Last updated: February 25, 2026
           </p>
         </div>
 
@@ -136,6 +136,29 @@ export default function PrivacyPolicyPage() {
             <p className="text-muted-foreground leading-relaxed">
               We may use analytics services to help us understand how users interact with our Service. These services may collect information about your use of our Service.
             </p>
+
+            <h3 className="text-xl font-medium mt-6 mb-3">5.4 Google API Services &amp; YouTube</h3>
+            <p className="text-muted-foreground leading-relaxed">
+              ScaleReach&apos;s use and transfer of information received from Google APIs adheres to the{" "}
+              <a href="https://developers.google.com/terms/api-services-user-data-policy" target="_blank" rel="noopener noreferrer" className="text-primary underline hover:text-primary/80">
+                Google API Services User Data Policy
+              </a>
+              , including the Limited Use requirements.
+            </p>
+            <p className="text-muted-foreground leading-relaxed mt-4">
+              When you connect your YouTube account to ScaleReach, we access the following data:
+            </p>
+            <ul className="list-disc list-inside text-muted-foreground space-y-2 mt-3">
+              <li>Your YouTube channel information (channel name, profile picture)</li>
+              <li>Ability to upload videos to your YouTube channel on your behalf</li>
+            </ul>
+            <p className="text-muted-foreground leading-relaxed mt-4">
+              We use this data solely to enable you to publish clips directly to your YouTube channel from within ScaleReach. We do not sell, share, or use your YouTube data for advertising, analytics, or any purpose other than providing the Service to you. You can revoke ScaleReach&apos;s access to your YouTube account at any time through your{" "}
+              <a href="https://myaccount.google.com/permissions" target="_blank" rel="noopener noreferrer" className="text-primary underline hover:text-primary/80">
+                Google Account permissions
+              </a>
+              .
+            </p>
           </section>
 
           {/* Data Retention */}
@@ -244,8 +267,8 @@ export default function PrivacyPolicyPage() {
             </p>
             <div className="mt-4 p-6 bg-muted/50 rounded-lg">
               <p className="text-foreground font-medium">ScaleReach</p>
-              <p className="text-muted-foreground mt-2">Email: privacy@scalereach.com</p>
-              <p className="text-muted-foreground">Support: support@scalereach.com</p>
+              <p className="text-muted-foreground mt-2">Email: privacy@scalereach.ai</p>
+              <p className="text-muted-foreground">Support: support@scalereach.ai</p>
             </div>
           </section>
         </div>
