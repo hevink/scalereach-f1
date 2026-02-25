@@ -37,7 +37,6 @@ export function useCreateCheckout() {
     mutationFn: ({ workspaceId, packageId }: { workspaceId: string; packageId: string }) =>
       creditsApi.createCheckout(workspaceId, packageId),
     onSuccess: (data) => {
-      // Redirect to Polar checkout
       window.location.href = data.checkoutUrl;
     },
     onError: (error: Error) => {

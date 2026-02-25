@@ -51,9 +51,6 @@ function calculatePollingInterval(
   // Clamp between 3 seconds (min) and 120 seconds (max)
   const finalInterval = Math.max(3000, Math.min(interval, 120000));
 
-  // Debug log - remove in production
-  console.log(`[Adaptive Polling] Status: ${status}, Duration: ${durationSeconds}s, Progress: ${jobProgress}%, Interval: ${finalInterval / 1000}s`);
-
   return finalInterval;
 }
 

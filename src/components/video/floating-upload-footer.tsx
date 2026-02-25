@@ -283,7 +283,7 @@ export function FloatingUploadFooter({ projectId, workspaceId }: FloatingUploadF
             uppyRef.current = null;
             setFiles([]);
         };
-    }, [isUploadDialogOpen, projectId, queryClient]);
+    }, [isUploadDialogOpen, projectId, workspaceId, queryClient]);
 
     // Handle file selection
     const handleFileSelect = useCallback((selectedFiles: FileList | null) => {
