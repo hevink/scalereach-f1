@@ -588,39 +588,42 @@ export interface SkeletonVideoListItemProps {
 export function SkeletonVideoListItem({ className }: SkeletonVideoListItemProps) {
     return (
         <div
-            className={cn("grid grid-cols-[80px_1fr_140px_140px_100px_100px] gap-6 px-6 py-4", className)}
+            className={cn(
+                "flex items-center gap-3 px-4 py-3",
+                "md:grid md:grid-cols-[80px_1fr_140px_100px] lg:grid-cols-[80px_1fr_140px_140px_100px] xl:grid-cols-[80px_1fr_140px_140px_100px_100px] md:gap-6 md:px-6 md:py-5",
+                className
+            )}
             role="status"
             aria-label="Loading video"
         >
-            {/* Thumbnail */}
-            <div className="relative aspect-video w-20 overflow-hidden rounded">
-                <Skeleton className="absolute inset-0" />
-            </div>
+            {/* Thumbnail - square matching VideoCard */}
+            <Skeleton className="shrink-0 size-14 md:size-20 rounded-lg" />
 
             {/* Description */}
-            <div className="flex flex-col justify-center gap-2 min-w-0">
+            <div className="flex flex-col justify-center gap-2 min-w-0 flex-1">
                 <Skeleton className="h-4 w-3/4 rounded" />
                 <Skeleton className="h-3 w-1/2 rounded" />
             </div>
 
-            {/* Source */}
-            <div className="hidden sm:flex items-center justify-center">
-                <Skeleton className="h-6 w-20 rounded-full" />
-            </div>
-
-            {/* Video type */}
+            {/* Source - md+ only */}
             <div className="hidden md:flex items-center justify-center">
-                <Skeleton className="h-6 w-24 rounded-full" />
+                <Skeleton className="h-7 w-20 rounded-md" />
             </div>
 
-            {/* Ratio */}
+            {/* Video type - lg+ only */}
             <div className="hidden lg:flex items-center justify-center">
-                <Skeleton className="h-6 w-12 rounded" />
+                <Skeleton className="h-4 w-20 rounded" />
+            </div>
+
+            {/* Ratio - xl+ only */}
+            <div className="hidden xl:flex items-center justify-center">
+                <Skeleton className="h-4 w-10 rounded" />
             </div>
 
             {/* Actions */}
-            <div className="flex items-center justify-end">
+            <div className="flex items-center justify-end gap-1 md:gap-2 shrink-0">
                 <Skeleton className="size-8 rounded" />
+                <Skeleton className="hidden md:block size-8 rounded" />
             </div>
         </div>
     );
@@ -656,13 +659,13 @@ export function SkeletonVideoList({ count = 10, className }: SkeletonVideoListPr
             role="status"
             aria-label="Loading videos"
         >
-            {/* Column Headers */}
-            <div className="grid grid-cols-[80px_1fr_140px_140px_100px_100px] gap-6 px-6 py-3 text-xs font-semibold text-muted-foreground uppercase tracking-wider bg-muted/20 border-b">
+            {/* Column Headers - matches VideoGrid exactly */}
+            <div className="hidden md:grid md:grid-cols-[80px_1fr_140px_100px] lg:grid-cols-[80px_1fr_140px_140px_100px] xl:grid-cols-[80px_1fr_140px_140px_100px_100px] gap-6 px-6 py-3 text-xs font-semibold text-muted-foreground uppercase tracking-wider bg-muted/20 border-b">
                 <div>Thumbnail</div>
                 <div>Description</div>
-                <div className="hidden sm:block text-center">Source</div>
-                <div className="hidden md:block text-center">Video type</div>
-                <div className="hidden lg:block text-center">Ratio</div>
+                <div className="text-center">Source</div>
+                <div className="hidden lg:block text-center">Video type</div>
+                <div className="hidden xl:block text-center">Ratio</div>
                 <div className="text-right">Actions</div>
             </div>
 

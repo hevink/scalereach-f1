@@ -2,8 +2,8 @@
 
 import * as React from "react";
 import { cn } from "@/lib/utils";
+import { FireIcon as FireAnimatedIcon } from "@/components/ui/fire-icon";
 import {
-    IconFlame,
     IconBulb,
     IconClock,
     IconChartBar,
@@ -202,7 +202,7 @@ function ReasonsSection({ reasons }: ReasonsSectionProps) {
     return (
         <Collapsible open={isOpen} onOpenChange={setIsOpen}>
             <SectionHeader
-                icon={<IconFlame className="size-4 text-orange-500" />}
+                icon={<FireAnimatedIcon />}
                 title="Why This Clip is Viral"
                 count={reasons.length}
                 isOpen={isOpen}
@@ -630,7 +630,7 @@ export function ViralAnalysisPanel({
                 data-testid="viral-analysis-panel-toggle"
             >
                 <div className="flex items-center gap-2">
-                    <IconFlame className="size-5 text-orange-500" aria-hidden="true" />
+                    <FireAnimatedIcon />
                     <h3 className="font-semibold">Viral Analysis</h3>
                 </div>
                 {isExpanded ? (

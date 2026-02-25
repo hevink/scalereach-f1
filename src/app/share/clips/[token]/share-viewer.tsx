@@ -6,7 +6,6 @@ import Image from "next/image";
 import {
     IconDownload,
     IconVideo,
-    IconFlame,
     IconFileText,
     IconWand,
     IconAlertCircle,
@@ -24,6 +23,7 @@ import { api } from "@/lib/axios";
 import { downloadClip, downloadAllClips } from "@/lib/download-utils";
 import { analytics } from "@/lib/analytics";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { FireIcon as FireAnimatedIcon } from "@/components/ui/fire-icon";
 import {
     YouTubeIcon,
     TikTokIcon,
@@ -105,7 +105,7 @@ function BrandedHeader({ videoTitle, clipCount, onDownloadAll }: {
                             </h1>
                             <div className="flex items-center gap-2 mt-1.5">
                                 <Badge variant="outline" className="gap-1 text-xs font-normal">
-                                    <IconFlame className="size-3" />
+                                    <FireAnimatedIcon />
                                     {clipCount} {clipCount === 1 ? "clip" : "clips"}
                                 </Badge>
                                 <Badge variant="outline" className="gap-1 text-xs font-normal">
@@ -275,7 +275,7 @@ function ClipCard({ clip, index, onDownload }: ClipCardProps) {
                                         clip.viralityScore >= 70 ? "bg-amber-500/15 text-amber-500" :
                                             "bg-zinc-500/15 text-zinc-400"
                                 )}>
-                                    <IconFlame className="size-3.5" />
+                                    <FireAnimatedIcon />
                                     {clip.viralityScore}
                                 </div>
                             </TooltipTrigger>

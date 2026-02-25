@@ -9,7 +9,7 @@ import {
     IconTrash,
     IconLoader2,
     IconClock,
-    IconFlame,
+
     IconBrandYoutube,
     IconBrandInstagram,
     IconBrandTiktok,
@@ -17,6 +17,7 @@ import {
     IconBrandTwitter,
     IconBrandFacebook,
 } from "@tabler/icons-react";
+import { FireIcon as FireAnimatedIcon } from "@/components/ui/fire-icon";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import type { ClipResponse, RecommendedPlatform } from "@/lib/api/clips";
@@ -280,7 +281,7 @@ export function ClipListItem({
                 data-testid="clip-viral-score"
                 aria-label={`Virality score: ${clip.viralityScore}`}
             >
-                <IconFlame className="size-3" aria-hidden="true" />
+                <FireAnimatedIcon />
                 {clip.viralityScore}
             </Badge>
 

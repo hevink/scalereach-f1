@@ -10,10 +10,11 @@ import {
     IconClock,
     IconFile,
     IconAspectRatio,
-    IconFlame,
+
     IconCalendar,
     IconLayoutRows,
 } from "@tabler/icons-react";
+import { FireIcon as FireAnimatedIcon } from "@/components/ui/fire-icon";
 
 import Image from "next/image";
 import { Button } from "@/components/ui/button";
@@ -507,7 +508,7 @@ export default function VideoClipsPage({ params }: VideoClipsPageProps) {
                         </Badge>
                     )}
                     <Badge variant="outline" className="gap-1.5 text-[11px] sm:text-xs">
-                        <IconFlame className="size-3" />
+                        <FireAnimatedIcon />
                         Viral Clips
                     </Badge>
                     {video.createdAt && (

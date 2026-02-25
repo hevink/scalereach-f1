@@ -4,8 +4,8 @@ import * as React from "react";
 import { cn } from "@/lib/utils";
 import { VideoPlayer, type VideoPlayerRef } from "@/components/video/video-player";
 import { Badge } from "@/components/ui/badge";
+import { FireIcon as FireAnimatedIcon } from "@/components/ui/fire-icon";
 import {
-    IconFlame,
     IconClock,
     IconHeart,
     IconHeartFilled,
@@ -187,7 +187,7 @@ function ClipMetadata({ clip }: ClipMetadataProps) {
                     variant="secondary"
                     className={cn("flex items-center gap-1", scoreColorClass)}
                 >
-                    <IconFlame className="size-3" />
+                    <FireAnimatedIcon />
                     <span>{clip.viralityScore}</span>
                 </Badge>
                 <Badge variant="outline" className="flex items-center gap-1">

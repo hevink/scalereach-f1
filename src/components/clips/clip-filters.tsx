@@ -8,10 +8,11 @@ import {
     IconHeart,
     IconSortAscending,
     IconSortDescending,
-    IconFlame,
+
     IconClock,
     IconCalendar,
 } from "@tabler/icons-react";
+import { FireIcon as FireAnimatedIcon } from "@/components/ui/fire-icon";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Slider } from "@/components/ui/slider";
@@ -56,7 +57,7 @@ interface SortOption {
 }
 
 const SORT_OPTIONS: SortOption[] = [
-    { value: "score", label: "Virality Score", icon: <IconFlame className="size-4" /> },
+    { value: "score", label: "Virality Score", icon: <FireAnimatedIcon /> },
     { value: "duration", label: "Duration", icon: <IconClock className="size-4" /> },
     { value: "createdAt", label: "Date Created", icon: <IconCalendar className="size-4" /> },
 ];

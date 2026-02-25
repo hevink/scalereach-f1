@@ -13,7 +13,6 @@ import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
     IconX,
-    IconFlame,
     IconEdit,
     IconClock,
     IconLoader2,
@@ -34,6 +33,7 @@ import { cn } from "@/lib/utils";
 import { useClip } from "@/hooks/useClips";
 import { analytics } from "@/lib/analytics";
 import type { ClipResponse, RecommendedPlatform } from "@/lib/api/clips";
+import { FireIcon as FireAnimatedIcon } from "@/components/ui/fire-icon";
 
 // ============================================================================
 // Types
@@ -338,7 +338,7 @@ export function ClipDetailModal({
                                         "flex items-center gap-2 rounded-full px-3 py-1.5",
                                         getScoreBgColor(clip.viralityScore)
                                     )}>
-                                        <IconFlame className={cn("size-4", getScoreColor(clip.viralityScore))} />
+                                        <FireAnimatedIcon />
                                         <span className={cn("font-bold", getScoreColor(clip.viralityScore))}>
                                             {clip.viralityScore}
                                         </span>

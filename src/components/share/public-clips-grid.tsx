@@ -9,7 +9,8 @@
 
 import { useState, useMemo } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { IconDownload, IconPlayerPlay, IconFlame } from "@tabler/icons-react";
+import { IconDownload, IconPlayerPlay } from "@tabler/icons-react";
+import { FireIcon as FireAnimatedIcon } from "@/components/ui/fire-icon";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -255,7 +256,7 @@ export function PublicClipsGrid({
                                         </h3>
                                         <div className="flex items-center gap-2">
                                             <Badge variant={badge.variant} className="gap-1">
-                                                <IconFlame className={cn("size-3", badge.color)} />
+                                                <FireAnimatedIcon />
                                                 {badge.label} ({clip.viralityScore})
                                             </Badge>
                                         </div>

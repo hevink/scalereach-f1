@@ -1,6 +1,7 @@
 "use client";
 
-import { IconFlame, IconMoodSmile, IconBulb, IconBrandYoutube } from "@tabler/icons-react";
+import { IconMoodSmile, IconBulb, IconBrandYoutube } from "@tabler/icons-react";
+import { FireIcon as FireAnimatedIcon } from "@/components/ui/fire-icon";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import type { ClipResponse, RecommendedPlatform } from "@/lib/api/clips";
@@ -54,7 +55,7 @@ export function ClipInfoPanel({ clip }: ClipInfoPanelProps) {
             {clip.hooks && clip.hooks.length > 0 && (
                 <div className="space-y-1.5">
                     <div className="flex items-center gap-1.5 text-xs text-zinc-400">
-                        <IconFlame className="size-3.5" />
+                        <FireAnimatedIcon />
                         Hooks
                     </div>
                     <div className="flex flex-wrap gap-1.5">

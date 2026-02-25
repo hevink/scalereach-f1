@@ -11,8 +11,9 @@ import {
     IconLayoutGrid,
     IconLayoutList,
     IconClock,
-    IconFlame,
+
 } from "@tabler/icons-react";
+import { FireIcon as FireAnimatedIcon } from "@/components/ui/fire-icon";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { EmptyState } from "@/components/ui/empty-state";
@@ -193,7 +194,7 @@ function ClipItem({
                             className={cn("flex items-center gap-1", scoreColorClass)}
                             aria-label={`Virality score: ${clip.viralityScore}`}
                         >
-                            <IconFlame className="size-3" aria-hidden="true" />
+                            <FireAnimatedIcon />
                             {clip.viralityScore}
                         </Badge>
                     </div>
@@ -334,7 +335,7 @@ function ClipItem({
                 className={cn("flex shrink-0 items-center gap-1", scoreColorClass)}
                 aria-label={`Virality score: ${clip.viralityScore}`}
             >
-                <IconFlame className="size-3" aria-hidden="true" />
+                <FireAnimatedIcon />
                 {clip.viralityScore}
             </Badge>
 

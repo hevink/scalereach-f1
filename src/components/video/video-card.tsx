@@ -84,14 +84,22 @@ export function VideoCard({
         return `${mins}:${secs.toString().padStart(2, "0")}`;
     };
 
-    const getStatusBadge = () => {
-        const processingStatuses = ["downloading", "uploading", "transcribing", "analyzing"];
+    const processingStatuses = ["downloading", "uploading", "transcribing", "analyzing"];
+    const isProcessing = processingStatuses.includes(video.status);
 
-        if (processingStatuses.includes(video.status)) {
+    const statusLabels: Record<string, string> = {
+        downloading: "Downloading",
+        uploading: "Uploading",
+        transcribing: "Transcribing",
+        analyzing: "Analyzing",
+    };
+
+    const getStatusBadge = () => {
+        if (isProcessing) {
             return (
-                <Badge variant="secondary" className="text-xs gap-1">
+                <Badge variant="secondary" className="text-xs gap-1 shrink-0">
                     <IconLoader2 className="size-3 animate-spin" />
-                    Processing
+                    {statusLabels[video.status] ?? "Processing"}
                 </Badge>
             );
         }
@@ -197,6 +205,10 @@ export function VideoCard({
                         <div className="w-full h-full flex items-center justify-center bg-linear-to-br from-muted to-muted/50">
                             <IconFile className="size-5 md:size-7 text-muted-foreground opacity-40" />
                         </div>
+                    )}
+                    {/* Shimmer overlay while processing */}
+                    {isProcessing && (
+                        <div className="absolute inset-0 bg-linear-to-r from-transparent via-white/20 to-transparent animate-[shimmer_1.5s_infinite] bg-[length:200%_100%]" />
                     )}
                 </div>
 
@@ -406,6 +418,13 @@ export function VideoCard({
                         <IconExternalLink className="size-4" />
                     </Button>
                 </div>
+
+                {/* Processing progress bar at bottom of row */}
+                {isProcessing && (
+                    <div className="absolute bottom-0 left-0 right-0 h-0.5 overflow-hidden">
+                        <div className="h-full w-1/3 bg-primary/60 rounded-full animate-[progress-slide_1.5s_ease-in-out_infinite]" />
+                    </div>
+                )}
             </div>
 
             {/* Delete Confirmation Dialog */}

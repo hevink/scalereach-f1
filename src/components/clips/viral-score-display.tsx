@@ -2,7 +2,7 @@
 
 import * as React from "react";
 import { cn } from "@/lib/utils";
-import { IconFlame } from "@tabler/icons-react";
+import { FireIcon as FireAnimatedIcon } from "@/components/ui/fire-icon";
 
 // ============================================================================
 // Types
@@ -303,11 +303,7 @@ export function ViralScoreDisplay({
                 >
                     {/* Flame icon for high scores */}
                     {score >= 70 && (
-                        <IconFlame
-                            className={cn(config.iconSize, "text-orange-500 animate-pulse")}
-                            aria-hidden="true"
-                            data-testid="viral-score-flame"
-                        />
+                        <FireAnimatedIcon />
                     )}
 
                     {/* Score number */}

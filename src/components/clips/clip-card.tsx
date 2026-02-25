@@ -9,12 +9,12 @@ import {
     Share01Icon,
     SparklesIcon,
     Video01Icon,
-    FireIcon,
     SubtitleIcon,
     MagicWand01Icon,
     FavouriteIcon,
     Calendar01Icon,
 } from "@hugeicons/core-free-icons";
+import { FireIcon as FireAnimatedIcon } from "@/components/ui/fire-icon";
 
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -79,7 +79,7 @@ export function ClipCard({ clip, index, onEdit, onFavorite, onDownload, onShare,
                                         clip.viralityScore >= 70 ? "bg-amber-500/15 text-amber-500" :
                                             "bg-zinc-500/15 text-zinc-400"
                                 )}>
-                                    <HugeiconsIcon icon={FireIcon} size={14} color="currentColor" />
+                                    <FireAnimatedIcon />
                                     {clip.viralityScore}
                                 </div>
                             </TooltipTrigger>

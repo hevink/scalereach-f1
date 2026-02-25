@@ -3,7 +3,8 @@
 import { useState, useEffect } from "react";
 import { format } from "date-fns";
 import { useQuery } from "@tanstack/react-query";
-import { IconCheck, IconFlame, IconClock, IconX, IconVideo } from "@tabler/icons-react";
+import { IconCheck, IconClock, IconX, IconVideo } from "@tabler/icons-react";
+import { FireIcon as FireAnimatedIcon } from "@/components/ui/fire-icon";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -266,7 +267,7 @@ export function CreatePostFromCalendarModal({ workspaceId }: Props) {
                           <div className="flex items-center justify-between">
                             {clip.score > 0 ? (
                               <span className="flex items-center gap-0.5 text-[11px] font-bold text-amber-400 drop-shadow">
-                                <IconFlame size={11} />{clip.score}
+                                <FireAnimatedIcon />{clip.score}
                               </span>
                             ) : <span />}
                             {clip.duration && (

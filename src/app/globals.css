@@ -3,6 +3,17 @@
 
 @custom-variant dark (&:is(.dark *));
 
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+@keyframes progress-slide {
+  0% { transform: translateX(-100%); }
+  50% { transform: translateX(200%); }
+  100% { transform: translateX(400%); }
+}
+
 /* 
  * Custom Viral Fonts (Requirement 8.1)
  * These fonts require custom font files to be added to /public/fonts/
