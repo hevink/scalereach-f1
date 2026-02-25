@@ -56,6 +56,23 @@ const plans: Record<string, Plan> = {
         ],
         featured: true,
     },
+    agency: {
+        name: "Agency",
+        badge: "Unlimited",
+        description: "For agencies and teams that need it all",
+        monthly: 99,
+        annually: 79,
+        features: [
+            "Unlimited Minutes",
+            "Without Watermark",
+            "Unlimited File Length",
+            "Unlimited File Size Upload",
+            "Unlimited Storage",
+            "Unlimited Editing",
+            "4K Clip Quality",
+        ],
+        featured: false,
+    },
     starter: {
         name: "Starter",
         description: "Unlock access to all powerful features",
@@ -225,7 +242,7 @@ export function InsufficientMinutesModal(props: InsufficientMinutesModalProps) {
 
     return (
         <Dialog open={props.isOpen} onOpenChange={props.onClose}>
-            <DialogContent className="sm:max-w-4xl max-h-[90vh] overflow-y-auto">
+            <DialogContent className="sm:max-w-5xl max-h-[90vh] overflow-y-auto">
                 <DialogHeader>
                     <div className="flex items-center gap-2">
                         <IconAlertCircle className="size-5 text-destructive" />
@@ -295,7 +312,7 @@ export function InsufficientMinutesModal(props: InsufficientMinutesModalProps) {
 
                         {/* Main pricing cards */}
                         <div className="relative mx-auto">
-                            <div className="grid md:grid-cols-2">
+                            <div className="grid md:grid-cols-3">
                                 {Object.entries(plans).map(([key, plan], index) => (
                                     <PricingCard
                                         key={key}

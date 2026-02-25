@@ -44,6 +44,7 @@ const SOCIAL_ACCOUNT_LIMITS: Record<string, number> = {
   free: 0,
   starter: 1,
   pro: 5,
+  agency: 999,
 };
 
 export default function SocialPage() {

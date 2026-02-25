@@ -76,6 +76,27 @@ const plans: Record<string, Plan> = {
         dodoProductIdMonthly: "pdt_0NY6llF7a0oFiFsaeVOW7",
         dodoProductIdYearly: "pdt_0NY6lyuXXpnq6BWWOeDTy",
     },
+    agency: {
+        name: "Agency",
+        badge: "Unlimited",
+        description: "For agencies and teams that need it all",
+        monthly: 99,
+        annually: 79,
+        features: [
+            "Unlimited Minutes",
+            "Without Watermark",
+            "Unlimited File Length",
+            "Unlimited File Size Upload",
+            "Unlimited Storage",
+            "Unlimited Editing",
+            "4K Clip Quality",
+            "Unlimited Social Accounts",
+            "Highest Queue Priority",
+        ],
+        featured: false,
+        dodoProductIdMonthly: "pdt_agency_monthly_placeholder",
+        dodoProductIdYearly: "pdt_agency_yearly_placeholder",
+    },
     starter: {
         name: "Starter",
         description: "Unlock access to all powerful features",
@@ -346,7 +367,7 @@ export default function WorkspacePricingPage() {
         if (isCurrentCombination) return "Current Plan";
 
         // Check if it's an upgrade, downgrade, or cycle switch
-        const planOrder = { free: 0, starter: 1, pro: 2 };
+        const planOrder = { free: 0, starter: 1, pro: 2, agency: 3 };
         const currentOrder = planOrder[currentPlanId as keyof typeof planOrder] || 0;
         const targetOrder = planOrder[planKey as keyof typeof planOrder] || 0;
 
@@ -486,7 +507,7 @@ export default function WorkspacePricingPage() {
                         {/* Main pricing cards */}
                         <div className="relative mx-auto border-b">
                             <CornerDecoration position="bottom-left" />
-                            <div className="@4xl:grid-cols-3 grid">
+                            <div className="@4xl:grid-cols-4 grid">
                                 {Object.entries(plans).map(([key, plan], index) => (
                                     <PricingCard
                                         key={key}

@@ -60,6 +60,27 @@ const plans: Record<string, Plan> = {
         dodoProductIdMonthly: "pdt_0NY6llF7a0oFiFsaeVOW7",
         dodoProductIdYearly: "pdt_0NY6lyuXXpnq6BWWOeDTy",
     },
+    agency: {
+        name: "Agency",
+        badge: "Unlimited",
+        description: "For agencies and teams that need it all",
+        monthly: 99,
+        annually: 79,
+        features: [
+            "Unlimited Minutes",
+            "Without Watermark",
+            "Unlimited File Length",
+            "Unlimited File Size Upload",
+            "Unlimited Storage",
+            "Unlimited Editing",
+            "4K Clip Quality",
+            "Unlimited Social Accounts",
+            "Highest Queue Priority",
+        ],
+        featured: false,
+        dodoProductIdMonthly: "pdt_agency_monthly_placeholder",
+        dodoProductIdYearly: "pdt_agency_yearly_placeholder",
+    },
     starter: {
         name: "Starter",
         description: "Unlock access to all powerful features",
@@ -287,7 +308,7 @@ export function UpgradeDialog({
 
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
-            <DialogContent className="sm:max-w-4xl max-h-[90vh] overflow-y-auto">
+            <DialogContent className="sm:max-w-5xl max-h-[90vh] overflow-y-auto">
                 <DialogHeader>
                     <div className="flex items-center gap-2">
                         <IconAlertCircle className="size-5 text-destructive" />
@@ -350,7 +371,7 @@ export function UpgradeDialog({
                         <CornerDecoration position="bottom-right" />
 
                         <div className="relative mx-auto">
-                            <div className="grid md:grid-cols-2">
+                            <div className="grid md:grid-cols-3">
                                 {Object.entries(plans).map(([key, plan], index) => (
                                     <PricingCard
                                         key={key}

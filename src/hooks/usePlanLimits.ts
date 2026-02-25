@@ -56,6 +56,15 @@ export function getPlanLimits(plan: string): PlanLimits {
       maxDuration: 10800,
       maxDurationFormatted: "3h",
       planName: "Pro",
+      canUpgrade: true,
+      nextPlan: "agency",
+    },
+    agency: {
+      maxFileSize: Number.MAX_SAFE_INTEGER,
+      maxFileSizeGB: 999,
+      maxDuration: Number.MAX_SAFE_INTEGER,
+      maxDurationFormatted: "Unlimited",
+      planName: "Agency",
       canUpgrade: false,
     },
   };
