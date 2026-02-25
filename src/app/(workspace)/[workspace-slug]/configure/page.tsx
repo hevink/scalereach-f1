@@ -403,6 +403,8 @@ export default function ConfigurePage() {
                     onClose={() => {
                         setShowInsufficientMinutes(false);
                         setInsufficientMinutesDetails(null);
+                        submitYouTubeMutation.reset();
+                        submitUploadMutation.reset();
                     }}
                     currentPlan={planLimits.planName}
                     minutesRemaining={insufficientMinutesDetails.minutesRemaining}

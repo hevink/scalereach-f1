@@ -208,7 +208,7 @@ export function VideoCard({
                     )}
                     {/* Shimmer overlay while processing */}
                     {isProcessing && (
-                        <div className="absolute inset-0 bg-linear-to-r from-transparent via-white/20 to-transparent animate-[shimmer_1.5s_infinite] bg-[length:200%_100%]" />
+                        <div className="absolute inset-0 bg-linear-to-r from-transparent via-white/20 to-transparent animate-[shimmer_1.5s_infinite] bg-size-[200%_100%]" />
                     )}
                 </div>
 

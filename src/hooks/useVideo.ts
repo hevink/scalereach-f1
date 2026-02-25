@@ -73,13 +73,19 @@ export function useMyVideos(workspaceId: string, enabled = true, filter?: string
     queryFn: () => videoApi.getMyVideos(workspaceId, filter),
     enabled: enabled && !!workspaceId,
     retry: (failureCount, error) => {
-      // Don't retry on auth errors
       if ((error as any)?.status === 401 || (error as any)?.status === 403) {
         return false;
       }
       return failureCount < 3;
     },
     retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000),
+    refetchOnWindowFocus: true,
+    refetchInterval: (query) => {
+      const videos = query.state.data as any[] | undefined;
+      const processingStatuses = ["downloading", "uploading", "transcribing", "analyzing", "pending"];
+      const hasProcessing = videos?.some((v) => processingStatuses.includes(v.status));
+      return hasProcessing ? 8000 : false;
+    },
   });
 }
 
