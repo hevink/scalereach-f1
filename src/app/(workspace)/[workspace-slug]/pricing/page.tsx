@@ -18,20 +18,10 @@ import { useMinutesBalance } from "@/hooks/useMinutes";
 
 type BillingPeriod = "monthly" | "annually";
 
-interface Plan {
-    name: string;
-    description: string;
-    monthly: number;
-    annually: number;
-    features: string[];
-    featured: boolean;
-    badge?: string;
-    dodoProductIdMonthly: string;
-    dodoProductIdYearly: string;
-}
+import { plans, type Plan } from "@/lib/pricing-config";
 
 // ============================================================================
-// Pricing Data - Based on aivideocut.com pricing
+// Pricing Data
 // ============================================================================
 
 // Scarcity data — update these numbers as spots fill up
@@ -39,71 +29,6 @@ const PLAN_SCARCITY: Record<string, { total: number; claimed: number } | null> =
     agency: { total: 10, claimed: 4 },
     pro: { total: 100, claimed: 28 },
     starter: null,
-};
-
-const plans: Record<string, Plan> = {
-    pro: {
-        name: "Pro",
-        badge: "Super offer",
-        description: "Step up your game with bigger volume",
-        monthly: 18,
-        annually: 12.5,
-        features: [
-            "400 Minutes/Month",
-            "Without Watermark",
-            "Up to 3h File Length",
-            "Up to 4GB File Size Upload",
-            "Storage: 6 Months (then auto-deleted)",
-            "Unlimited Editing",
-            "4K Clip Quality",
-            "5 Social Accounts",
-            "Highest Queue Priority",
-        ],
-        featured: true,
-        dodoProductIdMonthly: "pdt_0NZGBRrun07eXzoWlmzm2",
-        dodoProductIdYearly: "pdt_0NZGBSH8bWPajakeSOO8B",
-    },
-    agency: {
-        name: "Agency",
-        badge: "Unlimited",
-        description: "For agencies and teams that need it all",
-        monthly: 99,
-        annually: 49,
-        features: [
-            "Unlimited Minutes",
-            "Without Watermark",
-            "Unlimited File Length",
-            "Unlimited File Size Upload",
-            "Storage: 6 Months (then auto-deleted)",
-            "Unlimited Editing",
-            "4K Clip Quality",
-            "Unlimited Social Accounts",
-            "Highest Queue Priority",
-        ],
-        featured: false,
-        dodoProductIdMonthly: "pdt_0NZGBScekA4L6yNm7r3BX",
-        dodoProductIdYearly: "pdt_0NZGBSvywqWyfQBbnGecS",
-    },
-    starter: {
-        name: "Starter",
-        description: "Unlock access to all powerful features",
-        monthly: 12,
-        annually: 10,
-        features: [
-            "200 Minutes/Month",
-            "Without Watermark",
-            "Up to 2h File Length",
-            "Up to 4GB File Size Upload",
-            "Storage: 3 Months (then auto-deleted)",
-            "Unlimited Editing",
-            "1080p Clip Quality",
-            "1 Social Account",
-            "High Queue Priority",
-        ],
-        featured: false,
-        dodoProductIdMonthly: "pdt_0NZGBR6GtydxMB2lNeh09",
-        dodoProductIdYearly: "pdt_0NZGBRV0VGyAffgoPOiMx",
-    },
 };
 
 const enterpriseFeatures = [

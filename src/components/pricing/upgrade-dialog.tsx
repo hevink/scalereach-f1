@@ -26,92 +26,7 @@ interface UpgradeDialogProps {
 
 type BillingPeriod = "monthly" | "annually";
 
-interface Plan {
-    name: string;
-    description: string;
-    monthly: number;
-    annually: number;
-    features: string[];
-    featured: boolean;
-    badge?: string;
-    dodoProductIdMonthly: string;
-    dodoProductIdYearly: string;
-}
-
-// Scarcity — auto-increments from a base date
-// Pro: +1/day from base of 28 on Feb 25 2026, cap at 100
-// Agency: +1 every 3 days from base of 4 on Feb 25 2026, cap at 10
-function getScarcityClaimed(base: number, total: number, daysInterval: number): number {
-    const baseDate = new Date("2026-02-25");
-    const now = new Date();
-    const daysPassed = Math.floor((now.getTime() - baseDate.getTime()) / (1000 * 60 * 60 * 24));
-    return Math.min(total, base + Math.floor(daysPassed / daysInterval));
-}
-
-const plans: Record<string, Plan> = {
-    pro: {
-        name: "Pro",
-        badge: "Super offer",
-        description: "Step up your game with bigger volume",
-        monthly: 18,
-        annually: 12.5,
-        features: [
-            "400 Minutes/Month",
-            "Without Watermark",
-            "Up to 3h File Length",
-            "Up to 4GB File Size Upload",
-            "Storage: 6 Months (then auto-deleted)",
-            "Unlimited Editing",
-            "4K Clip Quality",
-            "5 Social Accounts",
-            "Highest Queue Priority",
-        ],
-        featured: true,
-        dodoProductIdMonthly: "pdt_0NZGBRrun07eXzoWlmzm2",
-        dodoProductIdYearly: "pdt_0NZGBSH8bWPajakeSOO8B",
-    },
-    agency: {
-        name: "Agency",
-        badge: "Unlimited",
-        description: "For agencies and teams that need it all",
-        monthly: 99,
-        annually: 49,
-        features: [
-            "Unlimited Minutes",
-            "Without Watermark",
-            "Unlimited File Length",
-            "Unlimited File Size Upload",
-            "Storage: 6 Months (then auto-deleted)",
-            "Unlimited Editing",
-            "4K Clip Quality",
-            "Unlimited Social Accounts",
-            "Highest Queue Priority",
-        ],
-        featured: false,
-        dodoProductIdMonthly: "pdt_0NZGBScekA4L6yNm7r3BX",
-        dodoProductIdYearly: "pdt_0NZGBSvywqWyfQBbnGecS",
-    },
-    starter: {
-        name: "Starter",
-        description: "Unlock access to all powerful features",
-        monthly: 12,
-        annually: 10,
-        features: [
-            "200 Minutes/Month",
-            "Without Watermark",
-            "Up to 2h File Length",
-            "Up to 4GB File Size Upload",
-            "Storage: 3 Months (then auto-deleted)",
-            "Unlimited Editing",
-            "1080p Clip Quality",
-            "1 Social Account",
-            "High Queue Priority",
-        ],
-        featured: false,
-        dodoProductIdMonthly: "pdt_0NZGBR6GtydxMB2lNeh09",
-        dodoProductIdYearly: "pdt_0NZGBRV0VGyAffgoPOiMx",
-    },
-};
+import { plans, type Plan } from "@/lib/pricing-config";
 
 const FEATURE_MESSAGES: Record<string, { title: string; message: string; subtitle: string }> = {
     edit: {
@@ -135,6 +50,14 @@ const FEATURE_MESSAGES: Record<string, { title: string; message: string; subtitl
         subtitle: "Upgrade to Starter or Pro to unlock multiple workspaces, more minutes, and premium features.",
     },
 };
+
+// Scarcity — auto-increments from a base date
+function getScarcityClaimed(base: number, total: number, daysInterval: number): number {
+    const baseDate = new Date("2026-02-25");
+    const now = new Date();
+    const daysPassed = Math.floor((now.getTime() - baseDate.getTime()) / (1000 * 60 * 60 * 24));
+    return Math.min(total, base + Math.floor(daysPassed / daysInterval));
+}
 
 function ScarcityBar({ planKey }: { planKey: string }) {
     let claimed = 0;
