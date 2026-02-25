@@ -89,13 +89,13 @@ const SETTINGS_INDEX: SearchableItem[] = [
     category: "Security",
     type: "card",
   },
-  {
-    title: "Passkey",
-    description: "Manage your passkeys for passwordless authentication.",
-    url: "/settings/security",
-    category: "Security",
-    type: "card",
-  },
+  // {
+  //   title: "Passkey",
+  //   description: "Manage your passkeys for passwordless authentication.",
+  //   url: "/settings/security",
+  //   category: "Security",
+  //   type: "card",
+  // },
 ];
 
 const MAC_PLATFORM_REGEX = /Mac|iPhone|iPad|iPod/;
@@ -306,9 +306,8 @@ export function SettingsSidebar() {
                     />
                   )}
                   <div
-                    className={`absolute top-1/2 right-2.5 flex -translate-y-1/2 items-center gap-1 transition-opacity duration-200 ${
-                      isInputFocused ? "opacity-0" : "opacity-100"
-                    }`}
+                    className={`absolute top-1/2 right-2.5 flex -translate-y-1/2 items-center gap-1 transition-opacity duration-200 ${isInputFocused ? "opacity-0" : "opacity-100"
+                      }`}
                   >
                     <Kbd>{isMac ? "⌘" : "Ctrl"}</Kbd>
                     <Kbd>K</Kbd>
@@ -317,11 +316,10 @@ export function SettingsSidebar() {
               </div>
               {shouldRenderResults && (
                 <div
-                  className={`absolute top-full right-2 left-2 z-50 mt-1 flex flex-col rounded-md bg-popover text-popover-foreground text-sm shadow-md ring-1 ring-foreground/10 transition-all duration-200 ease-in-out ${
-                    isResultsVisible
+                  className={`absolute top-full right-2 left-2 z-50 mt-1 flex flex-col rounded-md bg-popover text-popover-foreground text-sm shadow-md ring-1 ring-foreground/10 transition-all duration-200 ease-in-out ${isResultsVisible
                       ? "scale-100 opacity-100"
                       : "scale-[0.95] opacity-0"
-                  }`}
+                    }`}
                 >
                   <ScrollArea className="h-[200px]">
                     <div className="p-1">
@@ -367,11 +365,10 @@ export function SettingsSidebar() {
                       tooltip={item.title}
                     >
                       <IconComponent
-                        className={`${
-                          isActive
+                        className={`${isActive
                             ? "fill-current text-muted-foreground contrast-200"
                             : ""
-                        }`}
+                          }`}
                       />
                       <span className="font-[490] text-[13px]">
                         {item.title}

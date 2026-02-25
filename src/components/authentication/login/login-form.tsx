@@ -17,7 +17,7 @@ import { authClient } from "@/lib/auth-client";
 import { getAuthErrorMessage } from "@/lib/auth-errors";
 import { analytics } from "@/lib/analytics";
 import { LoginWithGoogle } from "../login-with-google";
-import { LoginWithPasskey } from "../login-with-passkey";
+// import { LoginWithPasskey } from "../login-with-passkey";
 
 const loginSchema = z.object({
   identifier: z.string().min(1, "Email or username is required"),
@@ -62,29 +62,24 @@ export function LoginForm() {
     },
   });
 
-  useEffect(() => {
-    if (
-      typeof window !== "undefined" &&
-      PublicKeyCredential.isConditionalMediationAvailable
-    ) {
-      const checkConditionalUI = async () => {
-        try {
-          const available =
-            await PublicKeyCredential.isConditionalMediationAvailable();
-          if (available) {
-            authClient.signIn.passkey({ autoFill: true }).catch(() => {
-              // Ignore errors for conditional UI
-            });
-          }
-        } catch {
-          // Conditional UI not available, ignore
-        }
-      };
-      checkConditionalUI().catch(() => {
-        // Ignore errors for conditional UI check
-      });
-    }
-  }, []);
+  // Passkey conditional UI disabled
+  // useEffect(() => {
+  //   if (
+  //     typeof window !== "undefined" &&
+  //     PublicKeyCredential.isConditionalMediationAvailable
+  //   ) {
+  //     const checkConditionalUI = async () => {
+  //       try {
+  //         const available =
+  //           await PublicKeyCredential.isConditionalMediationAvailable();
+  //         if (available) {
+  //           authClient.signIn.passkey({ autoFill: true }).catch(() => {});
+  //         }
+  //       } catch {}
+  //     };
+  //     checkConditionalUI().catch(() => {});
+  //   }
+  // }, []);
 
   const onSubmit = async (data: LoginFormData) => {
     setIsLoading(true);
@@ -272,7 +267,7 @@ export function LoginForm() {
         <>
           {renderEmailForm(true)}
           <LoginWithGoogle variant="outline" />
-          <LoginWithPasskey variant="outline" />
+          {/* <LoginWithPasskey variant="outline" /> */}
         </>
       );
     }
@@ -281,24 +276,24 @@ export function LoginForm() {
         <>
           <LoginWithGoogle showHelperText variant="default" />
           {renderEmailForm(false)}
-          <LoginWithPasskey variant="outline" />
+          {/* <LoginWithPasskey variant="outline" /> */}
         </>
       );
     }
-    if (lastUsedMethod === "passkey") {
-      return (
-        <>
-          <LoginWithPasskey showHelperText variant="default" />
-          {renderEmailForm(false)}
-          <LoginWithGoogle variant="outline" />
-        </>
-      );
-    }
+    // if (lastUsedMethod === "passkey") {
+    //   return (
+    //     <>
+    //       <LoginWithPasskey showHelperText variant="default" />
+    //       {renderEmailForm(false)}
+    //       <LoginWithGoogle variant="outline" />
+    //     </>
+    //   );
+    // }
     return (
       <>
         {renderEmailForm(false)}
         <LoginWithGoogle variant="outline" />
-        <LoginWithPasskey variant="outline" />
+        {/* <LoginWithPasskey variant="outline" /> */}
       </>
     );
   };

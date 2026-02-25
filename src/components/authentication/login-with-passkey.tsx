@@ -1,3 +1,4 @@
+// @ts-nocheck — Passkey feature disabled, will re-enable later
 "use client";
 
 import { IconFingerprint } from "@tabler/icons-react";

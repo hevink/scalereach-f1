@@ -1,4 +1,4 @@
-import { passkeyClient } from "@better-auth/passkey/client";
+// import { passkeyClient } from "@better-auth/passkey/client";
 import {
   lastLoginMethodClient,
   twoFactorClient,
@@ -12,7 +12,7 @@ export const authClient = createAuthClient({
   baseURL,
   plugins: [
     usernameClient(),
-    passkeyClient(),
+    // passkeyClient(),
     twoFactorClient({
       onTwoFactorRedirect() {
         window.location.href = "/two-factor-verify";

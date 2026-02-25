@@ -2,7 +2,7 @@
 
 import { LogoutButton } from "@/components/authentication/logout-button";
 import { ChangePasswordCard } from "@/components/settings/change-password-card";
-import { PasskeyCard } from "@/components/settings/passkey-card";
+// import { PasskeyCard } from "@/components/settings/passkey-card";
 import { SessionsCard } from "@/components/settings/sessions-card";
 import { TwoFactorCard } from "@/components/settings/two-factor-card";
 
@@ -15,7 +15,7 @@ export default function SecuritySettingsPage() {
       <div className="flex flex-col gap-6">
         <ChangePasswordCard />
         <TwoFactorCard />
-        <PasskeyCard />
+        {/* <PasskeyCard /> */}
         <SessionsCard />
         <LogoutButton />
       </div>
