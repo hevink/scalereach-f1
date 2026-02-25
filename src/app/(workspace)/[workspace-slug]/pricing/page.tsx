@@ -35,26 +35,6 @@ interface Plan {
 // ============================================================================
 
 const plans: Record<string, Plan> = {
-    free: {
-        name: "Free",
-        description: "Start creating viral clips for free",
-        monthly: 0,
-        annually: 0,
-        features: [
-            "50 Minutes One-Time",
-            "Includes Watermark",
-            "Up to 30 Minutes File Length",
-            "Up to 2GB File Size Upload",
-            "Storage: 14 Days (then auto-deleted)",
-            "Limited Editing",
-            "720p Clip Quality",
-            "No Social Account Integration",
-            "Standard Queue Priority",
-        ],
-        featured: false,
-        dodoProductIdMonthly: "",
-        dodoProductIdYearly: "",
-    },
     pro: {
         name: "Pro",
         badge: "Super offer",
@@ -495,6 +475,17 @@ export default function WorkspacePricingPage() {
                     </div>
                 </motion.div>
 
+                {/* Free plan removed notice */}
+                <motion.div
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.4 }}
+                    className="mb-8 rounded-xl border border-orange-500/30 bg-orange-500/10 px-5 py-4 text-sm text-orange-600 dark:text-orange-400 text-center"
+                >
+                    <span className="font-semibold">Free plan temporarily unavailable.</span>{" "}
+                    Due to extremely high usage, we&apos;ve paused the free tier while we scale our infrastructure. Pick a paid plan to get started — all plans come with a full feature set.
+                </motion.div>
+
                 {/* Pricing Cards Container */}
                 <div className="@container">
                     <div className="@max-4xl:max-w-sm relative mx-auto border">
@@ -507,7 +498,7 @@ export default function WorkspacePricingPage() {
                         {/* Main pricing cards */}
                         <div className="relative mx-auto border-b">
                             <CornerDecoration position="bottom-left" />
-                            <div className="@4xl:grid-cols-4 grid">
+                            <div className="@4xl:grid-cols-3 grid">
                                 {Object.entries(plans).map(([key, plan], index) => (
                                     <PricingCard
                                         key={key}
