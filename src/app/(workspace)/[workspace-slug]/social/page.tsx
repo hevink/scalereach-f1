@@ -22,6 +22,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { CalendarProvider } from "@/components/social/calendar/calendar-context";
 import { CalendarClientContainer } from "@/components/social/calendar/calendar-client-container";
+import { UpgradeDialog } from "@/components/pricing/upgrade-dialog";
 
 const PLATFORMS = [
   { id: "tiktok", label: "TikTok" },
@@ -69,6 +70,7 @@ export default function SocialPage() {
   const cancelPost = useCancelPost(workspaceId);
 
   const [statusFilter, setStatusFilter] = useState<string>("");
+  const [upgradeOpen, setUpgradeOpen] = useState(false);
 
   const filteredPosts = statusFilter ? posts.filter((p) => p.status === statusFilter) : posts;
 
@@ -116,9 +118,24 @@ export default function SocialPage() {
         {accountLimit === 0 && (
           <div className="mb-4 rounded-xl border border-yellow-500/30 bg-yellow-500/10 px-4 py-3 text-sm text-yellow-600 dark:text-yellow-400">
             Social account integration is not available on the free plan.{" "}
-            <a href="/pricing" className="font-medium underline underline-offset-2">Upgrade to Starter or Pro</a> to connect your accounts.
+            <button
+              type="button"
+              onClick={() => setUpgradeOpen(true)}
+              className="font-medium underline underline-offset-2 hover:opacity-80"
+            >
+              Upgrade to Starter or Pro
+            </button>{" "}
+            to connect your accounts.
           </div>
         )}
+
+        <UpgradeDialog
+          open={upgradeOpen}
+          onOpenChange={setUpgradeOpen}
+          workspaceSlug={workspaceSlug}
+          feature="social accounts"
+          description="Connect your social media accounts and post clips directly from ScaleReach."
+        />
 
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
           {PLATFORMS.map((platform) => {
@@ -216,8 +233,8 @@ export default function SocialPage() {
                 type="button"
                 onClick={() => setStatusFilter(s)}
                 className={`rounded-full border px-3 py-1 text-xs font-medium transition-colors ${statusFilter === s
-                    ? "border-primary bg-primary/10 text-primary"
-                    : "border-border bg-muted/40 hover:bg-muted"
+                  ? "border-primary bg-primary/10 text-primary"
+                  : "border-border bg-muted/40 hover:bg-muted"
                   }`}
               >
                 {s === "" ? "All" : s.charAt(0).toUpperCase() + s.slice(1)}

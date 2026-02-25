@@ -15,6 +15,7 @@ import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { UploadLimitErrorModal } from "@/components/upload/upload-limit-error-modal";
+import { UpgradeDialog } from "@/components/pricing/upgrade-dialog";
 import {
   IconUpload,
   IconLoader2,
@@ -95,6 +96,7 @@ export default function WorkspacePage({ params }: WorkspacePageProps) {
     currentPlan: string;
     recommendedPlan?: string;
   } | null>(null);
+  const [showUpgradeDialog, setShowUpgradeDialog] = useState(false);
 
   // Get plan limits for this workspace
   const planLimits = usePlanLimits(slug);
@@ -375,6 +377,13 @@ export default function WorkspacePage({ params }: WorkspacePageProps) {
           workspaceSlug={slug}
         />
       )}
+      <UpgradeDialog
+        open={showUpgradeDialog}
+        onOpenChange={setShowUpgradeDialog}
+        workspaceSlug={slug}
+        feature="file upload"
+        description="Upload MP4, WebM, and MOV files directly — available on Starter and Pro plans."
+      />
 
       <div className="flex flex-col items-center">
         {/* Hero Section with Upload UI - Responsive padding */}
@@ -445,17 +454,21 @@ export default function WorkspacePage({ params }: WorkspacePageProps) {
               />
               <button
                 onClick={() => {
+                  if (workspace?.plan === "free") {
+                    setShowUpgradeDialog(true);
+                    return;
+                  }
                   console.log("[UPPY] Upload button clicked, uppyReady:", uppyReady);
                   inputRef.current?.click();
                 }}
-                disabled={!uppyReady}
+                disabled={!uppyReady && workspace?.plan !== "free"}
                 className={cn(
                   "flex items-center gap-2 text-xs sm:text-sm transition-colors",
-                  uppyReady ? "text-muted-foreground hover:text-foreground" : "text-muted-foreground/50 cursor-not-allowed"
+                  (uppyReady || workspace?.plan === "free") ? "text-muted-foreground hover:text-foreground" : "text-muted-foreground/50 cursor-not-allowed"
                 )}
               >
                 <IconUpload className="size-4" />
-                {uppyReady ? "Upload file" : "Loading..."}
+                {workspace?.plan === "free" ? "Upload file" : uppyReady ? "Upload file" : "Loading..."}
               </button>
               <span className="text-xs text-muted-foreground">
                 MP4, WebM, MOV • Max {planLimits.maxFileSizeGB}GB • Up to {planLimits.maxDurationFormatted}

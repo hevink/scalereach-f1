@@ -14,7 +14,7 @@ import {
   IconLoader2,
 } from "@tabler/icons-react";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
-import { DateTimePicker } from "@/components/ui/datetime-picker";
+import { DateTimeScrollPicker } from "@/components/ui/date-time-scroll-picker";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -222,12 +222,9 @@ export function SchedulePostModal({
                 </div>
 
                 {postType === "scheduled" && (
-                  <DateTimePicker
+                  <DateTimeScrollPicker
                     value={scheduledDate}
                     onChange={setScheduledDate}
-                    granularity="minute"
-                    placeholder="Pick date & time"
-                    disablePast
                   />
                 )}
                 {submitAttempted && postType === "scheduled" && !scheduledDate && (

@@ -46,7 +46,7 @@ const plans: Record<string, Plan> = {
         monthly: 18,
         annually: 12.5,
         features: [
-            "3600 Minutes/Year (or 300/Month)",
+            "4800 Minutes/Year (or 400/Month)",
             "Without Watermark",
             "Up to 3h File Length",
             "Up to 4GB File Size Upload",

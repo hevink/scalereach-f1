@@ -10,9 +10,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
-import { DateTimePicker } from "@/components/ui/datetime-picker";
 import { cn } from "@/lib/utils";
-import { socialApi, type WorkspaceClip } from "@/lib/api/social";
+import { DateTimeScrollPicker } from "@/components/ui/date-time-scroll-picker"; import { socialApi, type WorkspaceClip } from "@/lib/api/social";
 import { useSocialAccounts } from "@/hooks/useSocialAccounts";
 import { useSchedulePost } from "@/hooks/useScheduledPosts";
 import { useCalendarContext } from "./calendar-context";
@@ -27,6 +26,7 @@ import {
 const PLATFORM_LABELS: Record<string, string> = {
   tiktok: "TikTok",
   instagram: "Instagram",
+  instagram_reels: "Instagram Reels",
   youtube: "YouTube",
   youtube_shorts: "YT Shorts",
   twitter: "Twitter / X",
@@ -36,6 +36,7 @@ const PLATFORM_LABELS: Record<string, string> = {
 const PLATFORM_CHIP_STYLES: Record<string, string> = {
   tiktok: "bg-black/10 text-foreground dark:bg-white/10",
   instagram: "bg-pink-500/10 text-pink-600 dark:text-pink-400",
+  instagram_reels: "bg-pink-500/10 text-pink-600 dark:text-pink-400",
   youtube: "bg-red-500/10 text-red-600 dark:text-red-400",
   youtube_shorts: "bg-red-500/10 text-red-600 dark:text-red-400",
   twitter: "bg-sky-500/10 text-sky-600 dark:text-sky-400",
@@ -45,6 +46,7 @@ const PLATFORM_CHIP_STYLES: Record<string, string> = {
 const PLATFORM_COLORS: Record<string, string> = {
   tiktok: "bg-black text-white",
   instagram: "bg-gradient-to-br from-yellow-400 via-pink-500 to-purple-600 text-white",
+  instagram_reels: "bg-gradient-to-br from-yellow-400 via-pink-500 to-purple-600 text-white",
   youtube: "bg-red-500 text-white",
   youtube_shorts: "bg-red-500 text-white",
   twitter: "bg-black text-white",
@@ -54,6 +56,7 @@ const PLATFORM_COLORS: Record<string, string> = {
 const PLATFORM_ICONS: Record<string, React.ElementType> = {
   tiktok: TikTokIcon,
   instagram: InstagramIcon,
+  instagram_reels: InstagramIcon,
   youtube: YouTubeIcon,
   youtube_shorts: YouTubeIcon,
   twitter: TwitterIcon,
@@ -171,6 +174,20 @@ export function CreatePostFromCalendarModal({ workspaceId }: Props) {
       caption,
       hashtags,
       scheduledAt: scheduledAt || undefined,
+    });
+    closeCreateModal();
+  }
+
+  async function handlePostNow() {
+    if (!selectedClip || !selectedAccountId) return;
+    await schedulePost.mutateAsync({
+      workspaceId,
+      clipId: selectedClip.id,
+      socialAccountId: selectedAccountId,
+      postType: "immediate",
+      caption,
+      hashtags,
+      scheduledAt: undefined,
     });
     closeCreateModal();
   }
@@ -393,12 +410,9 @@ export function CreatePostFromCalendarModal({ workspaceId }: Props) {
               {/* Date & Time */}
               <div className="flex flex-col gap-2">
                 <Label className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">Date & Time</Label>
-                <DateTimePicker
+                <DateTimeScrollPicker
                   value={scheduledDate}
                   onChange={setScheduledDate}
-                  granularity="minute"
-                  placeholder="Pick date & time"
-                  disablePast
                 />
               </div>
 
@@ -450,14 +464,24 @@ export function CreatePostFromCalendarModal({ workspaceId }: Props) {
                 >
                   ← Back
                 </button>
-                <Button
-                  size="sm"
-                  onClick={handleSubmit}
-                  disabled={!selectedAccountId || !scheduledAt || schedulePost.isPending}
-                  className="min-w-28"
-                >
-                  {schedulePost.isPending ? "Scheduling..." : "Schedule Post"}
-                </Button>
+                <div className="flex items-center gap-2">
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={handlePostNow}
+                    disabled={!selectedAccountId || schedulePost.isPending}
+                  >
+                    {schedulePost.isPending ? "Posting..." : "Post Now"}
+                  </Button>
+                  <Button
+                    size="sm"
+                    onClick={handleSubmit}
+                    disabled={!selectedAccountId || !scheduledAt || schedulePost.isPending}
+                    className="min-w-28"
+                  >
+                    {schedulePost.isPending ? "Scheduling..." : "Schedule Post"}
+                  </Button>
+                </div>
               </div>
             </div>
           </div>

@@ -62,7 +62,7 @@ const plans: Record<string, Plan> = {
         monthly: 18,
         annually: 12.5,
         features: [
-            "500 Minutes/Month",
+            "400 Minutes/Month",
             "Without Watermark",
             "Up to 3h File Length",
             "Up to 4GB File Size Upload",
@@ -230,8 +230,8 @@ function PricingCard({
                     // Replace minutes text based on period for Pro and Starter plans
                     let displayFeature = feature;
                     if (period === "annually") {
-                        if (planKey === "pro" && feature === "500 Minutes/Month") {
-                            displayFeature = "6000 Minutes/Year";
+                        if (planKey === "pro" && feature === "400 Minutes/Month") {
+                            displayFeature = "4800 Minutes/Year";
                         } else if (planKey === "starter" && feature === "200 Minutes/Month") {
                             displayFeature = "1800 Minutes/Year";
                         }
