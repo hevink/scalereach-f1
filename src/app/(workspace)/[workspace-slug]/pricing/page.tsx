@@ -95,7 +95,7 @@ const plans: Record<string, Plan> = {
         ],
         featured: false,
         dodoProductIdMonthly: "pdt_0NZFx5ffGwT1YxA1hGbe4",
-        dodoProductIdYearly: "pdt_agency_yearly_placeholder",
+        dodoProductIdYearly: "pdt_0NZFxhZt01qOI9OLNEaSd",
     },
     starter: {
         name: "Starter",
