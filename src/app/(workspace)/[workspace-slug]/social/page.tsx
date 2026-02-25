@@ -9,6 +9,17 @@ import { useScheduledPosts, useCancelPost } from "@/hooks/useScheduledPosts";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
+import {
+  AlertDialog,
+  AlertDialogTrigger,
+  AlertDialogContent,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogAction,
+  AlertDialogCancel,
+} from "@/components/ui/alert-dialog";
 import { CalendarProvider } from "@/components/social/calendar/calendar-context";
 import { CalendarClientContainer } from "@/components/social/calendar/calendar-client-container";
 
@@ -145,14 +156,36 @@ export default function SocialPage() {
                             )}
                           </div>
                         </div>
-                        <Button
-                          size="sm"
-                          variant="ghost"
-                          className="h-7 px-2 text-xs text-destructive hover:text-destructive"
-                          onClick={() => disconnectAccount.mutate(acc.id)}
-                        >
-                          Disconnect
-                        </Button>
+                        <AlertDialog>
+                          <AlertDialogTrigger
+                            render={
+                              <Button
+                                size="sm"
+                                variant="ghost"
+                                className="h-7 px-2 text-xs text-destructive hover:text-destructive"
+                              >
+                                Disconnect
+                              </Button>
+                            }
+                          />
+                          <AlertDialogContent>
+                            <AlertDialogHeader>
+                              <AlertDialogTitle>Disconnect Account</AlertDialogTitle>
+                              <AlertDialogDescription>
+                                Are you sure you want to disconnect <strong>{acc.accountName}</strong>? Any scheduled posts for this account will no longer be published.
+                              </AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <AlertDialogFooter>
+                              <AlertDialogCancel>Cancel</AlertDialogCancel>
+                              <AlertDialogAction
+                                variant="destructive"
+                                onClick={() => disconnectAccount.mutate(acc.id)}
+                              >
+                                Disconnect
+                              </AlertDialogAction>
+                            </AlertDialogFooter>
+                          </AlertDialogContent>
+                        </AlertDialog>
                       </div>
                     ))}
                   </div>
