@@ -61,7 +61,7 @@ const plans: Record<string, Plan> = {
         badge: "Unlimited",
         description: "For agencies and teams that need it all",
         monthly: 99,
-        annually: 79,
+        annually: 49,
         features: [
             "Unlimited Minutes",
             "Without Watermark",
