@@ -69,7 +69,7 @@ function CheckoutCancelContent() {
 
         <p className="text-xs text-zinc-500 mt-6">
           Need help?{" "}
-          <a href="mailto:support@scalereach.com" className="text-emerald-500 hover:underline">
+          <a href="#" onClick={(e) => { e.preventDefault(); if (window.$crisp) window.$crisp.push(["do", "chat:open"]); }} className="text-emerald-500 hover:underline">
             Contact Support
           </a>
         </p>

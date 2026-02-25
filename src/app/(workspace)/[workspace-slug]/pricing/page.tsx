@@ -261,7 +261,8 @@ function EnterpriseSection() {
                         whileHover={{ scale: 1.02 }}
                         whileTap={{ scale: 0.98 }}
                         className="cursor-pointer inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium transition-colors shadow-sm shadow-black/15 border border-transparent bg-card ring-1 ring-foreground/10 hover:bg-muted/50 h-9 px-4 py-2 @max-4xl:w-full"
-                        href="mailto:support@scalereach.com"
+                        href="#"
+                        onClick={(e) => { e.preventDefault(); if (window.$crisp) window.$crisp.push(["do", "chat:open"]); }}
                     >
                         Contact Sales
                     </motion.a>
@@ -550,7 +551,7 @@ export default function WorkspacePricingPage() {
                 {/* Footer */}
                 <p className="text-center text-sm text-muted-foreground mt-12">
                     Need more?{" "}
-                    <a href="mailto:support@scalereach.com" className="text-primary hover:underline">
+                    <a href="#" onClick={(e) => { e.preventDefault(); if (window.$crisp) window.$crisp.push(["do", "chat:open"]); }} className="text-primary hover:underline">
                         Let&apos;s talk!
                     </a>
                 </p>

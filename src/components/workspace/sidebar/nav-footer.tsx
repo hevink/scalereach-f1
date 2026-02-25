@@ -62,14 +62,14 @@ export function NavFooter({ currentSlug }: NavFooterProps) {
       title: "Get Help",
       icon: HugeHelpIcon,
       onClick: () => {
-        window.open("mailto:hevin@scalereach.ai?subject=Help%20Request", "_blank");
+        if (window.$crisp) window.$crisp.push(["do", "chat:open"]);
       },
     },
     {
       title: "Report Issue",
       icon: HugeAlertIcon,
       onClick: () => {
-        window.open("mailto:hevin@scalereach.ai?subject=Bug%20Report", "_blank");
+        if (window.$crisp) window.$crisp.push(["do", "chat:open"]);
       },
     },
   ];

@@ -25,6 +25,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryProvider } from "@/providers/query-provider";
 import { PostHogProvider } from "@/providers/posthog-provider";
 import { constructMetadata } from "@/lib/seo";
+import { CrispChat } from "@/components/crisp-chat";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -159,6 +160,7 @@ export default function RootLayout({
             <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
               <TooltipProvider>
                 <Toaster richColors position="bottom-center" />
+                <CrispChat />
                 <main className="root">{children}</main>
               </TooltipProvider>
             </ThemeProvider>
