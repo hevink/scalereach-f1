@@ -69,7 +69,7 @@ export function BackgroundStyleSelector({
     userPlan = "free",
     workspaceSlug = "",
 }: BackgroundStyleSelectorProps) {
-    const isPaid = userPlan === "starter" || userPlan === "pro";
+    const isPaid = userPlan === "starter" || userPlan === "pro" || userPlan === "agency";
     const [showUpgradeDialog, setShowUpgradeDialog] = useState(false);
 
     const handleClick = (style: BackgroundStyle, isLocked: boolean) => {

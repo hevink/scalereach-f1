@@ -37,7 +37,8 @@ export function NavFooter({ currentSlug }: NavFooterProps) {
 
   const minutesRemaining = minutesData?.minutesRemaining ?? 0;
   const minutesTotal = minutesData?.minutesTotal ?? 0;
-  const isLowMinutes = minutesTotal > 0 && (minutesRemaining / minutesTotal) < 0.2;
+  const isAgency = workspace?.plan === "agency";
+  const isLowMinutes = !isAgency && minutesTotal > 0 && (minutesRemaining / minutesTotal) < 0.2;
 
   const isFree = workspace?.plan === "free";
 
@@ -78,11 +79,9 @@ export function NavFooter({ currentSlug }: NavFooterProps) {
       {/* Minutes Display */}
       <SidebarMenuItem>
         <SidebarMenuButton
-          tooltip={`${minutesRemaining} min remaining`}
+          tooltip={isAgency ? "Unlimited minutes (Agency plan)" : `${minutesRemaining} min remaining`}
           onClick={() => router.push(`/${currentSlug}/pricing`)}
-          className={cn(
-            isLowMinutes && "text-amber-600 dark:text-amber-500"
-          )}
+          className={cn(isLowMinutes && "text-amber-600 dark:text-amber-500")}
         >
           <HugeClockIcon className={cn(isLowMinutes && "text-amber-500")} />
           <span className="font-[490] text-[13px]">Minutes</span>
@@ -94,7 +93,7 @@ export function NavFooter({ currentSlug }: NavFooterProps) {
               : "bg-primary/10 text-primary"
           )}
         >
-          {minutesRemaining} min
+          {isAgency ? "∞" : `${minutesRemaining} min`}
         </SidebarMenuBadge>
       </SidebarMenuItem>
 
@@ -113,17 +112,19 @@ export function NavFooter({ currentSlug }: NavFooterProps) {
         </SidebarMenuItem>
       )}
 
-      {/* Upgrade Button - Links to pricing page */}
-      <SidebarMenuItem>
-        <SidebarMenuButton
-          tooltip="Upgrade Plan"
-          onClick={() => router.push(`/${currentSlug}/pricing`)}
-          className="bg-linear-to-r from-primary/10 to-primary/5 hover:from-primary/20 hover:to-primary/10 border border-primary/20"
-        >
-          <HugeSparklesIcon className="text-primary" />
-          <span className="font-[490] text-[13px] text-primary">Upgrade</span>
-        </SidebarMenuButton>
-      </SidebarMenuItem>
+      {/* Upgrade Button - hide for agency */}
+      {!isAgency && (
+        <SidebarMenuItem>
+          <SidebarMenuButton
+            tooltip="Upgrade Plan"
+            onClick={() => router.push(`/${currentSlug}/pricing`)}
+            className="bg-linear-to-r from-primary/10 to-primary/5 hover:from-primary/20 hover:to-primary/10 border border-primary/20"
+          >
+            <HugeSparklesIcon className="text-primary" />
+            <span className="font-[490] text-[13px] text-primary">Upgrade</span>
+          </SidebarMenuButton>
+        </SidebarMenuItem>
+      )}
 
       {footerItems.map((item) => {
         const IconComponent = item.icon;

@@ -18,12 +18,14 @@ export function CreditBalanceCard({ workspaceSlug }: CreditBalanceCardProps) {
     const { data: workspace } = useWorkspaceBySlug(workspaceSlug);
     const { data: balance, isLoading } = useMinutesBalance(workspace?.id);
 
-    const usagePercentage = balance?.minutesTotal
+    const isAgency = workspace?.plan === "agency";
+
+    const usagePercentage = !isAgency && balance?.minutesTotal
         ? Math.round((balance.minutesUsed / balance.minutesTotal) * 100)
         : 0;
 
     const remainingPercentage = 100 - usagePercentage;
-    const isLow = remainingPercentage < 20;
+    const isLow = !isAgency && remainingPercentage < 20;
 
     const resetDateFormatted = balance?.minutesResetDate
         ? new Date(balance.minutesResetDate).toLocaleDateString("en-US", {
@@ -69,20 +71,24 @@ export function CreditBalanceCard({ workspaceSlug }: CreditBalanceCardProps) {
                         <div>
                             <CardTitle className="text-base">Minutes Remaining</CardTitle>
                             <p className="text-xs text-muted-foreground mt-0.5">
-                                {resetDateFormatted
-                                    ? `Resets ${resetDateFormatted}`
-                                    : "One-time allocation"}
+                                {isAgency
+                                    ? "Unlimited (Agency plan)"
+                                    : resetDateFormatted
+                                        ? `Resets ${resetDateFormatted}`
+                                        : "One-time allocation"}
                             </p>
                         </div>
                     </div>
-                    <Button
-                        size="sm"
-                        className="gap-1.5 shadow-sm"
-                        onClick={() => router.push(`/${workspaceSlug}/pricing`)}
-                    >
-                        <IconPlus className="h-4 w-4" />
-                        Upgrade Plan
-                    </Button>
+                    {!isAgency && (
+                        <Button
+                            size="sm"
+                            className="gap-1.5 shadow-sm"
+                            onClick={() => router.push(`/${workspaceSlug}/pricing`)}
+                        >
+                            <IconPlus className="h-4 w-4" />
+                            Upgrade Plan
+                        </Button>
+                    )}
                 </div>
             </CardHeader>
 
@@ -92,19 +98,19 @@ export function CreditBalanceCard({ workspaceSlug }: CreditBalanceCardProps) {
                     <div className="flex items-baseline gap-2">
                         <div className={cn(
                             "text-4xl font-bold bg-gradient-to-br bg-clip-text text-transparent",
-                            isLow
-                                ? "from-rose-600 to-rose-400"
-                                : "from-foreground to-foreground/70"
+                            isLow ? "from-rose-600 to-rose-400" : "from-foreground to-foreground/70"
                         )}>
-                            {(balance?.minutesRemaining || 0).toLocaleString()}
+                            {isAgency ? "∞" : (balance?.minutesRemaining || 0).toLocaleString()}
                         </div>
-                        <div className="text-sm text-muted-foreground font-medium">
-                            / {(balance?.minutesTotal || 0).toLocaleString()} min
-                        </div>
+                        {!isAgency && (
+                            <div className="text-sm text-muted-foreground font-medium">
+                                / {(balance?.minutesTotal || 0).toLocaleString()} min
+                            </div>
+                        )}
                     </div>
 
-                    {/* Progress Bar */}
-                    {balance?.minutesTotal && balance.minutesTotal > 0 && (
+                    {/* Progress Bar - hidden for agency */}
+                    {!isAgency && balance?.minutesTotal && balance.minutesTotal > 0 && (
                         <div className="space-y-1.5">
                             <div className="flex items-center justify-between text-xs text-muted-foreground">
                                 <span>Usage</span>
@@ -134,7 +140,7 @@ export function CreditBalanceCard({ workspaceSlug }: CreditBalanceCardProps) {
                                 <span className="text-xs text-muted-foreground font-medium">Total</span>
                             </div>
                             <div className="text-lg font-bold text-emerald-700 dark:text-emerald-400">
-                                {(balance?.minutesTotal || 0).toLocaleString()} min
+                                {isAgency ? "∞" : `${(balance?.minutesTotal || 0).toLocaleString()} min`}
                             </div>
                         </div>
 

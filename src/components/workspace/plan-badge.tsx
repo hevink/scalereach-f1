@@ -11,7 +11,7 @@ import { Button } from "@/components/ui/button";
 import { useRouter } from "next/navigation";
 
 interface PlanBadgeProps {
-    plan: "free" | "starter" | "pro";
+    plan: "free" | "starter" | "pro" | "agency";
     workspaceSlug: string;
 }
 
@@ -35,11 +35,17 @@ export function PlanBadge({ plan, workspaceSlug }: PlanBadgeProps) {
             label: "Pro",
             icon: <IconCrown className="size-3" />,
             variant: "default" as const,
-            limits: ["4GB uploads", "3h videos", "300 min/month"],
+            limits: ["4GB uploads", "3h videos", "400 min/month"],
+        },
+        agency: {
+            label: "Agency",
+            icon: <IconCrown className="size-3" />,
+            variant: "default" as const,
+            limits: ["Unlimited uploads", "Unlimited video length", "Unlimited minutes", "Unlimited social accounts"],
         },
     };
 
-    const { label, icon, variant, limits } = config[plan];
+    const { label, icon, variant, limits } = config[plan] ?? config.free;
 
     return (
         <Popover>
@@ -63,7 +69,7 @@ export function PlanBadge({ plan, workspaceSlug }: PlanBadgeProps) {
                         </ul>
                     </div>
 
-                    {plan !== "pro" && (
+                    {plan !== "pro" && plan !== "agency" && (
                         <Button
                             size="sm"
                             className="w-full"

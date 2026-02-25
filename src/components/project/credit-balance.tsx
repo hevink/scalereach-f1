@@ -26,6 +26,7 @@ export interface CreditBalanceProps {
     variant?: "compact" | "expanded";
     minuteCost?: number;
     className?: string;
+    plan?: string;
 }
 
 function formatBalance(minutes: number): string {
@@ -63,12 +64,14 @@ function CompactCreditBalance({
     isLow,
     showWarning,
     workspaceSlug,
+    isUnlimited,
     className,
 }: {
     minutesRemaining: number;
     isLow: boolean;
     showWarning: boolean;
     workspaceSlug: string;
+    isUnlimited: boolean;
     className?: string;
 }) {
     return (
@@ -79,36 +82,34 @@ function CompactCreditBalance({
                         <div
                             className={cn(
                                 "flex items-center gap-1.5 rounded-full px-2.5 py-1 text-sm font-medium transition-colors",
-                                isLow && showWarning
+                                isLow && showWarning && !isUnlimited
                                     ? "bg-amber-500/10 text-amber-600 dark:text-amber-400"
                                     : "bg-muted text-foreground"
                             )}
                         >
                             <IconClock className="size-4" />
-                            <span>{formatBalance(minutesRemaining)} min</span>
-                            {isLow && showWarning && (
+                            <span>{isUnlimited ? "Unlimited" : `${formatBalance(minutesRemaining)} min`}</span>
+                            {isLow && showWarning && !isUnlimited && (
                                 <IconAlertTriangle className="size-3.5 text-amber-500" />
                             )}
                         </div>
                     </TooltipTrigger>
                     <TooltipContent>
                         <p>
-                            {minutesRemaining} minutes remaining
-                            {isLow && showWarning && " - Running low!"}
+                            {isUnlimited ? "Unlimited minutes (Agency plan)" : `${minutesRemaining} minutes remaining`}
+                            {isLow && showWarning && !isUnlimited && " - Running low!"}
                         </p>
                     </TooltipContent>
                 </Tooltip>
 
-                <Link href={`/${workspaceSlug}/pricing`}>
-                    <Button
-                        variant="ghost"
-                        size="sm"
-                        className="h-7 gap-1 px-2 text-xs"
-                    >
-                        <IconPlus className="size-3" />
-                        Upgrade
-                    </Button>
-                </Link>
+                {!isUnlimited && (
+                    <Link href={`/${workspaceSlug}/pricing`}>
+                        <Button variant="ghost" size="sm" className="h-7 gap-1 px-2 text-xs">
+                            <IconPlus className="size-3" />
+                            Upgrade
+                        </Button>
+                    </Link>
+                )}
             </div>
         </TooltipProvider>
     );
@@ -121,6 +122,7 @@ function ExpandedCreditBalance({
     showWarning,
     minuteCost,
     workspaceSlug,
+    isUnlimited,
     className,
 }: {
     minutesRemaining: number;
@@ -129,36 +131,24 @@ function ExpandedCreditBalance({
     showWarning: boolean;
     minuteCost?: number;
     workspaceSlug: string;
+    isUnlimited: boolean;
     className?: string;
 }) {
-    const hasEnoughMinutes = minuteCost === undefined || minutesRemaining >= minuteCost;
+    const hasEnoughMinutes = isUnlimited || minuteCost === undefined || minutesRemaining >= minuteCost;
     const remainingAfterCost = minuteCost !== undefined ? minutesRemaining - minuteCost : minutesRemaining;
 
     return (
-        <div
-            className={cn(
-                "flex flex-col gap-3 rounded-lg border p-4",
-                isLow && showWarning && "border-amber-500/50 bg-amber-500/5",
-                className
-            )}
-        >
+        <div className={cn("flex flex-col gap-3 rounded-lg border p-4", isLow && showWarning && !isUnlimited && "border-amber-500/50 bg-amber-500/5", className)}>
             <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
-                    <div
-                        className={cn(
-                            "flex size-8 items-center justify-center rounded-full",
-                            isLow && showWarning
-                                ? "bg-amber-500/10 text-amber-600 dark:text-amber-400"
-                                : "bg-primary/10 text-primary"
-                        )}
-                    >
+                    <div className={cn("flex size-8 items-center justify-center rounded-full", isLow && showWarning && !isUnlimited ? "bg-amber-500/10 text-amber-600 dark:text-amber-400" : "bg-primary/10 text-primary")}>
                         <IconClock className="size-4" />
                     </div>
                     <span className="text-sm font-medium text-muted-foreground">
-                        Minutes Remaining
+                        {isUnlimited ? "Unlimited Minutes" : "Minutes Remaining"}
                     </span>
                 </div>
-                {isLow && showWarning && (
+                {isLow && showWarning && !isUnlimited && (
                     <Badge variant="outline" className="border-amber-500/50 text-amber-600 dark:text-amber-400">
                         <IconAlertTriangle className="mr-1 size-3" />
                         Low Minutes
@@ -167,11 +157,11 @@ function ExpandedCreditBalance({
             </div>
 
             <div className="flex items-baseline gap-2">
-                <span className="text-3xl font-bold">{minutesRemaining.toLocaleString()}</span>
-                <span className="text-sm text-muted-foreground">/ {minutesTotal.toLocaleString()} min</span>
+                <span className="text-3xl font-bold">{isUnlimited ? "∞" : minutesRemaining.toLocaleString()}</span>
+                {!isUnlimited && <span className="text-sm text-muted-foreground">/ {minutesTotal.toLocaleString()} min</span>}
             </div>
 
-            {minuteCost !== undefined && (
+            {minuteCost !== undefined && !isUnlimited && (
                 <div className="flex flex-col gap-1 rounded-md bg-muted/50 p-2.5">
                     <div className="flex items-center justify-between text-sm">
                         <span className="text-muted-foreground">This will use:</span>
@@ -179,43 +169,37 @@ function ExpandedCreditBalance({
                     </div>
                     <div className="flex items-center justify-between text-sm">
                         <span className="text-muted-foreground">After processing:</span>
-                        <span
-                            className={cn(
-                                "font-medium",
-                                !hasEnoughMinutes && "text-destructive"
-                            )}
-                        >
+                        <span className={cn("font-medium", !hasEnoughMinutes && "text-destructive")}>
                             {remainingAfterCost.toLocaleString()} min
                         </span>
                     </div>
                     {!hasEnoughMinutes && (
-                        <p className="mt-1 text-xs text-destructive">
-                            Insufficient minutes. Please upgrade your plan to continue.
-                        </p>
+                        <p className="mt-1 text-xs text-destructive">Insufficient minutes. Please upgrade your plan to continue.</p>
                     )}
                 </div>
             )}
 
-            <p className="text-xs text-muted-foreground">
-                Minutes used: {(minutesTotal - minutesRemaining).toLocaleString()} of {minutesTotal.toLocaleString()}
-            </p>
+            {!isUnlimited && (
+                <p className="text-xs text-muted-foreground">
+                    Minutes used: {(minutesTotal - minutesRemaining).toLocaleString()} of {minutesTotal.toLocaleString()}
+                </p>
+            )}
 
-            {isLow && showWarning && (
+            {isLow && showWarning && !isUnlimited && (
                 <div className="flex items-start gap-2 rounded-md bg-amber-500/10 p-2.5 text-sm text-amber-600 dark:text-amber-400">
                     <IconAlertTriangle className="mt-0.5 size-4 shrink-0" />
-                    <p>
-                        Your minutes are running low. Upgrade your plan to continue
-                        processing videos without interruption.
-                    </p>
+                    <p>Your minutes are running low. Upgrade your plan to continue processing videos without interruption.</p>
                 </div>
             )}
 
-            <Link href={`/${workspaceSlug}/pricing`}>
-                <Button className="w-full gap-2">
-                    <IconPlus className="size-4" />
-                    Upgrade Plan
-                </Button>
-            </Link>
+            {!isUnlimited && (
+                <Link href={`/${workspaceSlug}/pricing`}>
+                    <Button className="w-full gap-2">
+                        <IconPlus className="size-4" />
+                        Upgrade Plan
+                    </Button>
+                </Link>
+            )}
         </div>
     );
 }
@@ -226,6 +210,7 @@ export function CreditBalance({
     showWarning = true,
     variant = "compact",
     minuteCost,
+    plan,
     className,
 }: CreditBalanceProps) {
     const { data: minutesData, isLoading, error } = useMinutesBalance(workspaceId);
@@ -243,9 +228,10 @@ export function CreditBalance({
         );
     }
 
+    const isUnlimited = plan === "agency";
     const minutesRemaining = minutesData.minutesRemaining;
     const minutesTotal = minutesData.minutesTotal;
-    const isLow = minutesTotal > 0 && (minutesRemaining / minutesTotal) < 0.2;
+    const isLow = !isUnlimited && minutesTotal > 0 && (minutesRemaining / minutesTotal) < 0.2;
 
     if (variant === "compact") {
         return (
@@ -254,6 +240,7 @@ export function CreditBalance({
                 isLow={isLow}
                 showWarning={showWarning}
                 workspaceSlug={workspaceSlug}
+                isUnlimited={isUnlimited}
                 className={className}
             />
         );
@@ -267,6 +254,7 @@ export function CreditBalance({
             showWarning={showWarning}
             minuteCost={minuteCost}
             workspaceSlug={workspaceSlug}
+            isUnlimited={isUnlimited}
             className={className}
         />
     );

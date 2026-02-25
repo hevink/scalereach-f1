@@ -67,7 +67,7 @@ const plans: Record<string, Plan> = {
             "Without Watermark",
             "Unlimited File Length",
             "Unlimited File Size Upload",
-            "Unlimited Storage",
+            "Storage: 6 Months (then auto-deleted)",
             "Unlimited Editing",
             "4K Clip Quality",
         ],

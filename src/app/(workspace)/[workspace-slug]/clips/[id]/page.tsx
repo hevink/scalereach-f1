@@ -1304,7 +1304,7 @@ export default function ClipEditorPage({ params }: ClipEditorPageProps) {
                 onExportError={handleExportError}
                 onReset={() => setActiveExportId(null)}
                 isExporting={initiateExport.isPending}
-                hasProAccess={workspace?.plan === "starter" || workspace?.plan === "pro"}
+                hasProAccess={workspace?.plan === "starter" || workspace?.plan === "pro" || workspace?.plan === "agency"}
             />
 
             {/* Keyboard Shortcuts Modal */}

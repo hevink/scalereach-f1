@@ -144,7 +144,7 @@ function InviteMemberDialog({ workspaceId, workspacePlan }: { workspaceId: strin
   const [role, setRole] = useState("member");
   const createInvitation = useCreateInvitation();
 
-  const isAllowedPlan = workspacePlan === "starter" || workspacePlan === "pro" || workspacePlan === "pro-plus";
+  const isAllowedPlan = workspacePlan === "starter" || workspacePlan === "pro" || workspacePlan === "pro-plus" || workspacePlan === "agency";
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

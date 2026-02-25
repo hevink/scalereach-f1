@@ -23,7 +23,7 @@ export interface ShareManagerProps {
     videoId: string;
     workspaceSlug: string;
     clipCount: number;
-    userPlan: "free" | "starter" | "pro";
+    userPlan: "free" | "starter" | "pro" | "agency";
 }
 
 interface CreateShareResponse {
@@ -62,7 +62,7 @@ export function ShareManager({
         totalDownloads: 0,
     });
 
-    const isPro = userPlan === "pro";
+    const isPro = userPlan === "pro" || userPlan === "agency";
     const hasClips = clipCount > 0;
     const [showUpgradeDialog, setShowUpgradeDialog] = useState(false);
 

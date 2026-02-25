@@ -38,6 +38,16 @@ interface Plan {
     dodoProductIdYearly: string;
 }
 
+// Scarcity — auto-increments from a base date
+// Pro: +1/day from base of 28 on Feb 25 2026, cap at 100
+// Agency: +1 every 3 days from base of 4 on Feb 25 2026, cap at 10
+function getScarcityClaimed(base: number, total: number, daysInterval: number): number {
+    const baseDate = new Date("2026-02-25");
+    const now = new Date();
+    const daysPassed = Math.floor((now.getTime() - baseDate.getTime()) / (1000 * 60 * 60 * 24));
+    return Math.min(total, base + Math.floor(daysPassed / daysInterval));
+}
+
 const plans: Record<string, Plan> = {
     pro: {
         name: "Pro",
@@ -57,8 +67,8 @@ const plans: Record<string, Plan> = {
             "Highest Queue Priority",
         ],
         featured: true,
-        dodoProductIdMonthly: "pdt_0NY6llF7a0oFiFsaeVOW7",
-        dodoProductIdYearly: "pdt_0NY6lyuXXpnq6BWWOeDTy",
+        dodoProductIdMonthly: "pdt_0NZGBRrun07eXzoWlmzm2",
+        dodoProductIdYearly: "pdt_0NZGBSH8bWPajakeSOO8B",
     },
     agency: {
         name: "Agency",
@@ -71,15 +81,15 @@ const plans: Record<string, Plan> = {
             "Without Watermark",
             "Unlimited File Length",
             "Unlimited File Size Upload",
-            "Unlimited Storage",
+            "Storage: 6 Months (then auto-deleted)",
             "Unlimited Editing",
             "4K Clip Quality",
             "Unlimited Social Accounts",
             "Highest Queue Priority",
         ],
         featured: false,
-        dodoProductIdMonthly: "pdt_0NZFx5ffGwT1YxA1hGbe4",
-        dodoProductIdYearly: "pdt_0NZFxhZt01qOI9OLNEaSd",
+        dodoProductIdMonthly: "pdt_0NZGBScekA4L6yNm7r3BX",
+        dodoProductIdYearly: "pdt_0NZGBSvywqWyfQBbnGecS",
     },
     starter: {
         name: "Starter",
@@ -98,8 +108,8 @@ const plans: Record<string, Plan> = {
             "High Queue Priority",
         ],
         featured: false,
-        dodoProductIdMonthly: "pdt_0NY6k5d7b4MxSsVM7KzEV",
-        dodoProductIdYearly: "pdt_0NY6kJuPXxJUv7SFNbQOB",
+        dodoProductIdMonthly: "pdt_0NZGBR6GtydxMB2lNeh09",
+        dodoProductIdYearly: "pdt_0NZGBRV0VGyAffgoPOiMx",
     },
 };
 
@@ -125,6 +135,42 @@ const FEATURE_MESSAGES: Record<string, { title: string; message: string; subtitl
         subtitle: "Upgrade to Starter or Pro to unlock multiple workspaces, more minutes, and premium features.",
     },
 };
+
+function ScarcityBar({ planKey }: { planKey: string }) {
+    let claimed = 0;
+    let total = 0;
+
+    if (planKey === "pro") {
+        total = 100;
+        claimed = getScarcityClaimed(28, total, 1);
+    } else if (planKey === "agency") {
+        total = 10;
+        claimed = getScarcityClaimed(4, total, 3);
+    } else {
+        return null;
+    }
+
+    const pct = Math.min(100, Math.round((claimed / total) * 100));
+    const isSoldOut = claimed >= total;
+    const remaining = total - claimed;
+
+    return (
+        <div className="mt-3 space-y-1.5">
+            <div className="flex items-center justify-between text-xs">
+                <span className={isSoldOut ? "text-destructive font-medium" : "text-amber-600 dark:text-amber-400 font-medium"}>
+                    {isSoldOut ? "🔒 Sold out — join waitlist" : `🔥 Only ${remaining} spot${remaining === 1 ? "" : "s"} left`}
+                </span>
+                <span className="text-muted-foreground">{claimed}/{total} claimed</span>
+            </div>
+            <div className="h-1.5 w-full rounded-full bg-muted overflow-hidden">
+                <div
+                    className={`h-full rounded-full transition-all duration-500 ${isSoldOut ? "bg-destructive" : pct >= 80 ? "bg-amber-500" : "bg-primary"}`}
+                    style={{ width: `${pct}%` }}
+                />
+            </div>
+        </div>
+    );
+}
 
 function PricingCard({
     planKey,
@@ -170,6 +216,7 @@ function PricingCard({
                 <div className="text-muted-foreground mt-1 text-balance text-sm">
                     {plan.description}
                 </div>
+                <ScarcityBar planKey={planKey} />
             </div>
 
             <div>
