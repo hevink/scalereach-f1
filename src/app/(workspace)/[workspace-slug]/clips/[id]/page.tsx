@@ -30,12 +30,9 @@ import { KeyboardShortcutsModal, useKeyboardShortcutsModal } from "@/components/
 import { CaptionPanelTabs } from "@/components/captions/caption-panel-tabs";
 import { VideoCanvasEditor, type VideoCanvasEditorRef } from "@/components/video/video-canvas-editor";
 import { TranscriptParagraphView } from "@/components/transcript/transcript-paragraph-view";
-import { ExportOptions } from "@/components/export/export-options";
-import { ExportProgress } from "@/components/export/export-progress";
 import { useClip, useUpdateClipBoundaries, useUpdateClip } from "@/hooks/useClips";
 import { useVideo } from "@/hooks/useVideo";
 import { useCaptionStyle, useUpdateCaptionStyle, useCaptionTemplates } from "@/hooks/useCaptions";
-import { useInitiateExport } from "@/hooks/useExport";
 import { useMinutesBalance } from "@/hooks/useMinutes";
 import { useWorkspaceBySlug } from "@/hooks/useWorkspace";
 import { savePageScrollPosition } from "@/hooks/useScrollPosition";
@@ -43,7 +40,6 @@ import { useCaptionStylePresets } from "@/hooks/useCaptionStylePresets";
 import { useKeyboardShortcuts, type KeyboardShortcut } from "@/hooks/useKeyboardShortcuts";
 import type { CaptionStyle, Caption, CaptionWord } from "@/lib/api/captions";
 import { captionsApi } from "@/lib/api/captions";
-import type { ExportOptions as ExportOptionsType } from "@/lib/api/export";
 import { analytics } from "@/lib/analytics";
 import { AiHookPanel } from "@/components/clips/ai-hook-panel";
 import { ClipInfoPanel } from "@/components/clips/clip-info-panel";
@@ -296,81 +292,6 @@ function EditorHeader({
     );
 }
 
-// ============================================================================
-// Export Dialog Component
-// ============================================================================
-
-interface ExportDialogProps {
-    open: boolean;
-    onOpenChange: (open: boolean) => void;
-    clipId: string;
-    captionStyleId?: string;
-    creditCost?: number;
-    userCredits?: number;
-    activeExportId: string | null;
-    onExport: (options: ExportOptionsType) => void;
-    onExportComplete: (downloadUrl: string) => void;
-    onExportError: (error: string) => void;
-    onReset: () => void;
-    isExporting: boolean;
-    hasProAccess?: boolean;
-}
-
-function ExportDialog({
-    open,
-    onOpenChange,
-    clipId,
-    captionStyleId,
-    creditCost,
-    userCredits,
-    activeExportId,
-    onExport,
-    onExportComplete,
-    onExportError,
-    onReset,
-    isExporting,
-    hasProAccess,
-}: ExportDialogProps) {
-    return (
-        <Dialog open={open} onOpenChange={onOpenChange}>
-            <DialogContent className="max-w-md">
-                <DialogHeader>
-                    <DialogTitle>Export Clip</DialogTitle>
-                    <DialogDescription>
-                        Configure settings and download your clip.
-                    </DialogDescription>
-                </DialogHeader>
-                <div className="py-2">
-                    {activeExportId ? (
-                        <div className="flex flex-col gap-4">
-                            <ExportProgress
-                                exportId={activeExportId}
-                                onComplete={onExportComplete}
-                                onError={onExportError}
-                            />
-                            <Button
-                                variant="outline"
-                                onClick={onReset}
-                                className="w-full rounded-xl"
-                            >
-                                Export Again
-                            </Button>
-                        </div>
-                    ) : (
-                        <ExportOptions
-                            onExport={onExport}
-                            creditCost={creditCost}
-                            userCredits={userCredits}
-                            disabled={isExporting}
-                            captionStyleId={captionStyleId}
-                            hasProAccess={hasProAccess}
-                        />
-                    )}
-                </div>
-            </DialogContent>
-        </Dialog>
-    );
-}
 
 // ============================================================================
 // Main Clip Editor Page Component
@@ -405,8 +326,6 @@ export default function ClipEditorPage({ params }: ClipEditorPageProps) {
     const [captionStyle, setCaptionStyle] = useState<CaptionStyle>(DEFAULT_CAPTION_STYLE);
     const [currentTime, setCurrentTime] = useState(0);
     const [isPlaying, setIsPlaying] = useState(false);
-    const [activeExportId, setActiveExportId] = useState<string | null>(null);
-    const [exportDialogOpen, setExportDialogOpen] = useState(false);
     const [clipBoundaries, setClipBoundaries] = useState<{ start: number; end: number } | null>(null);
     // Local edited words — single source of truth for caption edits
     // Both video overlay and transcript panel derive from this
@@ -495,7 +414,6 @@ export default function ClipEditorPage({ params }: ClipEditorPageProps) {
     const updateCaptionStyle = useUpdateCaptionStyle();
     const updateClipBoundaries = useUpdateClipBoundaries();
     const updateClip = useUpdateClip();
-    const initiateExport = useInitiateExport();
 
     // Convert words from API to Caption[] format for VIDEO OVERLAY
     // Groups words into segments of max 5 words (matching backend ASS subtitle generation)
@@ -884,54 +802,28 @@ export default function ClipEditorPage({ params }: ClipEditorPageProps) {
         setHasUnsavedChanges(false);
     }, [clipId, captionStyle, currentPresetId, clipBoundaries, localWords, updateCaptionStyle, updateClipBoundaries, saveLastUsedStyle]);
 
-    // Export handler
-    const handleExport = useCallback(
-        async (options: ExportOptionsType) => {
-            // Track clip export
-            analytics.clipExported({
-                clipId,
-                aspectRatio: "9:16",
-                quality: options.resolution as string,
-                withCaptions: !!currentPresetId,
-            });
-
-            // Save changes before exporting and wait for them to complete
-            try {
-                await handleSave();
-            } catch (e) {
-                console.error("Failed to save before export:", e);
-                // Continue with export anyway — backend will use whatever is in DB
-            }
-
-            initiateExport.mutate(
-                {
-                    clipId,
-                    options: {
-                        format: options.format as "mp4" | "mov",
-                        resolution: options.resolution as "720p" | "1080p" | "2k" | "4k",
-                        captionStyleId: currentPresetId ?? undefined,
-                    },
-                },
-                {
-                    onSuccess: (data) => {
-                        setActiveExportId(data.export.clipId || clipId);
-                    },
-                }
-            );
-        },
-        [clipId, currentPresetId, initiateExport, handleSave]
-    );
+    // Save & go to clips handler
+    const handleSaveAndGoToClips = useCallback(async () => {
+        try {
+            await handleSave();
+        } catch (e) {
+            console.error("Failed to save:", e);
+        }
+        if (clip?.videoId) {
+            router.push(`/${slug}/videos/${clip.videoId}/clips`);
+        } else {
+            router.push(`/${slug}`);
+        }
+    }, [handleSave, clip?.videoId, router, slug]);
 
     // Export completion handler — keep progress view so user can see download button
     const handleExportComplete = useCallback((downloadUrl: string) => {
         console.log("Export complete:", downloadUrl);
-        // Don't clear activeExportId — ExportProgress shows the completed state with download button
     }, []);
 
     // Export error handler — keep progress view so user can see error and retry
     const handleExportError = useCallback((error: string) => {
         console.error("Export error:", error);
-        // Don't clear activeExportId — ExportProgress shows the error with retry option
     }, []);
 
     /**
@@ -939,19 +831,12 @@ export default function ClipEditorPage({ params }: ClipEditorPageProps) {
      * @validates Requirements 14.5 - Escape exits fullscreen mode or closes modals
      */
     const handleEscape = useCallback(() => {
-        // Close export dialog if open
-        if (exportDialogOpen) {
-            setExportDialogOpen(false);
-            return;
-        }
-
-        // Exit fullscreen if in fullscreen mode
         if (document.fullscreenElement) {
             document.exitFullscreen().catch((err) => {
                 console.error("Error exiting fullscreen:", err);
             });
         }
-    }, [exportDialogOpen]);
+    }, []);
 
     /**
      * Handle undo action - restores the previous caption text state
@@ -1168,8 +1053,8 @@ export default function ClipEditorPage({ params }: ClipEditorPageProps) {
                         title={clip.title || "Untitled Clip"}
                         onBack={handleBack}
                         isSaving={isSaving}
-                        onExportClick={() => setExportDialogOpen(true)}
-                        hasActiveExport={!!activeExportId}
+                        onExportClick={handleSaveAndGoToClips}
+                        hasActiveExport={false}
                         workspaceSlug={slug}
                         videoId={clip.videoId}
                         videoTitle={video?.title ?? undefined}
@@ -1284,21 +1169,6 @@ export default function ClipEditorPage({ params }: ClipEditorPageProps) {
                     ),
                 }}
             </EditingLayout>
-
-            {/* Export Dialog */}
-            <ExportDialog
-                open={exportDialogOpen}
-                onOpenChange={setExportDialogOpen}
-                clipId={clipId}
-                captionStyleId={captionData?.templateId ?? undefined}
-                activeExportId={activeExportId}
-                onExport={handleExport}
-                onExportComplete={handleExportComplete}
-                onExportError={handleExportError}
-                onReset={() => setActiveExportId(null)}
-                isExporting={initiateExport.isPending}
-                hasProAccess={workspace?.plan === "starter" || workspace?.plan === "pro" || workspace?.plan === "agency"}
-            />
 
             {/* Keyboard Shortcuts Modal */}
             <KeyboardShortcutsModal
