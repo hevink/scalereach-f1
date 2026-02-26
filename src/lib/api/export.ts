@@ -9,13 +9,13 @@ export type ExportStatus = "queued" | "processing" | "completed" | "failed";
 export type BatchExportStatus = "processing" | "completed" | "partial" | "failed";
 
 export interface ExportOptions {
-  format: ExportFormat;
-  resolution: VideoResolution;
+  format?: ExportFormat;
+  resolution?: VideoResolution;
   captionStyleId?: string;
   brandKitId?: string;
   brandingOptions?: BrandingOptions;
-  targetLanguage?: string; // If set, export with translated captions
-  dubbingId?: string; // If set, export with dubbed audio
+  targetLanguage?: string;
+  dubbingId?: string;
 }
 
 export interface ExportRecord {

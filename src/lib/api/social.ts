@@ -36,6 +36,8 @@ export interface ScheduledPost {
   createdBy: string | null;
   createdAt: string;
   updatedAt: string;
+  clipTitle?: string | null;
+  clipThumbnailUrl?: string | null;
 }
 
 export interface SchedulePostPayload {

@@ -33,6 +33,7 @@ import { TranscriptParagraphView } from "@/components/transcript/transcript-para
 import { useClip, useUpdateClipBoundaries, useUpdateClip } from "@/hooks/useClips";
 import { useVideo } from "@/hooks/useVideo";
 import { useCaptionStyle, useUpdateCaptionStyle, useCaptionTemplates } from "@/hooks/useCaptions";
+import { useInitiateExport } from "@/hooks/useExport";
 import { useMinutesBalance } from "@/hooks/useMinutes";
 import { useWorkspaceBySlug } from "@/hooks/useWorkspace";
 import { savePageScrollPosition } from "@/hooks/useScrollPosition";
@@ -414,6 +415,7 @@ export default function ClipEditorPage({ params }: ClipEditorPageProps) {
     const updateCaptionStyle = useUpdateCaptionStyle();
     const updateClipBoundaries = useUpdateClipBoundaries();
     const updateClip = useUpdateClip();
+    const initiateExport = useInitiateExport();
 
     // Convert words from API to Caption[] format for VIDEO OVERLAY
     // Groups words into segments of max 5 words (matching backend ASS subtitle generation)
@@ -802,29 +804,32 @@ export default function ClipEditorPage({ params }: ClipEditorPageProps) {
         setHasUnsavedChanges(false);
     }, [clipId, captionStyle, currentPresetId, clipBoundaries, localWords, updateCaptionStyle, updateClipBoundaries, saveLastUsedStyle]);
 
-    // Save & go to clips handler
+    // Save, trigger export job, then redirect to clips page
     const handleSaveAndGoToClips = useCallback(async () => {
         try {
             await handleSave();
         } catch (e) {
             console.error("Failed to save:", e);
         }
-        if (clip?.videoId) {
-            router.push(`/${slug}/videos/${clip.videoId}/clips`);
-        } else {
-            router.push(`/${slug}`);
-        }
-    }, [handleSave, clip?.videoId, router, slug]);
 
-    // Export completion handler — keep progress view so user can see download button
-    const handleExportComplete = useCallback((downloadUrl: string) => {
-        console.log("Export complete:", downloadUrl);
-    }, []);
-
-    // Export error handler — keep progress view so user can see error and retry
-    const handleExportError = useCallback((error: string) => {
-        console.error("Export error:", error);
-    }, []);
+        initiateExport.mutate(
+            {
+                clipId,
+                options: {
+                    captionStyleId: currentPresetId ?? undefined,
+                },
+            },
+            {
+                onSettled: () => {
+                    if (clip?.videoId) {
+                        router.push(`/${slug}/videos/${clip.videoId}/clips`);
+                    } else {
+                        router.push(`/${slug}`);
+                    }
+                },
+            }
+        );
+    }, [handleSave, initiateExport, clipId, currentPresetId, clip?.videoId, router, slug]);
 
     /**
      * Handle Escape key - close export dialog or exit fullscreen
@@ -1027,10 +1032,6 @@ export default function ClipEditorPage({ params }: ClipEditorPageProps) {
     // When using full video, we need to use the clip's original boundaries
     const videoStartTime = isUsingRawClip ? 0 : clipWithBoundaries.startTime;
     const videoEndTime = isUsingRawClip ? (clipWithBoundaries.endTime - clipWithBoundaries.startTime) : clipWithBoundaries.endTime;
-    const clipDuration = clipWithBoundaries.endTime - clipWithBoundaries.startTime;
-
-    const thumbnailUrl = (video?.metadata?.thumbnail as string) || undefined;
-    const videoDuration = video?.duration || clip.duration || 60;
 
     // Captions for video overlay — derived from localWords (or server data) via captionsForVideo useMemo
     const videoCaptions = captionsForVideo;

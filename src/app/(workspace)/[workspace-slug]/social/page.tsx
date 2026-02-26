@@ -20,16 +20,25 @@ import {
   AlertDialogAction,
   AlertDialogCancel,
 } from "@/components/ui/alert-dialog";
+import { format, parseISO } from "date-fns";
+import { IconVideo } from "@tabler/icons-react";
 import { CalendarProvider } from "@/components/social/calendar/calendar-context";
 import { CalendarClientContainer } from "@/components/social/calendar/calendar-client-container";
 import { UpgradeDialog } from "@/components/pricing/upgrade-dialog";
+import {
+  TikTokIcon,
+  InstagramIcon,
+  YouTubeIcon,
+  TwitterIcon,
+  LinkedInIcon,
+} from "@/components/icons/platform-icons";
 
-const PLATFORMS = [
-  { id: "tiktok", label: "TikTok" },
-  { id: "instagram", label: "Instagram" },
-  { id: "youtube", label: "YouTube Shorts" },
-  { id: "twitter", label: "Twitter / X" },
-  { id: "linkedin", label: "LinkedIn" },
+const PLATFORMS: { id: string; label: string; Icon: React.ElementType }[] = [
+  { id: "tiktok", label: "TikTok", Icon: TikTokIcon },
+  { id: "instagram", label: "Instagram", Icon: InstagramIcon },
+  { id: "youtube", label: "YouTube Shorts", Icon: YouTubeIcon },
+  { id: "twitter", label: "Twitter / X", Icon: TwitterIcon },
+  { id: "linkedin", label: "LinkedIn", Icon: LinkedInIcon },
 ];
 
 const STATUS_COLORS: Record<string, string> = {
@@ -145,7 +154,10 @@ export default function SocialPage() {
             return (
               <div key={platform.id} className="flex flex-col gap-3 rounded-xl border bg-card p-4">
                 <div className="flex items-center justify-between">
-                  <span className="text-sm font-medium">{platform.label}</span>
+                  <div className="flex items-center gap-2">
+                    <platform.Icon className="size-4 shrink-0" />
+                    <span className="text-sm font-medium">{platform.label}</span>
+                  </div>
                   <Button
                     size="sm"
                     variant="outline"
@@ -252,55 +264,91 @@ export default function SocialPage() {
           </div>
         ) : (
           <div className="flex flex-col gap-2">
-            {filteredPosts.map((post) => (
-              <div key={post.id} className="flex items-center justify-between gap-4 rounded-xl border bg-card px-4 py-3">
-                <div className="flex min-w-0 flex-col gap-0.5">
-                  <div className="flex items-center gap-2">
-                    <span className="text-sm font-medium capitalize">{post.platform}</span>
-                    <span className={`rounded-full px-2 py-0.5 text-[11px] font-medium ${STATUS_COLORS[post.status] ?? ""}`}>
-                      {post.status}
-                    </span>
-                    {post.postType === "drip" && (
-                      <Badge variant="outline" className="h-5 text-[11px]">
-                        Drip #{(post.dripOrder ?? 0) + 1}
-                      </Badge>
+            {filteredPosts.map((post) => {
+              const PlatformIcon = PLATFORMS.find((p) => p.id === post.platform)?.Icon;
+              const scheduledDate = post.scheduledAt ? parseISO(post.scheduledAt) : parseISO(post.createdAt);
+              const postedDate = post.postedAt ? parseISO(post.postedAt) : null;
+              return (
+                <div key={post.id} className="flex items-center gap-4 rounded-xl border bg-card p-3">
+                  {/* Thumbnail */}
+                  <div className="relative size-16 shrink-0 overflow-hidden rounded-lg bg-muted/40">
+                    {post.clipThumbnailUrl ? (
+                      <img src={post.clipThumbnailUrl} alt={post.clipTitle || ""} className="absolute inset-0 size-full object-cover" />
+                    ) : (
+                      <div className="flex size-full items-center justify-center">
+                        <IconVideo size={20} className="opacity-30" />
+                      </div>
+                    )}
+                    {PlatformIcon && (
+                      <div className="absolute bottom-0.5 right-0.5 flex size-4 items-center justify-center rounded-full bg-background shadow">
+                        <PlatformIcon className="size-2.5" />
+                      </div>
                     )}
                   </div>
-                  {post.caption && (
-                    <p className="max-w-xs truncate text-xs text-muted-foreground">{post.caption}</p>
-                  )}
-                  {post.scheduledAt && (
-                    <p className="text-[11px] text-muted-foreground">
-                      Scheduled: {new Date(post.scheduledAt).toLocaleString()}
-                    </p>
-                  )}
-                  {post.platformPostUrl && (
-                    <a
-                      href={post.platformPostUrl}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-[11px] text-primary hover:underline"
+
+                  {/* Info */}
+                  <div className="flex min-w-0 flex-1 flex-col gap-1">
+                    <div className="flex items-center gap-2">
+                      <span className="truncate text-sm font-medium">
+                        {post.clipTitle || "Untitled clip"}
+                      </span>
+                      <span className={`shrink-0 rounded-full px-2 py-0.5 text-[11px] font-medium ${STATUS_COLORS[post.status] ?? ""}`}>
+                        {post.status}
+                      </span>
+                      {post.postType === "drip" && (
+                        <Badge variant="outline" className="h-5 shrink-0 text-[11px]">
+                          Drip #{(post.dripOrder ?? 0) + 1}
+                        </Badge>
+                      )}
+                    </div>
+
+                    <div className="flex items-center gap-1.5 text-[11px] text-muted-foreground">
+                      {PlatformIcon && <PlatformIcon className="size-3 shrink-0" />}
+                      <span className="capitalize">{post.platform}</span>
+                    </div>
+
+                    {postedDate ? (
+                      <p className="text-[11px] text-muted-foreground">
+                        Posted {format(postedDate, "MMM d, yyyy 'at' h:mm a")}
+                      </p>
+                    ) : (
+                      <div className="flex items-center gap-1 text-[11px]">
+                        <span className="font-medium text-foreground/70">
+                          {format(scheduledDate, "MMM d, yyyy")}
+                        </span>
+                        <span className="text-muted-foreground/50">·</span>
+                        <span className="font-semibold text-primary">
+                          {format(scheduledDate, "h:mm a")}
+                        </span>
+                      </div>
+                    )}
+
+                    {post.caption && (
+                      <p className="truncate text-[11px] text-muted-foreground/70">{post.caption}</p>
+                    )}
+                    {post.errorMessage && (
+                      <p className="text-[11px] text-destructive">{post.errorMessage}</p>
+                    )}
+                    {post.platformPostUrl && (
+                      <a href={post.platformPostUrl} target="_blank" rel="noopener noreferrer" className="text-[11px] text-primary hover:underline">
+                        View post →
+                      </a>
+                    )}
+                  </div>
+
+                  {post.status === "pending" && (
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      className="shrink-0 text-destructive hover:text-destructive"
+                      onClick={() => cancelPost.mutate(post.id)}
                     >
-                      View post →
-                    </a>
-                  )}
-                  {post.errorMessage && (
-                    <p className="text-[11px] text-destructive">{post.errorMessage}</p>
+                      Cancel
+                    </Button>
                   )}
                 </div>
-
-                {post.status === "pending" && (
-                  <Button
-                    size="sm"
-                    variant="ghost"
-                    className="shrink-0 text-destructive hover:text-destructive"
-                    onClick={() => cancelPost.mutate(post.id)}
-                  >
-                    Cancel
-                  </Button>
-                )}
-              </div>
-            ))}
+              );
+            })}
           </div>
         )}
       </section>
