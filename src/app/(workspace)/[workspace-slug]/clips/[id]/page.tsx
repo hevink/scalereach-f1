@@ -733,29 +733,16 @@ export default function ClipEditorPage({ params }: ClipEditorPageProps) {
         // Save original text for undo history
         setCaptionUndoState({ segmentId, text: editedSegment.text });
 
-        // Update transcript captions optimistically (paragraph-grouped)
-        const updatedTranscript = currentTranscript.map((caption: Caption) => {
-            if (caption.id === segmentId) {
-                return { ...caption, text: newText };
-            }
-            return caption;
-        });
-        setLocalTranscriptCaptions(updatedTranscript);
-
-        // Update the underlying words so video overlay re-derives with new text
+        // Build replacement words first (needed for both transcript and video overlay updates)
         const currentWords = localWords ?? captionData?.words ?? [];
         const newWords = newText.split(/\s+/).filter(Boolean);
         const segmentWordCount = editedSegment.words.length;
 
-        // Find the index of the first word in this segment
         const firstWordStart = editedSegment.words[0]?.start ?? 0;
         const lastWordEnd = editedSegment.words[segmentWordCount - 1]?.end ?? 0;
-        const startIdx = currentWords.findIndex(
-            (w) => w.start === firstWordStart
-        );
+        const startIdx = currentWords.findIndex((w) => w.start === firstWordStart);
         if (startIdx === -1) return;
 
-        // Build replacement words, distributing timing evenly across new word count
         const totalDuration = lastWordEnd - firstWordStart;
         const wordDuration = newWords.length > 0 ? totalDuration / newWords.length : 0;
         const replacementWords: CaptionWord[] = newWords.map((word, i) => ({
@@ -766,7 +753,17 @@ export default function ClipEditorPage({ params }: ClipEditorPageProps) {
             highlight: false,
         }));
 
-        // Splice the new words in place of the old segment words
+        // Update transcript captions with new text AND new words so subsequent edits
+        // have the correct word count and timing (fixes stale segmentWordCount bug)
+        const updatedTranscript = currentTranscript.map((caption: Caption) => {
+            if (caption.id === segmentId) {
+                return { ...caption, text: newText, words: replacementWords };
+            }
+            return caption;
+        });
+        setLocalTranscriptCaptions(updatedTranscript);
+
+        // Splice the new words in place of the old segment words for video overlay
         const updatedWords = [
             ...currentWords.slice(0, startIdx),
             ...replacementWords,
