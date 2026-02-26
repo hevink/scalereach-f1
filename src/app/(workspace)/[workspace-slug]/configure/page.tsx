@@ -251,6 +251,7 @@ export default function ConfigurePage() {
                 splitScreenBgCategoryId: config.splitScreenBgCategoryId,
                 splitRatio: config.splitRatio,
                 backgroundStyle: config.backgroundStyle,
+                enableSmartCrop: config.enableSmartCrop,
             });
         },
         onSuccess: (result) => {
@@ -309,6 +310,7 @@ export default function ConfigurePage() {
                 splitScreenBgCategoryId: config.splitScreenBgCategoryId,
                 splitRatio: config.splitRatio,
                 backgroundStyle: config.backgroundStyle,
+                enableSmartCrop: config.enableSmartCrop,
             });
         },
         onSuccess: (result) => {
@@ -695,6 +697,21 @@ export default function ConfigurePage() {
                                             <Switch
                                                 checked={config.enableIntroTitle ?? true}
                                                 onCheckedChange={(checked) => updateConfig({ enableIntroTitle: checked })}
+                                                disabled={isSubmitting}
+                                            />
+                                        </div>
+                                    </div>
+
+                                    {/* Smart AI Reframing */}
+                                    <div className="rounded-xl border bg-card p-4">
+                                        <div className="flex items-center justify-between">
+                                            <div>
+                                                <h3 className="font-semibold text-sm">Smart AI Reframing</h3>
+                                                <p className="text-muted-foreground text-xs">Automatically reframe horizontal video to 9:16 by tracking faces</p>
+                                            </div>
+                                            <Switch
+                                                checked={config.enableSmartCrop ?? false}
+                                                onCheckedChange={(checked) => updateConfig({ enableSmartCrop: checked })}
                                                 disabled={isSubmitting}
                                             />
                                         </div>

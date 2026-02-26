@@ -49,6 +49,8 @@ export interface VideoConfigInput {
   splitRatio?: number;
   // Background Style (for vertical non-split-screen clips)
   backgroundStyle?: "blur" | "black" | "white" | "gradient-ocean" | "gradient-midnight" | "gradient-sunset" | "mirror" | "zoom";
+  // Smart AI Reframing
+  enableSmartCrop?: boolean;
 }
 
 export interface VideoConfig extends VideoConfigInput {
@@ -173,4 +175,6 @@ export const DEFAULT_VIDEO_CONFIG: VideoConfigInput = {
   splitRatio: 50,
   // Background Style
   backgroundStyle: "black",
+  // Smart AI Reframing
+  enableSmartCrop: false,
 };

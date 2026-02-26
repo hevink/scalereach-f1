@@ -10,6 +10,7 @@ import {
     IconScissors,
     IconDownload,
     IconLoader,
+    IconDeviceMobile,
 } from "@tabler/icons-react";
 
 import { Button } from "@/components/ui/button";
@@ -34,6 +35,7 @@ import { useClip, useUpdateClipBoundaries, useUpdateClip } from "@/hooks/useClip
 import { useVideo } from "@/hooks/useVideo";
 import { useCaptionStyle, useUpdateCaptionStyle, useCaptionTemplates } from "@/hooks/useCaptions";
 import { useInitiateExport } from "@/hooks/useExport";
+import { useSmartCropStatus, useTriggerSmartCrop } from "@/hooks/useSmartCrop";
 import { useMinutesBalance } from "@/hooks/useMinutes";
 import { useWorkspaceBySlug } from "@/hooks/useWorkspace";
 import { savePageScrollPosition } from "@/hooks/useScrollPosition";
@@ -190,6 +192,8 @@ interface EditorHeaderProps {
     videoTitle?: string;
     hasUnsavedChanges?: boolean;
     onSave?: () => void;
+    clipId?: string;
+    clipStatus?: string;
 }
 
 /**
@@ -206,7 +210,15 @@ function EditorHeader({
     videoTitle,
     hasUnsavedChanges = false,
     onSave,
+    clipId,
+    clipStatus,
 }: EditorHeaderProps) {
+    const { data: smartCrop } = useSmartCropStatus(clipId || "", !!clipId && (clipStatus === "ready" || clipStatus === "exported"));
+    const { mutate: triggerSmartCrop, isPending: isTriggering } = useTriggerSmartCrop(clipId || "");
+
+    const isClipReady = clipStatus === "ready" || clipStatus === "exported";
+    const scStatus = smartCrop?.status || "not_started";
+    const scProcessing = scStatus === "pending" || scStatus === "processing";
     return (
         <div className="flex flex-col gap-2 px-4 py-3">
             {/* Breadcrumb Navigation */}
@@ -287,6 +299,38 @@ function EditorHeader({
                         <IconDownload className="size-4" />
                         {hasUnsavedChanges ? "Save & Export" : "Export"}
                     </Button>
+                    {isClipReady && (
+                        scStatus === "done" ? (
+                            <a
+                                href={smartCrop?.smartCropStorageUrl || "#"}
+                                target="_blank"
+                                rel="noreferrer"
+                                className="inline-flex items-center gap-2 rounded-md border border-input bg-background px-3 py-2 text-sm font-medium hover:bg-accent hover:text-accent-foreground"
+                            >
+                                <IconDeviceMobile className="size-4" />
+                                Download Vertical
+                            </a>
+                        ) : (
+                            <Button
+                                variant="outline"
+                                className="gap-2"
+                                onClick={() => triggerSmartCrop()}
+                                disabled={isTriggering || scProcessing}
+                            >
+                                {scProcessing ? (
+                                    <>
+                                        <IconLoader className="size-4 animate-spin" />
+                                        {smartCrop?.progress ? `${smartCrop.progress}%` : "Processing..."}
+                                    </>
+                                ) : (
+                                    <>
+                                        <IconDeviceMobile className="size-4" />
+                                        Create Vertical
+                                    </>
+                                )}
+                            </Button>
+                        )
+                    )}
                 </div>
             </div>
         </div>
@@ -1061,6 +1105,8 @@ export default function ClipEditorPage({ params }: ClipEditorPageProps) {
                         videoTitle={video?.title ?? undefined}
                         hasUnsavedChanges={hasUnsavedChanges}
                         onSave={handleSave}
+                        clipId={clip.id}
+                        clipStatus={clip.status}
                     />
                 }
             >

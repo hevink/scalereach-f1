@@ -98,6 +98,7 @@ export interface SubmitVideoWithConfigRequest {
     splitScreenBgCategoryId?: string | null;
     splitRatio?: number;
     backgroundStyle?: string;
+    enableSmartCrop?: boolean;
   };
 }
 
