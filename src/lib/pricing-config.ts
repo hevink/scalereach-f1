@@ -61,8 +61,8 @@ export const plans: Record<string, Plan> = {
         features: [
             "Unlimited Minutes",
             "Without Watermark",
-            "Unlimited File Length",
-            "Unlimited File Size Upload",
+            "Up to 3h File Length",
+            "Up to 4GB File Size Upload",
             "Storage: 6 Months (then auto-deleted)",
             "Unlimited Editing",
             "4K Clip Quality",

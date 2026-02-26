@@ -864,11 +864,7 @@ export default function ClipEditorPage({ params }: ClipEditorPageProps) {
         // Save edited caption words if there are local changes
         if (localWords && localWords.length > 0) {
             promises.push(
-                captionsApi.updateCaptionWords(clipId, localWords).then(() => {
-                    // Clear local words after successful save so we re-derive from server data
-                    setLocalWords(null);
-                    setLocalTranscriptCaptions(null);
-                })
+                captionsApi.updateCaptionWords(clipId, localWords)
             );
         }
 
