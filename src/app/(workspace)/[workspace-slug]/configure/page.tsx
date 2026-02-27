@@ -63,6 +63,26 @@ function isValidYouTubeUrl(url: string): boolean {
     return YOUTUBE_URL_PATTERNS.some((pattern) => pattern.test(url.trim()));
 }
 
+function getFriendlyYouTubeError(error: string): string {
+    const msg = error.toLowerCase();
+    if (msg.includes("sign in") || msg.includes("not a bot") || msg.includes("cookies") || msg.includes("confirm you")) {
+        return "YouTube service is temporarily unavailable. Please try again in a few minutes.";
+    }
+    if (msg.includes("private") || msg.includes("members only")) {
+        return "This video is private or members-only and cannot be processed.";
+    }
+    if (msg.includes("unavailable") || msg.includes("removed") || msg.includes("does not exist")) {
+        return "This video is unavailable or has been removed.";
+    }
+    if (msg.includes("age") || msg.includes("age-restricted")) {
+        return "This video is age-restricted and cannot be processed.";
+    }
+    if (msg.includes("network") || msg.includes("fetch") || msg.includes("econnrefused")) {
+        return "Network error. Please check your connection and try again.";
+    }
+    return error || "Could not fetch video information. Please try again.";
+}
+
 function formatDuration(seconds: number): string {
     const hrs = Math.floor(seconds / 3600);
     const mins = Math.floor((seconds % 3600) / 60);
@@ -362,13 +382,13 @@ export default function ConfigurePage() {
                 } else {
                     setValidationState("invalid");
                     setVideoInfo(null);
-                    setErrorMessage(result.error || "Could not fetch video information");
+                    setErrorMessage(getFriendlyYouTubeError(result.error || ""));
                 }
             } catch (error: any) {
                 setValidationState("invalid");
                 setVideoInfo(null);
-                const errorMsg = error?.response?.data?.error || error?.message || "Failed to validate YouTube URL";
-                setErrorMessage(errorMsg);
+                const rawMsg = error?.response?.data?.error || error?.message || "";
+                setErrorMessage(getFriendlyYouTubeError(rawMsg));
             }
         }, 500);
         return () => clearTimeout(timeoutId);
