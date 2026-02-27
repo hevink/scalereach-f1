@@ -428,7 +428,7 @@ export function VideoCard({
             </div>
 
             {/* Delete Confirmation Dialog */}
-            <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+            <AlertDialog open={showDeleteDialog} onOpenChange={(open) => { if (!isDeletingLocal && !isDeleting) setShowDeleteDialog(open); }}>
                 <AlertDialogContent>
                     <AlertDialogHeader>
                         <AlertDialogTitle>Delete video?</AlertDialogTitle>
