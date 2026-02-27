@@ -1,5 +1,6 @@
 "use client";
 
+import * as Sentry from "@sentry/nextjs";
 import { useState, useCallback, useEffect, useRef } from "react";
 import { useRouter, useParams, useSearchParams } from "next/navigation";
 import {
@@ -382,12 +383,24 @@ export default function ConfigurePage() {
                 } else {
                     setValidationState("invalid");
                     setVideoInfo(null);
-                    setErrorMessage(getFriendlyYouTubeError(result.error || ""));
+                    const rawError = result.error || "";
+                    if (rawError.toLowerCase().includes("sign in") || rawError.toLowerCase().includes("not a bot") || rawError.toLowerCase().includes("cookies")) {
+                        Sentry.captureMessage("YouTube bot detection triggered", {
+                            level: "error",
+                            tags: { feature: "youtube-validation" },
+                            extra: { url: trimmedUrl, rawError },
+                        });
+                    }
+                    setErrorMessage(getFriendlyYouTubeError(rawError));
                 }
             } catch (error: any) {
                 setValidationState("invalid");
                 setVideoInfo(null);
                 const rawMsg = error?.response?.data?.error || error?.message || "";
+                Sentry.captureException(error, {
+                    tags: { feature: "youtube-validation" },
+                    extra: { url: trimmedUrl, rawError: rawMsg },
+                });
                 setErrorMessage(getFriendlyYouTubeError(rawMsg));
             }
         }, 500);
