@@ -741,11 +741,14 @@ export default function ConfigurePage() {
                                             <div>
                                                 <h3 className="font-semibold text-sm">Smart AI Reframing</h3>
                                                 <p className="text-muted-foreground text-xs">Automatically reframe horizontal video to 9:16 by tracking faces</p>
+                                                {(config.enableSplitScreen ?? false) && (
+                                                    <p className="text-xs text-amber-500 mt-1">Disable Split Screen to use Smart AI Reframing</p>
+                                                )}
                                             </div>
                                             <Switch
                                                 checked={config.enableSmartCrop ?? false}
                                                 onCheckedChange={(checked) => updateConfig({ enableSmartCrop: checked })}
-                                                disabled={isSubmitting}
+                                                disabled={isSubmitting || (config.enableSplitScreen ?? false)}
                                             />
                                         </div>
                                     </div>
@@ -816,10 +819,13 @@ export default function ConfigurePage() {
                                     <div className="rounded-xl border bg-card p-4 space-y-2">
                                         <h3 className="font-semibold text-sm">Layout Options</h3>
                                         <div className="pt-1">
+                                            {(config.enableSmartCrop ?? false) && (
+                                                <p className="text-xs text-amber-500 mb-2">Disable Smart AI Reframing to use Split Screen</p>
+                                            )}
                                             <SplitScreenSection
                                                 config={config}
                                                 onChange={updateConfig}
-                                                disabled={isSubmitting}
+                                                disabled={isSubmitting || (config.enableSmartCrop ?? false)}
                                                 userPlan={workspace?.plan || "free"}
                                                 workspaceSlug={workspaceSlug}
                                             />
