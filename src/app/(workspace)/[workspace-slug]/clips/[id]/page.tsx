@@ -378,6 +378,7 @@ export default function ClipEditorPage({ params }: ClipEditorPageProps) {
     const [localTranscriptCaptions, setLocalTranscriptCaptions] = useState<Caption[] | null>(null);
     // Track unsaved changes
     const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
+    const [isSavingWords, setIsSavingWords] = useState(false);
     const [showUnsavedDialog, setShowUnsavedDialog] = useState(false);
     const [pendingNavigation, setPendingNavigation] = useState<(() => void) | null>(null);
 
@@ -794,7 +795,7 @@ export default function ClipEditorPage({ params }: ClipEditorPageProps) {
     );
 
     /**
-     * Handle save action - saves all pending changes (caption style and clip boundaries)
+     * Handle save action - saves all pending changes (caption style, words, and clip boundaries)
      * Triggered by Ctrl+S / Cmd+S keyboard shortcut or Save & Export button
      * @validates Requirements 14.4 - Ctrl+S (or Cmd+S on Mac) saves all pending changes
      */
@@ -810,15 +811,16 @@ export default function ClipEditorPage({ params }: ClipEditorPageProps) {
                     templateId: currentPresetId,
                 })
             );
-
-            // Save the style as last used
             saveLastUsedStyle(captionStyle, currentPresetId);
         }
 
         // Save edited caption words if there are local changes
-        if (localWords && localWords.length > 0) {
+        if (localWords !== null && localWords.length > 0) {
+            setIsSavingWords(true);
             promises.push(
-                captionsApi.updateCaptionWords(clipId, localWords)
+                captionsApi.updateCaptionWords(clipId, localWords).finally(() => {
+                    setIsSavingWords(false);
+                })
             );
         }
 
@@ -836,8 +838,6 @@ export default function ClipEditorPage({ params }: ClipEditorPageProps) {
         }
 
         await Promise.all(promises);
-
-        // Clear unsaved changes flag
         setHasUnsavedChanges(false);
     }, [clipId, captionStyle, currentPresetId, clipBoundaries, localWords, updateCaptionStyle, updateClipBoundaries, saveLastUsedStyle]);
 
@@ -1078,7 +1078,7 @@ export default function ClipEditorPage({ params }: ClipEditorPageProps) {
 
     // Determine if saving is in progress (includes caption text auto-save)
     // @validates Requirements 13.2 - Show saving indicator during save operations
-    const isSaving = updateCaptionStyle.isPending || updateClipBoundaries.isPending;
+    const isSaving = updateCaptionStyle.isPending || updateClipBoundaries.isPending || isSavingWords;
 
     return (
         <>
@@ -1123,6 +1123,7 @@ export default function ClipEditorPage({ params }: ClipEditorPageProps) {
                                     }))}
                                     currentTime={currentTime}
                                     onWordClick={handleSegmentClick}
+                                    onSegmentEdit={handleCaptionEdit}
                                     highlightCurrent
                                     className="h-full"
                                 />
