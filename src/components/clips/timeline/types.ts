@@ -112,6 +112,8 @@ export interface AdvancedTimelineProps {
     onSkipForward?: () => void;
     onSkipBackward?: () => void;
     videoSrc?: string;
+    textOverlays?: { id: string; text: string; startTime: number; endTime: number; color: string }[];
+    onTextOverlayClick?: (id: string) => void;
     className?: string;
 }
 

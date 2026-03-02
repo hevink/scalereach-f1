@@ -5,6 +5,7 @@ import {
     IconTextCaption,
     IconX,
     IconInfoCircle,
+    IconLetterT,
 } from "@tabler/icons-react";
 
 import { cn } from "@/lib/utils";
@@ -19,13 +20,14 @@ import {
 // Types
 // ============================================================================
 
-export type ToolbarPanel = "captions" | "clip-info" | null;
+export type ToolbarPanel = "captions" | "clip-info" | "text-overlay" | null;
 
 export interface EditorToolbarProps {
     activePanel: ToolbarPanel;
     onPanelChange: (panel: ToolbarPanel) => void;
     captionsPanel?: ReactNode;
     clipInfoPanel?: ReactNode;
+    textOverlayPanel?: ReactNode;
     className?: string;
 }
 
@@ -38,6 +40,7 @@ interface ToolbarItem {
 
 const TOOLBAR_ITEMS: ToolbarItem[] = [
     { id: "captions", icon: IconTextCaption, label: "Captions" },
+    { id: "text-overlay", icon: IconLetterT, label: "Text Overlay" },
     { id: "clip-info", icon: IconInfoCircle, label: "Clip Info" },
 ];
 
@@ -114,6 +117,7 @@ export function EditorToolbar({
     onPanelChange,
     captionsPanel,
     clipInfoPanel,
+    textOverlayPanel,
     className,
 }: EditorToolbarProps) {
     const handleItemClick = (itemId: ToolbarPanel) => {
@@ -128,6 +132,7 @@ export function EditorToolbar({
     const getPanelContent = (panel: ToolbarPanel): ReactNode => {
         if (panel === "captions") return captionsPanel;
         if (panel === "clip-info") return clipInfoPanel;
+        if (panel === "text-overlay") return textOverlayPanel;
         return null;
     };
 

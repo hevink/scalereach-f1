@@ -14,6 +14,7 @@ export { ContextMenu } from "./context-menu";
 export { Marker } from "./marker";
 export { LoopRegionOverlay } from "./loop-region";
 export { TrackResizer } from "./track-resizer";
+export { TextOverlayTrack } from "./text-overlay-track";
 
 export type {
     AdvancedTimelineProps,

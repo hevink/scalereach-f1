@@ -17,6 +17,7 @@ import { Toolbar } from "./toolbar";
 import { LoopRegionOverlay } from "./loop-region";
 import { Marker } from "./marker";
 import { TrackResizer } from "./track-resizer";
+import { TextOverlayTrack } from "./text-overlay-track";
 
 
 // ============================================================================
@@ -45,6 +46,8 @@ export function TimelineContainer({
     onSkipForward,
     onSkipBackward,
     videoSrc,
+    textOverlays,
+    onTextOverlayClick,
     className,
 }: AdvancedTimelineProps) {
     const [isVisible, setIsVisible] = React.useState(true);
@@ -174,6 +177,7 @@ export function TimelineContainer({
     const totalTracksHeight =
         (videoTrack?.visible ? videoTrack.height : 0) +
         (audioTrack?.visible ? audioTrack.height : 0) +
+        (textOverlays && textOverlays.length > 0 ? 40 : 0) +
         16; // padding
 
     if (!isVisible) {
@@ -252,6 +256,24 @@ export function TimelineContainer({
                                 <div className="flex">
                                     <TrackLabel track={audioTrack} />
                                     <AudioTrack track={audioTrack} />
+                                </div>
+                            )}
+
+                            {/* Text overlay track */}
+                            {textOverlays && textOverlays.length > 0 && (
+                                <div className="flex">
+                                    <div
+                                        className="flex items-center gap-1.5 px-2 border-r border-zinc-800 bg-zinc-900/50 shrink-0"
+                                        style={{ width: TRACK_LABEL_WIDTH, height: 32 }}
+                                        data-no-seek
+                                    >
+                                        <div className="w-1.5 h-1.5 rounded-full bg-amber-500" />
+                                        <span className="text-[10px] font-medium text-zinc-300 leading-none">Text</span>
+                                    </div>
+                                    <TextOverlayTrack
+                                        overlays={textOverlays}
+                                        onOverlayClick={onTextOverlayClick}
+                                    />
                                 </div>
                             )}
 

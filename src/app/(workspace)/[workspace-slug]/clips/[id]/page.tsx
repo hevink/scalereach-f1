@@ -45,6 +45,7 @@ import type { CaptionStyle, Caption, CaptionWord } from "@/lib/api/captions";
 import { captionsApi } from "@/lib/api/captions";
 import { analytics } from "@/lib/analytics";
 import { ClipInfoPanel } from "@/components/clips/clip-info-panel";
+import { TextOverlayPanel, type TextOverlay } from "@/components/clips/text-overlay-panel";
 import {
     Dialog,
     DialogContent,
@@ -384,6 +385,9 @@ export default function ClipEditorPage({ params }: ClipEditorPageProps) {
 
     const [activeToolbarPanel, setActiveToolbarPanel] = useState<ToolbarPanel>(null);
 
+    // Text overlay state
+    const [textOverlays, setTextOverlays] = useState<TextOverlay[]>([]);
+
     // Undo/redo state management for caption text edits
     const {
         state: captionUndoState,
@@ -450,7 +454,7 @@ export default function ClipEditorPage({ params }: ClipEditorPageProps) {
     } = useVideo(clip?.videoId ?? "");
 
     // Fetch caption style for this clip
-    const { data: captionData } = useCaptionStyle(clipId);
+    const { data: captionData, isLoading: captionLoading } = useCaptionStyle(clipId);
 
     // Fetch user minutes balance
     const { data: minutesBalance } = useMinutesBalance(workspace?.id);
@@ -597,6 +601,13 @@ export default function ClipEditorPage({ params }: ClipEditorPageProps) {
             setCurrentPresetId(firstTemplate.id);
         }
     }, [captionData?.style, captionData?.templateId, getLastUsedStyle, apiTemplates]);
+
+    // Initialize text overlays from fetched data
+    useEffect(() => {
+        if (captionData?.textOverlays && captionData.textOverlays.length > 0) {
+            setTextOverlays(captionData.textOverlays);
+        }
+    }, [captionData?.textOverlays]);
 
     // Sync selected preset ID from hook
     useEffect(() => {
@@ -761,6 +772,24 @@ export default function ClipEditorPage({ params }: ClipEditorPageProps) {
     );
 
     /**
+     * Handle text overlay changes
+     */
+    const handleTextOverlayChange = useCallback((overlays: TextOverlay[]) => {
+        setTextOverlays(overlays);
+        setHasUnsavedChanges(true);
+    }, []);
+
+    /**
+     * Handle text overlay drag/resize on video preview
+     */
+    const handleTextOverlayDrag = useCallback((id: string, updates: { x?: number; y?: number; fontSize?: number; maxWidth?: number; text?: string }) => {
+        setTextOverlays((prev) =>
+            prev.map((o) => (o.id === id ? { ...o, ...updates } : o))
+        );
+        setHasUnsavedChanges(true);
+    }, []);
+
+    /**
      * Handle preset selection
      * Marks changes as unsaved instead of auto-saving
      */
@@ -837,9 +866,16 @@ export default function ClipEditorPage({ params }: ClipEditorPageProps) {
             );
         }
 
+        // Save text overlays if there are any
+        if (textOverlays.length > 0) {
+            promises.push(
+                captionsApi.updateTextOverlays(clipId, textOverlays)
+            );
+        }
+
         await Promise.all(promises);
         setHasUnsavedChanges(false);
-    }, [clipId, captionStyle, currentPresetId, clipBoundaries, localWords, updateCaptionStyle, updateClipBoundaries, saveLastUsedStyle]);
+    }, [clipId, captionStyle, currentPresetId, clipBoundaries, localWords, textOverlays, updateCaptionStyle, updateClipBoundaries, saveLastUsedStyle]);
 
     // Save, trigger export job, then redirect to clips page
     const handleSaveAndGoToClips = useCallback(async () => {
@@ -1107,7 +1143,14 @@ export default function ClipEditorPage({ params }: ClipEditorPageProps) {
                     /* Left Panel: Caption Editor (Paragraph View) */
                     captionEditor: (
                         <div className="h-full">
-                            {video?.id ? (
+                            {captionLoading ? (
+                                <div className="flex items-center justify-center h-full bg-zinc-900">
+                                    <div className="flex flex-col items-center gap-2">
+                                        <IconLoader className="size-6 animate-spin text-zinc-400" />
+                                        <p className="text-sm text-zinc-500">Loading transcript...</p>
+                                    </div>
+                                </div>
+                            ) : video?.id ? (
                                 <TranscriptParagraphView
                                     segments={transcriptCaptions.map((c) => ({
                                         id: c.id,
@@ -1153,6 +1196,8 @@ export default function ClipEditorPage({ params }: ClipEditorPageProps) {
                                     captionStyle={captionStyle}
                                     onCaptionStyleChange={handleStyleChange}
                                     onTimeUpdate={handleTimeUpdate}
+                                    textOverlays={textOverlays}
+                                    onTextOverlayChange={handleTextOverlayDrag}
                                     aspectRatio="9:16"
                                     className="flex-1 rounded-lg overflow-hidden"
                                 />
@@ -1183,6 +1228,15 @@ export default function ClipEditorPage({ params }: ClipEditorPageProps) {
                         <ClipInfoPanel clip={clip} />
                     ),
 
+                    /* Right Panel: Text Overlay */
+                    textOverlayPanel: (
+                        <TextOverlayPanel
+                            overlays={textOverlays}
+                            onChange={handleTextOverlayChange}
+                            clipDuration={videoEndTime - videoStartTime}
+                        />
+                    ),
+
                     /* Bottom Panel: Timeline Editor */
                     timeline: (
                         <AdvancedTimeline
@@ -1195,6 +1249,14 @@ export default function ClipEditorPage({ params }: ClipEditorPageProps) {
                             onSkipForward={handleSkipForward}
                             onSkipBackward={handleSkipBackward}
                             videoSrc={videoSrc}
+                            textOverlays={textOverlays.map((o) => ({
+                                id: o.id,
+                                text: o.text,
+                                startTime: o.startTime,
+                                endTime: o.endTime,
+                                color: o.color,
+                            }))}
+                            onTextOverlayClick={() => setActiveToolbarPanel("text-overlay")}
                             className="w-full"
                         />
                     ),

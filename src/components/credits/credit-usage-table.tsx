@@ -365,28 +365,23 @@ export function CreditUsageTable({ workspaceSlug }: CreditUsageTableProps) {
     });
 
     return (
-        <div className="space-y-4">
+        <div className="space-y-3">
             {/* Header with filters */}
             <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                    <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-primary/10">
-                        <IconClock className="h-4 w-4 text-primary" />
-                    </div>
-                    <div>
-                        <h3 className="text-base font-semibold">Transaction History</h3>
-                        <p className="text-xs text-muted-foreground mt-0.5">
-                            {transactions.length} total transactions
-                        </p>
-                    </div>
+                <div>
+                    <h3 className="text-base font-semibold">Transaction History</h3>
+                    <p className="text-xs text-muted-foreground mt-0.5">
+                        {transactions.length} transaction{transactions.length !== 1 ? "s" : ""}
+                    </p>
                 </div>
                 <div className="flex items-center gap-2">
                     <Select value={typeFilter} onValueChange={(value) => setTypeFilter(value || "all")}>
-                        <SelectTrigger className="w-[140px] h-9">
+                        <SelectTrigger className="w-[140px] h-8 text-xs">
                             <SelectValue placeholder="Filter by type" />
                         </SelectTrigger>
                         <SelectContent>
                             {TRANSACTION_TYPES.map((type) => (
-                                <SelectItem key={type.value} value={type.value}>
+                                <SelectItem key={type.value} value={type.value} className="text-xs">
                                     {type.label}
                                 </SelectItem>
                             ))}
@@ -394,16 +389,14 @@ export function CreditUsageTable({ workspaceSlug }: CreditUsageTableProps) {
                     </Select>
                     <Select
                         value={table.getState().pagination.pageSize.toString()}
-                        onValueChange={(value) => {
-                            table.setPageSize(Number(value));
-                        }}
+                        onValueChange={(value) => table.setPageSize(Number(value))}
                     >
-                        <SelectTrigger className="w-[100px] h-9">
+                        <SelectTrigger className="w-[90px] h-8 text-xs">
                             <SelectValue />
                         </SelectTrigger>
                         <SelectContent>
                             {[10, 25, 50, 100].map((pageSize) => (
-                                <SelectItem key={pageSize} value={pageSize.toString()}>
+                                <SelectItem key={pageSize} value={pageSize.toString()} className="text-xs">
                                     {pageSize} rows
                                 </SelectItem>
                             ))}
@@ -412,14 +405,11 @@ export function CreditUsageTable({ workspaceSlug }: CreditUsageTableProps) {
                     <Button
                         variant="outline"
                         size="icon"
-                        className="h-9 w-9"
+                        className="h-8 w-8"
                         onClick={() => refetch()}
                         disabled={isLoading}
                     >
-                        <IconRefresh className={cn(
-                            "h-4 w-4",
-                            isLoading && "animate-spin"
-                        )} />
+                        <IconRefresh className={cn("h-3.5 w-3.5", isLoading && "animate-spin")} />
                     </Button>
                 </div>
             </div>

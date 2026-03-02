@@ -69,7 +69,23 @@ export interface ClipCaptionsResponse {
   words: CaptionWord[];
   style: CaptionStyle | null;
   templateId: string | null;
+  textOverlays: TextOverlayData[];
   isEdited: boolean;
+}
+
+export interface TextOverlayData {
+  id: string;
+  text: string;
+  x: number;
+  y: number;
+  fontSize: number;
+  fontFamily: string;
+  color: string;
+  backgroundColor: string;
+  backgroundOpacity: number;
+  startTime: number;
+  endTime: number;
+  animation: "none" | "fade-in" | "slide-up" | "typewriter";
 }
 
 export interface CaptionStyleResponse {
@@ -195,6 +211,17 @@ export const captionsApi = {
     const response = await api.post<ClipCaptionsResponse>(`/api/clips/${clipId}/captions/reset`, {
       resetStyle,
     });
+    return response.data;
+  },
+
+  /**
+   * Update text overlays for a clip
+   */
+  updateTextOverlays: async (clipId: string, textOverlays: TextOverlayData[]): Promise<{ clipId: string; textOverlays: TextOverlayData[] }> => {
+    const response = await api.put<{ clipId: string; textOverlays: TextOverlayData[] }>(
+      `/api/clips/${clipId}/captions/text-overlays`,
+      { textOverlays }
+    );
     return response.data;
   },
 

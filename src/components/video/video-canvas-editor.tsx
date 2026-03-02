@@ -31,6 +31,24 @@ export interface VideoCanvasEditorProps {
     onCaptionStyleChange?: (style: Partial<CaptionStyle>) => void;
     /** Callback when playback time updates */
     onTimeUpdate?: (time: number) => void;
+    /** Text overlays to display on the video */
+    textOverlays?: {
+        id: string;
+        text: string;
+        x: number;
+        y: number;
+        fontSize: number;
+        fontFamily: string;
+        color: string;
+        backgroundColor: string;
+        backgroundOpacity: number;
+        maxWidth?: number;
+        startTime: number;
+        endTime: number;
+        animation: string;
+    }[];
+    /** Callback when a text overlay is moved/resized on the preview */
+    onTextOverlayChange?: (id: string, updates: { x?: number; y?: number; fontSize?: number; maxWidth?: number; text?: string }) => void;
     /** Aspect ratio: 9:16 (vertical), 16:9 (horizontal), 1:1 (square) */
     aspectRatio?: "9:16" | "16:9" | "1:1";
     /** Additional class names */
@@ -484,6 +502,292 @@ function DraggableCaption({
 }
 
 // ============================================================================
+// Draggable Text Overlay Component
+// ============================================================================
+
+interface DraggableTextOverlayProps {
+    overlay: {
+        id: string;
+        text: string;
+        x: number;
+        y: number;
+        fontSize: number;
+        fontFamily: string;
+        color: string;
+        backgroundColor: string;
+        backgroundOpacity: number;
+        maxWidth?: number;
+    };
+    containerScale: number;
+    displaySize: { width: number; height: number };
+    onChange?: (id: string, updates: { x?: number; y?: number; fontSize?: number; maxWidth?: number; text?: string }) => void;
+}
+
+function DraggableTextOverlay({
+    overlay,
+    containerScale,
+    displaySize,
+    onChange,
+}: DraggableTextOverlayProps) {
+    const [dragState, setDragState] = useState<{
+        type: "move" | "font" | "width";
+        startX: number;
+        startY: number;
+        startValue: { x: number; y: number; fontSize: number; maxWidth: number };
+    } | null>(null);
+
+    const [isHovering, setIsHovering] = useState(false);
+    const [isEditing, setIsEditing] = useState(false);
+    const [editText, setEditText] = useState(overlay.text);
+    const inputRef = useRef<HTMLTextAreaElement>(null);
+    const [local, setLocal] = useState<{ x?: number; y?: number; fontSize?: number; maxWidth?: number }>({});
+
+    const xPos = local.x ?? overlay.x;
+    const yPos = local.y ?? overlay.y;
+    const fontSize = local.fontSize ?? overlay.fontSize;
+    const maxWidth = local.maxWidth ?? overlay.maxWidth ?? 80;
+
+    // Sync edit text when overlay text changes externally
+    useEffect(() => {
+        if (!isEditing) setEditText(overlay.text);
+    }, [overlay.text, isEditing]);
+
+    // Auto-focus textarea when entering edit mode
+    useEffect(() => {
+        if (isEditing && inputRef.current) {
+            inputRef.current.focus();
+            inputRef.current.select();
+        }
+    }, [isEditing]);
+
+    const startDrag = useCallback((type: "move" | "font" | "width", e: React.MouseEvent) => {
+        if (isEditing) return;
+        e.preventDefault();
+        e.stopPropagation();
+        setDragState({
+            type,
+            startX: e.clientX,
+            startY: e.clientY,
+            startValue: { x: xPos, y: yPos, fontSize, maxWidth },
+        });
+    }, [xPos, yPos, fontSize, maxWidth, isEditing]);
+
+    const commitEdit = useCallback(() => {
+        if (editText.trim() && editText !== overlay.text) {
+            onChange?.(overlay.id, { text: editText.trim() });
+        }
+        setIsEditing(false);
+    }, [editText, overlay.text, overlay.id, onChange]);
+
+    const handleDoubleClick = useCallback((e: React.MouseEvent) => {
+        e.preventDefault();
+        e.stopPropagation();
+        setIsEditing(true);
+    }, []);
+
+    const handleKeyDown = useCallback((e: React.KeyboardEvent) => {
+        if (e.key === "Enter" && !e.shiftKey) {
+            e.preventDefault();
+            commitEdit();
+        } else if (e.key === "Escape") {
+            setEditText(overlay.text);
+            setIsEditing(false);
+        }
+    }, [commitEdit, overlay.text]);
+
+    useEffect(() => {
+        if (!dragState) return;
+
+        const handleMouseMove = (e: MouseEvent) => {
+            const dx = e.clientX - dragState.startX;
+            const dy = e.clientY - dragState.startY;
+
+            if (dragState.type === "move") {
+                const deltaXPercent = (dx / displaySize.width) * 100;
+                const deltaYPercent = (dy / displaySize.height) * 100;
+                setLocal({
+                    x: Math.max(5, Math.min(95, dragState.startValue.x + deltaXPercent)),
+                    y: Math.max(5, Math.min(95, dragState.startValue.y + deltaYPercent)),
+                });
+            } else if (dragState.type === "font") {
+                const delta = (dx - dy) / 4;
+                setLocal(prev => ({
+                    ...prev,
+                    fontSize: Math.max(8, Math.min(72, Math.round(dragState.startValue.fontSize + delta))),
+                }));
+            } else if (dragState.type === "width") {
+                const deltaPercent = (dx / displaySize.width) * 200;
+                setLocal(prev => ({
+                    ...prev,
+                    maxWidth: Math.max(20, Math.min(100, Math.round(dragState.startValue.maxWidth + deltaPercent))),
+                }));
+            }
+        };
+
+        const handleMouseUp = () => {
+            if (onChange) {
+                if (dragState.type === "move" && local.x !== undefined && local.y !== undefined) {
+                    onChange(overlay.id, { x: Math.round(local.x), y: Math.round(local.y) });
+                } else if (dragState.type === "font" && local.fontSize !== undefined) {
+                    onChange(overlay.id, { fontSize: local.fontSize });
+                } else if (dragState.type === "width" && local.maxWidth !== undefined) {
+                    onChange(overlay.id, { maxWidth: local.maxWidth });
+                }
+            }
+            setDragState(null);
+            setLocal({});
+        };
+
+        document.addEventListener("mousemove", handleMouseMove);
+        document.addEventListener("mouseup", handleMouseUp);
+        return () => {
+            document.removeEventListener("mousemove", handleMouseMove);
+            document.removeEventListener("mouseup", handleMouseUp);
+        };
+    }, [dragState, displaySize, local, onChange, overlay.id]);
+
+    const isActive = isHovering || dragState !== null || isEditing;
+    const isDragging = dragState?.type === "move";
+    const isResizingFont = dragState?.type === "font";
+    const isResizingWidth = dragState?.type === "width";
+
+    const bgColor = overlay.backgroundColor && overlay.backgroundOpacity > 0
+        ? `${overlay.backgroundColor}${Math.round((overlay.backgroundOpacity / 100) * 255).toString(16).padStart(2, "0")}`
+        : "transparent";
+
+    return (
+        <div
+            className="absolute z-20 select-none"
+            style={{
+                left: `${xPos}%`,
+                top: `${yPos}%`,
+                transform: "translate(-50%, -50%)",
+                width: `${maxWidth}%`,
+                cursor: isEditing ? "text" : isDragging ? "grabbing" : isResizingFont ? "nwse-resize" : isResizingWidth ? "ew-resize" : "grab",
+            }}
+            onMouseDown={(e) => { if (!isEditing) startDrag("move", e); }}
+            onDoubleClick={handleDoubleClick}
+            onMouseEnter={() => setIsHovering(true)}
+            onMouseLeave={() => setIsHovering(false)}
+        >
+            {/* Selection border */}
+            {isActive && (
+                <div
+                    className="absolute -inset-2 rounded-lg border-2 pointer-events-none"
+                    style={{
+                        borderColor: isEditing ? "rgba(59,130,246,0.6)" : "rgba(251,191,36,0.6)",
+                        backgroundColor: isEditing ? "rgba(59,130,246,0.05)" : "rgba(251,191,36,0.05)",
+                        boxShadow: "0 0 0 1px rgba(0,0,0,0.1)",
+                    }}
+                />
+            )}
+
+            {/* Font resize handles - corners */}
+            {isActive && !isEditing && (
+                <>
+                    <div
+                        className="absolute -bottom-3 -right-3 w-6 h-6 bg-amber-500 rounded-full border-2 border-white shadow-lg cursor-nwse-resize flex items-center justify-center hover:scale-110 transition-transform z-30"
+                        onMouseDown={(e) => startDrag("font", e)}
+                        title="Drag to resize font"
+                    >
+                        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="3" strokeLinecap="round">
+                            <path d="M15 3h6v6" />
+                            <path d="M9 21H3v-6" />
+                        </svg>
+                    </div>
+                    <div
+                        className="absolute -top-3 -left-3 w-6 h-6 bg-amber-500 rounded-full border-2 border-white shadow-lg cursor-nwse-resize flex items-center justify-center hover:scale-110 transition-transform z-30"
+                        onMouseDown={(e) => startDrag("font", e)}
+                        title="Drag to resize font"
+                    >
+                        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="3" strokeLinecap="round">
+                            <path d="M15 3h6v6" />
+                            <path d="M9 21H3v-6" />
+                        </svg>
+                    </div>
+                </>
+            )}
+
+            {/* Width resize handles - sides */}
+            {isActive && !isEditing && (
+                <>
+                    <div
+                        className="absolute top-1/2 -right-4 -translate-y-1/2 w-5 h-10 bg-blue-500 rounded-full border-2 border-white shadow-lg cursor-ew-resize flex items-center justify-center hover:scale-110 transition-transform z-30"
+                        onMouseDown={(e) => startDrag("width", e)}
+                        title="Drag to resize width"
+                    >
+                        <svg width="8" height="12" viewBox="0 0 8 12" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round">
+                            <path d="M2 1v10" />
+                            <path d="M6 1v10" />
+                        </svg>
+                    </div>
+                    <div
+                        className="absolute top-1/2 -left-4 -translate-y-1/2 w-5 h-10 bg-blue-500 rounded-full border-2 border-white shadow-lg cursor-ew-resize flex items-center justify-center hover:scale-110 transition-transform z-30"
+                        onMouseDown={(e) => startDrag("width", e)}
+                        title="Drag to resize width"
+                    >
+                        <svg width="8" height="12" viewBox="0 0 8 12" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round">
+                            <path d="M2 1v10" />
+                            <path d="M6 1v10" />
+                        </svg>
+                    </div>
+                </>
+            )}
+
+            {/* Badge */}
+            {isActive && !isEditing && (
+                <div className="absolute -top-8 left-1/2 -translate-x-1/2 bg-amber-500 text-white text-xs px-2 py-1 rounded-md shadow-lg flex items-center gap-1 whitespace-nowrap pointer-events-none z-40">
+                    {isResizingFont ? `Font: ${fontSize}px` : isResizingWidth ? `Width: ${maxWidth}%` : "Double-click to edit"}
+                </div>
+            )}
+
+            {/* Text content / Edit mode */}
+            {isEditing ? (
+                <textarea
+                    ref={inputRef}
+                    value={editText}
+                    onChange={(e) => setEditText(e.target.value)}
+                    onBlur={commitEdit}
+                    onKeyDown={handleKeyDown}
+                    className="w-full bg-transparent border-none outline-none resize-none text-center"
+                    style={{
+                        fontFamily: overlay.fontFamily || "Inter",
+                        fontSize: `${fontSize * containerScale}px`,
+                        fontWeight: "bold",
+                        color: overlay.color || "#FFFFFF",
+                        backgroundColor: bgColor,
+                        padding: `${4 * containerScale}px ${12 * containerScale}px`,
+                        borderRadius: "4px",
+                        textShadow: "2px 2px 4px rgba(0,0,0,0.8)",
+                        lineHeight: 1.3,
+                        caretColor: "#3b82f6",
+                    }}
+                    rows={Math.max(1, editText.split("\n").length)}
+                />
+            ) : (
+                <div
+                    className="text-center pointer-events-none"
+                    style={{
+                        fontFamily: overlay.fontFamily || "Inter",
+                        fontSize: `${fontSize * containerScale}px`,
+                        fontWeight: "bold",
+                        color: overlay.color || "#FFFFFF",
+                        backgroundColor: bgColor,
+                        padding: `${4 * containerScale}px ${12 * containerScale}px`,
+                        borderRadius: "4px",
+                        textShadow: "2px 2px 4px rgba(0,0,0,0.8)",
+                        whiteSpace: "pre-wrap",
+                        lineHeight: 1.3,
+                    }}
+                >
+                    {overlay.text}
+                </div>
+            )}
+        </div>
+    );
+}
+
+// ============================================================================
 // Video Canvas Editor Component
 // ============================================================================
 
@@ -497,6 +801,8 @@ export const VideoCanvasEditor = forwardRef<VideoCanvasEditorRef, VideoCanvasEdi
             captionStyle,
             onCaptionStyleChange,
             onTimeUpdate,
+            textOverlays = [],
+            onTextOverlayChange,
             aspectRatio = "9:16",
             className,
         },
@@ -837,6 +1143,20 @@ export const VideoCanvasEditor = forwardRef<VideoCanvasEditorRef, VideoCanvasEdi
                             {renderCaptionText()}
                         </DraggableCaption>
                     )}
+
+                    {/* Text overlay elements */}
+                    {textOverlays
+                        .filter((o) => relativeTime >= o.startTime && relativeTime <= o.endTime)
+                        .map((overlay) => (
+                            <DraggableTextOverlay
+                                key={overlay.id}
+                                overlay={overlay}
+                                containerScale={containerScale}
+                                displaySize={displaySize}
+                                onChange={onTextOverlayChange}
+                            />
+                        ))
+                    }
 
                     {/* Transform overlay */}
                     <div
