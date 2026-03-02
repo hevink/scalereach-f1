@@ -1,7 +1,7 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { IconClock, IconPencil } from "@tabler/icons-react";
+import { useCallback, useEffect, useMemo, useRef } from "react";
+import { IconClock } from "@tabler/icons-react";
 
 import { cn } from "@/lib/utils";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -15,8 +15,6 @@ export interface TranscriptParagraphViewProps {
     segments: TranscriptSegment[];
     currentTime?: number;
     onWordClick?: (timestamp: number) => void;
-    onTextEdit?: (segmentId: string, newText: string) => void;
-    editable?: boolean;
     className?: string;
     highlightCurrent?: boolean;
 }
@@ -49,177 +47,53 @@ function findCurrentWordInfo(
 }
 
 // ============================================================================
-// Inline Editable Segment Component
+// Segment Component
 // ============================================================================
 
-interface InlineEditableSegmentProps {
+interface SegmentProps {
     segment: TranscriptSegment;
     segIdx: number;
     currentWordInfo: { segmentIndex: number; wordIndex: number } | null;
     highlightCurrent: boolean;
-    editable: boolean;
     onWordClick?: (word: TranscriptWord) => void;
-    onTextEdit?: (segmentId: string, newText: string) => void;
     currentWordRef: React.RefObject<HTMLSpanElement | null>;
 }
 
-function InlineEditableSegment({
+function Segment({
     segment,
     segIdx,
     currentWordInfo,
     highlightCurrent,
-    editable,
     onWordClick,
-    onTextEdit,
     currentWordRef,
-}: InlineEditableSegmentProps) {
-    const [isEditing, setIsEditing] = useState(false);
-    const [displayText, setDisplayText] = useState(segment.text);
-    const editRef = useRef<HTMLParagraphElement>(null);
-    const originalText = useRef<string>("");
-
-    // Sync displayText when segment.text changes from parent
-    useEffect(() => {
-        setDisplayText(segment.text);
-    }, [segment.text]);
-
-    const startEditing = useCallback(() => {
-        if (!editable || isEditing) return;
-        originalText.current = displayText;
-        setIsEditing(true);
-    }, [editable, isEditing, displayText]);
-
-    // Focus when entering edit mode
-    useEffect(() => {
-        if (isEditing && editRef.current) {
-            editRef.current.focus();
-            const range = document.createRange();
-            const sel = window.getSelection();
-            range.selectNodeContents(editRef.current);
-            range.collapse(false);
-            sel?.removeAllRanges();
-            sel?.addRange(range);
-        }
-    }, [isEditing]);
-
-    const saveEdit = useCallback(() => {
-        if (!editRef.current) {
-            setIsEditing(false);
-            return;
-        }
-        const newText = editRef.current.textContent?.trim() || "";
-        setIsEditing(false);
-        if (newText && newText !== originalText.current) {
-            setDisplayText(newText);
-            onTextEdit?.(segment.id, newText);
-        }
-    }, [onTextEdit, segment.id]);
-
-    const handleKeyDown = useCallback((e: React.KeyboardEvent) => {
-        if (e.key === "Enter") {
-            e.preventDefault();
-            saveEdit();
-        } else if (e.key === "Escape") {
-            e.preventDefault();
-            if (editRef.current) {
-                editRef.current.textContent = originalText.current;
-            }
-            setIsEditing(false);
-        }
-    }, [saveEdit]);
-
-    // Check if text was edited (displayText no longer matches the joined words)
-    const joinedWords = segment.words.map(w => w.word).join(" ");
-    const wasEdited = displayText !== joinedWords;
-
-    if (isEditing) {
-        return (
-            <div className="relative group">
-                <p
-                    ref={editRef}
-                    contentEditable
-                    suppressContentEditableWarning
-                    onBlur={saveEdit}
-                    onKeyDown={handleKeyDown}
-                    className="text-[#FAFAFA] leading-relaxed text-sm outline-none ring-1 ring-primary/50 rounded px-2 py-1 bg-white/5"
-                >
-                    {displayText}
-                </p>
-                <span className="absolute -bottom-5 left-0 text-[10px] text-muted-foreground">
-                    Enter to save · Esc to cancel
-                </span>
-            </div>
-        );
-    }
-
-    // If text was edited, render plain text (words array is stale)
-    if (wasEdited) {
-        return (
-            <div className="group relative flex items-start gap-1">
-                <button
-                    onClick={startEditing}
-                    className="mt-1 shrink-0 opacity-0 group-hover:opacity-100 transition-opacity text-zinc-500 hover:text-white"
-                    aria-label="Edit caption"
-                >
-                    <IconPencil className="size-3.5" />
-                </button>
-                <p
-                    onDoubleClick={startEditing}
-                    className={cn(
-                        "text-[#FAFAFA] leading-relaxed text-sm rounded px-1 py-0.5 transition-colors flex-1",
-                        editable && "hover:bg-white/5 cursor-text"
-                    )}
-                >
-                    {displayText}
-                </p>
-            </div>
-        );
-    }
-
+}: SegmentProps) {
     return (
-        <div className="group relative flex items-start gap-1">
-            {editable && (
-                <button
-                    onClick={startEditing}
-                    className="mt-1 shrink-0 opacity-0 group-hover:opacity-100 transition-opacity text-zinc-500 hover:text-white"
-                    aria-label="Edit caption"
-                >
-                    <IconPencil className="size-3.5" />
-                </button>
-            )}
-            <p
-                onDoubleClick={startEditing}
-                className={cn(
-                    "text-[#FAFAFA] leading-relaxed text-sm rounded px-1 py-0.5 transition-colors flex-1",
-                    editable && "hover:bg-white/5 cursor-text"
-                )}
-            >
-                {segment.words.map((word, wordIdx) => {
-                    const isCurrentWord =
-                        currentWordInfo?.segmentIndex === segIdx &&
-                        currentWordInfo?.wordIndex === wordIdx;
-                    return (
-                        <span
-                            key={`${segment.id}-${wordIdx}`}
-                            ref={isCurrentWord ? currentWordRef : undefined}
-                            onClick={(e) => {
-                                e.stopPropagation();
-                                onWordClick?.(word);
-                            }}
-                            className={cn(
-                                "cursor-pointer transition-colors duration-200",
-                                highlightCurrent && isCurrentWord
-                                    ? "bg-secondary rounded px-0.5 py-1"
-                                    : "hover:text-gray-300"
-                            )}
-                            title={`${formatTimestamp(word.start)} - ${formatTimestamp(word.end)}`}
-                        >
-                            {word.word}{wordIdx < segment.words.length - 1 ? " " : ""}
-                        </span>
-                    );
-                })}
-            </p>
-        </div>
+        <p className="text-[#FAFAFA] leading-relaxed text-sm rounded px-1 py-0.5">
+            {segment.words.map((word, wordIdx) => {
+                const isCurrentWord =
+                    currentWordInfo?.segmentIndex === segIdx &&
+                    currentWordInfo?.wordIndex === wordIdx;
+                return (
+                    <span
+                        key={`${segment.id}-${wordIdx}`}
+                        ref={isCurrentWord ? currentWordRef : undefined}
+                        onClick={(e) => {
+                            e.stopPropagation();
+                            onWordClick?.(word);
+                        }}
+                        className={cn(
+                            "cursor-pointer transition-colors duration-200",
+                            highlightCurrent && isCurrentWord
+                                ? "bg-secondary rounded px-0.5 py-1"
+                                : "hover:text-gray-300"
+                        )}
+                        title={`${formatTimestamp(word.start)} - ${formatTimestamp(word.end)}`}
+                    >
+                        {word.word}{wordIdx < segment.words.length - 1 ? " " : ""}
+                    </span>
+                );
+            })}
+        </p>
     );
 }
 
@@ -231,8 +105,6 @@ export function TranscriptParagraphView({
     segments,
     currentTime = 0,
     onWordClick,
-    onTextEdit,
-    editable = true,
     className,
     highlightCurrent = true,
 }: TranscriptParagraphViewProps) {
@@ -295,27 +167,19 @@ export function TranscriptParagraphView({
     return (
         <div className={cn("flex flex-col h-full overflow-hidden bg-black", className)}>
             {/* Header */}
-            <div className="shrink-0 flex items-center justify-between px-6 pt-4 pb-2">
+            <div className="shrink-0 flex items-center px-6 pt-4 pb-2">
                 <h3 className="text-sm font-semibold text-zinc-300">Transcript</h3>
-                {editable && (
-                    <span className="text-[10px] text-zinc-500 flex items-center gap-1">
-                        <IconPencil className="size-3" />
-                        Click pencil or double-click to edit
-                    </span>
-                )}
             </div>
             <ScrollArea className="flex-1 h-0">
                 <div ref={containerRef} className="mx-6 pb-8 space-y-4">
                     {segments.map((segment, segIdx) => (
-                        <InlineEditableSegment
+                        <Segment
                             key={segment.id}
                             segment={segment}
                             segIdx={segIdx}
                             currentWordInfo={currentWordInfo}
                             highlightCurrent={highlightCurrent}
-                            editable={editable}
                             onWordClick={handleWordClick}
-                            onTextEdit={onTextEdit}
                             currentWordRef={currentWordRef}
                         />
                     ))}

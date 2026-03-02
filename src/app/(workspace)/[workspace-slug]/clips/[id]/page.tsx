@@ -1130,7 +1130,6 @@ export default function ClipEditorPage({ params }: ClipEditorPageProps) {
                                     }))}
                                     currentTime={currentTime}
                                     onWordClick={handleSegmentClick}
-                                    onTextEdit={handleCaptionEdit}
                                     highlightCurrent
                                     className="h-full"
                                 />
