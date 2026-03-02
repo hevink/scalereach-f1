@@ -44,7 +44,6 @@ import { useKeyboardShortcuts, type KeyboardShortcut } from "@/hooks/useKeyboard
 import type { CaptionStyle, Caption, CaptionWord } from "@/lib/api/captions";
 import { captionsApi } from "@/lib/api/captions";
 import { analytics } from "@/lib/analytics";
-import { AiHookPanel } from "@/components/clips/ai-hook-panel";
 import { ClipInfoPanel } from "@/components/clips/clip-info-panel";
 import {
     Dialog,
@@ -779,12 +778,6 @@ export default function ClipEditorPage({ params }: ClipEditorPageProps) {
         [applyPreset]
     );
 
-    // Handle intro title update from AI Hook panel
-    const handleIntroTitleSave = useCallback((introTitle: string) => {
-        if (!clip) return;
-        updateClip.mutate({ clipId: clip.id, data: { introTitle } });
-    }, [clip, updateClip]);
-
     // Timeline boundary change handler
     const handleBoundaryChange = useCallback(
         (startTime: number, endTime: number) => {
@@ -1181,15 +1174,6 @@ export default function ClipEditorPage({ params }: ClipEditorPageProps) {
                             presets={presets}
                             selectedPresetId={currentPresetId}
                             onPresetSelect={handlePresetSelect}
-                        />
-                    ),
-
-                    /* Right Panel: AI Hook Editor */
-                    aiHookPanel: (
-                        <AiHookPanel
-                            introTitle={clip.introTitle || ""}
-                            onSave={handleIntroTitleSave}
-                            isSaving={updateClip.isPending}
                         />
                     ),
 

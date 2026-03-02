@@ -3,7 +3,6 @@
 import { type ReactNode } from "react";
 import {
     IconTextCaption,
-    IconSparkles,
     IconX,
     IconInfoCircle,
 } from "@tabler/icons-react";
@@ -20,13 +19,12 @@ import {
 // Types
 // ============================================================================
 
-export type ToolbarPanel = "captions" | "ai-hook" | "clip-info" | null;
+export type ToolbarPanel = "captions" | "clip-info" | null;
 
 export interface EditorToolbarProps {
     activePanel: ToolbarPanel;
     onPanelChange: (panel: ToolbarPanel) => void;
     captionsPanel?: ReactNode;
-    aiHookPanel?: ReactNode;
     clipInfoPanel?: ReactNode;
     className?: string;
 }
@@ -40,7 +38,6 @@ interface ToolbarItem {
 
 const TOOLBAR_ITEMS: ToolbarItem[] = [
     { id: "captions", icon: IconTextCaption, label: "Captions" },
-    { id: "ai-hook", icon: IconSparkles, label: "AI Hook" },
     { id: "clip-info", icon: IconInfoCircle, label: "Clip Info" },
 ];
 
@@ -116,7 +113,6 @@ export function EditorToolbar({
     activePanel,
     onPanelChange,
     captionsPanel,
-    aiHookPanel,
     clipInfoPanel,
     className,
 }: EditorToolbarProps) {
@@ -131,7 +127,6 @@ export function EditorToolbar({
 
     const getPanelContent = (panel: ToolbarPanel): ReactNode => {
         if (panel === "captions") return captionsPanel;
-        if (panel === "ai-hook") return aiHookPanel;
         if (panel === "clip-info") return clipInfoPanel;
         return null;
     };
