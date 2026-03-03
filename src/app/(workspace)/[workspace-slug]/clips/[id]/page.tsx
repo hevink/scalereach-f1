@@ -571,8 +571,12 @@ export default function ClipEditorPage({ params }: ClipEditorPageProps) {
     }, [captionData?.style, captionData?.templateId, getLastUsedStyle, apiTemplates]);
 
     // Initialize text overlays from fetched data, injecting introTitle as a text overlay if present
+    // Use a ref to only run once after both captionData and clip are loaded
+    const textOverlaysInitialized = useRef(false);
     useEffect(() => {
         if (!captionData || !clip) return;
+        if (textOverlaysInitialized.current) return;
+        textOverlaysInitialized.current = true;
 
         const saved = captionData.textOverlays ?? [];
         const hasIntroOverlay = saved.some((o) => o.id === "intro-title");
@@ -594,10 +598,11 @@ export default function ClipEditorPage({ params }: ClipEditorPageProps) {
                 endTime: 3,
             };
             setTextOverlays([introOverlay, ...saved]);
-        } else if (saved.length > 0) {
+        } else {
+            // Always set from saved (even empty array) so deletions are reflected
             setTextOverlays(saved);
         }
-    }, [captionData?.textOverlays, clip?.introTitle]);
+    }, [captionData, clip]);
 
     // Sync selected preset ID from hook
     useEffect(() => {
