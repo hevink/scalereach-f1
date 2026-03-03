@@ -114,6 +114,7 @@ export interface AdvancedTimelineProps {
     videoSrc?: string;
     textOverlays?: { id: string; text: string; startTime: number; endTime: number; color: string }[];
     onTextOverlayClick?: (id: string) => void;
+    onTextOverlayTimeChange?: (id: string, startTime: number, endTime: number) => void;
     className?: string;
 }
 

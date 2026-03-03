@@ -25,20 +25,20 @@ export interface TextOverlay {
     x: number;
     y: number;
     fontSize: number;
-    fontFamily: string;
+    fontFamily: string | null;
     color: string;
     backgroundColor: string;
     backgroundOpacity: number;
     maxWidth?: number;
     startTime: number;
     endTime: number;
-    animation: "none" | "fade-in" | "slide-up" | "typewriter";
 }
 
 export interface TextOverlayPanelProps {
     overlays: TextOverlay[];
     onChange: (overlays: TextOverlay[]) => void;
     clipDuration: number;
+    currentTime?: number;
     className?: string;
 }
 
@@ -57,33 +57,27 @@ const FONT_OPTIONS = [
     "Anton",
 ];
 
-const ANIMATION_OPTIONS = [
-    { value: "none", label: "None" },
-    { value: "fade-in", label: "Fade In" },
-    { value: "slide-up", label: "Slide Up" },
-    { value: "typewriter", label: "Typewriter" },
-];
-
 const COLOR_PRESETS = [
     "#FFFFFF", "#000000", "#FF0000", "#FFD700",
     "#00FF00", "#00BFFF", "#FF69B4", "#8B5CF6",
 ];
 
-function createDefaultOverlay(clipDuration: number): TextOverlay {
+function createDefaultOverlay(clipDuration: number, currentTime = 0): TextOverlay {
+    const startTime = Math.min(currentTime, clipDuration);
+    const endTime = Math.min(startTime + 3, clipDuration);
     return {
         id: `overlay-${Date.now()}`,
         text: "Your text here",
         x: 50,
-        y: 50,
+        y: 25,
         fontSize: 32,
         fontFamily: "Inter",
         color: "#FFFFFF",
         backgroundColor: "#000000",
         backgroundOpacity: 0,
         maxWidth: 80,
-        startTime: 0,
-        endTime: Math.min(clipDuration, 5),
-        animation: "none",
+        startTime,
+        endTime,
     };
 }
 
@@ -157,7 +151,7 @@ function OverlayEditor({ overlay, index, clipDuration, onChange, onDelete }: Ove
                     <div className="grid grid-cols-2 gap-2">
                         <div>
                             <Label className="text-[10px] text-zinc-500 uppercase tracking-wide">Font</Label>
-                            <Select value={overlay.fontFamily} onValueChange={(v) => update({ fontFamily: v })}>
+                            <Select value={overlay.fontFamily ?? undefined} onValueChange={(v) => update({ fontFamily: v })}>
                                 <SelectTrigger className="mt-1 h-8 text-xs bg-zinc-800 border-zinc-700">
                                     <SelectValue />
                                 </SelectTrigger>
@@ -184,7 +178,7 @@ function OverlayEditor({ overlay, index, clipDuration, onChange, onDelete }: Ove
                     {/* Color */}
                     <div>
                         <Label className="text-[10px] text-zinc-500 uppercase tracking-wide">Color</Label>
-                        <div className="flex items-center gap-1.5 mt-1">
+                        <div className="flex items-center gap-1.5 mt-1 flex-wrap">
                             {COLOR_PRESETS.map((c) => (
                                 <button
                                     key={c}
@@ -196,6 +190,19 @@ function OverlayEditor({ overlay, index, clipDuration, onChange, onDelete }: Ove
                                     style={{ backgroundColor: c }}
                                 />
                             ))}
+                            {/* Custom color picker */}
+                            <label
+                                className="size-6 rounded-full border-2 border-zinc-700 cursor-pointer hover:scale-110 transition-transform overflow-hidden relative"
+                                title="Custom color"
+                                style={{ background: "conic-gradient(red, yellow, lime, cyan, blue, magenta, red)" }}
+                            >
+                                <input
+                                    type="color"
+                                    value={overlay.color}
+                                    onChange={(e) => update({ color: e.target.value })}
+                                    className="absolute inset-0 opacity-0 cursor-pointer w-full h-full"
+                                />
+                            </label>
                         </div>
                     </div>
 
@@ -248,7 +255,10 @@ function OverlayEditor({ overlay, index, clipDuration, onChange, onDelete }: Ove
                         </div>
                         <Slider
                             value={[overlay.maxWidth ?? 80]}
-                            onValueChange={([v]) => update({ maxWidth: v })}
+                            onValueChange={(val) => {
+                                const v = Array.isArray(val) ? val[0] : val;
+                                update({ maxWidth: v });
+                            }}
                             min={20}
                             max={100}
                             step={1}
@@ -283,21 +293,6 @@ function OverlayEditor({ overlay, index, clipDuration, onChange, onDelete }: Ove
                             />
                         </div>
                     </div>
-
-                    {/* Animation */}
-                    <div>
-                        <Label className="text-[10px] text-zinc-500 uppercase tracking-wide">Animation</Label>
-                        <Select value={overlay.animation} onValueChange={(v) => update({ animation: v as TextOverlay["animation"] })}>
-                            <SelectTrigger className="mt-1 h-8 text-xs bg-zinc-800 border-zinc-700">
-                                <SelectValue />
-                            </SelectTrigger>
-                            <SelectContent>
-                                {ANIMATION_OPTIONS.map((a) => (
-                                    <SelectItem key={a.value} value={a.value} className="text-xs">{a.label}</SelectItem>
-                                ))}
-                            </SelectContent>
-                        </Select>
-                    </div>
                 </div>
             )}
         </div>
@@ -308,10 +303,10 @@ function OverlayEditor({ overlay, index, clipDuration, onChange, onDelete }: Ove
 // TextOverlayPanel Component
 // ============================================================================
 
-export function TextOverlayPanel({ overlays, onChange, clipDuration, className }: TextOverlayPanelProps) {
+export function TextOverlayPanel({ overlays, onChange, clipDuration, currentTime = 0, className }: TextOverlayPanelProps) {
     const handleAdd = useCallback(() => {
-        onChange([...overlays, createDefaultOverlay(clipDuration)]);
-    }, [overlays, onChange, clipDuration]);
+        onChange([...overlays, createDefaultOverlay(clipDuration, currentTime)]);
+    }, [overlays, onChange, clipDuration, currentTime]);
 
     const handleUpdate = useCallback((index: number, updated: TextOverlay) => {
         const next = [...overlays];

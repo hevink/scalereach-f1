@@ -299,38 +299,6 @@ function EditorHeader({
                         <IconDownload className="size-4" />
                         {hasUnsavedChanges ? "Save & Export" : "Export"}
                     </Button>
-                    {isClipReady && (
-                        scStatus === "done" ? (
-                            <a
-                                href={smartCrop?.smartCropStorageUrl || "#"}
-                                target="_blank"
-                                rel="noreferrer"
-                                className="inline-flex items-center gap-2 rounded-md border border-input bg-background px-3 py-2 text-sm font-medium hover:bg-accent hover:text-accent-foreground"
-                            >
-                                <IconDeviceMobile className="size-4" />
-                                Download Vertical
-                            </a>
-                        ) : (
-                            <Button
-                                variant="outline"
-                                className="gap-2"
-                                onClick={() => triggerSmartCrop()}
-                                disabled={isTriggering || scProcessing}
-                            >
-                                {scProcessing ? (
-                                    <>
-                                        <IconLoader className="size-4 animate-spin" />
-                                        {smartCrop?.progress ? `${smartCrop.progress}%` : "Processing..."}
-                                    </>
-                                ) : (
-                                    <>
-                                        <IconDeviceMobile className="size-4" />
-                                        Create Vertical
-                                    </>
-                                )}
-                            </Button>
-                        )
-                    )}
                 </div>
             </div>
         </div>
@@ -602,12 +570,34 @@ export default function ClipEditorPage({ params }: ClipEditorPageProps) {
         }
     }, [captionData?.style, captionData?.templateId, getLastUsedStyle, apiTemplates]);
 
-    // Initialize text overlays from fetched data
+    // Initialize text overlays from fetched data, injecting introTitle as a text overlay if present
     useEffect(() => {
-        if (captionData?.textOverlays && captionData.textOverlays.length > 0) {
-            setTextOverlays(captionData.textOverlays);
+        if (!captionData || !clip) return;
+
+        const saved = captionData.textOverlays ?? [];
+        const hasIntroOverlay = saved.some((o) => o.id === "intro-title");
+
+        // If introTitle exists on the clip and isn't already a text overlay, inject it
+        if (clip.introTitle && !hasIntroOverlay) {
+            const introOverlay = {
+                id: "intro-title",
+                text: clip.introTitle,
+                x: 50,
+                y: 20,
+                fontSize: 36,
+                fontFamily: "Inter",
+                color: "#FFFFFF",
+                backgroundColor: "#000000",
+                backgroundOpacity: 0,
+                maxWidth: 80,
+                startTime: 0,
+                endTime: 3,
+            };
+            setTextOverlays([introOverlay, ...saved]);
+        } else if (saved.length > 0) {
+            setTextOverlays(saved);
         }
-    }, [captionData?.textOverlays]);
+    }, [captionData?.textOverlays, clip?.introTitle]);
 
     // Sync selected preset ID from hook
     useEffect(() => {
@@ -866,16 +856,21 @@ export default function ClipEditorPage({ params }: ClipEditorPageProps) {
             );
         }
 
-        // Save text overlays if there are any
-        if (textOverlays.length > 0) {
-            promises.push(
-                captionsApi.updateTextOverlays(clipId, textOverlays)
-            );
+        // Save text overlays (always, to persist deletions too)
+        promises.push(
+            captionsApi.updateTextOverlays(clipId, textOverlays)
+        );
+
+        // Sync intro-title overlay back to clip.introTitle
+        const introOverlay = textOverlays.find((o) => o.id === "intro-title");
+        const newIntroTitle = introOverlay ? introOverlay.text : "";
+        if (newIntroTitle !== (clip?.introTitle ?? "")) {
+            promises.push(updateClip.mutateAsync({ clipId, data: { introTitle: newIntroTitle } }));
         }
 
         await Promise.all(promises);
         setHasUnsavedChanges(false);
-    }, [clipId, captionStyle, currentPresetId, clipBoundaries, localWords, textOverlays, updateCaptionStyle, updateClipBoundaries, saveLastUsedStyle]);
+    }, [clipId, captionStyle, currentPresetId, clipBoundaries, localWords, textOverlays, clip, updateCaptionStyle, updateClipBoundaries, updateClip, saveLastUsedStyle]);
 
     // Save, trigger export job, then redirect to clips page
     const handleSaveAndGoToClips = useCallback(async () => {
@@ -1234,6 +1229,7 @@ export default function ClipEditorPage({ params }: ClipEditorPageProps) {
                             overlays={textOverlays}
                             onChange={handleTextOverlayChange}
                             clipDuration={videoEndTime - videoStartTime}
+                            currentTime={currentTime}
                         />
                     ),
 
@@ -1257,6 +1253,12 @@ export default function ClipEditorPage({ params }: ClipEditorPageProps) {
                                 color: o.color,
                             }))}
                             onTextOverlayClick={() => setActiveToolbarPanel("text-overlay")}
+                            onTextOverlayTimeChange={(id, startTime, endTime) => {
+                                setTextOverlays((prev) =>
+                                    prev.map((o) => (o.id === id ? { ...o, startTime, endTime } : o))
+                                );
+                                setHasUnsavedChanges(true);
+                            }}
                             className="w-full"
                         />
                     ),

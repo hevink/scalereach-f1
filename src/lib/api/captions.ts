@@ -85,7 +85,7 @@ export interface TextOverlayData {
   backgroundOpacity: number;
   startTime: number;
   endTime: number;
-  animation: "none" | "fade-in" | "slide-up" | "typewriter";
+  animation?: "none" | "fade-in" | "slide-up" | "typewriter";
 }
 
 export interface CaptionStyleResponse {

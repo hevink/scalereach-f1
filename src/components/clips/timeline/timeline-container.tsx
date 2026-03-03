@@ -16,7 +16,6 @@ import { PlaybackControls } from "./playback-controls";
 import { Toolbar } from "./toolbar";
 import { LoopRegionOverlay } from "./loop-region";
 import { Marker } from "./marker";
-import { TrackResizer } from "./track-resizer";
 import { TextOverlayTrack } from "./text-overlay-track";
 
 
@@ -48,6 +47,7 @@ export function TimelineContainer({
     videoSrc,
     textOverlays,
     onTextOverlayClick,
+    onTextOverlayTimeChange,
     className,
 }: AdvancedTimelineProps) {
     const [isVisible, setIsVisible] = React.useState(true);
@@ -238,27 +238,6 @@ export function TimelineContainer({
                                 <Marker key={marker.id} marker={marker} totalHeight={totalTracksHeight} />
                             ))}
 
-                            {/* Video track */}
-                            {videoTrack?.visible && (
-                                <div className="flex">
-                                    <TrackLabel track={videoTrack} />
-                                    <VideoTrack track={videoTrack} />
-                                </div>
-                            )}
-
-                            {/* Track resizer between video and audio */}
-                            {videoTrack?.visible && audioTrack?.visible && (
-                                <TrackResizer trackId="video" />
-                            )}
-
-                            {/* Audio track */}
-                            {audioTrack?.visible && (
-                                <div className="flex">
-                                    <TrackLabel track={audioTrack} />
-                                    <AudioTrack track={audioTrack} />
-                                </div>
-                            )}
-
                             {/* Text overlay track */}
                             {textOverlays && textOverlays.length > 0 && (
                                 <div className="flex">
@@ -273,7 +252,24 @@ export function TimelineContainer({
                                     <TextOverlayTrack
                                         overlays={textOverlays}
                                         onOverlayClick={onTextOverlayClick}
+                                        onOverlayTimeChange={onTextOverlayTimeChange}
                                     />
+                                </div>
+                            )}
+
+                            {/* Video track */}
+                            {videoTrack?.visible && (
+                                <div className="flex">
+                                    <TrackLabel track={videoTrack} />
+                                    <VideoTrack track={videoTrack} />
+                                </div>
+                            )}
+
+                            {/* Audio track */}
+                            {audioTrack?.visible && (
+                                <div className="flex">
+                                    <TrackLabel track={audioTrack} />
+                                    <AudioTrack track={audioTrack} />
                                 </div>
                             )}
 
