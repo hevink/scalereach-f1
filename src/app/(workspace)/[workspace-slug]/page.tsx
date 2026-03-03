@@ -544,12 +544,6 @@ export default function WorkspacePage({ params }: WorkspacePageProps) {
         {/* Content Section - Videos Only (Projects temporarily disabled) */}
         <div className="w-full border-t">
           <div className="max-w-6xl mx-auto px-4 py-4">
-            {/* Videos Header */}
-            <div className="flex items-center gap-2 mb-4">
-              <IconVideo className="size-5" />
-              <h2 className="text-lg font-semibold">Videos ({videos?.length || 0})</h2>
-            </div>
-
             {/* Videos Content */}
             {videosError ? (
               <div className="text-center py-8 sm:py-12 text-muted-foreground">
@@ -563,6 +557,12 @@ export default function WorkspacePage({ params }: WorkspacePageProps) {
                 onVideoClick={(videoId) => router.push(`/${slug}/videos/${videoId}/clips`)}
                 onDeleteVideo={(videoId) => deleteMutation.mutate(videoId)}
                 isLoading={videosLoading || sessionPending}
+                headerSlot={
+                  <div className="flex items-center gap-2">
+                    <IconVideo className="size-5" />
+                    <h2 className="text-lg font-semibold">Videos ({videos?.length || 0})</h2>
+                  </div>
+                }
               />
             )}
 
