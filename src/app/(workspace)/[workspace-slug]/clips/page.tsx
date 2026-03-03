@@ -1,6 +1,6 @@
 "use client";
 
-import { use, useCallback, useState, useMemo } from "react";
+import { use, useCallback, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import {
     IconScissors,
@@ -20,11 +20,10 @@ import {
     SelectTrigger,
     SelectValue,
 } from "@/components/ui/select";
-import { useMyVideos } from "@/hooks/useVideo";
-import { useClipsByVideo, useToggleFavorite } from "@/hooks/useClips";
+import { useClipsByWorkspace, useToggleFavorite } from "@/hooks/useClips";
 import { useWorkspaceBySlug } from "@/hooks/useWorkspace";
 import { analytics } from "@/lib/analytics";
-import type { ClipResponse } from "@/lib/api/clips";
+import type { ClipFilters, ClipResponse } from "@/lib/api/clips";
 import { ClipCard } from "@/components/clips/clip-card";
 
 interface AllClipsPageProps {
@@ -41,64 +40,55 @@ export default function AllClipsPage({ params, searchParams }: AllClipsPageProps
     const [sortBy, setSortBy] = useState<"score" | "duration" | "createdAt">("createdAt");
 
     const { data: workspace } = useWorkspaceBySlug(slug);
-    const { data: videos, isLoading: videosLoading } = useMyVideos(workspace?.id || "", !!workspace?.id);
+
+    const filters: Partial<ClipFilters> = {
+        sortBy,
+        sortOrder: "desc",
+        ...(showFavoritesOnly ? { favorited: true } : {}),
+    };
+
+    const {
+        data,
+        isLoading,
+        isFetchingNextPage,
+        hasNextPage,
+        fetchNextPage,
+        refetch,
+    } = useClipsByWorkspace(workspace?.id || "", filters);
+
     const toggleFavorite = useToggleFavorite();
 
-    // Get completed videos
-    const completedVideos = videos?.filter((v) => v.status === "completed") || [];
-    const videoIds = useMemo(() => completedVideos.map(v => v.id), [completedVideos]);
+    // Flatten all pages
+    const allClips = data?.pages.flatMap((p) => p.clips) ?? [];
 
-    const clips0 = useClipsByVideo(videoIds[0] || "");
-    const clips1 = useClipsByVideo(videoIds[1] || "");
-    const clips2 = useClipsByVideo(videoIds[2] || "");
-    const clips3 = useClipsByVideo(videoIds[3] || "");
-    const clips4 = useClipsByVideo(videoIds[4] || "");
-    const clips5 = useClipsByVideo(videoIds[5] || "");
-    const clips6 = useClipsByVideo(videoIds[6] || "");
-    const clips7 = useClipsByVideo(videoIds[7] || "");
-    const clips8 = useClipsByVideo(videoIds[8] || "");
-    const clips9 = useClipsByVideo(videoIds[9] || "");
-
-    const clipsQueries = [clips0, clips1, clips2, clips3, clips4, clips5, clips6, clips7, clips8, clips9];
-    const clipsLoading = videoIds.length > 0 && clipsQueries.some((q, i) => i < videoIds.length && q.isLoading);
-    const allClipsData = clipsQueries.map(q => q.data || []).flat();
-
-    let allClips = showFavoritesOnly
-        ? allClipsData.filter((clip) => clip.favorited)
-        : allClipsData;
-
-    allClips = [...allClips].sort((a, b) => {
-        if (sortBy === "score") return b.viralityScore - a.viralityScore;
-        if (sortBy === "duration") return b.duration - a.duration;
-        return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
-    });
+    // Sentinel ref for IntersectionObserver
+    const sentinelRef = useRef<HTMLDivElement>(null);
+    useEffect(() => {
+        const el = sentinelRef.current;
+        if (!el) return;
+        const observer = new IntersectionObserver(
+            (entries) => {
+                if (entries[0].isIntersecting && hasNextPage && !isFetchingNextPage) {
+                    fetchNextPage();
+                }
+            },
+            { threshold: 0.1 }
+        );
+        observer.observe(el);
+        return () => observer.disconnect();
+    }, [hasNextPage, isFetchingNextPage, fetchNextPage]);
 
     const handleEditClip = useCallback(
-        (clipId: string) => {
-            router.push(`/${slug}/clips/${clipId}`);
-        },
+        (clipId: string) => router.push(`/${slug}/clips/${clipId}`),
         [router, slug]
     );
 
     const handleFavorite = useCallback(
         (e: React.MouseEvent, clipId: string) => {
             e.stopPropagation();
-            toggleFavorite.mutate(clipId, {
-                onSuccess: () => {
-                    clips0.refetch();
-                    clips1.refetch();
-                    clips2.refetch();
-                    clips3.refetch();
-                    clips4.refetch();
-                    clips5.refetch();
-                    clips6.refetch();
-                    clips7.refetch();
-                    clips8.refetch();
-                    clips9.refetch();
-                }
-            });
+            toggleFavorite.mutate(clipId, { onSuccess: () => refetch() });
         },
-        [toggleFavorite, clips0, clips1, clips2, clips3, clips4, clips5, clips6, clips7, clips8, clips9]
+        [toggleFavorite, refetch]
     );
 
     const handleDownload = useCallback(async (clip: ClipResponse) => {
@@ -116,7 +106,6 @@ export default function AllClipsPage({ params, searchParams }: AllClipsPageProps
                 document.body.removeChild(link);
                 URL.revokeObjectURL(url);
             } catch {
-                // Fallback: open in new tab
                 window.open(clip.storageUrl, "_blank");
             }
         }
@@ -131,14 +120,10 @@ export default function AllClipsPage({ params, searchParams }: AllClipsPageProps
     }, []);
 
     const handleFilterChange = (value: string | null) => {
-        if (value === "favorites") {
-            router.push(`/${slug}/clips?favorites=true`);
-        } else {
-            router.push(`/${slug}/clips`);
-        }
+        router.push(value === "favorites" ? `/${slug}/clips?favorites=true` : `/${slug}/clips`);
     };
 
-    if (videosLoading || clipsLoading) {
+    if (isLoading || !workspace) {
         return (
             <div className="flex h-full items-center justify-center">
                 <IconLoader2 className="size-8 animate-spin text-muted-foreground" />
@@ -147,24 +132,21 @@ export default function AllClipsPage({ params, searchParams }: AllClipsPageProps
     }
 
     const userPlan = (workspace?.plan || "free") as "free" | "starter" | "pro" | "agency";
+    const totalCount = data?.pages[0]?.clips !== undefined ? allClips.length : 0;
 
     return (
         <div className="flex h-full flex-col bg-background">
-            {/* Header */}
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b px-4 sm:px-6 py-3 sm:py-4">
                 <div className="flex items-center gap-2 sm:gap-3">
                     <IconScissors className="size-5 sm:size-6" />
                     <h1 className="text-lg sm:text-xl font-semibold">
                         {showFavoritesOnly ? "Favorite Clips" : "All Clips"}
                     </h1>
-                    <Badge variant="secondary">{allClips.length}</Badge>
+                    <Badge variant="secondary">{allClips.length}{hasNextPage ? "+" : ""}</Badge>
                 </div>
 
                 <div className="flex items-center gap-2">
-                    <Select
-                        value={showFavoritesOnly ? "favorites" : "all"}
-                        onValueChange={handleFilterChange}
-                    >
+                    <Select value={showFavoritesOnly ? "favorites" : "all"} onValueChange={handleFilterChange}>
                         <SelectTrigger className="w-[120px] sm:w-[140px]">
                             <IconFilter className="mr-2 size-4" />
                             <SelectValue />
@@ -180,10 +162,7 @@ export default function AllClipsPage({ params, searchParams }: AllClipsPageProps
                         </SelectContent>
                     </Select>
 
-                    <Select
-                        value={sortBy}
-                        onValueChange={(v) => setSortBy(v as typeof sortBy)}
-                    >
+                    <Select value={sortBy} onValueChange={(v) => setSortBy(v as typeof sortBy)}>
                         <SelectTrigger className="w-[120px] sm:w-[140px]">
                             <SelectValue placeholder="Sort by" />
                         </SelectTrigger>
@@ -196,7 +175,6 @@ export default function AllClipsPage({ params, searchParams }: AllClipsPageProps
                 </div>
             </div>
 
-            {/* Clips List */}
             <div className="flex-1 overflow-auto p-4 sm:p-6 flex justify-center">
                 {allClips.length === 0 ? (
                     <div className="flex items-center justify-center h-full">
@@ -210,17 +188,13 @@ export default function AllClipsPage({ params, searchParams }: AllClipsPageProps
                             }
                             action={
                                 !showFavoritesOnly
-                                    ? {
-                                        label: "Upload Video",
-                                        onClick: () => router.push(`/${slug}`),
-                                    }
+                                    ? { label: "Upload Video", onClick: () => router.push(`/${slug}`) }
                                     : undefined
                             }
                         />
                     </div>
                 ) : (
                     <div className="space-y-6 max-w-4xl w-full">
-                        {/* Schedule nudge banner */}
                         <div className="flex items-center justify-between gap-4 rounded-xl border border-primary/20 bg-primary/5 px-4 py-3">
                             <div className="flex items-center gap-3">
                                 <div className="flex size-8 shrink-0 items-center justify-center rounded-full bg-primary/10">
@@ -254,6 +228,15 @@ export default function AllClipsPage({ params, searchParams }: AllClipsPageProps
                                 workspaceId={workspace?.id}
                             />
                         ))}
+
+                        {/* Scroll sentinel */}
+                        <div ref={sentinelRef} className="h-4" />
+
+                        {isFetchingNextPage && (
+                            <div className="flex justify-center py-4">
+                                <IconLoader2 className="size-6 animate-spin text-muted-foreground" />
+                            </div>
+                        )}
                     </div>
                 )}
             </div>

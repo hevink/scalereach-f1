@@ -141,6 +141,25 @@ function transformClipResponse(clip: any): ClipResponse {
 
 export const clipsApi = {
   /**
+   * Get all clips for a workspace in a single query
+   */
+  getClipsByWorkspace: async (workspaceId: string, filters?: Partial<ClipFilters>, limit = 20, offset = 0): Promise<{ clips: ClipResponse[]; hasMore: boolean; nextOffset: number | null }> => {
+    const searchParams = new URLSearchParams();
+    if (filters?.favorited !== undefined) searchParams.set("favorited", filters.favorited.toString());
+    if (filters?.sortBy) searchParams.set("sortBy", filters.sortBy);
+    if (filters?.sortOrder) searchParams.set("sortOrder", filters.sortOrder);
+    searchParams.set("limit", String(limit));
+    searchParams.set("offset", String(offset));
+    const url = `/api/workspaces/${workspaceId}/clips?${searchParams.toString()}`;
+    const response = await api.get<{ clips: any[]; hasMore: boolean; nextOffset: number | null }>(url);
+    return {
+      clips: response.data.clips.map(transformClipResponse),
+      hasMore: response.data.hasMore,
+      nextOffset: response.data.nextOffset,
+    };
+  },
+
+  /**
    * Get all clips for a video with optional filtering and sorting
    */
   getClipsByVideo: async (videoId: string, filters?: Partial<ClipFilters>): Promise<ClipResponse[]> => {

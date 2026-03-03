@@ -1,4 +1,4 @@
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient, useInfiniteQuery } from "@tanstack/react-query";
 import {
   clipsApi,
   type ClipResponse,
@@ -21,6 +21,26 @@ export const clipKeys = {
 function hasGeneratingClips(clips: ClipResponse[] | undefined): boolean {
   if (!clips) return false;
   return clips.some(clip => clip.status === "generating" || clip.status === "detected");
+}
+
+/**
+ * Get all clips for a workspace with infinite scroll pagination
+ */
+export function useClipsByWorkspace(workspaceId: string, filters?: Partial<ClipFilters>) {
+  return useInfiniteQuery({
+    queryKey: ["clips", "workspace", workspaceId, filters],
+    queryFn: ({ pageParam = 0 }) =>
+      clipsApi.getClipsByWorkspace(workspaceId, filters, 20, pageParam as number),
+    initialPageParam: 0,
+    getNextPageParam: (lastPage) => lastPage.nextOffset ?? undefined,
+    enabled: !!workspaceId,
+    refetchInterval: (query) => {
+      const allClips = query.state.data?.pages.flatMap(p => p.clips);
+      return hasGeneratingClips(allClips) ? 5000 : false;
+    },
+    refetchIntervalInBackground: false,
+    refetchOnWindowFocus: true,
+  });
 }
 
 /**
