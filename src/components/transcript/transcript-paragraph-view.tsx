@@ -84,6 +84,8 @@ function Segment({
     const [editText, setEditText] = useState(segment.text);
     const [isDirty, setIsDirty] = useState(false);
     const textareaRef = useRef<HTMLTextAreaElement>(null);
+    // Prevents onBlur from firing when user clicks Save/Cancel buttons
+    const mouseDownInsideRef = useRef(false);
 
     // sync external changes when not editing
     useEffect(() => {
@@ -93,14 +95,13 @@ function Segment({
         }
     }, [segment.text, isActive]);
 
-    // auto-resize textarea height
+    // auto-resize textarea height and focus
     useEffect(() => {
         if (isActive && textareaRef.current) {
             const el = textareaRef.current;
             el.style.height = "auto";
             el.style.height = `${el.scrollHeight}px`;
             el.focus();
-            // place cursor at end
             el.setSelectionRange(el.value.length, el.value.length);
         }
     }, [isActive]);
@@ -108,7 +109,6 @@ function Segment({
     const handleChange = useCallback((e: React.ChangeEvent<HTMLTextAreaElement>) => {
         setEditText(e.target.value);
         setIsDirty(e.target.value.trim() !== segment.text);
-        // auto-resize
         e.target.style.height = "auto";
         e.target.style.height = `${e.target.scrollHeight}px`;
     }, [segment.text]);
@@ -143,24 +143,36 @@ function Segment({
         }
     }, [confirmEdit, cancelEdit, onFocusNext, onFocusPrev]);
 
+    // Only confirm on blur if the user didn't mousedown inside the edit UI
+    const handleBlur = useCallback(() => {
+        if (mouseDownInsideRef.current) {
+            mouseDownInsideRef.current = false;
+            return;
+        }
+        confirmEdit();
+    }, [confirmEdit]);
+
     const timestamp = formatTimestamp(segment.startTime);
     const isCurrentSegment = currentWordInfo?.segmentIndex === segIdx;
 
     if (isActive && onSegmentEdit) {
         return (
-            <div className="rounded-lg border border-blue-500/50 bg-zinc-800/80 overflow-hidden">
+            <div
+                className="rounded-lg border border-blue-500/50 bg-zinc-800/80 overflow-hidden"
+                onMouseDown={() => { mouseDownInsideRef.current = true; }}
+            >
                 <div className="flex items-center justify-between px-3 py-1.5 border-b border-zinc-700 bg-zinc-900/60">
                     <span className="text-[10px] text-zinc-400 font-mono">{timestamp}</span>
                     <div className="flex items-center gap-2">
                         {isDirty && <span className="text-[10px] text-amber-400">unsaved</span>}
                         <button
-                            onMouseDown={(e) => { e.preventDefault(); confirmEdit(); }}
+                            onMouseDown={(e) => { e.preventDefault(); mouseDownInsideRef.current = false; confirmEdit(); }}
                             className="flex items-center gap-1 text-[10px] text-green-400 hover:text-green-300 px-1.5 py-0.5 rounded hover:bg-zinc-700"
                         >
                             <IconCheck className="size-3" /> Save
                         </button>
                         <button
-                            onMouseDown={(e) => { e.preventDefault(); cancelEdit(); }}
+                            onMouseDown={(e) => { e.preventDefault(); mouseDownInsideRef.current = false; cancelEdit(); }}
                             className="flex items-center gap-1 text-[10px] text-zinc-400 hover:text-zinc-200 px-1.5 py-0.5 rounded hover:bg-zinc-700"
                         >
                             <IconX className="size-3" /> Cancel
@@ -172,7 +184,7 @@ function Segment({
                     value={editText}
                     onChange={handleChange}
                     onKeyDown={handleKeyDown}
-                    onBlur={confirmEdit}
+                    onBlur={handleBlur}
                     className="w-full bg-transparent text-zinc-100 text-sm px-3 py-2 focus:outline-none resize-none leading-relaxed min-h-[40px]"
                     style={{ overflow: "hidden" }}
                 />
@@ -209,13 +221,10 @@ function Segment({
                         key={`${segment.id}-${wordIdx}`}
                         ref={isCurrentWord ? currentWordRef : undefined}
                         onClick={(e) => {
-                            if (onSegmentEdit) return; // let parent div handle
                             e.stopPropagation();
-                            onWordClick?.(word);
-                        }}
-                        onMouseDown={(e) => {
-                            if (!onSegmentEdit) return;
-                            e.preventDefault(); // prevent blur on textarea
+                            if (onSegmentEdit) {
+                                onActivate();
+                            }
                             onWordClick?.(word);
                         }}
                         className={cn(
@@ -223,7 +232,7 @@ function Segment({
                             highlightCurrent && isCurrentWord
                                 ? "bg-white/20 text-white rounded px-0.5"
                                 : "text-zinc-200 hover:text-white",
-                            !onSegmentEdit && "cursor-pointer"
+                            onSegmentEdit ? "cursor-text" : "cursor-pointer"
                         )}
                         title={`${formatTimestamp(word.start)} – ${formatTimestamp(word.end)}`}
                     >

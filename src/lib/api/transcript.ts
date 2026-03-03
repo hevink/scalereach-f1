@@ -2,6 +2,7 @@ import { api } from "../axios";
 
 // Types based on design document
 export interface TranscriptWord {
+  id?: string;
   word: string;
   start: number;
   end: number;
