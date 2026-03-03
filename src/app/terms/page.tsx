@@ -19,7 +19,7 @@ export default function TermsOfServicePage() {
             Terms of Service
           </h1>
           <p className="text-muted-foreground">
-            Last updated: February 25, 2026
+            Last updated: March 3, 2026
           </p>
         </div>
 
@@ -84,6 +84,11 @@ export default function TermsOfServicePage() {
               The Service is offered through various subscription plans with different features, limits, and pricing. Details of available plans are provided on our pricing page. We reserve the right to modify our pricing and plans at any time.
             </p>
 
+            <h3 className="text-xl font-medium mt-6 mb-3">4.1.1 Agency Plan — Fair Use Policy</h3>
+            <p className="text-muted-foreground leading-relaxed">
+              The Agency plan includes unlimited video uploads. However, to ensure fair access and platform stability for all users, Agency plan accounts are subject to a fair use limit of <strong>300 minutes of video processing per day</strong> (rolling 24-hour window). This limit is not currently enforced but is reserved as a protective measure against abuse. ScaleReach reserves the right to enforce this limit at any time, with or without prior notice, if usage patterns are found to negatively impact platform performance or other users.
+            </p>
+
             <h3 className="text-xl font-medium mt-6 mb-3">4.2 Billing</h3>
             <p className="text-muted-foreground leading-relaxed">
               By subscribing to a paid plan, you authorize us to charge your designated payment method on a recurring basis (monthly or annually, depending on your selected billing cycle). All fees are non-refundable except as expressly stated in these Terms or required by applicable law.
@@ -91,7 +96,7 @@ export default function TermsOfServicePage() {
 
             <h3 className="text-xl font-medium mt-6 mb-3">4.3 Credits and Usage</h3>
             <p className="text-muted-foreground leading-relaxed">
-              Certain features of the Service operate on a credit-based system. Credits are allocated according to your subscription plan and reset at the beginning of each billing cycle. Unused credits do not roll over to subsequent billing periods unless otherwise specified.
+              Certain features of the Service operate on a credit-based system. Credits are allocated according to your subscription plan and are valid for <strong>60 days from the date of purchase or allocation</strong>. Any unused credits expire after 60 days and will not be refunded or carried forward. Credits are consumed in order of their expiry date (earliest-expiring credits are used first).
             </p>
 
             <h3 className="text-xl font-medium mt-6 mb-3">4.4 Cancellation</h3>
