@@ -190,28 +190,12 @@ export function useSubmitYouTubeUrl() {
       queryClient.invalidateQueries({ queryKey: videoKeys.myVideos(variables.workspaceId) });
     },
     onError: (error) => {
-      console.error("[useSubmitYouTubeUrl] Failed to submit YouTube URL:", { error, timestamp: new Date().toISOString() });
-      toast.error("Failed to submit video", {
-        description: error instanceof Error ? error.message : "Please try again",
+      // Log error for debugging (Requirement 30.5)
+      console.error("[useSubmitYouTubeUrl] Failed to submit YouTube URL:", {
+        error,
+        timestamp: new Date().toISOString(),
       });
-    },
-  });
-}
-
-/**
- * Submit any supported platform URL (YouTube, TikTok, Instagram, etc.)
- */
-export function useSubmitVideoUrl() {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: (req: import("@/lib/api/video").SubmitVideoUrlRequest) =>
-      videoApi.submitVideoUrl(req),
-    onSuccess: (_data, variables) => {
-      queryClient.invalidateQueries({ queryKey: videoKeys.myVideos(variables.workspaceId) });
-    },
-    onError: (error) => {
-      console.error("[useSubmitVideoUrl] Failed to submit video URL:", { error, timestamp: new Date().toISOString() });
+      // Show error toast (Requirement 30.1)
       toast.error("Failed to submit video", {
         description: error instanceof Error ? error.message : "Please try again",
       });

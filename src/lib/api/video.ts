@@ -20,7 +20,7 @@ export interface VideoLite {
   duration: number | null;
   thumbnailUrl: string | null;
   status: "pending" | "pending_config" | "downloading" | "uploading" | "transcribing" | "analyzing" | "completed" | "failed";
-  sourceType: "youtube" | "upload" | SupportedPlatform;
+  sourceType: "youtube" | "upload";
   sourceUrl: string | null;
   createdAt: string;
 }
@@ -54,30 +54,10 @@ export interface ViralClip {
   createdAt: string;
 }
 
-export type SupportedPlatform =
-  | "youtube" | "tiktok" | "instagram" | "twitter" | "facebook"
-  | "vimeo" | "twitch" | "linkedin" | "reddit" | "rumble"
-  | "dailymotion" | "loom" | "ted";
-
-export interface PlatformInfo {
-  platform: SupportedPlatform;
-  displayName: string;
-  requiresAuth: boolean;
-}
-
-export interface ValidateVideoUrlResponse {
+export interface ValidateYouTubeResponse {
   valid: boolean;
   videoInfo?: VideoInfo;
-  platform?: SupportedPlatform;
   error?: string;
-}
-
-export interface SubmitVideoUrlRequest {
-  videoUrl: string;
-  workspaceId: string;
-  projectId?: string;
-  workspaceSlug?: string;
-  config?: SubmitVideoWithConfigRequest["config"];
 }
 
 export interface SubmitVideoResponse {
@@ -132,23 +112,15 @@ export interface VideoStatusResponse {
 }
 
 export const videoApi = {
-  // Validate YouTube URL (public endpoint) — kept for backward compat
-  validateYouTubeUrl: async (url: string): Promise<ValidateVideoUrlResponse> => {
-    const response = await api.get<ValidateVideoUrlResponse>(
+  // Validate YouTube URL (public endpoint)
+  validateYouTubeUrl: async (url: string): Promise<ValidateYouTubeResponse> => {
+    const response = await api.get<ValidateYouTubeResponse>(
       `/api/videos/validate-youtube?url=${encodeURIComponent(url)}`
     );
     return response.data;
   },
 
-  // Validate any supported platform URL
-  validateVideoUrl: async (url: string): Promise<ValidateVideoUrlResponse> => {
-    const response = await api.get<ValidateVideoUrlResponse>(
-      `/api/videos/validate-url?url=${encodeURIComponent(url)}`
-    );
-    return response.data;
-  },
-
-  // Submit YouTube URL for processing (with optional config) — kept for backward compat
+  // Submit YouTube URL for processing (with optional config)
   submitYouTubeUrl: async (
     youtubeUrl: string,
     workspaceId: string,
@@ -163,12 +135,6 @@ export const videoApi = {
       workspaceSlug,
       config,
     });
-    return response.data;
-  },
-
-  // Submit any supported platform URL for processing
-  submitVideoUrl: async (req: SubmitVideoUrlRequest): Promise<SubmitVideoResponse> => {
-    const response = await api.post<SubmitVideoResponse>("/api/videos/url", req);
     return response.data;
   },
 

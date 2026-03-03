@@ -3,13 +3,6 @@
 import { useState, useCallback, useEffect, useRef } from "react";
 import {
     IconBrandYoutube,
-    IconBrandTiktok,
-    IconBrandInstagram,
-    IconBrandX,
-    IconBrandFacebook,
-    IconBrandVimeo,
-    IconBrandTwitch,
-    IconBrandLinkedin,
     IconCheck,
     IconLoader2,
     IconX,
@@ -18,7 +11,6 @@ import {
     IconCloudUpload,
     IconFile,
     IconAlertCircle,
-    IconVideo,
 } from "@tabler/icons-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -29,55 +21,26 @@ import {
     DialogHeader,
     DialogTitle,
 } from "@/components/ui/dialog";
-import { useSubmitVideoUrl, videoKeys } from "@/hooks/useVideo";
+import { useSubmitYouTubeUrl, videoKeys } from "@/hooks/useVideo";
 import { toast } from "sonner";
 import Uppy from "@uppy/core";
 import AwsS3 from "@uppy/aws-s3";
 import { useQueryClient } from "@tanstack/react-query";
 import { cn } from "@/lib/utils";
-import type { SupportedPlatform } from "@/lib/api/video";
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3001";
 
-// Multi-platform URL detection
-const PLATFORM_PATTERNS: Array<{ platform: SupportedPlatform; patterns: RegExp[] }> = [
-    { platform: "youtube", patterns: [/(?:youtube\.com\/(?:watch\?v=|shorts\/|embed\/|v\/)|youtu\.be\/)([a-zA-Z0-9_-]{11})/] },
-    { platform: "tiktok", patterns: [/tiktok\.com\/@[\w.]+\/video\/\d+/, /tiktok\.com\/t\/\w+/, /vm\.tiktok\.com\/\w+/] },
-    { platform: "instagram", patterns: [/instagram\.com\/(?:p|reel|tv)\/[\w-]+/] },
-    { platform: "twitter", patterns: [/(?:twitter|x)\.com\/\w+\/status\/\d+/] },
-    { platform: "facebook", patterns: [/facebook\.com\/(?:watch|[\w.]+\/videos|reel)/, /fb\.watch\/\w+/] },
-    { platform: "vimeo", patterns: [/vimeo\.com\/(?:video\/)?\d+/] },
-    { platform: "twitch", patterns: [/twitch\.tv\/videos\/\d+/, /twitch\.tv\/\w+\/clip\/[\w-]+/, /clips\.twitch\.tv\/[\w-]+/] },
-    { platform: "linkedin", patterns: [/linkedin\.com\/(?:posts|feed\/update|learning)/] },
-    { platform: "reddit", patterns: [/reddit\.com\/r\/\w+\/comments\/\w+/, /v\.redd\.it\/\w+/] },
-    { platform: "rumble", patterns: [/rumble\.com\/(?:v[\w-]+|embed\/[\w-]+)/] },
-    { platform: "dailymotion", patterns: [/dailymotion\.com\/video\/[\w]+/, /dai\.ly\/[\w]+/] },
-    { platform: "loom", patterns: [/loom\.com\/share\/[\w]+/] },
-    { platform: "ted", patterns: [/ted\.com\/talks\/[\w-]+/] },
+// YouTube URL patterns
+const YOUTUBE_URL_PATTERNS = [
+    /^(https?:\/\/)?(www\.)?youtube\.com\/watch\?v=([a-zA-Z0-9_-]{11})/,
+    /^(https?:\/\/)?(www\.)?youtu\.be\/([a-zA-Z0-9_-]{11})/,
+    /^(https?:\/\/)?(www\.)?youtube\.com\/embed\/([a-zA-Z0-9_-]{11})/,
+    /^(https?:\/\/)?(www\.)?youtube\.com\/v\/([a-zA-Z0-9_-]{11})/,
+    /^(https?:\/\/)?(www\.)?youtube\.com\/shorts\/([a-zA-Z0-9_-]{11})/,
 ];
 
-const PLATFORM_DISPLAY: Record<SupportedPlatform, { name: string; Icon: React.ComponentType<{ size?: number; className?: string }> }> = {
-    youtube: { name: "YouTube", Icon: IconBrandYoutube },
-    tiktok: { name: "TikTok", Icon: IconBrandTiktok },
-    instagram: { name: "Instagram", Icon: IconBrandInstagram },
-    twitter: { name: "X / Twitter", Icon: IconBrandX },
-    facebook: { name: "Facebook", Icon: IconBrandFacebook },
-    vimeo: { name: "Vimeo", Icon: IconBrandVimeo },
-    twitch: { name: "Twitch", Icon: IconBrandTwitch },
-    linkedin: { name: "LinkedIn", Icon: IconBrandLinkedin },
-    reddit: { name: "Reddit", Icon: IconVideo },
-    rumble: { name: "Rumble", Icon: IconVideo },
-    dailymotion: { name: "Dailymotion", Icon: IconVideo },
-    loom: { name: "Loom", Icon: IconVideo },
-    ted: { name: "TED", Icon: IconVideo },
-};
-
-function detectPlatform(url: string): SupportedPlatform | null {
-    const normalized = url.trim().toLowerCase();
-    for (const { platform, patterns } of PLATFORM_PATTERNS) {
-        if (patterns.some((p) => p.test(normalized))) return platform;
-    }
-    return null;
+function isValidYouTubeUrl(url: string): boolean {
+    return YOUTUBE_URL_PATTERNS.some((pattern) => pattern.test(url.trim()));
 }
 
 function formatFileSize(bytes: number): string {
@@ -104,7 +67,6 @@ interface FloatingUploadFooterProps {
 
 export function FloatingUploadFooter({ projectId, workspaceId }: FloatingUploadFooterProps) {
     const [url, setUrl] = useState("");
-    const [detectedPlatform, setDetectedPlatform] = useState<SupportedPlatform | null>(null);
     const [isValidUrl, setIsValidUrl] = useState(false);
     const [isUploadDialogOpen, setIsUploadDialogOpen] = useState(false);
     const [files, setFiles] = useState<FileState[]>([]);
@@ -115,14 +77,12 @@ export function FloatingUploadFooter({ projectId, workspaceId }: FloatingUploadF
     const queryClient = useQueryClient();
     const videoIdsRef = useRef<Map<string, string>>(new Map());
 
-    const submitMutation = useSubmitVideoUrl();
+    const submitMutation = useSubmitYouTubeUrl();
 
-    // Client-side platform detection
+    // Client-side only validation for YouTube URL
     useEffect(() => {
         const trimmedUrl = url.trim();
-        const platform = trimmedUrl ? detectPlatform(trimmedUrl) : null;
-        setDetectedPlatform(platform);
-        setIsValidUrl(platform !== null);
+        setIsValidUrl(trimmedUrl ? isValidYouTubeUrl(trimmedUrl) : false);
     }, [url]);
 
     // Initialize Uppy when dialog opens
@@ -368,64 +328,51 @@ export function FloatingUploadFooter({ projectId, workspaceId }: FloatingUploadF
         setFiles((prev) => prev.filter((f) => f.id !== fileId));
     }, []);
 
-    const handleSubmitVideoUrl = useCallback(async () => {
+    const handleSubmitYouTube = useCallback(async () => {
         if (!isValidUrl || !url.trim() || !workspaceId) return;
 
         try {
             await submitMutation.mutateAsync({
-                videoUrl: url.trim(),
+                youtubeUrl: url.trim(),
                 workspaceId,
                 projectId,
             });
 
-            const platformName = detectedPlatform ? PLATFORM_DISPLAY[detectedPlatform].name : "Video";
-            toast.success(`${platformName} video submitted`, {
+            toast.success("Video submitted for processing", {
                 description: "Your video is being processed",
             });
 
             setUrl("");
-            setDetectedPlatform(null);
+            setIsValidUrl(false);
         } catch (error) {
             toast.error("Failed to submit video", {
                 description: error instanceof Error ? error.message : "Please try again",
             });
         }
-    }, [isValidUrl, url, workspaceId, projectId, submitMutation, detectedPlatform]);
+    }, [isValidUrl, url, workspaceId, projectId, submitMutation]);
 
     const handleKeyDown = useCallback(
         (e: React.KeyboardEvent) => {
             if (e.key === "Enter" && isValidUrl) {
-                handleSubmitVideoUrl();
+                handleSubmitYouTube();
             }
         },
-        [isValidUrl, handleSubmitVideoUrl]
+        [isValidUrl, handleSubmitYouTube]
     );
-
-    // Render the platform icon for the detected platform
-    const PlatformIcon = detectedPlatform ? PLATFORM_DISPLAY[detectedPlatform].Icon : IconBrandYoutube;
-    const platformIconClass = detectedPlatform === "youtube" ? "text-red-500"
-        : detectedPlatform === "tiktok" ? "text-black dark:text-white"
-            : detectedPlatform === "instagram" ? "text-pink-500"
-                : detectedPlatform === "twitter" ? "text-sky-500"
-                    : detectedPlatform === "facebook" ? "text-blue-600"
-                        : detectedPlatform === "vimeo" ? "text-cyan-500"
-                            : detectedPlatform === "twitch" ? "text-purple-500"
-                                : detectedPlatform === "linkedin" ? "text-blue-700"
-                                    : "text-muted-foreground";
 
     return (
         <>
             {/* Floating Footer */}
             <div className="fixed inset-x-0 bottom-0 z-50 border-t bg-background/95 backdrop-blur supports-backdrop-filter:bg-background/60">
                 <div className="mx-auto flex max-w-4xl items-center gap-3 px-4 py-3">
-                    {/* Multi-platform URL Input */}
+                    {/* YouTube URL Input */}
                     <div className="relative flex-1">
                         <div className="pointer-events-none absolute inset-y-0 left-3 flex items-center">
-                            <PlatformIcon className={cn("size-5", platformIconClass)} />
+                            <IconBrandYoutube className="size-5 text-red-500" />
                         </div>
                         <Input
                             type="url"
-                            placeholder="Paste a URL from YouTube, TikTok, Instagram, X, Facebook, Vimeo..."
+                            placeholder="Paste YouTube URL here..."
                             value={url}
                             onChange={(e) => setUrl(e.target.value)}
                             onKeyDown={handleKeyDown}
@@ -449,7 +396,7 @@ export function FloatingUploadFooter({ projectId, workspaceId }: FloatingUploadF
                     {/* Submit YouTube Button */}
                     <Button
                         size="icon"
-                        onClick={handleSubmitVideoUrl}
+                        onClick={handleSubmitYouTube}
                         disabled={!isValidUrl || submitMutation.isPending}
                         className="shrink-0"
                     >
