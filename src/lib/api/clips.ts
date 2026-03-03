@@ -115,6 +115,7 @@ function transformClipResponse(clip: any): ClipResponse {
     id: clip.id,
     videoId: clip.videoId,
     title: clip.title,
+    introTitle: clip.introTitle,
     startTime: clip.startTime,
     endTime: clip.endTime,
     duration: clip.duration,
