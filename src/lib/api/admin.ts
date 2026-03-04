@@ -422,6 +422,30 @@ export const adminApi = {
     return response.data;
   },
 
+  retryClip: async (clipId: string) => {
+    const response = await api.post(`/api/admin/clips/${clipId}/retry`);
+    return response.data;
+  },
+
+  getFailedItems: async (page = 1, limit = 50) => {
+    const response = await api.get(`/api/admin/failed?page=${page}&limit=${limit}`);
+    return response.data as {
+      failedVideos: Array<{
+        id: string; title: string | null; status: string; sourceType: string;
+        errorMessage: string | null; createdAt: string; updatedAt: string;
+        userId: string; userName: string | null; userEmail: string | null; workspaceName: string | null;
+      }>;
+      failedClips: Array<{
+        id: string; title: string | null; status: string; createdAt: string; updatedAt: string;
+        videoId: string; videoTitle: string | null; userId: string;
+        userName: string | null; userEmail: string | null; workspaceName: string | null;
+      }>;
+      totalFailedVideos: number;
+      totalFailedClips: number;
+      page: number; limit: number;
+    };
+  },
+
   // User videos & clips
   getUserById: async (userId: string) => {
     const response = await api.get<AdminUser>(`/api/admin/users/${userId}`);

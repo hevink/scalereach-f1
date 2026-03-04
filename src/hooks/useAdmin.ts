@@ -158,7 +158,29 @@ export function useRetryVideo() {
       queryClient.invalidateQueries({ queryKey: ["admin", "videos"] });
       queryClient.invalidateQueries({ queryKey: ["admin", "video-detail"] });
       queryClient.invalidateQueries({ queryKey: ["admin", "video-analytics"] });
+      queryClient.invalidateQueries({ queryKey: ["admin", "failed"] });
     },
+  });
+}
+
+export function useRetryClip() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (clipId: string) => adminApi.retryClip(clipId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["admin", "failed"] });
+      queryClient.invalidateQueries({ queryKey: ["admin", "user-clips"] });
+    },
+  });
+}
+
+export function useFailedItems(page = 1) {
+  return useQuery({
+    queryKey: ["admin", "failed", page],
+    queryFn: () => adminApi.getFailedItems(page, 50),
+    staleTime: 15 * 1000,
+    refetchInterval: 30 * 1000,
   });
 }
 
