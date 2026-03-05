@@ -556,8 +556,10 @@ export function SignUpForm() {
           </div>
           {currentStep === 1 && (
             <>
-              <div className="text-center font-semibold text-muted-foreground text-sm">
-                OR
+              <div className="flex items-center gap-3">
+                <div className="h-px flex-1 bg-border" />
+                <span className="text-xs font-semibold text-muted-foreground">OR</span>
+                <div className="h-px flex-1 bg-border" />
               </div>
               <LoginWithGoogle isSignUp />
             </>

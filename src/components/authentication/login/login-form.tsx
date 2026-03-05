@@ -266,7 +266,11 @@ export function LoginForm() {
       return (
         <>
           {renderEmailForm(true)}
-          <div className="text-center font-semibold text-muted-foreground text-sm">OR</div>
+          <div className="flex items-center gap-3">
+            <div className="h-px flex-1 bg-border" />
+            <span className="text-xs font-semibold text-muted-foreground">OR</span>
+            <div className="h-px flex-1 bg-border" />
+          </div>
           <LoginWithGoogle variant="outline" />
           {/* <LoginWithPasskey variant="outline" /> */}
         </>
@@ -276,7 +280,11 @@ export function LoginForm() {
       return (
         <>
           <LoginWithGoogle showHelperText variant="default" />
-          <div className="text-center font-semibold text-muted-foreground text-sm">OR</div>
+          <div className="flex items-center gap-3">
+            <div className="h-px flex-1 bg-border" />
+            <span className="text-xs font-semibold text-muted-foreground">OR</span>
+            <div className="h-px flex-1 bg-border" />
+          </div>
           {renderEmailForm(false)}
           {/* <LoginWithPasskey variant="outline" /> */}
         </>
@@ -295,7 +303,11 @@ export function LoginForm() {
     return (
       <>
         {renderEmailForm(false)}
-        <div className="text-center font-semibold text-muted-foreground text-sm">OR</div>
+        <div className="flex items-center gap-3">
+          <div className="h-px flex-1 bg-border" />
+          <span className="text-xs font-semibold text-muted-foreground">OR</span>
+          <div className="h-px flex-1 bg-border" />
+        </div>
         <LoginWithGoogle variant="outline" />
         {/* <LoginWithPasskey variant="outline" /> */}
       </>
