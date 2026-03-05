@@ -40,9 +40,9 @@ export default function SignUpPage() {
       <SignUpForm />
       <AuthNavigation />
       <p className="text-xs text-zinc-500 text-center">
-        By creating an account, you agree to our{" "}
+        By proceeding you acknowledge that you have read, understood and agree to our{" "}
         <Link href="/terms" className="text-zinc-400 hover:text-zinc-900 dark:hover:text-white underline">
-          Terms of Service
+          Terms and Conditions
         </Link>{" "}
         and{" "}
         <Link href="/privacy" className="text-zinc-400 hover:text-zinc-900 dark:hover:text-white underline">
