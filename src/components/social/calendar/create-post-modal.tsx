@@ -21,12 +21,14 @@ import {
   InstagramIcon,
   TwitterIcon,
   LinkedInIcon,
+  FacebookIcon,
 } from "@/components/icons/platform-icons";
 
 const PLATFORM_LABELS: Record<string, string> = {
   tiktok: "TikTok",
   instagram: "Instagram",
   instagram_reels: "Instagram Reels",
+  facebook: "Facebook",
   youtube: "YouTube",
   youtube_shorts: "YT Shorts",
   twitter: "Twitter / X",
@@ -37,6 +39,7 @@ const PLATFORM_CHIP_STYLES: Record<string, string> = {
   tiktok: "bg-black/10 text-foreground dark:bg-white/10",
   instagram: "bg-pink-500/10 text-pink-600 dark:text-pink-400",
   instagram_reels: "bg-pink-500/10 text-pink-600 dark:text-pink-400",
+  facebook: "bg-blue-600/10 text-blue-700 dark:text-blue-400",
   youtube: "bg-red-500/10 text-red-600 dark:text-red-400",
   youtube_shorts: "bg-red-500/10 text-red-600 dark:text-red-400",
   twitter: "bg-sky-500/10 text-sky-600 dark:text-sky-400",
@@ -47,6 +50,7 @@ const PLATFORM_COLORS: Record<string, string> = {
   tiktok: "bg-black text-white",
   instagram: "bg-gradient-to-br from-yellow-400 via-pink-500 to-purple-600 text-white",
   instagram_reels: "bg-gradient-to-br from-yellow-400 via-pink-500 to-purple-600 text-white",
+  facebook: "bg-blue-600 text-white",
   youtube: "bg-red-500 text-white",
   youtube_shorts: "bg-red-500 text-white",
   twitter: "bg-black text-white",
@@ -57,6 +61,7 @@ const PLATFORM_ICONS: Record<string, React.ElementType> = {
   tiktok: TikTokIcon,
   instagram: InstagramIcon,
   instagram_reels: InstagramIcon,
+  facebook: FacebookIcon,
   youtube: YouTubeIcon,
   youtube_shorts: YouTubeIcon,
   twitter: TwitterIcon,

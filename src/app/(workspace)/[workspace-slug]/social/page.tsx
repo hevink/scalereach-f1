@@ -31,11 +31,13 @@ import {
   YouTubeIcon,
   TwitterIcon,
   LinkedInIcon,
+  FacebookIcon,
 } from "@/components/icons/platform-icons";
 
 const PLATFORMS: { id: string; label: string; Icon: React.ElementType }[] = [
   { id: "tiktok", label: "TikTok", Icon: TikTokIcon },
   { id: "instagram", label: "Instagram", Icon: InstagramIcon },
+  { id: "facebook", label: "Facebook", Icon: FacebookIcon },
   { id: "youtube", label: "YouTube Shorts", Icon: YouTubeIcon },
   { id: "twitter", label: "Twitter / X", Icon: TwitterIcon },
   { id: "linkedin", label: "LinkedIn", Icon: LinkedInIcon },

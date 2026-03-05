@@ -6,6 +6,7 @@ import {
   IconCheck,
   IconBrandTiktok,
   IconBrandInstagram,
+  IconBrandFacebook,
   IconBrandYoutube,
   IconBrandTwitter,
   IconCalendar,
@@ -34,6 +35,7 @@ interface SchedulePostModalProps {
 const PLATFORM_META: Record<string, { label: string; icon: React.ReactNode; color: string; bg: string }> = {
   tiktok: { label: "TikTok", icon: <IconBrandTiktok size={13} />, color: "text-white", bg: "bg-black" },
   instagram: { label: "Instagram", icon: <IconBrandInstagram size={13} />, color: "text-white", bg: "bg-gradient-to-br from-purple-500 to-pink-500" },
+  facebook: { label: "Facebook", icon: <IconBrandFacebook size={13} />, color: "text-white", bg: "bg-blue-600" },
   youtube: { label: "YouTube", icon: <IconBrandYoutube size={13} />, color: "text-white", bg: "bg-red-500" },
   twitter: { label: "Twitter / X", icon: <IconBrandTwitter size={13} />, color: "text-white", bg: "bg-sky-500" },
 };
