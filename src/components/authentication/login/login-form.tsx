@@ -266,6 +266,7 @@ export function LoginForm() {
       return (
         <>
           {renderEmailForm(true)}
+          <div className="text-center font-semibold text-muted-foreground text-sm">OR</div>
           <LoginWithGoogle variant="outline" />
           {/* <LoginWithPasskey variant="outline" /> */}
         </>
@@ -275,6 +276,7 @@ export function LoginForm() {
       return (
         <>
           <LoginWithGoogle showHelperText variant="default" />
+          <div className="text-center font-semibold text-muted-foreground text-sm">OR</div>
           {renderEmailForm(false)}
           {/* <LoginWithPasskey variant="outline" /> */}
         </>
@@ -284,6 +286,7 @@ export function LoginForm() {
     //   return (
     //     <>
     //       <LoginWithPasskey showHelperText variant="default" />
+    //       <div className="text-center font-semibold text-muted-foreground text-sm">OR</div>
     //       {renderEmailForm(false)}
     //       <LoginWithGoogle variant="outline" />
     //     </>
@@ -292,6 +295,7 @@ export function LoginForm() {
     return (
       <>
         {renderEmailForm(false)}
+        <div className="text-center font-semibold text-muted-foreground text-sm">OR</div>
         <LoginWithGoogle variant="outline" />
         {/* <LoginWithPasskey variant="outline" /> */}
       </>
