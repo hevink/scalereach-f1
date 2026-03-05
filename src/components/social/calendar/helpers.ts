@@ -108,6 +108,7 @@ export const PLATFORM_LABELS: Record<string, string> = {
   instagram: "Instagram",
   youtube:   "YouTube",
   twitter:   "Twitter / X",
+  threads:   "Threads",
 };
 
 export const WEEK_DAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];

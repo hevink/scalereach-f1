@@ -32,6 +32,7 @@ import {
   TwitterIcon,
   LinkedInIcon,
   FacebookIcon,
+  ThreadsIcon,
 } from "@/components/icons/platform-icons";
 
 const PLATFORMS: { id: string; label: string; Icon: React.ElementType }[] = [
@@ -41,6 +42,7 @@ const PLATFORMS: { id: string; label: string; Icon: React.ElementType }[] = [
   { id: "youtube", label: "YouTube Shorts", Icon: YouTubeIcon },
   { id: "twitter", label: "Twitter / X", Icon: TwitterIcon },
   { id: "linkedin", label: "LinkedIn", Icon: LinkedInIcon },
+  { id: "threads", label: "Threads", Icon: ThreadsIcon },
 ];
 
 const STATUS_COLORS: Record<string, string> = {

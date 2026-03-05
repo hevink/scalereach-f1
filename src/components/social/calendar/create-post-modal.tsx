@@ -22,6 +22,7 @@ import {
   TwitterIcon,
   LinkedInIcon,
   FacebookIcon,
+  ThreadsIcon,
 } from "@/components/icons/platform-icons";
 
 const PLATFORM_LABELS: Record<string, string> = {
@@ -33,6 +34,7 @@ const PLATFORM_LABELS: Record<string, string> = {
   youtube_shorts: "YT Shorts",
   twitter: "Twitter / X",
   linkedin: "LinkedIn",
+  threads: "Threads",
 };
 
 const PLATFORM_CHIP_STYLES: Record<string, string> = {
@@ -44,6 +46,7 @@ const PLATFORM_CHIP_STYLES: Record<string, string> = {
   youtube_shorts: "bg-red-500/10 text-red-600 dark:text-red-400",
   twitter: "bg-sky-500/10 text-sky-600 dark:text-sky-400",
   linkedin: "bg-blue-600/10 text-blue-700 dark:text-blue-400",
+  threads: "bg-black/10 text-foreground dark:bg-white/10",
 };
 
 const PLATFORM_COLORS: Record<string, string> = {
@@ -55,6 +58,7 @@ const PLATFORM_COLORS: Record<string, string> = {
   youtube_shorts: "bg-red-500 text-white",
   twitter: "bg-black text-white",
   linkedin: "bg-blue-600 text-white",
+  threads: "bg-black text-white",
 };
 
 const PLATFORM_ICONS: Record<string, React.ElementType> = {
@@ -66,6 +70,7 @@ const PLATFORM_ICONS: Record<string, React.ElementType> = {
   youtube_shorts: YouTubeIcon,
   twitter: TwitterIcon,
   linkedin: LinkedInIcon,
+  threads: ThreadsIcon,
 };
 
 function PlatformChip({ platform }: { platform: string }) {

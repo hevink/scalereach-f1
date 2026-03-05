@@ -11,6 +11,7 @@ import {
   TwitterIcon,
   LinkedInIcon,
   FacebookIcon,
+  ThreadsIcon,
 } from "@/components/icons/platform-icons";
 import type { ScheduledPost } from "@/lib/api/social";
 
@@ -23,6 +24,7 @@ const PLATFORM_ICONS: Record<string, React.ElementType> = {
   twitter: TwitterIcon,
   linkedin: LinkedInIcon,
   facebook: FacebookIcon,
+  threads: ThreadsIcon,
 };
 
 interface PostBadgeProps {
