@@ -26,6 +26,7 @@ export interface EditorToolbarProps {
     activePanel: ToolbarPanel;
     onPanelChange: (panel: ToolbarPanel) => void;
     captionsPanel?: ReactNode;
+    aiHookPanel?: ReactNode;
     clipInfoPanel?: ReactNode;
     textOverlayPanel?: ReactNode;
     className?: string;

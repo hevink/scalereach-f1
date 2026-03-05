@@ -126,7 +126,7 @@ export default function AdminOverviewPage() {
                     <p className="text-sm text-muted-foreground">Platform analytics and metrics</p>
                 </div>
                 <Popover>
-                    <PopoverTrigger asChild>
+                    <PopoverTrigger>
                         <Button variant="outline" size="sm" className="gap-2 w-full sm:w-auto justify-start sm:justify-center">
                             <IconCalendar className="h-4 w-4 shrink-0" />
                             <span className="truncate">

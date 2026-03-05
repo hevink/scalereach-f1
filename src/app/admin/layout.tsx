@@ -131,7 +131,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                 <div className="flex h-14 items-center gap-3 px-4">
                     {/* Mobile menu trigger */}
                     <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
-                        <SheetTrigger asChild>
+                        <SheetTrigger>
                             <Button variant="ghost" size="icon" className="lg:hidden">
                                 <IconMenu2 className="h-5 w-5" />
                             </Button>

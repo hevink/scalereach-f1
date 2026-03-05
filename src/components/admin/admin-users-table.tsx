@@ -223,7 +223,7 @@ export function AdminUsersTable() {
                                                 </TableCell>
                                                 <TableCell onClick={(e) => e.stopPropagation()}>
                                                     <DropdownMenu>
-                                                        <DropdownMenuTrigger asChild>
+                                                        <DropdownMenuTrigger>
                                                             <Button variant="ghost" size="icon" className="h-8 w-8">
                                                                 <IconDotsVertical className="h-4 w-4" />
                                                             </Button>
@@ -296,7 +296,7 @@ export function AdminUsersTable() {
                                         </div>
                                         <div onClick={(e) => e.stopPropagation()}>
                                             <DropdownMenu>
-                                                <DropdownMenuTrigger asChild>
+                                                <DropdownMenuTrigger>
                                                     <Button variant="ghost" size="icon" className="h-8 w-8 shrink-0">
                                                         <IconDotsVertical className="h-4 w-4" />
                                                     </Button>
