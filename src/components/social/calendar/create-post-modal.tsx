@@ -127,17 +127,34 @@ export function CreatePostFromCalendarModal({ workspaceId }: Props) {
 
   const [step, setStep] = useState<"clip" | "details">("clip");
   const [selectedClip, setSelectedClip] = useState<WorkspaceClip | null>(null);
-  const [selectedAccountId, setSelectedAccountId] = useState("");
+  const [selectedAccountIds, setSelectedAccountIds] = useState<Set<string>>(new Set());
   const [caption, setCaption] = useState("");
   const [hashtags, setHashtags] = useState<string[]>([]);
   const [hashtagInput, setHashtagInput] = useState("");
   const [scheduledDate, setScheduledDate] = useState<Date | undefined>(undefined);
 
+  function toggleAccount(id: string) {
+    setSelectedAccountIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  }
+
+  function selectAll() {
+    if (selectedAccountIds.size === accounts.length) {
+      setSelectedAccountIds(new Set());
+    } else {
+      setSelectedAccountIds(new Set(accounts.map((a) => a.id)));
+    }
+  }
+
   useEffect(() => {
     if (createModalDate) {
       setStep("clip");
       setSelectedClip(null);
-      setSelectedAccountId("");
+      setSelectedAccountIds(new Set());
       setCaption("");
       setHashtags([]);
       setHashtagInput("");
@@ -170,30 +187,36 @@ export function CreatePostFromCalendarModal({ workspaceId }: Props) {
   }
 
   async function handleSubmit() {
-    if (!selectedClip || !selectedAccountId) return;
-    await schedulePost.mutateAsync({
-      workspaceId,
-      clipId: selectedClip.id,
-      socialAccountId: selectedAccountId,
-      postType: scheduledAt ? "scheduled" : "immediate",
-      caption,
-      hashtags,
-      scheduledAt: scheduledAt || undefined,
-    });
+    if (!selectedClip || selectedAccountIds.size === 0) return;
+    const promises = Array.from(selectedAccountIds).map((accountId) =>
+      schedulePost.mutateAsync({
+        workspaceId,
+        clipId: selectedClip.id,
+        socialAccountId: accountId,
+        postType: scheduledAt ? "scheduled" : "immediate",
+        caption,
+        hashtags,
+        scheduledAt: scheduledAt || undefined,
+      })
+    );
+    await Promise.all(promises);
     closeCreateModal();
   }
 
   async function handlePostNow() {
-    if (!selectedClip || !selectedAccountId) return;
-    await schedulePost.mutateAsync({
-      workspaceId,
-      clipId: selectedClip.id,
-      socialAccountId: selectedAccountId,
-      postType: "immediate",
-      caption,
-      hashtags,
-      scheduledAt: undefined,
-    });
+    if (!selectedClip || selectedAccountIds.size === 0) return;
+    const promises = Array.from(selectedAccountIds).map((accountId) =>
+      schedulePost.mutateAsync({
+        workspaceId,
+        clipId: selectedClip.id,
+        socialAccountId: accountId,
+        postType: "immediate",
+        caption,
+        hashtags,
+        scheduledAt: undefined,
+      })
+    );
+    await Promise.all(promises);
     closeCreateModal();
   }
 
@@ -371,19 +394,30 @@ export function CreatePostFromCalendarModal({ workspaceId }: Props) {
             <div className="flex flex-1 flex-col gap-4 overflow-y-auto p-5 max-h-[540px]">
               {/* Account */}
               <div className="flex flex-col gap-2">
-                <Label className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">Post to</Label>
+                <div className="flex items-center justify-between">
+                  <Label className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">Post to</Label>
+                  {accounts.length > 1 && (
+                    <button
+                      type="button"
+                      onClick={selectAll}
+                      className="text-[11px] font-medium text-primary hover:underline"
+                    >
+                      {selectedAccountIds.size === accounts.length ? "Deselect all" : "Select all"}
+                    </button>
+                  )}
+                </div>
                 {accounts.length === 0 ? (
                   <p className="text-xs text-muted-foreground">No connected accounts. Connect one from the Social page.</p>
                 ) : (
                   <div className="flex flex-col gap-1.5">
                     {accounts.map((acc) => {
                       const Icon = PLATFORM_ICONS[acc.platform];
-                      const isSelected = selectedAccountId === acc.id;
+                      const isSelected = selectedAccountIds.has(acc.id);
                       return (
                         <button
                           key={acc.id}
                           type="button"
-                          onClick={() => setSelectedAccountId(acc.id)}
+                          onClick={() => toggleAccount(acc.id)}
                           className={cn(
                             "flex items-center gap-3 rounded-xl border px-3 py-2.5 text-sm transition-all text-left",
                             isSelected
@@ -400,11 +434,14 @@ export function CreatePostFromCalendarModal({ workspaceId }: Props) {
                             <p className="truncate text-xs font-semibold">{acc.accountName}</p>
                             <p className="text-[11px] text-muted-foreground">{PLATFORM_LABELS[acc.platform] || acc.platform}</p>
                           </div>
-                          {isSelected && (
-                            <span className="flex size-5 shrink-0 items-center justify-center rounded-full bg-primary text-primary-foreground">
-                              <IconCheck size={11} strokeWidth={3} />
-                            </span>
-                          )}
+                          <span className={cn(
+                            "flex size-5 shrink-0 items-center justify-center rounded-full border-2 transition-all",
+                            isSelected
+                              ? "border-primary bg-primary text-primary-foreground"
+                              : "border-muted-foreground/30"
+                          )}>
+                            {isSelected && <IconCheck size={11} strokeWidth={3} />}
+                          </span>
                         </button>
                       );
                     })}
@@ -474,14 +511,14 @@ export function CreatePostFromCalendarModal({ workspaceId }: Props) {
                     size="sm"
                     variant="outline"
                     onClick={handlePostNow}
-                    disabled={!selectedAccountId || schedulePost.isPending}
+                    disabled={selectedAccountIds.size === 0 || schedulePost.isPending}
                   >
                     {schedulePost.isPending ? "Posting..." : "Post Now"}
                   </Button>
                   <Button
                     size="sm"
                     onClick={handleSubmit}
-                    disabled={!selectedAccountId || !scheduledAt || schedulePost.isPending}
+                    disabled={selectedAccountIds.size === 0 || !scheduledAt || schedulePost.isPending}
                     className="min-w-28"
                   >
                     {schedulePost.isPending ? "Scheduling..." : "Schedule Post"}

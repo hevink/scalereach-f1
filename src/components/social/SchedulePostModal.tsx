@@ -13,6 +13,7 @@ import {
   IconSend,
   IconHash,
   IconLoader2,
+  IconClock,
 } from "@tabler/icons-react";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { DateTimeScrollPicker } from "@/components/ui/date-time-scroll-picker";
@@ -46,7 +47,7 @@ export function SchedulePostModal({
   clip,
   workspaceId,
 }: SchedulePostModalProps) {
-  const [selectedAccountId, setSelectedAccountId] = useState("");
+  const [selectedAccountIds, setSelectedAccountIds] = useState<Set<string>>(new Set());
   const [caption, setCaption] = useState(clip.title || "");
   const [hashtagInput, setHashtagInput] = useState("");
   const [hashtags, setHashtags] = useState<string[]>(() =>
@@ -57,11 +58,27 @@ export function SchedulePostModal({
   );
   const [postType, setPostType] = useState<"immediate" | "scheduled">("scheduled");
   const [scheduledDate, setScheduledDate] = useState<Date | undefined>(undefined);
-
   const [submitAttempted, setSubmitAttempted] = useState(false);
 
   const { data: accounts = [], isLoading } = useSocialAccounts(workspaceId);
   const schedulePost = useSchedulePost(workspaceId);
+
+  function toggleAccount(id: string) {
+    setSelectedAccountIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  }
+
+  function selectAll() {
+    if (selectedAccountIds.size === accounts.length) {
+      setSelectedAccountIds(new Set());
+    } else {
+      setSelectedAccountIds(new Set(accounts.map((a) => a.id)));
+    }
+  }
 
   function addHashtag() {
     const tag = hashtagInput.trim().replace(/^#/, "");
@@ -71,48 +88,81 @@ export function SchedulePostModal({
 
   async function handleSubmit() {
     setSubmitAttempted(true);
-    if (!selectedAccountId) return;
+    if (selectedAccountIds.size === 0) return;
     if (postType === "scheduled" && !scheduledDate) return;
-    await schedulePost.mutateAsync({
-      workspaceId,
-      clipId: clip.id,
-      socialAccountId: selectedAccountId,
-      postType,
-      caption,
-      hashtags,
-      scheduledAt: postType === "scheduled" ? scheduledDate?.toISOString() : undefined,
-    });
+
+    const promises = Array.from(selectedAccountIds).map((accountId) =>
+      schedulePost.mutateAsync({
+        workspaceId,
+        clipId: clip.id,
+        socialAccountId: accountId,
+        postType,
+        caption,
+        hashtags,
+        scheduledAt: postType === "scheduled" ? scheduledDate?.toISOString() : undefined,
+      })
+    );
+
+    await Promise.all(promises);
     onOpenChange(false);
   }
 
-  const selectedAccount = accounts.find((a) => a.id === selectedAccountId);
+  const selectedAccounts = accounts.filter((a) => selectedAccountIds.has(a.id));
   const canSubmit =
-    !!selectedAccountId &&
+    selectedAccountIds.size > 0 &&
     !schedulePost.isPending &&
     (postType === "immediate" || !!scheduledDate);
+
+  // Step management
+  const [step, setStep] = useState<1 | 2>(1);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="!max-w-3xl gap-0 p-0 overflow-hidden [&>button]:hidden">
         {/* Header */}
         <div className="flex items-center justify-between border-b px-5 py-4">
-          <div>
+          <div className="flex items-center gap-4">
             <DialogTitle className="text-base font-semibold">Schedule Post</DialogTitle>
-            <p className="mt-0.5 text-xs text-muted-foreground line-clamp-1">{clip.title || "Untitled clip"}</p>
+            <p className="text-xs text-muted-foreground">
+              {new Date().toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric", year: "numeric" })}
+            </p>
           </div>
-          <button
-            type="button"
-            onClick={() => onOpenChange(false)}
-            className="flex size-8 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
-          >
-            <IconX size={16} />
-          </button>
+          <div className="flex items-center gap-4">
+            {/* Step indicator */}
+            <div className="flex items-center gap-2 text-xs">
+              <span className={cn(
+                "flex items-center gap-1.5",
+                step === 1 ? "text-primary" : "text-emerald-500"
+              )}>
+                {step > 1 ? <IconCheck size={13} className="text-emerald-500" /> : <span className="flex size-4 items-center justify-center rounded-full bg-primary text-[10px] font-bold text-primary-foreground">1</span>}
+                Pick clip
+              </span>
+              <span className="text-muted-foreground/40">—</span>
+              <span className={cn(
+                "flex items-center gap-1.5",
+                step === 2 ? "text-primary" : "text-muted-foreground"
+              )}>
+                <span className={cn(
+                  "flex size-4 items-center justify-center rounded-full text-[10px] font-bold",
+                  step === 2 ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground"
+                )}>2</span>
+                Details
+              </span>
+            </div>
+            <button
+              type="button"
+              onClick={() => onOpenChange(false)}
+              className="flex size-8 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+            >
+              <IconX size={16} />
+            </button>
+          </div>
         </div>
 
         <div className="flex">
           {/* Left: clip preview */}
-          <div className="flex w-44 shrink-0 flex-col gap-3 border-r bg-muted/20 p-4">
-            <div className="relative aspect-9/16 w-full overflow-hidden rounded-xl bg-muted shadow-sm">
+          <div className="flex w-52 shrink-0 flex-col gap-3 border-r bg-muted/20 p-4">
+            <div className="relative aspect-[9/16] w-full overflow-hidden rounded-xl bg-muted shadow-sm">
               {clip.thumbnailUrl ? (
                 <img src={clip.thumbnailUrl} alt={clip.title || ""} className="absolute inset-0 size-full object-cover" />
               ) : clip.storageUrl ? (
@@ -133,18 +183,33 @@ export function SchedulePostModal({
             <p className="line-clamp-3 text-xs font-medium leading-snug text-foreground">
               {clip.title || <span className="italic text-muted-foreground">Untitled clip</span>}
             </p>
-            {clip.duration && (
-              <span className="text-[11px] text-muted-foreground">{Math.round(clip.duration)}s</span>
-            )}
+            <button
+              type="button"
+              onClick={() => onOpenChange(false)}
+              className="text-xs text-primary hover:underline text-left"
+            >
+              Change clip
+            </button>
           </div>
 
           {/* Right: form */}
           <div className="flex flex-1 flex-col overflow-y-auto max-h-[520px]">
             <div className="flex flex-col gap-5 p-5">
 
-              {/* Account selector */}
+              {/* Account selector — multi-select */}
               <div className="flex flex-col gap-2">
-                <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">Post to</p>
+                <div className="flex items-center justify-between">
+                  <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">Post to</p>
+                  {accounts.length > 1 && (
+                    <button
+                      type="button"
+                      onClick={selectAll}
+                      className="text-[11px] font-medium text-primary hover:underline"
+                    >
+                      {selectedAccountIds.size === accounts.length ? "Deselect all" : "Select all"}
+                    </button>
+                  )}
+                </div>
                 {isLoading ? (
                   <div className="flex items-center gap-2 text-xs text-muted-foreground">
                     <IconLoader2 size={13} className="animate-spin" /> Loading accounts...
@@ -157,12 +222,12 @@ export function SchedulePostModal({
                   <div className="flex flex-col gap-1.5">
                     {accounts.map((acc) => {
                       const meta = PLATFORM_META[acc.platform];
-                      const isSelected = selectedAccountId === acc.id;
+                      const isSelected = selectedAccountIds.has(acc.id);
                       return (
                         <button
                           key={acc.id}
                           type="button"
-                          onClick={() => setSelectedAccountId(acc.id)}
+                          onClick={() => toggleAccount(acc.id)}
                           className={cn(
                             "flex items-center gap-3 rounded-xl border px-3 py-2.5 text-sm transition-all text-left",
                             isSelected
@@ -178,32 +243,35 @@ export function SchedulePostModal({
                                 {meta?.icon || acc.platform[0].toUpperCase()}
                               </span>
                             )}
-                            <span className={cn("absolute bottom-0 right-0 flex size-3.5 items-center justify-center rounded-full border border-background", meta?.bg || "bg-muted", meta?.color || "")}>
-                              {meta?.icon ? <span className="scale-75">{meta.icon}</span> : null}
+                            <span className={cn("absolute -bottom-0.5 -right-0.5 flex size-4 items-center justify-center rounded-full border-2 border-background", meta?.bg || "bg-muted", meta?.color || "")}>
+                              {meta?.icon ? <span className="scale-[0.7]">{meta.icon}</span> : null}
                             </span>
                           </span>
                           <div className="min-w-0 flex-1">
                             <p className="truncate text-xs font-semibold">{acc.accountName}</p>
                             <p className="text-[11px] text-muted-foreground">{meta?.label || acc.platform}</p>
                           </div>
-                          {isSelected && (
-                            <span className="flex size-5 shrink-0 items-center justify-center rounded-full bg-primary text-primary-foreground">
-                              <IconCheck size={11} strokeWidth={3} />
-                            </span>
-                          )}
+                          <span className={cn(
+                            "flex size-5 shrink-0 items-center justify-center rounded-full border-2 transition-all",
+                            isSelected
+                              ? "border-primary bg-primary text-primary-foreground"
+                              : "border-muted-foreground/30"
+                          )}>
+                            {isSelected && <IconCheck size={11} strokeWidth={3} />}
+                          </span>
                         </button>
                       );
                     })}
                   </div>
                 )}
-                {submitAttempted && !selectedAccountId && accounts.length > 0 && (
-                  <p className="text-xs text-red-500">Please select an account to post to</p>
+                {submitAttempted && selectedAccountIds.size === 0 && accounts.length > 0 && (
+                  <p className="text-xs text-red-500">Please select at least one account</p>
                 )}
               </div>
 
-              {/* When to post */}
+              {/* Date & Time */}
               <div className="flex flex-col gap-2">
-                <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">When to post</p>
+                <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">Date & Time</p>
                 <div className="grid grid-cols-2 gap-2">
                   {(["immediate", "scheduled"] as const).map((type) => (
                     <button
@@ -217,17 +285,13 @@ export function SchedulePostModal({
                           : "border-border bg-muted/20 text-muted-foreground hover:border-primary/40 hover:text-foreground"
                       )}
                     >
-                      {type === "immediate" ? <IconSend size={14} /> : <IconCalendar size={14} />}
+                      {type === "immediate" ? <IconSend size={14} /> : <IconClock size={14} />}
                       {type === "immediate" ? "Post now" : "Schedule"}
                     </button>
                   ))}
                 </div>
-
                 {postType === "scheduled" && (
-                  <DateTimeScrollPicker
-                    value={scheduledDate}
-                    onChange={setScheduledDate}
-                  />
+                  <DateTimeScrollPicker value={scheduledDate} onChange={setScheduledDate} />
                 )}
                 {submitAttempted && postType === "scheduled" && !scheduledDate && (
                   <p className="text-xs text-red-500">Please pick a date and time</p>
@@ -261,8 +325,8 @@ export function SchedulePostModal({
                     ))}
                   </div>
                 )}
-                <div className="flex flex-col gap-2">
-                  <div className="relative">
+                <div className="flex gap-2">
+                  <div className="relative flex-1">
                     <IconHash size={13} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
                     <Input
                       value={hashtagInput}
@@ -272,7 +336,7 @@ export function SchedulePostModal({
                       onKeyDown={(e) => e.key === "Enter" && (e.preventDefault(), addHashtag())}
                     />
                   </div>
-                  <Button type="button" variant="outline" className="w-full" onClick={addHashtag}>
+                  <Button type="button" variant="outline" onClick={addHashtag}>
                     Add
                   </Button>
                 </div>
@@ -281,20 +345,34 @@ export function SchedulePostModal({
 
             {/* Footer */}
             <div className="mt-auto border-t bg-muted/20 px-5 py-4">
-              {selectedAccount && (
+              {selectedAccounts.length > 0 && (
                 <p className="mb-3 text-xs text-muted-foreground">
-                  Posting to <span className="font-medium text-foreground">{selectedAccount.accountName}</span> on <span className="font-medium text-foreground">{PLATFORM_META[selectedAccount.platform]?.label || selectedAccount.platform}</span>
+                  Posting to{" "}
+                  {selectedAccounts.length === 1 ? (
+                    <>
+                      <span className="font-medium text-foreground">{selectedAccounts[0].accountName}</span>
+                      {" on "}
+                      <span className="font-medium text-foreground">{PLATFORM_META[selectedAccounts[0].platform]?.label || selectedAccounts[0].platform}</span>
+                    </>
+                  ) : (
+                    <span className="font-medium text-foreground">{selectedAccounts.length} accounts</span>
+                  )}
                 </p>
               )}
-              <Button className="w-full gap-2" onClick={handleSubmit} disabled={schedulePost.isPending}>
-                {schedulePost.isPending ? (
-                  <><IconLoader2 size={15} className="animate-spin" /> Scheduling...</>
-                ) : postType === "immediate" ? (
-                  <><IconSend size={15} /> Post Now</>
-                ) : (
-                  <><IconCalendar size={15} /> Schedule Post</>
-                )}
-              </Button>
+              <div className="flex items-center gap-2">
+                <Button variant="outline" className="flex-1" onClick={() => onOpenChange(false)}>
+                  ← Back
+                </Button>
+                <Button className="flex-1 gap-2" onClick={handleSubmit} disabled={!canSubmit}>
+                  {schedulePost.isPending ? (
+                    <><IconLoader2 size={15} className="animate-spin" /> Scheduling...</>
+                  ) : postType === "immediate" ? (
+                    <><IconSend size={15} /> Post Now</>
+                  ) : (
+                    <><IconCalendar size={15} /> Schedule Post</>
+                  )}
+                </Button>
+              </div>
             </div>
           </div>
         </div>
