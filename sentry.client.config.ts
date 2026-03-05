@@ -8,8 +8,10 @@ Sentry.init({
   debug: false,
   environment: process.env.NODE_ENV || "development",
   integrations: [
+    Sentry.browserTracingIntegration(),
     Sentry.replayIntegration(),
   ],
+  tracePropagationTargets: ["localhost", /^https:\/\/api\.scalereach\.ai/],
   ignoreErrors: [
     "ResizeObserver loop",
     "Non-Error promise rejection",
