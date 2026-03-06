@@ -61,7 +61,7 @@ export default function PlaygroundPage() {
 
                                 {/* Custom Gradient Button */}
                                 <button
-                                    className="focus-visible:ring-ring inline-flex h-9 cursor-pointer items-center justify-center rounded-md px-4 py-2 text-sm font-medium whitespace-nowrap transition-all duration-200 focus-visible:ring-1 focus-visible:outline-none disabled:pointer-events-none disabled:opacity-50"
+                                    className="focus-visible:ring-ring inline-flex h-9 cursor-pointer items-center justify-center rounded-md px-4 py-2 text-sm font-medium whitespace-nowrap transition-all duration-200 focus-visible:ring-1 focus-visible:outline-none disabled:pointer-events-none disabled:opacity-50 active:scale-95"
                                     style={{
                                         background: 'radial-gradient(228.571% 228.571% at 50% -9.32995e-07%, #2553cb 0%, #1a3d8f 100%)',
                                         borderRadius: '6px',
