@@ -6,6 +6,7 @@ import { toast } from "sonner";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { GradientButton } from "@/components/ui/gradient-button";
 import {
   Card,
   CardContent,
@@ -103,7 +104,7 @@ function ConfirmDialog({
   description: string;
   confirmText?: string;
   cancelText?: string;
-  variant?: "destructive" | "default";
+  variant?: "destructive" | "default" | "gradient";
   onConfirm: () => void;
   isLoading?: boolean;
 }) {
@@ -125,13 +126,19 @@ function ConfirmDialog({
           <DialogClose render={<Button variant="outline" disabled={isLoading} />}>
             {cancelText}
           </DialogClose>
-          <Button
-            variant={variant === "destructive" ? "destructive" : "default"}
-            onClick={onConfirm}
-            loading={isLoading}
-          >
-            {confirmText}
-          </Button>
+          {variant === "gradient" ? (
+            <GradientButton onClick={onConfirm} loading={isLoading}>
+              {confirmText}
+            </GradientButton>
+          ) : (
+            <Button
+              variant={variant === "destructive" ? "destructive" : "default"}
+              onClick={onConfirm}
+              loading={isLoading}
+            >
+              {confirmText}
+            </Button>
+          )}
         </DialogFooter>
       </DialogContent>
     </Dialog>
@@ -204,9 +211,9 @@ function InviteMemberDialog({ workspaceId, workspacePlan }: { workspaceId: strin
             <Button type="button" variant="outline" onClick={() => setOpen(false)}>
               Cancel
             </Button>
-            <Button type="submit" loading={createInvitation.isPending}>
+            <GradientButton type="submit" loading={createInvitation.isPending}>
               Send Invitation
-            </Button>
+            </GradientButton>
           </DialogFooter>
         </form>
       </DialogContent>
@@ -332,7 +339,7 @@ function ResendInvitationDialog({
         title="Resend invitation?"
         description={`Send a new invitation email to ${invitation.email}? The invitation link will remain the same.`}
         confirmText="Resend"
-        variant="default"
+        variant="gradient"
         onConfirm={handleConfirm}
         isLoading={resendInvitation.isPending}
       />

@@ -9,6 +9,7 @@ import { Controller, useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
 import { Button } from "@/components/ui/button";
+import { GradientButton } from "@/components/ui/gradient-button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { FieldError } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
@@ -240,18 +241,24 @@ export function LoginForm() {
         </Link>
       </div>
       <div className="flex flex-col gap-1">
-        <Button
-          disabled={isLoading}
-          loading={isLoading}
-          type="submit"
-          variant={
-            lastUsedMethod === "email" || !lastUsedMethod
-              ? "default"
-              : "outline"
-          }
-        >
-          Sign in
-        </Button>
+        {lastUsedMethod === "email" || !lastUsedMethod ? (
+          <GradientButton
+            disabled={isLoading}
+            loading={isLoading}
+            type="submit"
+          >
+            Sign in
+          </GradientButton>
+        ) : (
+          <Button
+            disabled={isLoading}
+            loading={isLoading}
+            type="submit"
+            variant="outline"
+          >
+            Sign in
+          </Button>
+        )}
         {showHelperText && lastUsedMethod === "email" && (
           <p className="py-4 text-center font-medium text-muted-foreground text-sm">
             You last used {getMethodDisplayName(lastUsedMethod)} to sign in
@@ -279,7 +286,7 @@ export function LoginForm() {
     if (lastUsedMethod === "google") {
       return (
         <>
-          <LoginWithGoogle showHelperText variant="default" />
+          <LoginWithGoogle showHelperText useGradient />
           <div className="flex items-center gap-3">
             <div className="h-px flex-1 bg-border" />
             <span className="text-xs font-semibold text-muted-foreground">OR</span>

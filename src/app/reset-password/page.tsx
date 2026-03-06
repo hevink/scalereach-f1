@@ -5,6 +5,7 @@ import { useSearchParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import { AuthLayout } from "@/components/authentication/auth-layout";
 import { Button } from "@/components/ui/button";
+import { GradientButton } from "@/components/ui/gradient-button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { IconArrowLeft, IconCheck, IconEye, IconEyeOff } from "@tabler/icons-react";
@@ -152,9 +153,9 @@ export default function ResetPasswordPage() {
           </div>
         </div>
         {error && <p className="text-sm text-red-500">{error}</p>}
-        <Button type="submit" className="w-full" disabled={isLoading}>
+        <GradientButton type="submit" className="w-full" disabled={isLoading}>
           {isLoading ? "Resetting..." : "Reset password"}
-        </Button>
+        </GradientButton>
       </form>
       <Link href="/login" className="flex items-center justify-center text-sm text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white">
         <IconArrowLeft className="size-4 mr-1" />

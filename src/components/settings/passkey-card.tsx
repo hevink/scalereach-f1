@@ -14,6 +14,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
+import { GradientButton } from "@/components/ui/gradient-button";
 import {
   Card,
   CardContent,
@@ -426,9 +427,9 @@ export function PasskeyCard() {
               >
                 Cancel
               </Button>
-              <Button disabled={isAdding} loading={isAdding} type="submit">
+              <GradientButton disabled={isAdding} loading={isAdding} type="submit">
                 Continue
-              </Button>
+              </GradientButton>
             </DialogFooter>
           </form>
         </DialogContent>
@@ -499,9 +500,9 @@ export function PasskeyCard() {
               >
                 Cancel
               </Button>
-              <Button disabled={isRenaming} loading={isRenaming} type="submit">
+              <GradientButton disabled={isRenaming} loading={isRenaming} type="submit">
                 Save
-              </Button>
+              </GradientButton>
             </DialogFooter>
           </form>
         </DialogContent>

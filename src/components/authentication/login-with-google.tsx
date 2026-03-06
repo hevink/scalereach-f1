@@ -4,6 +4,7 @@ import type { ComponentProps } from "react";
 import { useState } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
+import { GradientButton } from "@/components/ui/gradient-button";
 import { authClient } from "@/lib/auth-client";
 import { getAuthErrorMessage } from "@/lib/auth-errors";
 import { analytics } from "@/lib/analytics";
@@ -15,12 +16,15 @@ interface LoginWithGoogleProps {
   showHelperText?: boolean;
   /** When true, tracks as sign-up instead of login */
   isSignUp?: boolean;
+  /** When true, uses GradientButton instead of Button with variant */
+  useGradient?: boolean;
 }
 
 export function LoginWithGoogle({
   variant = "outline",
   showHelperText = false,
   isSignUp = false,
+  useGradient = false,
 }: LoginWithGoogleProps) {
   const [isLoading, setIsLoading] = useState(false);
 
@@ -64,15 +68,18 @@ export function LoginWithGoogle({
     }
   };
 
+  const ButtonComponent = useGradient ? GradientButton : Button;
+  const buttonProps = useGradient ? {} : { variant };
+
   return (
     <div className="flex flex-col gap-1">
-      <Button
+      <ButtonComponent
         className="w-full gap-2"
         disabled={isLoading}
         loading={isLoading}
         onClick={handleGoogleSignIn}
         type="button"
-        variant={variant}
+        {...buttonProps}
       >
         <svg
           aria-label="Google logo"
@@ -101,7 +108,7 @@ export function LoginWithGoogle({
           />
         </svg>
         Sign in with Google
-      </Button>
+      </ButtonComponent>
       {showHelperText && (
         <p className="py-4 text-center font-medium text-muted-foreground text-sm">
           You last used Google to sign in

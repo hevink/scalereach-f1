@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { GradientButton } from "@/components/ui/gradient-button";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -50,6 +51,7 @@ export default function PlaygroundPage() {
                             <CardHeader><CardTitle>Buttons</CardTitle></CardHeader>
                             <CardContent className="flex flex-wrap gap-3">
                                 <Button>Default</Button>
+                                <GradientButton>Gradient</GradientButton>
                                 <Button variant="secondary">Secondary</Button>
                                 <Button variant="outline">Outline</Button>
                                 <Button variant="ghost">Ghost</Button>
@@ -58,25 +60,6 @@ export default function PlaygroundPage() {
                                 <Button disabled>Disabled</Button>
                                 <Button size="sm">Small</Button>
                                 <Button size="lg">Large</Button>
-
-                                {/* Custom Gradient Button */}
-                                <button
-                                    className="focus-visible:ring-ring inline-flex h-9 cursor-pointer items-center justify-center rounded-md px-4 py-2 text-sm font-medium whitespace-nowrap transition-all duration-200 focus-visible:ring-1 focus-visible:outline-none disabled:pointer-events-none disabled:opacity-50 active:scale-95"
-                                    style={{
-                                        background: 'radial-gradient(228.571% 228.571% at 50% -9.32995e-07%, #2553cb 0%, #1a3d8f 100%)',
-                                        borderRadius: '6px',
-                                        boxShadow: 'rgba(255, 255, 255, 0.2) 0px 1px 0px 0px inset, rgba(0, 0, 0, 0.4) 0px 1.25px 2.5px 0px, #2553cb 0px 0px 0px 1.25px',
-                                        border: 'none',
-                                        color: 'rgb(255, 255, 255)',
-                                        fontFamily: 'Inter, "Inter Placeholder", sans-serif',
-                                        fontSize: '14px',
-                                        fontWeight: 500,
-                                        letterSpacing: '-0.02em',
-                                        lineHeight: '20px'
-                                    }}
-                                >
-                                    <span className="font-semibold">Start Scaling →</span>
-                                </button>
                             </CardContent>
                         </Card>
 
