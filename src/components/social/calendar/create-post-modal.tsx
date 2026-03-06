@@ -151,11 +151,10 @@ export function CreatePostFromCalendarModal({ workspaceId }: Props) {
 
   const handleFileSelect = useCallback(async (selectedFile: File) => {
     const isVideo = selectedFile.type.startsWith("video/");
-    const isImage = selectedFile.type.startsWith("image/");
-    if (!isVideo && !isImage) return;
+    if (!isVideo) return;
 
     setUploadFile(selectedFile);
-    setUploadMediaType(isVideo ? "video" : "image");
+    setUploadMediaType("video");
     setUploadPreview(URL.createObjectURL(selectedFile));
     setUploadState("uploading");
     setUploadProgress(0);
@@ -516,12 +515,11 @@ export function CreatePostFromCalendarModal({ workspaceId }: Props) {
                     </div>
                     <div className="flex items-center gap-3 text-xs text-muted-foreground/60">
                       <span className="flex items-center gap-1"><IconVideo size={13} /> MP4, MOV, WebM</span>
-                      <span className="flex items-center gap-1"><IconPhoto size={13} /> JPG, PNG, WebP</span>
                     </div>
                     <input
                       ref={fileInputRef}
                       type="file"
-                      accept="video/mp4,video/quicktime,video/webm,image/jpeg,image/png,image/webp"
+                      accept="video/mp4,video/quicktime,video/webm"
                       className="hidden"
                       onChange={(e) => { const f = e.target.files?.[0]; if (f) handleFileSelect(f); }}
                     />
