@@ -19,7 +19,6 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Spinner } from "@/components/ui/spinner";
 import { SkeletonCard, SkeletonText, SkeletonVideoListItem, SkeletonVideoGridItem } from "@/components/ui/skeletons";
 import { InfoIcon, XCircleIcon } from "lucide-react";
-import { FireIcon } from "@/components/ui/fire-icon";
 
 export default function PlaygroundPage() {
     const [progress, setProgress] = useState(60);
@@ -29,8 +28,8 @@ export default function PlaygroundPage() {
         <div className="min-h-screen bg-background p-8">
             <div className="max-w-5xl mx-auto space-y-10">
                 <div>
-                    <h1 className="text-3xl font-bold tracking-tight flex items-center gap-1">
-                        <FireIcon /> Component Playground
+                    <h1 className="text-3xl font-bold tracking-tight">
+                        Component Playground
                     </h1>
                     <p className="text-muted-foreground mt-1">A sandbox for all UI components in one place.</p>
                 </div>
@@ -39,16 +38,16 @@ export default function PlaygroundPage() {
 
                 <Tabs defaultValue="basics">
                     <TabsList>
-                        <TabsTrigger value="basics"><FireIcon /> Basics</TabsTrigger>
-                        <TabsTrigger value="forms"><FireIcon /> Forms</TabsTrigger>
-                        <TabsTrigger value="feedback"><FireIcon /> Feedback</TabsTrigger>
-                        <TabsTrigger value="skeletons"><FireIcon /> Skeletons</TabsTrigger>
+                        <TabsTrigger value="basics">Basics</TabsTrigger>
+                        <TabsTrigger value="forms">Forms</TabsTrigger>
+                        <TabsTrigger value="feedback">Feedback</TabsTrigger>
+                        <TabsTrigger value="skeletons">Skeletons</TabsTrigger>
                     </TabsList>
 
                     {/* BASICS */}
                     <TabsContent value="basics" className="space-y-8 mt-6">
                         <Card>
-                            <CardHeader><CardTitle className="flex items-center gap-1"><FireIcon /> Buttons</CardTitle></CardHeader>
+                            <CardHeader><CardTitle>Buttons</CardTitle></CardHeader>
                             <CardContent className="flex flex-wrap gap-3">
                                 <Button>Default</Button>
                                 <Button variant="secondary">Secondary</Button>
@@ -64,9 +63,9 @@ export default function PlaygroundPage() {
                                 <button
                                     className="focus-visible:ring-ring inline-flex h-9 cursor-pointer items-center justify-center rounded-md px-4 py-2 text-sm font-medium whitespace-nowrap transition-all duration-200 focus-visible:ring-1 focus-visible:outline-none disabled:pointer-events-none disabled:opacity-50"
                                     style={{
-                                        background: 'radial-gradient(228.571% 228.571% at 50% -9.32995e-07%, rgb(59, 130, 246) 0%, rgb(29, 78, 216) 100%)',
+                                        background: 'radial-gradient(228.571% 228.571% at 50% -9.32995e-07%, #2553cb 0%, #1a3d8f 100%)',
                                         borderRadius: '6px',
-                                        boxShadow: 'rgba(255, 255, 255, 0.2) 0px 1px 0px 0px inset, rgba(0, 0, 0, 0.4) 0px 1.25px 2.5px 0px, rgb(37, 99, 235) 0px 0px 0px 1.25px',
+                                        boxShadow: 'rgba(255, 255, 255, 0.2) 0px 1px 0px 0px inset, rgba(0, 0, 0, 0.4) 0px 1.25px 2.5px 0px, #2553cb 0px 0px 0px 1.25px',
                                         border: 'none',
                                         color: 'rgb(255, 255, 255)',
                                         fontFamily: 'Inter, "Inter Placeholder", sans-serif',
@@ -76,14 +75,13 @@ export default function PlaygroundPage() {
                                         lineHeight: '20px'
                                     }}
                                 >
-                                    <span className="hidden font-semibold sm:inline">Start Scaling →</span>
-                                    <span className="font-semibold sm:hidden">Start Scaling →</span>
+                                    <span className="font-semibold">Start Scaling →</span>
                                 </button>
                             </CardContent>
                         </Card>
 
                         <Card>
-                            <CardHeader><CardTitle className="flex items-center gap-1"><FireIcon /> Badges</CardTitle></CardHeader>
+                            <CardHeader><CardTitle>Badges</CardTitle></CardHeader>
                             <CardContent className="flex flex-wrap gap-3">
                                 <Badge>Default</Badge>
                                 <Badge variant="secondary">Secondary</Badge>
@@ -93,7 +91,7 @@ export default function PlaygroundPage() {
                         </Card>
 
                         <Card>
-                            <CardHeader><CardTitle className="flex items-center gap-1"><FireIcon /> Avatars</CardTitle></CardHeader>
+                            <CardHeader><CardTitle>Avatars</CardTitle></CardHeader>
                             <CardContent className="flex flex-wrap gap-4 items-center">
                                 <Avatar>
                                     <AvatarImage src="https://github.com/shadcn.png" alt="shadcn" />
@@ -105,7 +103,7 @@ export default function PlaygroundPage() {
                         </Card>
 
                         <Card>
-                            <CardHeader><CardTitle className="flex items-center gap-1"><FireIcon /> Spinner</CardTitle></CardHeader>
+                            <CardHeader><CardTitle>Spinner</CardTitle></CardHeader>
                             <CardContent className="flex gap-6 items-center">
                                 <Spinner />
                             </CardContent>
@@ -115,7 +113,7 @@ export default function PlaygroundPage() {
                     {/* FORMS */}
                     <TabsContent value="forms" className="space-y-8 mt-6">
                         <Card>
-                            <CardHeader><CardTitle className="flex items-center gap-1"><FireIcon /> Inputs</CardTitle></CardHeader>
+                            <CardHeader><CardTitle>Inputs</CardTitle></CardHeader>
                             <CardContent className="space-y-4 max-w-sm">
                                 <Input placeholder="Default input" />
                                 <Input placeholder="Disabled input" disabled />
@@ -134,7 +132,7 @@ export default function PlaygroundPage() {
                         </Card>
 
                         <Card>
-                            <CardHeader><CardTitle className="flex items-center gap-1"><FireIcon /> Controls</CardTitle></CardHeader>
+                            <CardHeader><CardTitle>Controls</CardTitle></CardHeader>
                             <CardContent className="space-y-6">
                                 <div className="flex items-center gap-3">
                                     <Switch id="toggle" checked={switchOn} onCheckedChange={setSwitchOn} />
@@ -173,7 +171,7 @@ export default function PlaygroundPage() {
                     {/* FEEDBACK */}
                     <TabsContent value="feedback" className="space-y-8 mt-6">
                         <Card>
-                            <CardHeader><CardTitle className="flex items-center gap-1"><FireIcon /> Alerts</CardTitle></CardHeader>
+                            <CardHeader><CardTitle>Alerts</CardTitle></CardHeader>
                             <CardContent className="space-y-4">
                                 <Alert>
                                     <InfoIcon className="h-4 w-4" />
@@ -189,7 +187,7 @@ export default function PlaygroundPage() {
                         </Card>
 
                         <Card>
-                            <CardHeader><CardTitle className="flex items-center gap-1"><FireIcon /> Progress</CardTitle></CardHeader>
+                            <CardHeader><CardTitle>Progress</CardTitle></CardHeader>
                             <CardContent className="space-y-4">
                                 <div className="space-y-2">
                                     <span className="text-sm">Progress: {progress}%</span>
@@ -206,17 +204,17 @@ export default function PlaygroundPage() {
                     {/* SKELETONS */}
                     <TabsContent value="skeletons" className="space-y-8 mt-6">
                         <Card>
-                            <CardHeader><CardTitle className="flex items-center gap-1"><FireIcon /> Skeleton Text</CardTitle></CardHeader>
+                            <CardHeader><CardTitle>Skeleton Text</CardTitle></CardHeader>
                             <CardContent><SkeletonText lines={3} /></CardContent>
                         </Card>
 
                         <Card>
-                            <CardHeader><CardTitle className="flex items-center gap-1"><FireIcon /> Skeleton Card</CardTitle></CardHeader>
+                            <CardHeader><CardTitle>Skeleton Card</CardTitle></CardHeader>
                             <CardContent><SkeletonCard /></CardContent>
                         </Card>
 
                         <Card>
-                            <CardHeader><CardTitle className="flex items-center gap-1"><FireIcon /> Skeleton Video List</CardTitle></CardHeader>
+                            <CardHeader><CardTitle>Skeleton Video List</CardTitle></CardHeader>
                             <CardContent className="space-y-3">
                                 <SkeletonVideoListItem />
                                 <SkeletonVideoListItem />
@@ -225,7 +223,7 @@ export default function PlaygroundPage() {
                         </Card>
 
                         <Card>
-                            <CardHeader><CardTitle className="flex items-center gap-1"><FireIcon /> Skeleton Video Grid</CardTitle></CardHeader>
+                            <CardHeader><CardTitle>Skeleton Video Grid</CardTitle></CardHeader>
                             <CardContent className="grid grid-cols-2 md:grid-cols-3 gap-4">
                                 <SkeletonVideoGridItem />
                                 <SkeletonVideoGridItem />
