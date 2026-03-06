@@ -1,46 +1,154 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
+import { format } from "date-fns";
+import { useQuery } from "@tanstack/react-query";
 import {
   IconX,
   IconCheck,
-  IconBrandTiktok,
-  IconBrandInstagram,
-  IconBrandFacebook,
-  IconBrandYoutube,
-  IconBrandTwitter,
-  IconCalendar,
-  IconSend,
-  IconHash,
-  IconLoader2,
   IconClock,
+  IconVideo,
+  IconUpload,
+  IconPhoto,
+  IconTrash,
+  IconLoader2,
+  IconHash,
 } from "@tabler/icons-react";
+import { FireIcon as FireAnimatedIcon } from "@/components/ui/fire-icon";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { DateTimeScrollPicker } from "@/components/ui/date-time-scroll-picker";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/utils";
 import { useSocialAccounts } from "@/hooks/useSocialAccounts";
 import { useSchedulePost } from "@/hooks/useScheduledPosts";
+import { socialApi, type WorkspaceClip, type SocialMediaItem } from "@/lib/api/social";
 import type { ClipResponse } from "@/lib/api/clips";
+import {
+  YouTubeIcon,
+  TikTokIcon,
+  InstagramIcon,
+  TwitterIcon,
+  LinkedInIcon,
+  FacebookIcon,
+  ThreadsIcon,
+} from "@/components/icons/platform-icons";
+
+/* ─── Constants ─── */
+
+const PLATFORM_LABELS: Record<string, string> = {
+  tiktok: "TikTok",
+  instagram: "Instagram",
+  instagram_reels: "Instagram Reels",
+  facebook: "Facebook",
+  youtube: "YouTube",
+  youtube_shorts: "YT Shorts",
+  twitter: "Twitter / X",
+  linkedin: "LinkedIn",
+  threads: "Threads",
+};
+
+const PLATFORM_CHIP_STYLES: Record<string, string> = {
+  tiktok: "bg-black/10 text-foreground dark:bg-white/10",
+  instagram: "bg-pink-500/10 text-pink-600 dark:text-pink-400",
+  instagram_reels: "bg-pink-500/10 text-pink-600 dark:text-pink-400",
+  facebook: "bg-blue-600/10 text-blue-700 dark:text-blue-400",
+  youtube: "bg-red-500/10 text-red-600 dark:text-red-400",
+  youtube_shorts: "bg-red-500/10 text-red-600 dark:text-red-400",
+  twitter: "bg-sky-500/10 text-sky-600 dark:text-sky-400",
+  linkedin: "bg-blue-600/10 text-blue-700 dark:text-blue-400",
+  threads: "bg-black/10 text-foreground dark:bg-white/10",
+};
+
+const PLATFORM_COLORS: Record<string, string> = {
+  tiktok: "bg-black text-white",
+  instagram: "bg-gradient-to-br from-yellow-400 via-pink-500 to-purple-600 text-white",
+  instagram_reels: "bg-gradient-to-br from-yellow-400 via-pink-500 to-purple-600 text-white",
+  facebook: "bg-blue-600 text-white",
+  youtube: "bg-red-500 text-white",
+  youtube_shorts: "bg-red-500 text-white",
+  twitter: "bg-black text-white",
+  linkedin: "bg-blue-600 text-white",
+  threads: "bg-black text-white",
+};
+
+const PLATFORM_ICONS: Record<string, React.ElementType> = {
+  tiktok: TikTokIcon,
+  instagram: InstagramIcon,
+  instagram_reels: InstagramIcon,
+  facebook: FacebookIcon,
+  youtube: YouTubeIcon,
+  youtube_shorts: YouTubeIcon,
+  twitter: TwitterIcon,
+  linkedin: LinkedInIcon,
+  threads: ThreadsIcon,
+};
+
+/* ─── Helpers ─── */
+
+function PlatformChip({ platform }: { platform: string }) {
+  const Icon = PLATFORM_ICONS[platform];
+  const label = PLATFORM_LABELS[platform] ?? platform;
+  const chipStyle = PLATFORM_CHIP_STYLES[platform] ?? "bg-muted text-muted-foreground";
+  return (
+    <span className={cn("flex items-center gap-1 rounded-md px-1.5 py-0.5 text-[10px] font-semibold", chipStyle)}>
+      {Icon && <Icon className="size-2.5 shrink-0" />}
+      {label}
+    </span>
+  );
+}
+
+function formatDuration(seconds: number | null) {
+  if (!seconds) return "";
+  const m = Math.floor(seconds / 60);
+  const s = seconds % 60;
+  return m > 0 ? `${m}m ${s}s` : `${s}s`;
+}
+
+function hooksToHashtags(hooks: string[] | null): string[] {
+  if (!hooks) return [];
+  return hooks
+    .flatMap((h) => h.toLowerCase().replace(/[^a-z0-9\s]/g, "").split(/\s+/))
+    .filter((w) => w.length > 3)
+    .slice(0, 6);
+}
+
+function ClipThumbnail({ clip }: { clip: WorkspaceClip }) {
+  if (clip.thumbnailUrl) {
+    return <img src={clip.thumbnailUrl} alt={clip.title || ""} className="absolute inset-0 size-full object-cover" />;
+  }
+  if (clip.storageUrl) {
+    return (
+      <video
+        src={clip.storageUrl}
+        className="absolute inset-0 size-full object-cover"
+        preload="metadata"
+        muted
+        playsInline
+        onLoadedMetadata={(e) => { (e.currentTarget as HTMLVideoElement).currentTime = 1; }}
+      />
+    );
+  }
+  return (
+    <div className="flex size-full flex-col items-center justify-center gap-1 bg-muted/20">
+      <IconVideo size={20} className="text-muted-foreground/30" />
+    </div>
+  );
+}
+
+/* ─── Props ─── */
 
 interface SchedulePostModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  clip: ClipResponse;
+  clip?: ClipResponse;
   workspaceId: string;
-  workspaceSlug: string;
+  workspaceSlug?: string;
 }
 
-const PLATFORM_META: Record<string, { label: string; icon: React.ReactNode; color: string; bg: string }> = {
-  tiktok: { label: "TikTok", icon: <IconBrandTiktok size={13} />, color: "text-white", bg: "bg-black" },
-  instagram: { label: "Instagram", icon: <IconBrandInstagram size={13} />, color: "text-white", bg: "bg-gradient-to-br from-purple-500 to-pink-500" },
-  facebook: { label: "Facebook", icon: <IconBrandFacebook size={13} />, color: "text-white", bg: "bg-blue-600" },
-  youtube: { label: "YouTube", icon: <IconBrandYoutube size={13} />, color: "text-white", bg: "bg-red-500" },
-  twitter: { label: "Twitter / X", icon: <IconBrandTwitter size={13} />, color: "text-white", bg: "bg-sky-500" },
-  threads: { label: "Threads", icon: <svg width={13} height={13} viewBox="0 0 192 192" fill="currentColor"><path d="M141.537 88.988a66.667 66.667 0 0 0-2.518-1.143c-1.482-27.307-16.403-42.94-41.457-43.1h-.34c-14.986 0-27.449 6.396-35.12 18.036l13.779 9.452c5.73-8.695 14.724-10.548 21.348-10.548h.229c8.249.053 14.474 2.452 18.503 7.129 2.932 3.405 4.893 8.111 5.864 14.05-7.314-1.243-15.224-1.626-23.68-1.14-23.82 1.371-39.134 15.24-38.142 34.573.504 9.789 5.27 18.216 13.418 23.711 6.882 4.638 15.733 6.949 24.907 6.505 12.107-.585 21.592-5.072 28.18-13.333 5.005-6.275 8.13-14.38 9.467-24.56 5.672 3.428 9.904 7.894 12.44 13.248 4.313 9.108 4.566 24.063-3.462 32.091-7.065 7.065-15.556 10.123-28.468 10.217-14.327-.104-25.166-4.716-32.218-13.712C77.224 141.854 73.376 127.86 73.26 112c.116-15.86 3.964-29.854 11.44-41.566 7.052-8.996 17.891-13.608 32.218-13.712 14.44.106 25.384 4.77 32.524 13.862 3.472 4.422 6.098 9.88 7.865 16.268l14.47-3.992c-2.26-8.164-5.79-15.26-10.594-21.218-9.758-12.44-24.016-18.87-42.36-18.992h-.12c-18.216.122-32.383 6.558-42.12 19.126C68.091 77.372 63.49 93.57 63.36 112l.001.12c.13 18.43 4.731 34.628 13.283 46.776 9.737 12.568 23.904 18.998 42.12 19.104h.12c16.072-.113 27.438-4.546 36.768-14.352 11.736-12.348 11.39-27.756 5.852-39.464-3.972-8.394-10.908-15.186-20.1-19.68l.133.484ZM110.45 134.2c-10.16.588-20.72-3.98-21.26-14.46-.4-7.78 5.5-16.46 25.14-17.59 2.2-.127 4.35-.19 6.46-.19 6.27 0 12.14.59 17.49 1.72-1.99 24.78-14.68 29.93-27.83 30.52Z" /></svg>, color: "text-white", bg: "bg-black" },
-};
+/* ─── Component ─── */
 
 export function SchedulePostModal({
   open,
@@ -48,21 +156,189 @@ export function SchedulePostModal({
   clip,
   workspaceId,
 }: SchedulePostModalProps) {
+  const [step, setStep] = useState<"clip" | "details">("clip");
+  const [selectedClip, setSelectedClip] = useState<WorkspaceClip | null>(null);
   const [selectedAccountIds, setSelectedAccountIds] = useState<Set<string>>(new Set());
-  const [caption, setCaption] = useState(clip.title || "");
+  const [caption, setCaption] = useState("");
+  const [hashtags, setHashtags] = useState<string[]>([]);
   const [hashtagInput, setHashtagInput] = useState("");
-  const [hashtags, setHashtags] = useState<string[]>(() =>
-    (clip.hooks || [])
-      .flatMap((h) => h.toLowerCase().replace(/[^a-z0-9\s]/g, "").split(/\s+/))
-      .filter((w) => w.length > 3)
-      .slice(0, 6)
-  );
-  const [postType, setPostType] = useState<"immediate" | "scheduled">("scheduled");
   const [scheduledDate, setScheduledDate] = useState<Date | undefined>(undefined);
-  const [submitAttempted, setSubmitAttempted] = useState(false);
 
-  const { data: accounts = [], isLoading } = useSocialAccounts(workspaceId);
+  // Custom upload state
+  const [sourceTab, setSourceTab] = useState<"clip" | "upload">("clip");
+  const [uploadFile, setUploadFile] = useState<File | null>(null);
+  const [uploadPreview, setUploadPreview] = useState<string | null>(null);
+  const [uploadMediaType, setUploadMediaType] = useState<"video" | "image" | null>(null);
+  const [uploadState, setUploadState] = useState<"idle" | "uploading" | "done" | "error">("idle");
+  const [uploadProgress, setUploadProgress] = useState(0);
+  const [uploadedMedia, setUploadedMedia] = useState<{ url: string; storageKey: string } | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [isDragging, setIsDragging] = useState(false);
+
+  // Media library state
+  const [mediaLibrary, setMediaLibrary] = useState<SocialMediaItem[]>([]);
+  const [loadingMedia, setLoadingMedia] = useState(false);
+  const [deletingMediaId, setDeletingMediaId] = useState<string | null>(null);
+
+  const { data: accounts = [] } = useSocialAccounts(workspaceId);
   const schedulePost = useSchedulePost(workspaceId);
+
+  const { data: clips = [], isLoading: loadingClips } = useQuery({
+    queryKey: ["social", "workspace-clips", workspaceId],
+    queryFn: () => socialApi.listWorkspaceClips(workspaceId),
+    enabled: !!workspaceId && open,
+  });
+
+  // Fetch media library
+  const fetchMedia = useCallback(async () => {
+    if (!workspaceId) return;
+    setLoadingMedia(true);
+    try {
+      const items = await socialApi.listMedia(workspaceId);
+      setMediaLibrary(items);
+    } catch {
+      // silent
+    } finally {
+      setLoadingMedia(false);
+    }
+  }, [workspaceId]);
+
+  // Load media library when switching to upload tab
+  useEffect(() => {
+    if (open && sourceTab === "upload") {
+      fetchMedia();
+    }
+  }, [open, sourceTab, fetchMedia]);
+
+  // If opened with a clip prop, skip step 1 and go straight to details
+  useEffect(() => {
+    if (open && clip) {
+      const asWorkspaceClip: WorkspaceClip = {
+        id: clip.id,
+        title: clip.title,
+        thumbnailUrl: clip.thumbnailUrl || null,
+        storageUrl: clip.storageUrl || null,
+        score: clip.viralityScore,
+        duration: clip.duration,
+        aspectRatio: clip.aspectRatio,
+        hooks: clip.hooks,
+        recommendedPlatforms: clip.recommendedPlatforms || null,
+      };
+      setSelectedClip(asWorkspaceClip);
+      setSourceTab("clip");
+      setCaption(clip.title || "");
+      setHashtags(hooksToHashtags(clip.hooks));
+      setStep("details");
+    }
+  }, [open, clip]);
+
+  // Reset on close
+  useEffect(() => {
+    if (!open) {
+      setStep("clip");
+      setSelectedClip(null);
+      setSelectedAccountIds(new Set());
+      setCaption("");
+      setHashtags([]);
+      setHashtagInput("");
+      setScheduledDate(undefined);
+      setSourceTab("clip");
+      removeUploadFile();
+    }
+  }, [open]);
+
+  // When selecting a clip in step 1
+  useEffect(() => {
+    if (selectedClip) {
+      setCaption(selectedClip.title || "");
+      setHashtags(hooksToHashtags(selectedClip.hooks));
+    }
+  }, [selectedClip]);
+
+  const handleFileSelect = useCallback(async (selectedFile: File) => {
+    const isVideo = selectedFile.type.startsWith("video/");
+    const isImage = selectedFile.type.startsWith("image/");
+    if (!isVideo && !isImage) return;
+
+    setUploadFile(selectedFile);
+    setUploadMediaType(isVideo ? "video" : "image");
+    setUploadPreview(URL.createObjectURL(selectedFile));
+    setUploadState("uploading");
+    setUploadProgress(0);
+
+    try {
+      const { uploadUrl, storageKey, publicUrl } = await socialApi.getMediaUploadUrl(
+        workspaceId, selectedFile.name, selectedFile.type
+      );
+      await new Promise<void>((resolve, reject) => {
+        const xhr = new XMLHttpRequest();
+        xhr.upload.addEventListener("progress", (e) => {
+          if (e.lengthComputable) setUploadProgress(Math.round((e.loaded / e.total) * 100));
+        });
+        xhr.addEventListener("load", () => xhr.status >= 200 && xhr.status < 300 ? resolve() : reject(new Error(`Upload failed: ${xhr.status}`)));
+        xhr.addEventListener("error", () => reject(new Error("Upload failed")));
+        xhr.open("PUT", uploadUrl);
+        xhr.setRequestHeader("Content-Type", selectedFile.type);
+        xhr.send(selectedFile);
+      });
+      setUploadedMedia({ url: publicUrl, storageKey });
+      setUploadState("done");
+      // Refresh media library so the new upload appears
+      fetchMedia();
+      // Auto-select the newly uploaded media but clear the upload preview
+      // so the drop zone reappears for another upload
+      const newMedia = { url: publicUrl, storageKey };
+      setTimeout(() => {
+        if (uploadPreview) URL.revokeObjectURL(uploadPreview);
+        setUploadFile(null);
+        setUploadPreview(null);
+        setUploadState("idle");
+        setUploadProgress(0);
+        // Keep uploadedMedia and uploadMediaType set so "Continue" works
+        setUploadedMedia(newMedia);
+      }, 800); // brief delay so user sees the success checkmark
+    } catch {
+      setUploadState("error");
+    }
+  }, [workspaceId]);
+
+  function removeUploadFile() {
+    if (uploadPreview) URL.revokeObjectURL(uploadPreview);
+    setUploadFile(null);
+    setUploadPreview(null);
+    setUploadMediaType(null);
+    setUploadState("idle");
+    setUploadProgress(0);
+    setUploadedMedia(null);
+  }
+
+  function selectFromLibrary(item: SocialMediaItem) {
+    // Clear any active upload preview
+    if (uploadPreview) URL.revokeObjectURL(uploadPreview);
+    setUploadFile(null);
+    setUploadPreview(null);
+    setUploadState("idle");
+    setUploadProgress(0);
+    // Set the selected media for scheduling
+    setUploadMediaType(item.mediaType);
+    setUploadedMedia({ url: item.url, storageKey: item.storageKey });
+  }
+
+  async function deleteFromLibrary(item: SocialMediaItem) {
+    setDeletingMediaId(item.id);
+    try {
+      await socialApi.deleteMedia(item.id);
+      setMediaLibrary((prev) => prev.filter((m) => m.id !== item.id));
+      // If this was the selected one, clear it
+      if (uploadedMedia?.storageKey === item.storageKey) {
+        removeUploadFile();
+      }
+    } catch {
+      // silent
+    } finally {
+      setDeletingMediaId(null);
+    }
+  }
 
   function toggleAccount(id: string) {
     setSelectedAccountIds((prev) => {
@@ -81,126 +357,454 @@ export function SchedulePostModal({
     }
   }
 
-  function addHashtag() {
-    const tag = hashtagInput.trim().replace(/^#/, "");
-    if (tag && !hashtags.includes(tag)) setHashtags((p) => [...p, tag]);
-    setHashtagInput("");
+  function addHashtag(tag?: string) {
+    const t = (tag ?? hashtagInput).trim().replace(/^#/, "");
+    if (t && !hashtags.includes(t)) setHashtags((p) => [...p, t]);
+    if (!tag) setHashtagInput("");
   }
 
+  const scheduledAt = scheduledDate?.toISOString() ?? "";
+
   async function handleSubmit() {
-    setSubmitAttempted(true);
-    if (selectedAccountIds.size === 0) return;
-    if (postType === "scheduled" && !scheduledDate) return;
-
-    const promises = Array.from(selectedAccountIds).map((accountId) =>
-      schedulePost.mutateAsync({
-        workspaceId,
-        clipId: clip.id,
-        socialAccountId: accountId,
-        postType,
-        caption,
-        hashtags,
-        scheduledAt: postType === "scheduled" ? scheduledDate?.toISOString() : undefined,
-      })
-    );
-
-    await Promise.all(promises);
+    if (sourceTab === "clip") {
+      if (!selectedClip || selectedAccountIds.size === 0) return;
+      const promises = Array.from(selectedAccountIds).map((accountId) =>
+        schedulePost.mutateAsync({
+          workspaceId,
+          clipId: selectedClip.id,
+          socialAccountId: accountId,
+          postType: scheduledAt ? "scheduled" : "immediate",
+          caption,
+          hashtags,
+          scheduledAt: scheduledAt || undefined,
+        })
+      );
+      await Promise.all(promises);
+    } else {
+      if (!uploadedMedia || selectedAccountIds.size === 0) return;
+      const promises = Array.from(selectedAccountIds).map((accountId) =>
+        schedulePost.mutateAsync({
+          workspaceId,
+          socialAccountId: accountId,
+          postType: scheduledAt ? "scheduled" : "immediate",
+          caption,
+          hashtags,
+          scheduledAt: scheduledAt || undefined,
+          mediaUrl: uploadedMedia.url,
+          mediaType: uploadMediaType || "video",
+          mediaStorageKey: uploadedMedia.storageKey,
+        })
+      );
+      await Promise.all(promises);
+    }
     onOpenChange(false);
   }
 
-  const selectedAccounts = accounts.filter((a) => selectedAccountIds.has(a.id));
-  const canSubmit =
-    selectedAccountIds.size > 0 &&
-    !schedulePost.isPending &&
-    (postType === "immediate" || !!scheduledDate);
-
-  // Step management
-  const [step, setStep] = useState<1 | 2>(1);
+  async function handlePostNow() {
+    if (sourceTab === "clip") {
+      if (!selectedClip || selectedAccountIds.size === 0) return;
+      const promises = Array.from(selectedAccountIds).map((accountId) =>
+        schedulePost.mutateAsync({
+          workspaceId,
+          clipId: selectedClip.id,
+          socialAccountId: accountId,
+          postType: "immediate",
+          caption,
+          hashtags,
+        })
+      );
+      await Promise.all(promises);
+    } else {
+      if (!uploadedMedia || selectedAccountIds.size === 0) return;
+      const promises = Array.from(selectedAccountIds).map((accountId) =>
+        schedulePost.mutateAsync({
+          workspaceId,
+          socialAccountId: accountId,
+          postType: "immediate",
+          caption,
+          hashtags,
+          mediaUrl: uploadedMedia.url,
+          mediaType: uploadMediaType || "video",
+          mediaStorageKey: uploadedMedia.storageKey,
+        })
+      );
+      await Promise.all(promises);
+    }
+    onOpenChange(false);
+  }
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="!max-w-3xl gap-0 p-0 overflow-hidden [&>button]:hidden">
+      <DialogContent className={cn(
+        "gap-0 p-0 overflow-hidden [&>button]:hidden",
+        step === "details" && sourceTab === "upload" && uploadMediaType === "image"
+          ? "max-w-4xl!"
+          : "max-w-3xl!"
+      )}>
         {/* Header */}
-        <div className="flex items-center justify-between border-b px-5 py-4">
-          <div className="flex items-center gap-4">
-            <DialogTitle className="text-base font-semibold">Schedule Post</DialogTitle>
-            <p className="text-xs text-muted-foreground">
-              {new Date().toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric", year: "numeric" })}
+        <div className="flex items-center border-b px-5 py-3.5">
+          <div className="flex-1 min-w-0">
+            <DialogTitle className="text-sm font-semibold leading-none">Schedule Post</DialogTitle>
+            <p className="mt-0.5 text-xs text-muted-foreground">
+              {format(new Date(), "EEEE, MMMM d, yyyy")}
             </p>
           </div>
-          <div className="flex items-center gap-4">
-            {/* Step indicator */}
-            <div className="flex items-center gap-2 text-xs">
-              <span className={cn(
-                "flex items-center gap-1.5",
-                step === 1 ? "text-primary" : "text-emerald-500"
-              )}>
-                {step > 1 ? <IconCheck size={13} className="text-emerald-500" /> : <span className="flex size-4 items-center justify-center rounded-full bg-primary text-[10px] font-bold text-primary-foreground">1</span>}
-                Pick clip
-              </span>
-              <span className="text-muted-foreground/40">—</span>
-              <span className={cn(
-                "flex items-center gap-1.5",
-                step === 2 ? "text-primary" : "text-muted-foreground"
-              )}>
-                <span className={cn(
-                  "flex size-4 items-center justify-center rounded-full text-[10px] font-bold",
-                  step === 2 ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground"
-                )}>2</span>
-                Details
-              </span>
+
+          {/* Step indicator */}
+          <div className="flex items-center gap-2 text-xs">
+            <div className={cn(
+              "flex size-5 items-center justify-center rounded-full text-[10px] font-bold transition-colors",
+              step === "clip" ? "bg-primary text-primary-foreground" : "bg-emerald-500 text-white"
+            )}>
+              {step === "details" ? <IconCheck size={10} strokeWidth={3} /> : "1"}
             </div>
+            <span className={cn("transition-colors", step === "clip" ? "font-medium text-foreground" : "text-muted-foreground")}>
+              Pick source
+            </span>
+            <div className={cn("h-px w-4 rounded-full transition-colors", step === "details" ? "bg-primary" : "bg-border")} />
+            <div className={cn(
+              "flex size-5 items-center justify-center rounded-full text-[10px] font-bold transition-colors",
+              step === "details" ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground"
+            )}>
+              2
+            </div>
+            <span className={cn("transition-colors", step === "details" ? "font-medium text-foreground" : "text-muted-foreground")}>
+              Details
+            </span>
+          </div>
+
+          <div className="flex flex-1 justify-end">
             <button
               type="button"
               onClick={() => onOpenChange(false)}
-              className="flex size-8 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+              className="flex size-7 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
             >
-              <IconX size={16} />
+              <IconX size={15} />
             </button>
           </div>
         </div>
 
-        <div className="flex">
-          {/* Left: clip preview */}
-          <div className="flex w-52 shrink-0 flex-col gap-3 border-r bg-muted/20 p-4">
-            <div className="relative aspect-[9/16] w-full overflow-hidden rounded-xl bg-muted shadow-sm">
-              {clip.thumbnailUrl ? (
-                <img src={clip.thumbnailUrl} alt={clip.title || ""} className="absolute inset-0 size-full object-cover" />
-              ) : clip.storageUrl ? (
-                <video
-                  src={clip.storageUrl}
-                  className="absolute inset-0 size-full object-cover"
-                  preload="metadata"
-                  muted
-                  playsInline
-                  onLoadedMetadata={(e) => { (e.currentTarget as HTMLVideoElement).currentTime = 1; }}
-                />
-              ) : (
-                <div className="flex size-full items-center justify-center">
-                  <span className="text-[10px] text-muted-foreground/40">No preview</span>
-                </div>
-              )}
+        {/* Step 1 — Source picker */}
+        {step === "clip" && (
+          <div className="flex flex-col gap-3 p-5">
+            {/* Tab switcher */}
+            <div className="flex gap-1 rounded-lg bg-muted/40 p-1">
+              <button
+                type="button"
+                onClick={() => setSourceTab("clip")}
+                className={cn(
+                  "flex flex-1 items-center justify-center gap-2 rounded-md px-3 py-2 text-sm font-medium transition-all",
+                  sourceTab === "clip" ? "bg-background text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"
+                )}
+              >
+                <IconVideo size={15} /> From Clips
+              </button>
+              <button
+                type="button"
+                onClick={() => setSourceTab("upload")}
+                className={cn(
+                  "flex flex-1 items-center justify-center gap-2 rounded-md px-3 py-2 text-sm font-medium transition-all",
+                  sourceTab === "upload" ? "bg-background text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"
+                )}
+              >
+                <IconUpload size={15} /> Upload Media
+              </button>
             </div>
-            <p className="line-clamp-3 text-xs font-medium leading-snug text-foreground">
-              {clip.title || <span className="italic text-muted-foreground">Untitled clip</span>}
-            </p>
-            <button
-              type="button"
-              onClick={() => onOpenChange(false)}
-              className="text-xs text-primary hover:underline text-left"
-            >
-              Change clip
-            </button>
+
+            {sourceTab === "clip" ? (
+              <>
+                {loadingClips ? (
+                  <div className="grid grid-cols-3 gap-3">
+                    {Array.from({ length: 6 }).map((_, i) => (
+                      <div key={i} className="flex flex-col overflow-hidden rounded-xl border border-border">
+                        <div className="aspect-[3/4] animate-pulse bg-muted/60" />
+                        <div className="p-2 flex flex-col gap-1.5">
+                          <div className="h-3 w-3/4 animate-pulse rounded bg-muted/60" />
+                          <div className="h-2.5 w-1/2 animate-pulse rounded bg-muted/40" />
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : clips.length === 0 ? (
+                  <div className="flex flex-col items-center justify-center gap-3 rounded-xl border border-dashed py-20 text-muted-foreground">
+                    <IconVideo size={32} className="opacity-30" />
+                    <p className="text-sm">No ready clips in this workspace yet.</p>
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-3 gap-3 max-h-[520px] overflow-y-auto p-1">
+                    {clips.map((c) => {
+                      const isSelected = selectedClip?.id === c.id;
+                      return (
+                        <button
+                          key={c.id}
+                          type="button"
+                          onClick={() => setSelectedClip(c)}
+                          className={cn(
+                            "group relative flex flex-col rounded-xl border text-left transition-all duration-150",
+                            isSelected
+                              ? "border-primary ring-2 ring-primary ring-offset-2 ring-offset-background"
+                              : "border-border hover:border-primary/50 hover:shadow-sm"
+                          )}
+                        >
+                          <div className="relative aspect-[3/4] w-full overflow-hidden rounded-t-xl bg-muted/30">
+                            <ClipThumbnail clip={c} />
+                            <div className="absolute inset-x-0 bottom-0 bg-linear-to-t from-black/80 via-black/20 to-transparent px-2 pb-2 pt-8">
+                              <div className="flex items-center justify-between">
+                                {c.score > 0 ? (
+                                  <span className="flex items-center gap-0.5 text-[11px] font-bold text-amber-400 drop-shadow">
+                                    <FireAnimatedIcon />{c.score}
+                                  </span>
+                                ) : <span />}
+                                {c.duration && (
+                                  <span className="flex items-center gap-0.5 rounded bg-black/50 px-1 py-0.5 text-[10px] text-white/80 backdrop-blur-sm">
+                                    <IconClock size={10} />{formatDuration(c.duration)}
+                                  </span>
+                                )}
+                              </div>
+                            </div>
+                            {isSelected && (
+                              <div className="absolute right-2 top-2 flex size-5 items-center justify-center rounded-full bg-primary shadow-lg">
+                                <IconCheck size={11} className="text-primary-foreground" strokeWidth={3} />
+                              </div>
+                            )}
+                          </div>
+                          <div className={cn(
+                            "flex flex-col gap-1 overflow-hidden rounded-b-xl p-2 transition-colors duration-150",
+                            isSelected ? "bg-primary/5" : "bg-card group-hover:bg-muted/20"
+                          )}>
+                            <p className="line-clamp-2 text-[11px] font-medium leading-tight text-foreground/90">
+                              {c.title || "Untitled clip"}
+                            </p>
+                            {c.recommendedPlatforms && c.recommendedPlatforms.length > 0 && (
+                              <div className="flex flex-wrap gap-1">
+                                {c.recommendedPlatforms.slice(0, 3).map((p) => (
+                                  <PlatformChip key={p} platform={p} />
+                                ))}
+                              </div>
+                            )}
+                          </div>
+                        </button>
+                      );
+                    })}
+                  </div>
+                )}
+
+                <div className="flex items-center justify-between border-t pt-3">
+                  <p className="text-xs text-muted-foreground">
+                    {selectedClip
+                      ? <span className="font-medium text-foreground">{selectedClip.title || "Untitled clip"}</span>
+                      : "Select a clip to continue"}
+                  </p>
+                  <Button size="sm" disabled={!selectedClip} onClick={() => setStep("details")}>
+                    Continue →
+                  </Button>
+                </div>
+              </>
+            ) : (
+              /* Upload tab */
+              <>
+                {!uploadFile ? (
+                  <div
+                    onDragOver={(e) => { e.preventDefault(); setIsDragging(true); }}
+                    onDragLeave={() => setIsDragging(false)}
+                    onDrop={(e) => { e.preventDefault(); setIsDragging(false); const f = e.dataTransfer.files[0]; if (f) handleFileSelect(f); }}
+                    onClick={() => fileInputRef.current?.click()}
+                    className={cn(
+                      "flex min-h-[320px] cursor-pointer flex-col items-center justify-center gap-4 rounded-xl border-2 border-dashed transition-all",
+                      isDragging ? "border-primary bg-primary/5 scale-[1.01]" : "border-muted-foreground/20 hover:border-primary/50 hover:bg-muted/20"
+                    )}
+                  >
+                    <div className="flex size-14 items-center justify-center rounded-full bg-muted">
+                      <IconUpload size={24} className="text-muted-foreground" />
+                    </div>
+                    <div className="text-center">
+                      <p className="text-sm font-medium">Drop your file here</p>
+                      <p className="text-xs text-muted-foreground">or click to browse</p>
+                    </div>
+                    <div className="flex items-center gap-3 text-xs text-muted-foreground/60">
+                      <span className="flex items-center gap-1"><IconVideo size={13} /> MP4, MOV, WebM</span>
+                      <span className="flex items-center gap-1"><IconPhoto size={13} /> JPG, PNG, WebP</span>
+                    </div>
+                    <input
+                      ref={fileInputRef}
+                      type="file"
+                      accept="video/mp4,video/quicktime,video/webm,image/jpeg,image/png,image/webp"
+                      className="hidden"
+                      onChange={(e) => { const f = e.target.files?.[0]; if (f) handleFileSelect(f); }}
+                    />
+                  </div>
+                ) : (
+                  <div className="flex flex-col items-center gap-3">
+                    <div className="relative aspect-video w-full max-w-sm overflow-hidden rounded-xl bg-black">
+                      {uploadMediaType === "video" ? (
+                        <video src={uploadPreview || ""} className="absolute inset-0 size-full object-contain" muted playsInline loop autoPlay />
+                      ) : (
+                        <img src={uploadPreview || ""} alt="Preview" className="absolute inset-0 size-full object-contain" />
+                      )}
+                      {uploadState === "uploading" && (
+                        <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 bg-black/60 backdrop-blur-sm">
+                          <IconLoader2 size={24} className="animate-spin text-white" />
+                          <div className="w-2/3">
+                            <div className="h-1.5 overflow-hidden rounded-full bg-white/20">
+                              <div className="h-full rounded-full bg-primary transition-all duration-300" style={{ width: `${uploadProgress}%` }} />
+                            </div>
+                          </div>
+                          <p className="text-xs text-white/80">{uploadProgress}%</p>
+                        </div>
+                      )}
+                      {uploadState === "done" && (
+                        <div className="absolute right-2 top-2 flex size-6 items-center justify-center rounded-full bg-emerald-500 shadow-lg">
+                          <IconCheck size={13} className="text-white" strokeWidth={3} />
+                        </div>
+                      )}
+                      {uploadState === "error" && (
+                        <div className="absolute inset-x-2 bottom-2 rounded-lg bg-red-500/90 px-2 py-1.5 text-center text-[11px] text-white">Upload failed. Try again.</div>
+                      )}
+                      <button
+                        type="button"
+                        onClick={removeUploadFile}
+                        className="absolute left-2 top-2 flex size-6 items-center justify-center rounded-full bg-black/60 text-white/80 backdrop-blur-sm transition-colors hover:bg-red-500 hover:text-white"
+                      >
+                        <IconTrash size={12} />
+                      </button>
+                    </div>
+                    <p className="text-xs text-muted-foreground">{uploadFile.name} · {(uploadFile.size / (1024 * 1024)).toFixed(1)} MB</p>
+                  </div>
+                )}
+
+                <div className="flex items-center justify-between border-t pt-3">
+                  <p className="text-xs text-muted-foreground">
+                    {uploadedMedia
+                      ? <span className="font-medium text-foreground">{uploadFile?.name || "Media selected"}</span>
+                      : "Upload or select media to continue"}
+                  </p>
+                  <Button size="sm" disabled={!uploadedMedia} onClick={() => setStep("details")}>
+                    Continue →
+                  </Button>
+                </div>
+
+                {/* Previously uploaded media library */}
+                {loadingMedia ? (
+                  <div className="flex items-center justify-center py-6">
+                    <IconLoader2 size={18} className="animate-spin text-muted-foreground" />
+                  </div>
+                ) : mediaLibrary.length > 0 && (
+                  <div className="flex flex-col gap-2">
+                    <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">Your Media Library</p>
+                    <div className="grid grid-cols-4 gap-2 max-h-[200px] overflow-y-auto p-2">
+                      {mediaLibrary.map((item) => {
+                        const isActive = uploadedMedia?.storageKey === item.storageKey;
+                        const isDeleting = deletingMediaId === item.id;
+                        return (
+                          <div key={item.id} className="group relative">
+                            <button
+                              type="button"
+                              onClick={() => !isDeleting && selectFromLibrary(item)}
+                              disabled={isDeleting}
+                              className={cn(
+                                "relative aspect-square w-full overflow-hidden rounded-lg bg-muted transition-all",
+                                isDeleting && "opacity-50 pointer-events-none",
+                                isActive
+                                  ? "ring-2 ring-primary ring-offset-2 ring-offset-background"
+                                  : "hover:ring-2 hover:ring-primary/50"
+                              )}
+                            >
+                              {item.mediaType === "video" ? (
+                                <video src={item.url} className="absolute inset-0 size-full object-cover" preload="metadata" muted />
+                              ) : (
+                                <img src={item.url} alt={item.filename} className="absolute inset-0 size-full object-cover" />
+                              )}
+                              <div className="absolute bottom-0.5 left-0.5">
+                                {item.mediaType === "video" ? (
+                                  <IconVideo size={10} className="text-white drop-shadow" />
+                                ) : (
+                                  <IconPhoto size={10} className="text-white drop-shadow" />
+                                )}
+                              </div>
+                              {isActive && (
+                                <div className="absolute right-1 top-1 flex size-4 items-center justify-center rounded-full bg-primary shadow">
+                                  <IconCheck size={9} className="text-primary-foreground" strokeWidth={3} />
+                                </div>
+                              )}
+                              {isDeleting && (
+                                <div className="absolute inset-0 flex items-center justify-center bg-black/50 backdrop-blur-sm rounded-lg">
+                                  <IconLoader2 size={16} className="animate-spin text-white" />
+                                </div>
+                              )}
+                            </button>
+                            {!isDeleting && (
+                              <button
+                                type="button"
+                                onClick={(e) => { e.stopPropagation(); deleteFromLibrary(item); }}
+                                className="absolute -top-1 -right-1 hidden group-hover:flex size-5 items-center justify-center rounded-full bg-destructive text-white shadow-sm"
+                              >
+                                <IconTrash size={10} />
+                              </button>
+                            )}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
+              </>
+            )}
           </div>
+        )}
 
-          {/* Right: form */}
-          <div className="flex flex-1 flex-col overflow-y-auto max-h-[520px]">
-            <div className="flex flex-col gap-5 p-5">
+        {/* Step 2 — Details */}
+        {step === "details" && (selectedClip || (sourceTab === "upload" && uploadedMedia)) && (
+          <div className="flex divide-x">
+            {/* Left: preview */}
+            <div className={cn(
+              "flex shrink-0 flex-col gap-2.5 p-4",
+              sourceTab === "upload" && uploadMediaType === "image" ? "w-72" : "w-44"
+            )}>
+              {sourceTab === "clip" && selectedClip ? (
+                <>
+                  <div className="relative aspect-9/16 w-full overflow-hidden rounded-xl bg-muted/40">
+                    <ClipThumbnail clip={selectedClip} />
+                  </div>
+                  <p className="line-clamp-3 text-xs font-medium leading-snug text-foreground">
+                    {selectedClip.title || <span className="italic text-muted-foreground">Untitled clip</span>}
+                  </p>
+                  {selectedClip.recommendedPlatforms && selectedClip.recommendedPlatforms.length > 0 && (
+                    <div className="flex flex-wrap gap-1">
+                      {selectedClip.recommendedPlatforms.slice(0, 3).map((p) => (
+                        <PlatformChip key={p} platform={p} />
+                      ))}
+                    </div>
+                  )}
+                </>
+              ) : (
+                <>
+                  <div className="relative aspect-square w-full overflow-hidden rounded-xl bg-muted/40">
+                    {uploadMediaType === "video" ? (
+                      <video src={uploadPreview || uploadedMedia?.url || ""} className="absolute inset-0 size-full object-contain" muted playsInline loop autoPlay />
+                    ) : (
+                      <img src={uploadPreview || uploadedMedia?.url || ""} alt="Preview" className="absolute inset-0 size-full object-contain" />
+                    )}
+                  </div>
+                  <p className="line-clamp-3 text-xs font-medium leading-snug text-foreground">
+                    {uploadFile?.name || "Custom media"}
+                  </p>
+                </>
+              )}
+              <button
+                type="button"
+                onClick={() => setStep("clip")}
+                className="text-left text-[11px] text-muted-foreground underline hover:text-foreground"
+              >
+                Change source
+              </button>
+            </div>
 
-              {/* Account selector — multi-select */}
+            {/* Right: form */}
+            <div className="flex flex-1 flex-col gap-4 overflow-y-auto p-5 max-h-[540px]">
+              {/* Account */}
               <div className="flex flex-col gap-2">
                 <div className="flex items-center justify-between">
-                  <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">Post to</p>
+                  <Label className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">Post to</Label>
                   {accounts.length > 1 && (
                     <button
                       type="button"
@@ -211,18 +815,12 @@ export function SchedulePostModal({
                     </button>
                   )}
                 </div>
-                {isLoading ? (
-                  <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                    <IconLoader2 size={13} className="animate-spin" /> Loading accounts...
-                  </div>
-                ) : accounts.length === 0 ? (
-                  <p className="rounded-lg border border-dashed p-3 text-xs text-muted-foreground">
-                    No connected accounts. Go to Social → Connected Accounts to add one.
-                  </p>
+                {accounts.length === 0 ? (
+                  <p className="text-xs text-muted-foreground">No connected accounts. Connect one from the Social page.</p>
                 ) : (
                   <div className="flex flex-col gap-1.5">
                     {accounts.map((acc) => {
-                      const meta = PLATFORM_META[acc.platform];
+                      const Icon = PLATFORM_ICONS[acc.platform];
                       const isSelected = selectedAccountIds.has(acc.id);
                       return (
                         <button
@@ -236,21 +834,14 @@ export function SchedulePostModal({
                               : "border-border bg-muted/20 hover:border-primary/40 hover:bg-muted/40"
                           )}
                         >
-                          <span className="relative flex size-9 shrink-0 items-center justify-center rounded-full overflow-hidden bg-muted">
-                            {acc.avatarUrl ? (
-                              <img src={acc.avatarUrl} alt={acc.accountName} className="size-full object-cover" />
-                            ) : (
-                              <span className={cn("flex size-full items-center justify-center rounded-full", meta?.bg || "bg-muted", meta?.color || "")}>
-                                {meta?.icon || acc.platform[0].toUpperCase()}
-                              </span>
-                            )}
-                            <span className={cn("absolute -bottom-0.5 -right-0.5 flex size-4 items-center justify-center rounded-full border-2 border-background", meta?.bg || "bg-muted", meta?.color || "")}>
-                              {meta?.icon ? <span className="scale-[0.7]">{meta.icon}</span> : null}
+                          {Icon && (
+                            <span className={cn("flex size-7 shrink-0 items-center justify-center rounded-lg p-1", PLATFORM_COLORS[acc.platform] || "bg-muted")}>
+                              <Icon className="size-4" />
                             </span>
-                          </span>
+                          )}
                           <div className="min-w-0 flex-1">
                             <p className="truncate text-xs font-semibold">{acc.accountName}</p>
-                            <p className="text-[11px] text-muted-foreground">{meta?.label || acc.platform}</p>
+                            <p className="text-[11px] text-muted-foreground">{PLATFORM_LABELS[acc.platform] || acc.platform}</p>
                           </div>
                           <span className={cn(
                             "flex size-5 shrink-0 items-center justify-center rounded-full border-2 transition-all",
@@ -265,43 +856,17 @@ export function SchedulePostModal({
                     })}
                   </div>
                 )}
-                {submitAttempted && selectedAccountIds.size === 0 && accounts.length > 0 && (
-                  <p className="text-xs text-red-500">Please select at least one account</p>
-                )}
               </div>
 
               {/* Date & Time */}
               <div className="flex flex-col gap-2">
-                <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">Date & Time</p>
-                <div className="grid grid-cols-2 gap-2">
-                  {(["immediate", "scheduled"] as const).map((type) => (
-                    <button
-                      key={type}
-                      type="button"
-                      onClick={() => setPostType(type)}
-                      className={cn(
-                        "flex items-center justify-center gap-2 rounded-xl border py-2.5 text-sm font-medium transition-all",
-                        postType === type
-                          ? "border-primary bg-primary/8 text-primary"
-                          : "border-border bg-muted/20 text-muted-foreground hover:border-primary/40 hover:text-foreground"
-                      )}
-                    >
-                      {type === "immediate" ? <IconSend size={14} /> : <IconClock size={14} />}
-                      {type === "immediate" ? "Post now" : "Schedule"}
-                    </button>
-                  ))}
-                </div>
-                {postType === "scheduled" && (
-                  <DateTimeScrollPicker value={scheduledDate} onChange={setScheduledDate} />
-                )}
-                {submitAttempted && postType === "scheduled" && !scheduledDate && (
-                  <p className="text-xs text-red-500">Please pick a date and time</p>
-                )}
+                <Label className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">Date & Time</Label>
+                <DateTimeScrollPicker value={scheduledDate} onChange={setScheduledDate} />
               </div>
 
               {/* Caption */}
-              <div className="flex flex-col gap-2">
-                <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">Caption</p>
+              <div className="flex flex-col gap-1.5">
+                <Label className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">Caption</Label>
                 <Textarea
                   value={caption}
                   onChange={(e) => setCaption(e.target.value)}
@@ -313,7 +878,7 @@ export function SchedulePostModal({
 
               {/* Hashtags */}
               <div className="flex flex-col gap-2">
-                <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">Hashtags</p>
+                <Label className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">Hashtags</Label>
                 {hashtags.length > 0 && (
                   <div className="flex flex-wrap gap-1.5">
                     {hashtags.map((tag) => (
@@ -327,56 +892,48 @@ export function SchedulePostModal({
                   </div>
                 )}
                 <div className="flex gap-2">
-                  <div className="relative flex-1">
-                    <IconHash size={13} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
-                    <Input
-                      value={hashtagInput}
-                      onChange={(e) => setHashtagInput(e.target.value)}
-                      placeholder="Add hashtag..."
-                      className="pl-8 text-sm"
-                      onKeyDown={(e) => e.key === "Enter" && (e.preventDefault(), addHashtag())}
-                    />
-                  </div>
-                  <Button type="button" variant="outline" onClick={addHashtag}>
-                    Add
+                  <Input
+                    value={hashtagInput}
+                    onChange={(e) => setHashtagInput(e.target.value)}
+                    placeholder="Add hashtag..."
+                    className="text-sm"
+                    onKeyDown={(e) => e.key === "Enter" && (e.preventDefault(), addHashtag())}
+                  />
+                  <Button type="button" variant="outline" size="sm" onClick={() => addHashtag()}>Add</Button>
+                </div>
+              </div>
+
+              {/* Submit */}
+              <div className="flex items-center justify-between border-t pt-3">
+                <button
+                  type="button"
+                  onClick={() => { if (!clip) setStep("clip"); else onOpenChange(false); }}
+                  className="text-xs text-muted-foreground hover:text-foreground"
+                >
+                  ← Back
+                </button>
+                <div className="flex items-center gap-2">
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={handlePostNow}
+                    disabled={selectedAccountIds.size === 0 || schedulePost.isPending}
+                  >
+                    {schedulePost.isPending ? "Posting..." : "Post Now"}
+                  </Button>
+                  <Button
+                    size="sm"
+                    onClick={handleSubmit}
+                    disabled={selectedAccountIds.size === 0 || !scheduledAt || schedulePost.isPending}
+                    className="min-w-28"
+                  >
+                    {schedulePost.isPending ? "Scheduling..." : "Schedule Post"}
                   </Button>
                 </div>
               </div>
             </div>
-
-            {/* Footer */}
-            <div className="mt-auto border-t bg-muted/20 px-5 py-4">
-              {selectedAccounts.length > 0 && (
-                <p className="mb-3 text-xs text-muted-foreground">
-                  Posting to{" "}
-                  {selectedAccounts.length === 1 ? (
-                    <>
-                      <span className="font-medium text-foreground">{selectedAccounts[0].accountName}</span>
-                      {" on "}
-                      <span className="font-medium text-foreground">{PLATFORM_META[selectedAccounts[0].platform]?.label || selectedAccounts[0].platform}</span>
-                    </>
-                  ) : (
-                    <span className="font-medium text-foreground">{selectedAccounts.length} accounts</span>
-                  )}
-                </p>
-              )}
-              <div className="flex items-center gap-2">
-                <Button variant="outline" className="flex-1" onClick={() => onOpenChange(false)}>
-                  ← Back
-                </Button>
-                <Button className="flex-1 gap-2" onClick={handleSubmit} disabled={!canSubmit}>
-                  {schedulePost.isPending ? (
-                    <><IconLoader2 size={15} className="animate-spin" /> Scheduling...</>
-                  ) : postType === "immediate" ? (
-                    <><IconSend size={15} /> Post Now</>
-                  ) : (
-                    <><IconCalendar size={15} /> Schedule Post</>
-                  )}
-                </Button>
-              </div>
-            </div>
           </div>
-        </div>
+        )}
       </DialogContent>
     </Dialog>
   );

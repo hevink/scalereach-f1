@@ -25,6 +25,7 @@ import { IconVideo } from "@tabler/icons-react";
 import { CalendarProvider } from "@/components/social/calendar/calendar-context";
 import { CalendarClientContainer } from "@/components/social/calendar/calendar-client-container";
 import { UpgradeDialog } from "@/components/pricing/upgrade-dialog";
+import { SchedulePostModal } from "@/components/social/SchedulePostModal";
 import {
   TikTokIcon,
   InstagramIcon,
@@ -85,6 +86,7 @@ export default function SocialPage() {
 
   const [statusFilter, setStatusFilter] = useState<string>("");
   const [upgradeOpen, setUpgradeOpen] = useState(false);
+  const [createPostOpen, setCreatePostOpen] = useState(false);
 
   const filteredPosts = statusFilter ? posts.filter((p) => p.status === statusFilter) : posts;
 
@@ -100,10 +102,20 @@ export default function SocialPage() {
     <div className="flex flex-col gap-8 p-6">
       {/* Calendar */}
       <section>
-        <h2 className="mb-1 text-lg font-semibold">Post Calendar</h2>
-        <p className="mb-4 text-sm text-muted-foreground">
-          Visualise your scheduled posts across time.
-        </p>
+        <div className="mb-4 flex items-center justify-between">
+          <div>
+            <h2 className="mb-1 text-lg font-semibold">Post Calendar</h2>
+            <p className="text-sm text-muted-foreground">
+              Visualise your scheduled posts across time.
+            </p>
+          </div>
+          {accounts.length > 0 && (
+            <Button onClick={() => setCreatePostOpen(true)} size="sm" className="gap-2">
+              <IconVideo size={15} />
+              Create Post
+            </Button>
+          )}
+        </div>
         {loadingPosts ? (
           <div className="flex h-64 items-center justify-center rounded-xl border bg-muted/20">
             <p className="text-sm text-muted-foreground">Loading calendar...</p>
@@ -241,7 +253,7 @@ export default function SocialPage() {
         <div className="mb-4 flex items-center justify-between">
           <div>
             <h2 className="text-lg font-semibold">Scheduled Posts</h2>
-            <p className="text-sm text-muted-foreground">All posts scheduled from your clips.</p>
+            <p className="text-sm text-muted-foreground">All posts scheduled from your clips and uploads.</p>
           </div>
           <div className="flex gap-1.5">
             {["", "pending", "posted", "failed"].map((s) => (
@@ -264,7 +276,7 @@ export default function SocialPage() {
           <p className="text-sm text-muted-foreground">Loading posts...</p>
         ) : filteredPosts.length === 0 ? (
           <div className="rounded-xl border bg-muted/20 p-8 text-center">
-            <p className="text-sm text-muted-foreground">No posts yet. Schedule a clip from the Clips page.</p>
+            <p className="text-sm text-muted-foreground">No posts yet. Schedule a clip from the Clips page or create a custom post.</p>
           </div>
         ) : (
           <div className="flex flex-col gap-2">
@@ -278,6 +290,10 @@ export default function SocialPage() {
                   <div className="relative size-16 shrink-0 overflow-hidden rounded-lg bg-muted/40">
                     {post.clipThumbnailUrl ? (
                       <img src={post.clipThumbnailUrl} alt={post.clipTitle || ""} className="absolute inset-0 size-full object-cover" />
+                    ) : post.mediaThumbnailUrl ? (
+                      <img src={post.mediaThumbnailUrl} alt="Custom post" className="absolute inset-0 size-full object-cover" />
+                    ) : post.mediaUrl && post.mediaType === "image" ? (
+                      <img src={post.mediaUrl} alt="Custom post" className="absolute inset-0 size-full object-cover" />
                     ) : (
                       <div className="flex size-full items-center justify-center">
                         <IconVideo size={20} className="opacity-30" />
@@ -294,7 +310,7 @@ export default function SocialPage() {
                   <div className="flex min-w-0 flex-1 flex-col gap-1">
                     <div className="flex items-center gap-2">
                       <span className="truncate text-sm font-medium">
-                        {post.clipTitle || "Untitled clip"}
+                        {post.clipTitle || (post.mediaUrl ? "Custom post" : "Untitled clip")}
                       </span>
                       <span className={`shrink-0 rounded-full px-2 py-0.5 text-[11px] font-medium ${STATUS_COLORS[post.status] ?? ""}`}>
                         {post.status}
@@ -356,6 +372,14 @@ export default function SocialPage() {
           </div>
         )}
       </section>
+
+      {workspaceId && (
+        <SchedulePostModal
+          open={createPostOpen}
+          onOpenChange={setCreatePostOpen}
+          workspaceId={workspaceId}
+        />
+      )}
     </div>
   );
 }
