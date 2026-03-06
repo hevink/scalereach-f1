@@ -59,6 +59,26 @@ export default function PlaygroundPage() {
                                 <Button disabled>Disabled</Button>
                                 <Button size="sm">Small</Button>
                                 <Button size="lg">Large</Button>
+
+                                {/* Custom Gradient Button */}
+                                <button
+                                    className="focus-visible:ring-ring inline-flex h-9 cursor-pointer items-center justify-center rounded-md px-4 py-2 text-sm font-medium whitespace-nowrap transition-all duration-200 focus-visible:ring-1 focus-visible:outline-none disabled:pointer-events-none disabled:opacity-50"
+                                    style={{
+                                        background: 'radial-gradient(228.571% 228.571% at 50% -9.32995e-07%, rgb(59, 130, 246) 0%, rgb(29, 78, 216) 100%)',
+                                        borderRadius: '6px',
+                                        boxShadow: 'rgba(255, 255, 255, 0.2) 0px 1px 0px 0px inset, rgba(0, 0, 0, 0.4) 0px 1.25px 2.5px 0px, rgb(37, 99, 235) 0px 0px 0px 1.25px',
+                                        border: 'none',
+                                        color: 'rgb(255, 255, 255)',
+                                        fontFamily: 'Inter, "Inter Placeholder", sans-serif',
+                                        fontSize: '14px',
+                                        fontWeight: 500,
+                                        letterSpacing: '-0.02em',
+                                        lineHeight: '20px'
+                                    }}
+                                >
+                                    <span className="hidden font-semibold sm:inline">Start Scaling →</span>
+                                    <span className="font-semibold sm:hidden">Start Scaling →</span>
+                                </button>
                             </CardContent>
                         </Card>
 
