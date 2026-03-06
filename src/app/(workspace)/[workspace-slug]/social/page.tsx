@@ -36,12 +36,12 @@ import {
   ThreadsIcon,
 } from "@/components/icons/platform-icons";
 
-const PLATFORMS: { id: string; label: string; Icon: React.ElementType }[] = [
+const PLATFORMS: { id: string; label: string; Icon: React.ElementType; comingSoon?: boolean }[] = [
   { id: "tiktok", label: "TikTok", Icon: TikTokIcon },
   { id: "instagram", label: "Instagram", Icon: InstagramIcon },
   { id: "facebook", label: "Facebook", Icon: FacebookIcon },
   { id: "youtube", label: "YouTube Shorts", Icon: YouTubeIcon },
-  { id: "twitter", label: "Twitter / X", Icon: TwitterIcon },
+  { id: "twitter", label: "Twitter / X", Icon: TwitterIcon, comingSoon: true },
   { id: "linkedin", label: "LinkedIn", Icon: LinkedInIcon },
   { id: "threads", label: "Threads", Icon: ThreadsIcon },
 ];
@@ -173,14 +173,19 @@ export default function SocialPage() {
                   <div className="flex items-center gap-2">
                     <platform.Icon className="size-4 shrink-0" />
                     <span className="text-sm font-medium">{platform.label}</span>
+                    {platform.comingSoon && (
+                      <span className="rounded-full bg-muted px-2 py-0.5 text-[10px] font-medium text-muted-foreground">
+                        Coming Soon
+                      </span>
+                    )}
                   </div>
                   <Button
                     size="sm"
                     variant="outline"
-                    disabled={!canConnect || connectAccount.isPending || !workspaceId}
-                    title={!canConnect ? limitLabel : undefined}
+                    disabled={platform.comingSoon || !canConnect || connectAccount.isPending || !workspaceId}
+                    title={platform.comingSoon ? "Coming soon" : !canConnect ? limitLabel : undefined}
                     onClick={() =>
-                      workspaceId && canConnect && connectAccount.mutate({ platform: platform.id, workspaceId })
+                      workspaceId && canConnect && !platform.comingSoon && connectAccount.mutate({ platform: platform.id, workspaceId })
                     }
                   >
                     + Connect
