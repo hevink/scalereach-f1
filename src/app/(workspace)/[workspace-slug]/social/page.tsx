@@ -7,7 +7,6 @@ import { useWorkspaceBySlug } from "@/hooks/useWorkspace";
 import { useSocialAccounts, useConnectSocialAccount, useDisconnectSocialAccount } from "@/hooks/useSocialAccounts";
 import { useScheduledPosts, useCancelPost } from "@/hooks/useScheduledPosts";
 import { Button } from "@/components/ui/button";
-import { GradientButton } from "@/components/ui/gradient-button";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import {
@@ -111,10 +110,10 @@ export default function SocialPage() {
             </p>
           </div>
           {accounts.length > 0 && (
-            <GradientButton onClick={() => setCreatePostOpen(true)} size="sm" className="gap-2">
+            <Button onClick={() => setCreatePostOpen(true)} size="sm" className="gap-2">
               <IconVideo size={15} />
               Create Post
-            </GradientButton>
+            </Button>
           )}
         </div>
         {loadingPosts ? (

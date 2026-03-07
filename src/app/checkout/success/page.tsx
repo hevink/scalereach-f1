@@ -3,7 +3,6 @@
 import { Suspense, useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
-import { GradientButton } from "@/components/ui/gradient-button";
 import Confetti from "react-confetti";
 import { DotLottieReact } from "@lottiefiles/dotlottie-react";
 import { analytics } from "@/lib/analytics";
@@ -74,12 +73,12 @@ function CheckoutSuccessContent() {
         </p>
 
         <div className="space-y-3">
-          <GradientButton
+          <Button
             onClick={handleContinue}
             className="w-full h-12 font-medium"
           >
             Continue to Dashboard
-          </GradientButton>
+          </Button>
 
           {workspaceSlug && (
             <Button

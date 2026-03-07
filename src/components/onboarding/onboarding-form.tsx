@@ -18,7 +18,6 @@ import { LogoIcon } from "@/components/ui/logo";
 import { toast } from "sonner";
 import { z } from "zod";
 import { Button } from "@/components/ui/button";
-import { GradientButton } from "@/components/ui/gradient-button";
 import { FieldError } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { Spinner } from "@/components/ui/spinner";
@@ -582,7 +581,7 @@ export function OnboardingForm() {
             })}
           </div>
 
-          <GradientButton
+          <Button
             className="w-full"
             disabled={isLoading}
             onClick={handleNext}
@@ -591,7 +590,7 @@ export function OnboardingForm() {
           >
             {selectedRole ? "Continue" : "Skip for now"}
             <IconChevronRight className="size-4" />
-          </GradientButton>
+          </Button>
         </div>
 
         {/* Step 3: Workspace Name */}
@@ -631,7 +630,7 @@ export function OnboardingForm() {
             >
               Back
             </Button>
-            <GradientButton
+            <Button
               className="flex-1"
               disabled={isLoading}
               onClick={handleNext}
@@ -640,7 +639,7 @@ export function OnboardingForm() {
             >
               Continue
               <IconChevronRight className="size-4" />
-            </GradientButton>
+            </Button>
           </div>
         </div>
 
@@ -704,7 +703,7 @@ export function OnboardingForm() {
             >
               Back
             </Button>
-            <GradientButton
+            <Button
               className="flex-1"
               disabled={isLoading || slugAvailable === false}
               onClick={handleNext}
@@ -713,7 +712,7 @@ export function OnboardingForm() {
             >
               Continue
               <IconChevronRight className="size-4" />
-            </GradientButton>
+            </Button>
           </div>
         </div>
 
@@ -753,7 +752,7 @@ export function OnboardingForm() {
             >
               Back
             </Button>
-            <GradientButton
+            <Button
               className="flex-1"
               disabled={isLoading}
               onClick={handleNext}
@@ -762,7 +761,7 @@ export function OnboardingForm() {
             >
               Continue
               <IconChevronRight className="size-4" />
-            </GradientButton>
+            </Button>
           </div>
         </div>
 
@@ -816,7 +815,7 @@ export function OnboardingForm() {
             >
               Back
             </Button>
-            <GradientButton
+            <Button
               className="flex-1"
               disabled={isLoading}
               loading={isLoading}
@@ -825,7 +824,7 @@ export function OnboardingForm() {
               type="button"
             >
               Create Workspace
-            </GradientButton>
+            </Button>
           </div>
         </div>
 

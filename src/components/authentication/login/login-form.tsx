@@ -9,7 +9,6 @@ import { Controller, useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
 import { Button } from "@/components/ui/button";
-import { GradientButton } from "@/components/ui/gradient-button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { FieldError } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
@@ -241,24 +240,13 @@ export function LoginForm() {
         </Link>
       </div>
       <div className="flex flex-col gap-1">
-        {lastUsedMethod === "email" || !lastUsedMethod ? (
-          <GradientButton
-            disabled={isLoading}
-            loading={isLoading}
-            type="submit"
-          >
-            Sign in
-          </GradientButton>
-        ) : (
-          <Button
-            disabled={isLoading}
-            loading={isLoading}
-            type="submit"
-            variant="outline"
-          >
-            Sign in
-          </Button>
-        )}
+        <Button
+          disabled={isLoading}
+          loading={isLoading}
+          type="submit"
+        >
+          Sign in
+        </Button>
         {showHelperText && lastUsedMethod === "email" && (
           <p className="py-4 text-center font-medium text-muted-foreground text-sm">
             You last used {getMethodDisplayName(lastUsedMethod)} to sign in

@@ -4,7 +4,6 @@ import { Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { IconArrowLeft, IconRefresh } from "@tabler/icons-react";
 import { Button } from "@/components/ui/button";
-import { GradientButton } from "@/components/ui/gradient-button";
 import { DotLottieReact } from "@lottiefiles/dotlottie-react";
 
 function CheckoutCancelContent() {
@@ -50,13 +49,13 @@ function CheckoutCancelContent() {
         </p>
 
         <div className="space-y-3">
-          <GradientButton
+          <Button
             onClick={handleRetry}
             className="w-full h-12 font-medium"
           >
             <IconRefresh className="size-4 mr-2" />
             Try Again
-          </GradientButton>
+          </Button>
 
           <Button
             variant="outline"

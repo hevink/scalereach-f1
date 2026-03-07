@@ -4,7 +4,6 @@ import { useState } from "react";
 import Link from "next/link";
 import { AuthLayout } from "@/components/authentication/auth-layout";
 import { Button } from "@/components/ui/button";
-import { GradientButton } from "@/components/ui/gradient-button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { IconArrowLeft, IconCheck } from "@tabler/icons-react";
@@ -25,7 +24,7 @@ export default function ForgotPasswordPage() {
       const res = await fetch(`${apiUrl}/api/auth/request-password-reset`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ 
+        body: JSON.stringify({
           email,
           redirectTo: `${window.location.origin}/reset-password`
         }),
@@ -85,9 +84,9 @@ export default function ForgotPasswordPage() {
           />
         </div>
         {error && <p className="text-sm text-red-500">{error}</p>}
-        <GradientButton type="submit" className="w-full" disabled={isLoading}>
+        <Button type="submit" className="w-full" disabled={isLoading}>
           {isLoading ? "Sending..." : "Send reset link"}
-        </GradientButton>
+        </Button>
       </form>
       <Link href="/login" className="flex items-center justify-center text-sm text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white">
         <IconArrowLeft className="size-4 mr-1" />

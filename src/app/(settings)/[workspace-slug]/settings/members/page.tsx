@@ -6,7 +6,6 @@ import { toast } from "sonner";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { GradientButton } from "@/components/ui/gradient-button";
 import {
   Card,
   CardContent,
@@ -126,19 +125,13 @@ function ConfirmDialog({
           <DialogClose render={<Button variant="outline" disabled={isLoading} />}>
             {cancelText}
           </DialogClose>
-          {variant === "gradient" ? (
-            <GradientButton onClick={onConfirm} loading={isLoading}>
-              {confirmText}
-            </GradientButton>
-          ) : (
-            <Button
-              variant={variant === "destructive" ? "destructive" : "default"}
-              onClick={onConfirm}
-              loading={isLoading}
-            >
-              {confirmText}
-            </Button>
-          )}
+          <Button
+            variant={variant === "destructive" ? "destructive" : "default"}
+            onClick={onConfirm}
+            loading={isLoading}
+          >
+            {confirmText}
+          </Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
@@ -211,9 +204,9 @@ function InviteMemberDialog({ workspaceId, workspacePlan }: { workspaceId: strin
             <Button type="button" variant="outline" onClick={() => setOpen(false)}>
               Cancel
             </Button>
-            <GradientButton type="submit" loading={createInvitation.isPending}>
+            <Button type="submit" loading={createInvitation.isPending}>
               Send Invitation
-            </GradientButton>
+            </Button>
           </DialogFooter>
         </form>
       </DialogContent>

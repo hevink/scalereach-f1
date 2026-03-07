@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import { GradientButton } from "@/components/ui/gradient-button";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -51,7 +50,6 @@ export default function PlaygroundPage() {
                             <CardHeader><CardTitle>Buttons</CardTitle></CardHeader>
                             <CardContent className="flex flex-wrap gap-3">
                                 <Button>Default</Button>
-                                <GradientButton>Gradient</GradientButton>
                                 <Button variant="secondary">Secondary</Button>
                                 <Button variant="outline">Outline</Button>
                                 <Button variant="ghost">Ghost</Button>

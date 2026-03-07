@@ -14,7 +14,6 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
-import { GradientButton } from "@/components/ui/gradient-button";
 import {
   Card,
   CardContent,
@@ -125,9 +124,9 @@ function EnablePasswordForm({
         >
           Cancel
         </Button>
-        <GradientButton disabled={isEnabling} loading={isEnabling} type="submit">
+        <Button disabled={isEnabling} loading={isEnabling} type="submit">
           Continue
-        </GradientButton>
+        </Button>
       </DialogFooter>
     </form>
   );

@@ -5,7 +5,6 @@ import { useRouter } from "next/navigation";
 import { type ReactNode, useEffect, useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { GradientButton } from "@/components/ui/gradient-button";
 import {
   Card,
   CardContent,
@@ -121,9 +120,9 @@ export default function WorkspacesPage() {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <GradientButton className="w-full" onClick={() => router.push("/onboarding")}>
+          <Button className="w-full" onClick={() => router.push("/onboarding")}>
             Create Workspace
-          </GradientButton>
+          </Button>
         </CardContent>
       </Card>
     );

@@ -9,7 +9,6 @@ import { toast } from "sonner";
 import { z } from "zod";
 import { LoginWithGoogle } from "@/components/authentication/login-with-google";
 import { Button } from "@/components/ui/button";
-import { GradientButton } from "@/components/ui/gradient-button";
 import { FieldDescription, FieldError } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -531,7 +530,7 @@ export function SignUpForm() {
               </Button>
             )}
             {currentStep < 3 ? (
-              <GradientButton
+              <Button
                 className="flex-1"
                 disabled={
                   isLoading ||
@@ -543,16 +542,16 @@ export function SignUpForm() {
                 type="button"
               >
                 {currentStep === 1 ? "Continue with email" : "Next"}
-              </GradientButton>
+              </Button>
             ) : (
-              <GradientButton
+              <Button
                 className="flex-1"
                 disabled={isLoading || usernameAvailable === false}
                 loading={isLoading}
                 type="submit"
               >
                 Create account
-              </GradientButton>
+              </Button>
             )}
           </div>
           {currentStep === 1 && (
