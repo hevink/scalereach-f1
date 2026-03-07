@@ -23,6 +23,8 @@ export interface Plan {
     description: string;
     monthly: number;
     annually: number;
+    originalMonthly?: number;
+    originalAnnually?: number;
     features: string[];
     featured: boolean;
     badge?: string;
@@ -37,6 +39,8 @@ export const plans: Record<string, Plan> = {
         description: "Full power for serious creators",
         monthly: 18,
         annually: 12.5,
+        originalMonthly: 29,
+        originalAnnually: 29,
         features: [
             "400 Minutes/Month",
             "Without Watermark",
@@ -76,6 +80,8 @@ export const plans: Record<string, Plan> = {
         description: "For agencies and teams that need it all",
         monthly: 99,
         annually: 49,
+        originalMonthly: 149,
+        originalAnnually: 99,
         features: [
             "Unlimited Minutes",
             "Without Watermark",
@@ -117,6 +123,8 @@ export const plans: Record<string, Plan> = {
         description: "Everything you need to get started",
         monthly: 12,
         annually: 10,
+        originalMonthly: 19,
+        originalAnnually: 19,
         features: [
             "200 Minutes/Month",
             "Without Watermark",

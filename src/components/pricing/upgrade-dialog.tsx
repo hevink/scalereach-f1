@@ -113,6 +113,7 @@ function PricingCard({
     loadingPlanId: string | null;
 }) {
     const price = period === "monthly" ? plan.monthly : plan.annually;
+    const originalPrice = period === "monthly" ? plan.originalMonthly : plan.originalAnnually;
     const productId = period === "annually" ? plan.dodoProductIdYearly : plan.dodoProductIdMonthly;
     const isThisLoading = isLoading && loadingPlanId === planKey;
 
@@ -152,6 +153,9 @@ function PricingCard({
                         transition={{ duration: 0.2 }}
                         className="text-3xl font-semibold"
                     >
+                        {originalPrice && originalPrice > price && (
+                            <span className="text-lg font-normal text-muted-foreground line-through mr-2">${originalPrice}</span>
+                        )}
                         ${price}
                         {price > 0 && <span className="text-lg font-normal text-muted-foreground">/month</span>}
                     </motion.div>

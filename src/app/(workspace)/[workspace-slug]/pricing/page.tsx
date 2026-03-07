@@ -175,9 +175,12 @@ function PricingCard({
                         animate={{ opacity: 1, y: 0 }}
                         exit={{ opacity: 0, y: 10 }}
                         transition={{ duration: 0.2 }}
-                        className="text-3xl font-semibold"
+                        className="flex items-baseline gap-2"
                     >
-                        ${price}
+                        {plan.originalMonthly && plan.originalMonthly > price && (
+                            <span className="text-lg text-muted-foreground line-through">${period === "monthly" ? plan.originalMonthly : plan.originalAnnually}</span>
+                        )}
+                        <span className="text-3xl font-semibold">${price}</span>
                         {price > 0 && <span className="text-lg font-normal text-muted-foreground">/month</span>}
                     </motion.div>
                 </AnimatePresence>
