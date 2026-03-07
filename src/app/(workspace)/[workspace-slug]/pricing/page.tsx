@@ -11,6 +11,7 @@ import { useWorkspaceBySlug } from "@/hooks/useWorkspace";
 import { toast } from "sonner";
 import { analytics } from "@/lib/analytics";
 import { useMinutesBalance } from "@/hooks/useMinutes";
+import { IconCreditCard } from "@tabler/icons-react";
 
 // ============================================================================
 // Types
@@ -325,6 +326,7 @@ export default function WorkspacePricingPage() {
     const [period, setPeriod] = useState<BillingPeriod>("annually");
     const [isLoading, setIsLoading] = useState(false);
     const [loadingPlanId, setLoadingPlanId] = useState<string | null>(null);
+    const [isBillingPortalLoading, setIsBillingPortalLoading] = useState(false);
 
     const currentPlanId = workspace?.plan ?? "free";
     const currentBillingCycle = workspace?.billingCycle; // 'monthly' | 'annual' | null
@@ -369,6 +371,30 @@ export default function WorkspacePricingPage() {
     useEffect(() => {
         analytics.pricingViewed();
     }, []);
+
+    const handleManageBilling = async () => {
+        if (!workspace?.id) {
+            toast.error("Workspace not found");
+            return;
+        }
+
+        setIsBillingPortalLoading(true);
+
+        try {
+            const response = await creditsApi.getCustomerPortal(workspace.id);
+            if (response.portalUrl) {
+                window.open(response.portalUrl, "_blank");
+            } else {
+                throw new Error("No portal URL received");
+            }
+        } catch (error: any) {
+            console.error("Billing portal error:", error);
+            const errorMessage = error.response?.data?.message || error.response?.data?.error || "Failed to open billing portal";
+            toast.error(errorMessage);
+        } finally {
+            setIsBillingPortalLoading(false);
+        }
+    };
 
     const handleSelectPlan = async (planId: string, productId: string) => {
         if (!workspace?.id) {
@@ -420,16 +446,32 @@ export default function WorkspacePricingPage() {
 
     return (
         <div className="min-h-screen bg-background">
-            <div className="mx-auto max-w-5xl px-6 py-16 md:py-24">
+            <div className="mx-auto max-w-5xl p-6">
                 {/* Back Button */}
-                <Button
-                    variant="ghost"
-                    className="mb-6"
-                    onClick={() => router.back()}
-                >
-                    <ArrowLeft className="size-4 mr-2" />
-                    Back
-                </Button>
+                <div className="flex items-center justify-between mb-6">
+                    <Button
+                        variant="ghost"
+                        onClick={() => router.back()}
+                    >
+                        <ArrowLeft className="size-4 mr-2" />
+                        Back
+                    </Button>
+
+                    {currentPlanId !== "free" && (
+                        <Button
+                            variant="outline"
+                            onClick={handleManageBilling}
+                            disabled={isBillingPortalLoading}
+                        >
+                            {isBillingPortalLoading ? (
+                                <Loader2 className="size-4 mr-2 animate-spin" />
+                            ) : (
+                                <IconCreditCard className="size-4 mr-2" />
+                            )}
+                            Manage Billing
+                        </Button>
+                    )}
+                </div>
 
                 {/* Header */}
                 <motion.div
