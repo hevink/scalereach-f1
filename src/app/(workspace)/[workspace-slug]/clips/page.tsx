@@ -188,7 +188,7 @@ export default function AllClipsPage({ params, searchParams }: AllClipsPageProps
                             }
                             action={
                                 showFavoritesOnly
-                                    ? { label: "View All Clips", onClick: () => setShowFavoritesOnly(false) }
+                                    ? { label: "View All Clips", onClick: () => router.push(`/${slug}/clips`) }
                                     : { label: "Upload Video", onClick: () => router.push(`/${slug}`) }
                             }
                         />
