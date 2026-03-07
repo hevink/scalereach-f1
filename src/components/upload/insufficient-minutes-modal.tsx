@@ -13,6 +13,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { IconAlertCircle } from "@tabler/icons-react";
 import { cn } from "@/lib/utils";
+import { plans, type Plan } from "@/lib/pricing-config";
 
 interface InsufficientMinutesModalProps {
     isOpen: boolean;
@@ -27,69 +28,6 @@ interface InsufficientMinutesModalProps {
 }
 
 type BillingPeriod = "monthly" | "annually";
-
-interface Plan {
-    name: string;
-    description: string;
-    monthly: number;
-    annually: number;
-    features: string[];
-    featured: boolean;
-    badge?: string;
-}
-
-const plans: Record<string, Plan> = {
-    pro: {
-        name: "Pro",
-        badge: "Super offer",
-        description: "Step up your game with bigger volume",
-        monthly: 18,
-        annually: 12.5,
-        features: [
-            "4800 Minutes/Year (or 400/Month)",
-            "Without Watermark",
-            "Up to 3h File Length",
-            "Up to 4GB File Size Upload",
-            "Storage: 6 Months (then auto-deleted)",
-            "Unlimited Editing",
-            "4K Clip Quality",
-        ],
-        featured: true,
-    },
-    agency: {
-        name: "Agency",
-        badge: "Unlimited",
-        description: "For agencies and teams that need it all",
-        monthly: 99,
-        annually: 49,
-        features: [
-            "Unlimited Minutes",
-            "Without Watermark",
-            "Up to 3h File Length",
-            "Up to 4GB File Size Upload",
-            "Storage: 6 Months (then auto-deleted)",
-            "Unlimited Editing",
-            "4K Clip Quality",
-        ],
-        featured: false,
-    },
-    starter: {
-        name: "Starter",
-        description: "Unlock access to all powerful features",
-        monthly: 12,
-        annually: 10,
-        features: [
-            "1800 Minutes/Year (or 200/Month)",
-            "Without Watermark",
-            "Up to 2h File Length",
-            "Up to 4GB File Size Upload",
-            "Storage: 3 Months (then auto-deleted)",
-            "Unlimited Editing",
-            "1080p Clip Quality",
-        ],
-        featured: false,
-    },
-};
 
 function PricingCard({
     planKey,
@@ -166,20 +104,40 @@ function PricingCard({
             </motion.button>
 
             {/* Features list */}
-            <ul role="list" className="space-y-3 text-sm">
-                {plan.features.map((feature, i) => (
-                    <motion.li
-                        key={feature}
-                        initial={{ opacity: 0, x: -10 }}
-                        whileInView={{ opacity: 1, x: 0 }}
-                        viewport={{ once: true }}
-                        transition={{ duration: 0.3, delay: i * 0.05 }}
-                        className="group flex items-center gap-2 first:font-medium"
-                    >
-                        <Check className="text-muted-foreground size-3 group-first:hidden" strokeWidth={3.5} />
-                        {feature}
-                    </motion.li>
-                ))}
+            <ul role="list" className="space-y-2 text-sm">
+                {plan.features.map((feature, i) => {
+                    // Check if this is a section header (starts with ────)
+                    const isSectionHeader = feature.startsWith("────");
+
+                    if (isSectionHeader) {
+                        return (
+                            <motion.li
+                                key={feature}
+                                initial={{ opacity: 0 }}
+                                whileInView={{ opacity: 1 }}
+                                viewport={{ once: true }}
+                                transition={{ duration: 0.3, delay: i * 0.02 }}
+                                className="pt-3 pb-1 text-xs font-semibold text-primary/80 tracking-wide"
+                            >
+                                {feature.replace(/────/g, "").trim()}
+                            </motion.li>
+                        );
+                    }
+
+                    return (
+                        <motion.li
+                            key={feature}
+                            initial={{ opacity: 0, x: -10 }}
+                            whileInView={{ opacity: 1, x: 0 }}
+                            viewport={{ once: true }}
+                            transition={{ duration: 0.3, delay: i * 0.02 }}
+                            className="group flex items-center gap-2 first:font-medium"
+                        >
+                            <Check className="text-muted-foreground size-3 group-first:hidden" strokeWidth={3.5} />
+                            {feature}
+                        </motion.li>
+                    );
+                })}
             </ul>
         </motion.div>
     );

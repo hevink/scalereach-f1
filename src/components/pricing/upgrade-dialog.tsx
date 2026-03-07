@@ -181,7 +181,7 @@ function PricingCard({
                 )}
             </motion.button>
 
-            <ul role="list" className="space-y-3 text-sm">
+            <ul role="list" className="space-y-2 text-sm">
                 {plan.features.map((feature, i) => {
                     // Replace minutes text based on period for Pro and Starter plans
                     let displayFeature = feature;
@@ -193,13 +193,31 @@ function PricingCard({
                         }
                     }
 
+                    // Check if this is a section header (starts with ────)
+                    const isSectionHeader = feature.startsWith("────");
+
+                    if (isSectionHeader) {
+                        return (
+                            <motion.li
+                                key={feature}
+                                initial={{ opacity: 0 }}
+                                whileInView={{ opacity: 1 }}
+                                viewport={{ once: true }}
+                                transition={{ duration: 0.3, delay: i * 0.02 }}
+                                className="pt-3 pb-1 text-xs font-semibold text-primary/80 tracking-wide"
+                            >
+                                {feature.replace(/────/g, "").trim()}
+                            </motion.li>
+                        );
+                    }
+
                     return (
                         <motion.li
                             key={feature}
                             initial={{ opacity: 0, x: -10 }}
                             whileInView={{ opacity: 1, x: 0 }}
                             viewport={{ once: true }}
-                            transition={{ duration: 0.3, delay: i * 0.05 }}
+                            transition={{ duration: 0.3, delay: i * 0.02 }}
                             className="group flex items-center gap-2 first:font-medium"
                         >
                             <Check className="text-muted-foreground size-3 group-first:hidden" strokeWidth={3.5} />
