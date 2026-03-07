@@ -440,7 +440,7 @@ export function VideoCard({
                     <AlertDialogFooter>
                         <AlertDialogCancel disabled={isDeletingLocal || isDeleting}>Cancel</AlertDialogCancel>
                         <AlertDialogAction
-                            onClick={handleDelete}
+                            onClick={(e) => { e.preventDefault(); handleDelete(); }}
                             disabled={isDeletingLocal || isDeleting}
                             className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
                         >

@@ -347,7 +347,7 @@ export function AdminUsersTable() {
                 </CardContent>
             </Card>
 
-            <AlertDialog open={!!deleteUserId} onOpenChange={() => setDeleteUserId(null)}>
+            <AlertDialog open={!!deleteUserId} onOpenChange={(open) => { if (!deleteUser.isPending) setDeleteUserId(open ? deleteUserId : null); }}>
                 <AlertDialogContent>
                     <AlertDialogHeader>
                         <AlertDialogTitle>Delete User</AlertDialogTitle>
@@ -356,9 +356,13 @@ export function AdminUsersTable() {
                         </AlertDialogDescription>
                     </AlertDialogHeader>
                     <AlertDialogFooter>
-                        <AlertDialogCancel>Cancel</AlertDialogCancel>
-                        <AlertDialogAction onClick={handleDelete} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
-                            Delete
+                        <AlertDialogCancel disabled={deleteUser.isPending}>Cancel</AlertDialogCancel>
+                        <AlertDialogAction
+                            onClick={(e) => { e.preventDefault(); handleDelete(); }}
+                            disabled={deleteUser.isPending}
+                            className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                        >
+                            {deleteUser.isPending ? "Deleting..." : "Delete"}
                         </AlertDialogAction>
                     </AlertDialogFooter>
                 </AlertDialogContent>

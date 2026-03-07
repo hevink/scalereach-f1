@@ -228,12 +228,13 @@ export default function SocialPage() {
                               </AlertDialogDescription>
                             </AlertDialogHeader>
                             <AlertDialogFooter>
-                              <AlertDialogCancel>Cancel</AlertDialogCancel>
+                              <AlertDialogCancel disabled={disconnectAccount.isPending}>Cancel</AlertDialogCancel>
                               <AlertDialogAction
                                 variant="destructive"
-                                onClick={() => disconnectAccount.mutate(acc.id)}
+                                disabled={disconnectAccount.isPending}
+                                onClick={(e) => { e.preventDefault(); disconnectAccount.mutateAsync(acc.id); }}
                               >
-                                Disconnect
+                                {disconnectAccount.isPending ? "Disconnecting..." : "Disconnect"}
                               </AlertDialogAction>
                             </AlertDialogFooter>
                           </AlertDialogContent>

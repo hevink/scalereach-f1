@@ -147,7 +147,7 @@ function PricingCard({
             viewport={{ once: true }}
             transition={{ duration: 0.5, delay: index * 0.1 }}
             className={`@max-4xl:p-9 row-span-4 grid grid-rows-subgrid gap-8 p-8 ${plan.featured
-                ? "rounded-[--radius] ring-border bg-card @4xl:my-2 @max-4xl:mx-1 shadow-black/6.5 shadow-xl ring-1 backdrop-blur"
+                ? "rounded-[--radius] ring-border bg-card @max-4xl:mx-1 shadow-black/6.5 shadow-xl ring-1 backdrop-blur"
                 : ""
                 }`}
         >

@@ -55,20 +55,20 @@ export function VideoGrid({
         const steps = [
             {
                 num: "1",
-                icon: <IconUpload className="size-4 text-primary" />,
+                icon: <IconUpload className="size-5" />,
                 title: "Upload or paste a YouTube link",
                 desc: "Drop any video file or paste a YouTube URL above.",
             },
             {
                 num: "2",
-                icon: <IconVideo className="size-4 text-primary" />,
+                icon: <IconVideo className="size-5" />,
                 title: "AI generates your clips",
                 desc: "ScaleReach finds the best moments and adds captions automatically.",
             },
             {
                 num: "3",
                 icon: (
-                    <svg className="size-4 text-primary" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <svg className="size-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                         <circle cx="18" cy="5" r="3" /><circle cx="6" cy="12" r="3" /><circle cx="18" cy="19" r="3" />
                         <line x1="8.59" x2="15.42" y1="13.51" y2="17.49" /><line x1="15.41" x2="8.59" y1="6.51" y2="10.49" />
                     </svg>
@@ -79,26 +79,44 @@ export function VideoGrid({
         ];
 
         return (
-            <div className={cn(
-                "flex flex-col items-center py-12 px-4",
-                "rounded-2xl border-2 border-dashed bg-muted/20",
-                className
-            )}>
-                <h3 className="text-lg font-semibold mb-1">No videos yet</h3>
-                <p className="text-sm text-muted-foreground mb-8 text-center max-w-xs">
-                    Paste a YouTube link or upload a file above to get started.
-                </p>
-                <div className="flex flex-col sm:flex-row gap-4 w-full max-w-2xl">
-                    {steps.map((step) => (
-                        <div key={step.num} className="flex flex-1 flex-col gap-2 rounded-xl border bg-card p-4">
-                            <div className="flex items-center gap-2">
-                                <div className="flex size-6 shrink-0 items-center justify-center rounded-full bg-primary/10 text-xs font-bold text-primary">
-                                    {step.num}
-                                </div>
+            <div className={cn("flex flex-col items-center py-16 px-6", className)}>
+                {/* Header */}
+                <div className="text-center mb-10">
+                    <h3 className="text-2xl font-semibold mb-2">No videos yet</h3>
+                    <p className="text-muted-foreground max-w-md">
+                        Paste a YouTube link or upload a file above to get started
+                    </p>
+                </div>
+
+                {/* Steps */}
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 w-full max-w-3xl">
+                    {steps.map((step, index) => (
+                        <div
+                            key={step.num}
+                            className="relative flex flex-col items-center text-center p-6"
+                        >
+                            {/* Step indicator */}
+                            <div className="flex items-center justify-center size-12 rounded-full bg-primary/10 text-primary mb-4">
                                 {step.icon}
                             </div>
-                            <p className="text-sm font-medium">{step.title}</p>
+
+                            {/* Step number */}
+                            <span className="absolute top-4 right-4 text-xs font-medium text-muted-foreground/50">
+                                {step.num}
+                            </span>
+
+                            {/* Content */}
+                            <p className="text-sm font-medium mb-1">{step.title}</p>
                             <p className="text-xs text-muted-foreground leading-relaxed">{step.desc}</p>
+
+                            {/* Arrow connector (desktop only) */}
+                            {index < steps.length - 1 && (
+                                <div className="hidden sm:flex absolute -right-3 top-1/2 -translate-y-1/2 text-muted-foreground/30">
+                                    <svg className="size-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+                                        <path d="M9 6l6 6-6 6" />
+                                    </svg>
+                                </div>
+                            )}
                         </div>
                     ))}
                 </div>

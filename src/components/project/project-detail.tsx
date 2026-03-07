@@ -283,7 +283,7 @@ function ProjectInfoSkeleton() {
 function NoVideosEmptyState({ onAddVideo }: { onAddVideo: () => void }) {
     return (
         <EmptyState
-            icon={<IconVideo className="size-6" />}
+            illustration="videos"
             title="No videos yet"
             description="Add your first video to start creating clips. Upload a video file or paste a YouTube URL."
             action={{

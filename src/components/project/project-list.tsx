@@ -151,7 +151,7 @@ function ProjectCardSkeleton() {
 function NoProjectsEmptyState({ onCreateProject }: { onCreateProject: () => void }) {
     return (
         <EmptyState
-            icon={<IconFolder className="size-6" />}
+            illustration="generic"
             title="No projects yet"
             description="Create your first project to start organizing your videos and clips into collections."
             action={{
@@ -173,7 +173,7 @@ function NoProjectsEmptyState({ onCreateProject }: { onCreateProject: () => void
 function NoSearchResults({ searchQuery }: { searchQuery: string }) {
     return (
         <EmptyState
-            icon={<IconSearch className="size-6" />}
+            illustration="search"
             title="No projects found"
             description={`No projects match "${searchQuery}". Try a different search term or create a new project.`}
             variant="minimal"

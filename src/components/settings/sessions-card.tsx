@@ -150,15 +150,15 @@ export function SessionsCard() {
       return;
     }
 
-    setShowRevokeDialog(false);
-
-    revokeSessionMutation.mutate(sessionToRevoke.token, {
-      onSuccess: () => {
-        toast.success("Session revoked successfully");
-        refetch();
-        setSessionToRevoke(null);
-      },
-    });
+    try {
+      await revokeSessionMutation.mutateAsync(sessionToRevoke.token);
+      toast.success("Session revoked successfully");
+      refetch();
+      setSessionToRevoke(null);
+      setShowRevokeDialog(false);
+    } catch {
+      toast.error("Failed to revoke session");
+    }
   }, [sessionToRevoke, revokeSessionMutation, refetch]);
 
   const handleRevokeAllClick = useCallback(() => {
@@ -166,14 +166,14 @@ export function SessionsCard() {
   }, []);
 
   const handleRevokeAllConfirm = useCallback(async () => {
-    setShowRevokeAllDialog(false);
-
-    revokeSessionMutation.mutate(undefined, {
-      onSuccess: () => {
-        toast.success("All sessions revoked successfully");
-        refetch();
-      },
-    });
+    try {
+      await revokeSessionMutation.mutateAsync(undefined);
+      toast.success("All sessions revoked successfully");
+      refetch();
+      setShowRevokeAllDialog(false);
+    } catch {
+      toast.error("Failed to revoke sessions");
+    }
   }, [revokeSessionMutation, refetch]);
 
   const isLoadingState = useMemo(() => isLoading, [isLoading]);

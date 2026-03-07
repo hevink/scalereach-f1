@@ -97,23 +97,27 @@ export function NavFooter({ currentSlug }: NavFooterProps) {
         </SidebarMenuBadge>
       </SidebarMenuItem>
 
-      {/* Free plan upgrade nudge */}
+      {/* Free plan upgrade nudge - detailed card for free users */}
       {isFree && (
-        <SidebarMenuItem>
-          <div
+        <SidebarMenuItem className="my-1">
+          <SidebarMenuButton
+            tooltip="Upgrade to Pro: 400 min/month, no watermark, longer videos"
             onClick={() => router.push(`/${currentSlug}/pricing`)}
-            className="cursor-pointer mx-1 mb-1 rounded-lg border border-primary/20 bg-primary/5 px-3 py-2.5 hover:bg-primary/10 transition-colors"
+            className="h-auto py-2 bg-linear-to-r from-primary/10 to-primary/5 border border-primary/20 hover:from-primary/15 hover:to-primary/10"
           >
-            <p className="text-xs font-semibold text-primary mb-0.5">Unlock more minutes</p>
-            <p className="text-[11px] text-muted-foreground leading-relaxed">
-              500 min/month, no watermark, longer videos.
-            </p>
-          </div>
+            <HugeSparklesIcon className="text-primary shrink-0" />
+            <div className="flex flex-col gap-0.5 min-w-0">
+              <span className="text-xs font-semibold text-primary">Unlock more minutes</span>
+              <span className="text-[11px] text-muted-foreground leading-tight truncate">
+                400 min/month, no watermark
+              </span>
+            </div>
+          </SidebarMenuButton>
         </SidebarMenuItem>
       )}
 
-      {/* Upgrade Button - hide for agency */}
-      {!isAgency && (
+      {/* Upgrade Button - show for paid non-agency users */}
+      {!isFree && !isAgency && (
         <SidebarMenuItem>
           <SidebarMenuButton
             tooltip="Upgrade Plan"

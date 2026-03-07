@@ -179,17 +179,17 @@ export default function AllClipsPage({ params, searchParams }: AllClipsPageProps
                 {allClips.length === 0 ? (
                     <div className="flex items-center justify-center h-full">
                         <EmptyState
-                            icon={showFavoritesOnly ? <IconHeart className="size-6" /> : <IconScissors className="size-6" />}
+                            illustration={showFavoritesOnly ? "favorites" : "clips"}
                             title={showFavoritesOnly ? "No favorite clips" : "No clips yet"}
                             description={
                                 showFavoritesOnly
-                                    ? "Mark clips as favorites to see them here"
+                                    ? "Heart the clips you love to find them quickly here"
                                     : "Upload a video to generate viral clips"
                             }
                             action={
-                                !showFavoritesOnly
-                                    ? { label: "Upload Video", onClick: () => router.push(`/${slug}`) }
-                                    : undefined
+                                showFavoritesOnly
+                                    ? { label: "View All Clips", onClick: () => setShowFavoritesOnly(false) }
+                                    : { label: "Upload Video", onClick: () => router.push(`/${slug}`) }
                             }
                         />
                     </div>

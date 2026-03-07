@@ -555,7 +555,7 @@ export default function WorkspacePage({ params }: WorkspacePageProps) {
               <VideoGrid
                 videos={videos || []}
                 onVideoClick={(videoId) => router.push(`/${slug}/videos/${videoId}/clips`)}
-                onDeleteVideo={(videoId) => deleteMutation.mutate(videoId)}
+                onDeleteVideo={(videoId) => deleteMutation.mutateAsync(videoId)}
                 isLoading={videosLoading || sessionPending}
                 headerSlot={
                   <div className="flex items-center gap-2">
@@ -623,7 +623,7 @@ export default function WorkspacePage({ params }: WorkspacePageProps) {
                       <VideoGrid
                         videos={videos || []}
                         onVideoClick={(videoId) => router.push(`/${slug}/videos/${videoId}/clips`)}
-                        onDeleteVideo={(videoId) => deleteMutation.mutate(videoId)}
+                        onDeleteVideo={(videoId) => deleteMutation.mutateAsync(videoId)}
                         isLoading={videosLoading || sessionPending}
                       />
                     )}
