@@ -90,7 +90,7 @@ function PricingCard({
                     </motion.div>
                 </AnimatePresence>
                 <div className="text-muted-foreground text-sm">
-                    {price === 0 ? "Free forever" : `billed ${period}`}
+                    {price === 0 ? "Free forever" : period === "annually" ? `$${(price * 12).toFixed(2)} billed annually` : `$${price} billed monthly`}
                 </div>
             </div>
 
