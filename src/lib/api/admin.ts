@@ -466,4 +466,9 @@ export const adminApi = {
     const response = await api.get<AdminUserClipsResponse>(`/api/admin/users/${userId}/clips?page=${page}&limit=${limit}`);
     return response.data;
   },
+
+  generateMagicLink: async (userId: string) => {
+    const response = await api.post<{ magicLink: string }>(`/api/admin/users/${userId}/magic-link`);
+    return response.data;
+  },
 };

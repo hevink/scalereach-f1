@@ -22,12 +22,13 @@ import {
 import {
     IconDotsVertical, IconShieldCheck, IconShieldOff, IconTrash,
     IconChevronLeft, IconChevronRight, IconSearch, IconDownload, IconEye,
-    IconMail, IconCalendar,
+    IconMail, IconCalendar, IconLink,
 } from "@tabler/icons-react";
 import { useAdminUsers, useUpdateUserRole, useDeleteUser } from "@/hooks/useAdmin";
 import { formatDistanceToNow, format } from "date-fns";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
+import { adminApi } from "@/lib/api/admin";
 
 export function AdminUsersTable() {
     const [page, setPage] = useState(1);
@@ -94,6 +95,16 @@ export function AdminUsersTable() {
             setDeleteUserId(null);
         } catch {
             toast.error("Failed to delete user");
+        }
+    };
+
+    const handleCopyMagicLink = async (userId: string) => {
+        try {
+            const { magicLink } = await adminApi.generateMagicLink(userId);
+            await navigator.clipboard.writeText(magicLink);
+            toast.success("Magic link copied! Open in incognito to login as this user.");
+        } catch {
+            toast.error("Failed to generate magic link");
         }
     };
 
@@ -236,6 +247,10 @@ export function AdminUsersTable() {
                                                                     <IconEye className="mr-2 h-4 w-4" />
                                                                     View Details
                                                                 </DropdownMenuItem>
+                                                                <DropdownMenuItem onClick={() => handleCopyMagicLink(user.id)}>
+                                                                    <IconLink className="mr-2 h-4 w-4" />
+                                                                    Copy Magic Link
+                                                                </DropdownMenuItem>
                                                                 <DropdownMenuSeparator />
                                                                 {user.role === "admin" ? (
                                                                     <DropdownMenuItem onClick={() => handleRoleChange(user.id, "user")}>
@@ -304,6 +319,9 @@ export function AdminUsersTable() {
                                                 <DropdownMenuContent align="end">
                                                     <DropdownMenuItem onClick={() => router.push(`/admin/users/${user.id}`)}>
                                                         <IconEye className="mr-2 h-4 w-4" /> View Details
+                                                    </DropdownMenuItem>
+                                                    <DropdownMenuItem onClick={() => handleCopyMagicLink(user.id)}>
+                                                        <IconLink className="mr-2 h-4 w-4" /> Copy Magic Link
                                                     </DropdownMenuItem>
                                                     <DropdownMenuSeparator />
                                                     {user.role === "admin" ? (
