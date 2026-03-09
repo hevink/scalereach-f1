@@ -170,4 +170,10 @@ export const videoApi = {
   deleteVideo: async (id: string): Promise<void> => {
     await api.delete(`/api/videos/${id}`);
   },
+
+  // Re-analyze video (regenerate viral clips)
+  analyzeVideo: async (id: string): Promise<{ message: string; clipsFound: number }> => {
+    const response = await api.post<{ message: string; clipsFound: number }>(`/api/videos/${id}/analyze`);
+    return response.data;
+  },
 };

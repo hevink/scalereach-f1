@@ -13,6 +13,7 @@ import {
     MagicWand01Icon,
     FavouriteIcon,
     Calendar01Icon,
+    RefreshIcon,
 } from "@hugeicons/core-free-icons";
 import { FireIcon as FireAnimatedIcon } from "@/components/ui/fire-icon";
 
@@ -31,6 +32,7 @@ import {
     FacebookIcon,
 } from "@/components/icons/platform-icons";
 import { SchedulePostModal } from "@/components/social/SchedulePostModal";
+import { clipsApi } from "@/lib/api/clips";
 
 export interface ClipCardProps {
     clip: ClipResponse;
@@ -58,8 +60,10 @@ export function ClipCard({ clip, index, onEdit, onFavorite, onDownload, onShare,
     const [upgradeFeature, setUpgradeFeature] = useState<string | null>(null);
     const [isDownloading, setIsDownloading] = useState(false);
     const [scheduleOpen, setScheduleOpen] = useState(false);
+    const [isRegenerating, setIsRegenerating] = useState(false);
     const isGenerating = clip.status === "generating" || clip.status === "detected";
     const isFreePlan = userPlan === "free";
+    const isDev = process.env.NODE_ENV === "development";
 
     return (
         <div className="rounded-xl border bg-card overflow-hidden">
@@ -263,6 +267,32 @@ export function ClipCard({ clip, index, onEdit, onFavorite, onDownload, onShare,
                             >
                                 <HugeiconsIcon icon={Calendar01Icon} size={16} color="currentColor" />
                                 <span className="hidden sm:inline">Post</span>
+                            </Button>
+                        )}
+
+                        {isDev && (
+                            <Button
+                                size="sm"
+                                variant="outline"
+                                className="gap-1.5 sm:gap-2 h-8 sm:h-9 px-2.5 sm:px-3"
+                                disabled={isGenerating || isRegenerating}
+                                onClick={async () => {
+                                    setIsRegenerating(true);
+                                    try {
+                                        await clipsApi.regenerateClip(clip.id);
+                                    } catch (err) {
+                                        console.error("Clip regenerate failed:", err);
+                                    } finally {
+                                        setIsRegenerating(false);
+                                    }
+                                }}
+                            >
+                                {isRegenerating ? (
+                                    <IconLoader2 className="size-4 animate-spin" />
+                                ) : (
+                                    <HugeiconsIcon icon={RefreshIcon} size={16} color="currentColor" />
+                                )}
+                                <span className="hidden sm:inline">{isRegenerating ? "Regenerating..." : "Regenerate"}</span>
                             </Button>
                         )}
                     </div>
