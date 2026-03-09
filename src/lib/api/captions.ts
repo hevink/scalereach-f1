@@ -83,6 +83,7 @@ export interface TextOverlayData {
   color: string;
   backgroundColor: string;
   backgroundOpacity: number;
+  borderRadius: number;
   startTime: number;
   endTime: number;
   animation?: "none" | "fade-in" | "slide-up" | "typewriter";

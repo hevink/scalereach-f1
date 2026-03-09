@@ -32,6 +32,10 @@ export interface ClipResponse {
   // Raw clip without captions (for editing)
   rawStorageKey?: string | null;
   rawStorageUrl?: string | null;
+  // Smart crop (face-tracked vertical version)
+  smartCropStatus?: string | null;
+  smartCropStorageKey?: string | null;
+  smartCropStorageUrl?: string | null;
   aspectRatio: AspectRatio | null;
   favorited: boolean;
   status: ClipStatus;
@@ -130,6 +134,9 @@ function transformClipResponse(clip: any): ClipResponse {
     storageUrl: clip.storageUrl || clip.downloadUrl,
     rawStorageKey: clip.rawStorageKey,
     rawStorageUrl: clip.rawStorageUrl,
+    smartCropStatus: clip.smartCropStatus ?? null,
+    smartCropStorageKey: clip.smartCropStorageKey ?? null,
+    smartCropStorageUrl: clip.smartCropStorageUrl ?? null,
     aspectRatio: clip.aspectRatio,
     favorited: clip.favorited ?? false,
     status: clip.status,

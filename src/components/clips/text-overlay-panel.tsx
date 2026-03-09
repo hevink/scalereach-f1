@@ -29,6 +29,7 @@ export interface TextOverlay {
     color: string;
     backgroundColor: string;
     backgroundOpacity: number;
+    borderRadius: number;
     maxWidth?: number;
     startTime: number;
     endTime: number;
@@ -74,7 +75,8 @@ function createDefaultOverlay(clipDuration: number, currentTime = 0): TextOverla
         fontFamily: "Inter",
         color: "#FFFFFF",
         backgroundColor: "#000000",
-        backgroundOpacity: 0,
+        backgroundOpacity: 100,
+        borderRadius: 4,
         maxWidth: 80,
         startTime,
         endTime,
@@ -177,7 +179,7 @@ function OverlayEditor({ overlay, index, clipDuration, onChange, onDelete }: Ove
 
                     {/* Color */}
                     <div>
-                        <Label className="text-[10px] text-zinc-500 uppercase tracking-wide">Color</Label>
+                        <Label className="text-[10px] text-zinc-500 uppercase tracking-wide">Text Color</Label>
                         <div className="flex items-center gap-1.5 mt-1 flex-wrap">
                             {COLOR_PRESETS.map((c) => (
                                 <button
@@ -204,6 +206,74 @@ function OverlayEditor({ overlay, index, clipDuration, onChange, onDelete }: Ove
                                 />
                             </label>
                         </div>
+                    </div>
+
+                    {/* Background Color */}
+                    <div>
+                        <Label className="text-[10px] text-zinc-500 uppercase tracking-wide">Background Color</Label>
+                        <div className="flex items-center gap-1.5 mt-1 flex-wrap">
+                            {COLOR_PRESETS.map((c) => (
+                                <button
+                                    key={`bg-${c}`}
+                                    onClick={() => update({ backgroundColor: c })}
+                                    className={cn(
+                                        "size-6 rounded-full border-2 transition-transform hover:scale-110",
+                                        overlay.backgroundColor === c ? "border-white scale-110" : "border-zinc-700"
+                                    )}
+                                    style={{ backgroundColor: c }}
+                                />
+                            ))}
+                            <label
+                                className="size-6 rounded-full border-2 border-zinc-700 cursor-pointer hover:scale-110 transition-transform overflow-hidden relative"
+                                title="Custom background color"
+                                style={{ background: "conic-gradient(red, yellow, lime, cyan, blue, magenta, red)" }}
+                            >
+                                <input
+                                    type="color"
+                                    value={overlay.backgroundColor}
+                                    onChange={(e) => update({ backgroundColor: e.target.value })}
+                                    className="absolute inset-0 opacity-0 cursor-pointer w-full h-full"
+                                />
+                            </label>
+                        </div>
+                    </div>
+
+                    {/* Background Opacity */}
+                    <div className="space-y-1.5">
+                        <div className="flex items-center justify-between">
+                            <Label className="text-[10px] text-zinc-500 uppercase tracking-wide">Background Opacity</Label>
+                            <span className="text-[10px] text-zinc-400 tabular-nums">{overlay.backgroundOpacity}%</span>
+                        </div>
+                        <Slider
+                            value={[overlay.backgroundOpacity]}
+                            onValueChange={(val) => {
+                                const v = Array.isArray(val) ? val[0] : val;
+                                update({ backgroundOpacity: v });
+                            }}
+                            min={0}
+                            max={100}
+                            step={1}
+                            className="w-full"
+                        />
+                    </div>
+
+                    {/* Border Radius */}
+                    <div className="space-y-1.5">
+                        <div className="flex items-center justify-between">
+                            <Label className="text-[10px] text-zinc-500 uppercase tracking-wide">Border Radius</Label>
+                            <span className="text-[10px] text-zinc-400 tabular-nums">{overlay.borderRadius ?? 4}px</span>
+                        </div>
+                        <Slider
+                            value={[overlay.borderRadius ?? 4]}
+                            onValueChange={(val) => {
+                                const v = Array.isArray(val) ? val[0] : val;
+                                update({ borderRadius: v });
+                            }}
+                            min={0}
+                            max={32}
+                            step={1}
+                            className="w-full"
+                        />
                     </div>
 
                     {/* Position */}

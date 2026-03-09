@@ -6,6 +6,7 @@ import {
     IconX,
     IconInfoCircle,
     IconLetterT,
+    IconPhoto,
 } from "@tabler/icons-react";
 
 import { cn } from "@/lib/utils";
@@ -20,7 +21,7 @@ import {
 // Types
 // ============================================================================
 
-export type ToolbarPanel = "captions" | "clip-info" | "text-overlay" | null;
+export type ToolbarPanel = "captions" | "clip-info" | "text-overlay" | "background" | null;
 
 export interface EditorToolbarProps {
     activePanel: ToolbarPanel;
@@ -29,6 +30,7 @@ export interface EditorToolbarProps {
     aiHookPanel?: ReactNode;
     clipInfoPanel?: ReactNode;
     textOverlayPanel?: ReactNode;
+    backgroundPanel?: ReactNode;
     className?: string;
 }
 
@@ -42,6 +44,7 @@ interface ToolbarItem {
 const TOOLBAR_ITEMS: ToolbarItem[] = [
     { id: "captions", icon: IconTextCaption, label: "Captions" },
     { id: "text-overlay", icon: IconLetterT, label: "Text Overlay" },
+    { id: "background", icon: IconPhoto, label: "Background" },
     { id: "clip-info", icon: IconInfoCircle, label: "Clip Info" },
 ];
 
@@ -119,6 +122,7 @@ export function EditorToolbar({
     captionsPanel,
     clipInfoPanel,
     textOverlayPanel,
+    backgroundPanel,
     className,
 }: EditorToolbarProps) {
     const handleItemClick = (itemId: ToolbarPanel) => {
@@ -134,6 +138,7 @@ export function EditorToolbar({
         if (panel === "captions") return captionsPanel;
         if (panel === "clip-info") return clipInfoPanel;
         if (panel === "text-overlay") return textOverlayPanel;
+        if (panel === "background") return backgroundPanel;
         return null;
     };
 

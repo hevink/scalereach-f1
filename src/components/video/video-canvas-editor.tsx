@@ -42,6 +42,7 @@ export interface VideoCanvasEditorProps {
         color: string;
         backgroundColor: string;
         backgroundOpacity: number;
+        borderRadius?: number;
         maxWidth?: number;
         startTime: number;
         endTime: number;
@@ -51,6 +52,10 @@ export interface VideoCanvasEditorProps {
     onTextOverlayChange?: (id: string, updates: { x?: number; y?: number; fontSize?: number; maxWidth?: number; text?: string }) => void;
     /** Aspect ratio: 9:16 (vertical), 16:9 (horizontal), 1:1 (square) */
     aspectRatio?: "9:16" | "16:9" | "1:1";
+    /** Background style for the video preview */
+    backgroundStyle?: "blur" | "black" | "white" | "gradient-ocean" | "gradient-midnight" | "gradient-sunset" | "mirror" | "zoom";
+    /** Video scale factor (100 = fit, 125 = 1.25x default, 200 = 2x zoom) */
+    videoScale?: number;
     /** Additional class names */
     className?: string;
 }
@@ -516,6 +521,7 @@ interface DraggableTextOverlayProps {
         color: string;
         backgroundColor: string;
         backgroundOpacity: number;
+        borderRadius?: number;
         maxWidth?: number;
     };
     containerScale: number;
@@ -655,6 +661,8 @@ function DraggableTextOverlay({
         ? `${overlay.backgroundColor}${Math.round((overlay.backgroundOpacity / 100) * 255).toString(16).padStart(2, "0")}`
         : "transparent";
 
+    const overlayBorderRadius = `${overlay.borderRadius ?? 4}px`;
+
     return (
         <div
             className="absolute z-20 select-none"
@@ -757,8 +765,8 @@ function DraggableTextOverlay({
                         color: overlay.color || "#FFFFFF",
                         backgroundColor: bgColor,
                         padding: `${4 * containerScale}px ${12 * containerScale}px`,
-                        borderRadius: "4px",
-                        textShadow: "2px 2px 4px rgba(0,0,0,0.8)",
+                        borderRadius: overlayBorderRadius,
+                        textShadow: "none",
                         lineHeight: 1.3,
                         caretColor: "#3b82f6",
                     }}
@@ -774,8 +782,8 @@ function DraggableTextOverlay({
                         color: overlay.color || "#FFFFFF",
                         backgroundColor: bgColor,
                         padding: `${4 * containerScale}px ${12 * containerScale}px`,
-                        borderRadius: "4px",
-                        textShadow: "2px 2px 4px rgba(0,0,0,0.8)",
+                        borderRadius: overlayBorderRadius,
+                        textShadow: "none",
                         whiteSpace: "pre-wrap",
                         lineHeight: 1.3,
                     }}
@@ -804,6 +812,8 @@ export const VideoCanvasEditor = forwardRef<VideoCanvasEditorRef, VideoCanvasEdi
             textOverlays = [],
             onTextOverlayChange,
             aspectRatio = "9:16",
+            backgroundStyle = "black",
+            videoScale = 125,
             className,
         },
         ref
@@ -814,7 +824,6 @@ export const VideoCanvasEditor = forwardRef<VideoCanvasEditorRef, VideoCanvasEdi
         const animationRef = useRef<number>(0);
 
         const [containerSize, setContainerSize] = useState({ width: 0, height: 0 });
-        const [canvasSize, setCanvasSize] = useState({ width: 480, height: 854 });
         const [currentTime, setCurrentTime] = useState(startTime);
         const [duration, setDuration] = useState(0);
         const [selectedLayerId, setSelectedLayerId] = useState<string | null>(null);
@@ -823,6 +832,14 @@ export const VideoCanvasEditor = forwardRef<VideoCanvasEditorRef, VideoCanvasEdi
         // Calculate aspect ratio dimensions
         const ratio = ASPECT_RATIOS[aspectRatio];
         const aspectValue = ratio.width / ratio.height;
+
+        // Canvas internal resolution — must match the selected aspect ratio
+        const canvasSize = React.useMemo(() => {
+            const BASE = 480;
+            if (aspectRatio === "16:9") return { width: 854, height: BASE };
+            if (aspectRatio === "1:1") return { width: BASE, height: BASE };
+            return { width: BASE, height: 854 }; // 9:16
+        }, [aspectRatio]);
 
         // Calculate canvas display size to fit container
         const displaySize = React.useMemo(() => {
@@ -922,21 +939,87 @@ export const VideoCanvasEditor = forwardRef<VideoCanvasEditorRef, VideoCanvasEdi
                 if (!isRendering) return;
 
                 if (video.readyState >= 2 && video.videoWidth > 0 && video.videoHeight > 0) {
-                    // Calculate crop to fit aspect ratio
                     const videoAspect = video.videoWidth / video.videoHeight;
-                    let sx = 0, sy = 0, sw = video.videoWidth, sh = video.videoHeight;
+                    const canvasAspect = canvas.width / canvas.height;
 
-                    if (videoAspect > aspectValue) {
-                        // Video is wider, crop sides
-                        sw = video.videoHeight * aspectValue;
-                        sx = (video.videoWidth - sw) / 2;
+                    // Check if video roughly fills the canvas (same aspect ratio)
+                    const videoFillsCanvas = Math.abs(videoAspect - canvasAspect) < 0.1;
+
+                    if (videoFillsCanvas) {
+                        // Video fills the entire canvas — no background needed
+                        ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
                     } else {
-                        // Video is taller, crop top/bottom
-                        sh = video.videoWidth / aspectValue;
-                        sy = (video.videoHeight - sh) / 2;
-                    }
+                        // ── Draw background ──
+                        if (backgroundStyle === "white") {
+                            ctx.fillStyle = "#FFFFFF";
+                            ctx.fillRect(0, 0, canvas.width, canvas.height);
+                        } else if (backgroundStyle === "blur") {
+                            // Draw blurred, scaled-up video as background
+                            ctx.save();
+                            ctx.filter = "blur(30px) brightness(0.6)";
+                            ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+                            ctx.restore();
+                        } else if (backgroundStyle === "mirror") {
+                            // Draw mirrored video as background
+                            ctx.save();
+                            ctx.filter = "brightness(0.5)";
+                            ctx.translate(canvas.width, 0);
+                            ctx.scale(-1, 1);
+                            ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+                            ctx.restore();
+                        } else if (backgroundStyle === "zoom") {
+                            // Draw zoomed + dimmed video as background
+                            ctx.save();
+                            ctx.filter = "brightness(0.4)";
+                            const zoomScale = 1.5;
+                            const zw = canvas.width * zoomScale;
+                            const zh = canvas.height * zoomScale;
+                            ctx.drawImage(video, -(zw - canvas.width) / 2, -(zh - canvas.height) / 2, zw, zh);
+                            ctx.restore();
+                        } else if (backgroundStyle === "gradient-ocean") {
+                            const grad = ctx.createLinearGradient(0, 0, 0, canvas.height);
+                            grad.addColorStop(0, "#0f2027");
+                            grad.addColorStop(0.5, "#203a43");
+                            grad.addColorStop(1, "#2c5364");
+                            ctx.fillStyle = grad;
+                            ctx.fillRect(0, 0, canvas.width, canvas.height);
+                        } else if (backgroundStyle === "gradient-midnight") {
+                            const grad = ctx.createLinearGradient(0, 0, 0, canvas.height);
+                            grad.addColorStop(0, "#0f0c29");
+                            grad.addColorStop(0.5, "#302b63");
+                            grad.addColorStop(1, "#24243e");
+                            ctx.fillStyle = grad;
+                            ctx.fillRect(0, 0, canvas.width, canvas.height);
+                        } else if (backgroundStyle === "gradient-sunset") {
+                            const grad = ctx.createLinearGradient(0, 0, 0, canvas.height);
+                            grad.addColorStop(0, "#f12711");
+                            grad.addColorStop(1, "#f5af19");
+                            ctx.fillStyle = grad;
+                            ctx.fillRect(0, 0, canvas.width, canvas.height);
+                        } else {
+                            // "black" or default
+                            ctx.fillStyle = "#000000";
+                            ctx.fillRect(0, 0, canvas.width, canvas.height);
+                        }
 
-                    ctx.drawImage(video, sx, sy, sw, sh, 0, 0, canvas.width, canvas.height);
+                        // ── Draw letterboxed video on top ──
+                        const fgScale = videoScale / 100;
+                        let dw: number, dh: number, dx: number, dy: number;
+                        if (videoAspect > canvasAspect) {
+                            // Video is wider than canvas — fit width, scale up
+                            dw = canvas.width * fgScale;
+                            dh = dw / videoAspect;
+                        } else {
+                            // Video is taller — fit height, scale up
+                            dh = canvas.height * fgScale;
+                            dw = dh * videoAspect;
+                        }
+                        // Center the scaled video
+                        dx = (canvas.width - dw) / 2;
+                        dy = (canvas.height - dh) / 2;
+
+                        ctx.drawImage(video, 0, 0, video.videoWidth, video.videoHeight, dx, dy, dw, dh);
+                    } // end else: video doesn't fill canvas
                 }
 
                 animationRef.current = requestAnimationFrame(render);
@@ -959,7 +1042,7 @@ export const VideoCanvasEditor = forwardRef<VideoCanvasEditorRef, VideoCanvasEdi
                 cancelAnimationFrame(animationRef.current);
                 video.removeEventListener("canplay", handleCanPlay);
             };
-        }, [aspectValue, src]);
+        }, [aspectValue, src, backgroundStyle, videoScale]);
 
         // Video event handlers
         const handleLoadedMetadata = useCallback(() => {

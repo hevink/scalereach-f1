@@ -3,6 +3,7 @@
 import { use, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useUndoRedo } from "@/hooks/useUndoRedo";
 import { useRouter } from "next/navigation";
+import { cn } from "@/lib/utils";
 import Link from "next/link";
 import {
     IconArrowLeft,
@@ -34,7 +35,7 @@ import { TranscriptParagraphView } from "@/components/transcript/transcript-para
 import { useClip, useUpdateClipBoundaries, useUpdateClip } from "@/hooks/useClips";
 import { useVideo } from "@/hooks/useVideo";
 import { useCaptionStyle, useUpdateCaptionStyle, useCaptionTemplates, captionKeys } from "@/hooks/useCaptions";
-import { useQueryClient } from "@tanstack/react-query";
+import { useQueryClient, useQuery } from "@tanstack/react-query";
 import { useInitiateExport } from "@/hooks/useExport";
 import { useSmartCropStatus, useTriggerSmartCrop } from "@/hooks/useSmartCrop";
 import { useMinutesBalance } from "@/hooks/useMinutes";
@@ -45,9 +46,11 @@ import { useKeyboardShortcuts, type KeyboardShortcut } from "@/hooks/useKeyboard
 import type { CaptionStyle, Caption, CaptionWord } from "@/lib/api/captions";
 import { captionsApi } from "@/lib/api/captions";
 import { analytics } from "@/lib/analytics";
+import { videoConfigApi } from "@/lib/api/video-config";
 import { toast } from "sonner";
 import { ClipInfoPanel } from "@/components/clips/clip-info-panel";
 import { TextOverlayPanel, type TextOverlay } from "@/components/clips/text-overlay-panel";
+import { BackgroundStylePanel } from "@/components/clips/background-style-panel";
 import {
     Dialog,
     DialogContent,
@@ -432,6 +435,50 @@ export default function ClipEditorPage({ params }: ClipEditorPageProps) {
     // Fetch caption style for this clip
     const { data: captionData, isLoading: captionLoading } = useCaptionStyle(clipId);
 
+    // Fetch video config for background style
+    const { data: videoConfigData } = useQuery({
+        queryKey: ["video-config", clip?.videoId],
+        queryFn: () => videoConfigApi.getConfig(clip!.videoId),
+        enabled: !!clip?.videoId,
+    });
+    const [backgroundStyle, setBackgroundStyle] = useState<string>("black");
+    const [aspectRatio, setAspectRatio] = useState<"9:16" | "1:1" | "16:9">("9:16");
+    const [videoScale, setVideoScale] = useState<number>(125);
+    const [dirtyBackground, setDirtyBackground] = useState(false);
+    const [dirtyAspectRatio, setDirtyAspectRatio] = useState(false);
+    const [dirtyVideoScale, setDirtyVideoScale] = useState(false);
+
+    // Sync background style, aspect ratio, and video scale from video config
+    useEffect(() => {
+        if (videoConfigData?.config?.backgroundStyle) {
+            setBackgroundStyle(videoConfigData.config.backgroundStyle);
+        }
+        if (videoConfigData?.config?.aspectRatio) {
+            setAspectRatio(videoConfigData.config.aspectRatio);
+        }
+        if (videoConfigData?.config?.videoScale) {
+            setVideoScale(videoConfigData.config.videoScale);
+        }
+    }, [videoConfigData]);
+
+    const handleBackgroundStyleChange = useCallback((style: string) => {
+        setBackgroundStyle(style);
+        setDirtyBackground(true);
+        setHasUnsavedChanges(true);
+    }, []);
+
+    const handleAspectRatioChange = useCallback((ratio: "9:16" | "1:1" | "16:9") => {
+        setAspectRatio(ratio);
+        setDirtyAspectRatio(true);
+        setHasUnsavedChanges(true);
+    }, []);
+
+    const handleVideoScaleChange = useCallback((scale: number) => {
+        setVideoScale(scale);
+        setDirtyVideoScale(true);
+        setHasUnsavedChanges(true);
+    }, []);
+
     // Fetch user minutes balance
     const { data: minutesBalance } = useMinutesBalance(workspace?.id);
 
@@ -598,17 +645,18 @@ export default function ClipEditorPage({ params }: ClipEditorPageProps) {
                 y: 20,
                 fontSize: 36,
                 fontFamily: "Inter",
-                color: "#FFFFFF",
-                backgroundColor: "#000000",
-                backgroundOpacity: 0,
+                color: "#000000",
+                backgroundColor: "#FFFFFF",
+                backgroundOpacity: 100,
+                borderRadius: 4,
                 maxWidth: 80,
                 startTime: 0,
                 endTime: 3,
             };
-            setTextOverlays([introOverlay, ...saved]);
+            setTextOverlays([introOverlay, ...saved.map((o) => ({ ...o, borderRadius: o.borderRadius ?? 4 }))]);
         } else {
             // Always set from saved (even empty array) so deletions are reflected
-            setTextOverlays(saved);
+            setTextOverlays(saved.map((o) => ({ ...o, borderRadius: o.borderRadius ?? 4 })));
         }
     }, [captionData, clip]);
 
@@ -884,6 +932,21 @@ export default function ClipEditorPage({ params }: ClipEditorPageProps) {
             }
         }
 
+        // 4. Save background style, aspect ratio, and video scale if changed
+        if ((dirtyBackground || dirtyAspectRatio || dirtyVideoScale) && clip?.videoId) {
+            try {
+                const configUpdate: Record<string, any> = {};
+                if (dirtyBackground) configUpdate.backgroundStyle = backgroundStyle;
+                if (dirtyAspectRatio) configUpdate.aspectRatio = aspectRatio;
+                if (dirtyVideoScale) configUpdate.videoScale = videoScale;
+                await videoConfigApi.updateConfig(clip.videoId, configUpdate);
+                queryClient.invalidateQueries({ queryKey: ["video-config", clip.videoId] });
+            } catch (err: any) {
+                console.error("[ClipEditor] updateVideoConfig failed:", err);
+                anyError = anyError ?? (err?.message || "Failed to save video config");
+            }
+        }
+
         setIsSavingAll(false);
         setIsSavingWords(false);
 
@@ -897,12 +960,15 @@ export default function ClipEditorPage({ params }: ClipEditorPageProps) {
             setDirtyStyle(false);
             setDirtyBoundaries(false);
             setDirtyOverlays(false);
+            setDirtyBackground(false);
+            setDirtyAspectRatio(false);
+            setDirtyVideoScale(false);
             setHasUnsavedChanges(false);
             // Invalidate caption cache so next read gets the saved words
             queryClient.invalidateQueries({ queryKey: captionKeys.byClip(clipId) });
             toast.success("Changes saved");
         }
-    }, [isSavingAll, clipId, captionStyle, currentPresetId, localWords, textOverlays, clip, dirtyWords, dirtyStyle, dirtyOverlays, updateCaptionStyle, updateClip, saveLastUsedStyle, queryClient]);
+    }, [isSavingAll, clipId, captionStyle, currentPresetId, localWords, textOverlays, clip, dirtyWords, dirtyStyle, dirtyOverlays, dirtyBackground, dirtyAspectRatio, dirtyVideoScale, backgroundStyle, aspectRatio, videoScale, updateCaptionStyle, updateClip, saveLastUsedStyle, queryClient]);
 
     // Save, trigger export job, then redirect to clips page
     const handleSaveAndGoToClips = useCallback(async () => {
@@ -1108,17 +1174,37 @@ export default function ClipEditorPage({ params }: ClipEditorPageProps) {
 
     // Get video source URL for editing
     // Priority:
-    // 1. rawStorageUrl (clip without captions) - best for editing
-    // 2. Original video with clip time range - fallback for old clips
-    // Note: We DON'T use clip.storageUrl because it has captions baked in
-    const videoSrc = clip.rawStorageUrl || video?.storageUrl || video?.sourceUrl || "";
+    // 1. Split screen ON → always use rawStorageUrl (has gameplay composition baked in by FFmpeg)
+    // 2. Smart crop ON + smartCropStorageUrl ready → use face-tracked video (fills frame, no background needed)
+    // 3. Smart crop OFF → use original source video, render background style via canvas
+    // 4. Fallback → rawStorageUrl (has background baked in by FFmpeg)
+    const splitScreenEnabled = videoConfigData?.config?.enableSplitScreen ?? false;
+    const smartCropEnabled = videoConfigData?.config?.enableSmartCrop ?? false;
+    const smartCropReady = smartCropEnabled && clip.smartCropStatus === "done" && !!clip.smartCropStorageUrl;
 
-    // Determine if we're using the raw clip or the full video
-    // If using full video, we need to constrain playback to clip boundaries
-    const isUsingRawClip = !!clip.rawStorageUrl;
+    let videoSrc: string;
+    let isUsingRawClip: boolean;
 
-    // When using raw clip, video starts at 0 (it's already trimmed)
-    // When using full video, we need to use the clip's original boundaries
+    if (splitScreenEnabled && clip.rawStorageUrl) {
+        // Split screen — rawStorageUrl has the gameplay composition baked in, use it directly
+        videoSrc = clip.rawStorageUrl;
+        isUsingRawClip = true; // trimmed clip, starts at 0
+    } else if (smartCropReady) {
+        // Face-tracked video — already 9:16, fills the frame
+        videoSrc = clip.smartCropStorageUrl!;
+        isUsingRawClip = true; // trimmed clip, starts at 0
+    } else if (!smartCropEnabled && (video?.storageUrl || video?.sourceUrl)) {
+        // Original source video — canvas renders background style live
+        videoSrc = video?.storageUrl || video?.sourceUrl || "";
+        isUsingRawClip = false; // full video, use clip boundaries
+    } else {
+        // Fallback to raw clip (background baked in)
+        videoSrc = clip.rawStorageUrl || video?.storageUrl || video?.sourceUrl || "";
+        isUsingRawClip = !!clip.rawStorageUrl;
+    }
+
+    // When using original source (full video), constrain playback to clip boundaries
+    // When using raw/smart-crop clip, video starts at 0 (already trimmed)
     const videoStartTime = isUsingRawClip ? 0 : clipWithBoundaries.startTime;
     const videoEndTime = isUsingRawClip ? (clipWithBoundaries.endTime - clipWithBoundaries.startTime) : clipWithBoundaries.endTime;
 
@@ -1199,10 +1285,60 @@ export default function ClipEditorPage({ params }: ClipEditorPageProps) {
 
                     /* Center Panel: Video Canvas Editor with Caption Overlay */
                     videoPlayer: (
-                        <div className="flex flex-col gap-4 h-full">
-                            <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">
-                                Preview
-                            </h2>
+                        <div className="flex flex-col gap-2 h-full">
+                            {/* Preview toolbar — aspect ratio + layout controls */}
+                            <div className="flex items-center gap-3 px-1">
+                                {/* Aspect ratio pills — hidden for split screen (composition is baked in) */}
+                                {!splitScreenEnabled && (
+                                    <div className="flex items-center gap-1 bg-zinc-800/60 rounded-lg p-0.5">
+                                        {(["9:16", "1:1", "16:9"] as const).map((r) => (
+                                            <button
+                                                key={r}
+                                                type="button"
+                                                onClick={() => handleAspectRatioChange(r)}
+                                                className={cn(
+                                                    "flex items-center gap-1 px-2.5 py-1 rounded-md text-[11px] font-medium transition-all",
+                                                    aspectRatio === r
+                                                        ? "bg-zinc-700 text-white shadow-sm"
+                                                        : "text-zinc-400 hover:text-zinc-200"
+                                                )}
+                                            >
+                                                {r === "9:16" && <IconDeviceMobile className="size-3" />}
+                                                {r === "1:1" && <span className="size-3 border border-current rounded-[2px]" />}
+                                                {r === "16:9" && <span className="w-4 h-2.5 border border-current rounded-[2px]" />}
+                                                {r}
+                                            </button>
+                                        ))}
+                                    </div>
+                                )}
+
+                                {/* Split screen indicator */}
+                                {splitScreenEnabled && (
+                                    <div className="flex items-center gap-1.5 text-[11px] text-primary">
+                                        <span className="size-3 border border-current rounded-[2px] flex flex-col"><span className="flex-1 border-b border-current" /></span>
+                                        Split Screen
+                                    </div>
+                                )}
+
+                                {/* Layout: Fit / Scale indicator — hidden for 16:9 and split screen */}
+                                {aspectRatio !== "16:9" && !splitScreenEnabled && (
+                                    <div className="flex items-center gap-2 text-[11px] text-zinc-400">
+                                        <span>Layout:</span>
+                                        <select
+                                            value={videoScale}
+                                            onChange={(e) => handleVideoScaleChange(Number(e.target.value))}
+                                            className="bg-zinc-800/60 border border-zinc-700 rounded-md px-2 py-1 text-[11px] text-zinc-200 outline-none cursor-pointer"
+                                        >
+                                            <option value={100}>Fit</option>
+                                            <option value={110}>1.1x</option>
+                                            <option value={125}>1.25x</option>
+                                            <option value={150}>1.5x</option>
+                                            <option value={175}>1.75x</option>
+                                            <option value={200}>2x Fill</option>
+                                        </select>
+                                    </div>
+                                )}
+                            </div>
                             {videoSrc ? (
                                 <VideoCanvasEditor
                                     ref={videoPlayerRef as any}
@@ -1219,7 +1355,9 @@ export default function ClipEditorPage({ params }: ClipEditorPageProps) {
                                         animation: "none",
                                     }))}
                                     onTextOverlayChange={handleTextOverlayDrag}
-                                    aspectRatio="9:16"
+                                    aspectRatio={aspectRatio}
+                                    backgroundStyle={backgroundStyle as any}
+                                    videoScale={videoScale}
                                     className="flex-1 rounded-lg overflow-hidden"
                                 />
                             ) : (
@@ -1256,6 +1394,22 @@ export default function ClipEditorPage({ params }: ClipEditorPageProps) {
                             onChange={handleTextOverlayChange}
                             clipDuration={videoEndTime - videoStartTime}
                             currentTime={currentTime}
+                        />
+                    ),
+
+                    /* Right Panel: Background Style */
+                    backgroundPanel: splitScreenEnabled ? (
+                        <div className="flex flex-col items-center justify-center gap-2 p-6 text-center">
+                            <span className="text-xs text-zinc-400">
+                                Background style is not available for split screen clips. The gameplay video is composited during generation.
+                            </span>
+                        </div>
+                    ) : (
+                        <BackgroundStylePanel
+                            value={backgroundStyle as any}
+                            onChange={handleBackgroundStyleChange}
+                            aspectRatio={aspectRatio}
+                            userPlan={workspace?.plan || "free"}
                         />
                     ),
 

@@ -5,8 +5,6 @@ import {
     IconBan,
     IconChevronDown,
     IconChevronUp,
-    IconItalic,
-    IconUnderline,
 } from "@tabler/icons-react";
 
 import { cn } from "@/lib/utils";
@@ -60,14 +58,6 @@ const FONTS = [
     "Anton",
     "Bebas Neue",
     "Oswald",
-];
-
-const FONT_WEIGHTS = [
-    { value: "400", label: "Regular" },
-    { value: "500", label: "Medium" },
-    { value: "600", label: "Semibold" },
-    { value: "700", label: "Bold" },
-    { value: "900", label: "Black" },
 ];
 
 const ANIMATIONS = [
@@ -408,7 +398,7 @@ function FontTab({ style, onChange, disabled }: FontTabProps) {
                         </SelectContent>
                     </Select>
 
-                    {/* Font Size & Weight Row */}
+                    {/* Font Size */}
                     <div className="flex gap-2">
                         <div className="flex items-center bg-zinc-800 rounded-md border border-zinc-700">
                             <div
@@ -424,54 +414,6 @@ function FontTab({ style, onChange, disabled }: FontTabProps) {
                             />
                             <span className="text-xs text-zinc-500 pr-2">px</span>
                         </div>
-                        <Select defaultValue="900" disabled={disabled}>
-                            <SelectTrigger className="flex-1 bg-zinc-800 border-zinc-700 text-white">
-                                <SelectValue />
-                            </SelectTrigger>
-                            <SelectContent className="bg-zinc-800 border-zinc-700">
-                                {FONT_WEIGHTS.map((weight) => (
-                                    <SelectItem key={weight.value} value={weight.value} className="text-white hover:bg-zinc-700">
-                                        {weight.label}
-                                    </SelectItem>
-                                ))}
-                            </SelectContent>
-                        </Select>
-                    </div>
-
-                    {/* Decoration */}
-                    <div className="flex items-center justify-between">
-                        <Label className="text-sm text-zinc-400">Decoration</Label>
-                        <div className="flex gap-1">
-                            <Button variant="ghost" size="icon" className="h-8 w-8 text-zinc-400 hover:text-white hover:bg-zinc-700">
-                                <IconItalic className="size-4" />
-                            </Button>
-                            <Button variant="ghost" size="icon" className="h-8 w-8 text-zinc-400 hover:text-white hover:bg-zinc-700">
-                                <IconUnderline className="size-4" />
-                            </Button>
-                        </div>
-                    </div>
-
-                    {/* Uppercase */}
-                    <div className="flex items-center justify-between">
-                        <Label className="text-sm text-zinc-400">Uppercase</Label>
-                        <Switch className="data-[state=checked]:bg-green-500" />
-                    </div>
-
-                    {/* Font Stroke */}
-                    <div className="flex items-center justify-between">
-                        <Label className="text-sm text-zinc-400">Font stroke</Label>
-                        <div className="flex items-center gap-2">
-                            <div className="w-6 h-6 rounded bg-black border border-zinc-700" />
-                            <div className="flex items-center bg-zinc-800 rounded-md border border-zinc-700">
-                                <Input
-                                    type="number"
-                                    defaultValue={8}
-                                    className="w-12 border-0 bg-transparent text-center text-white"
-                                    disabled={disabled}
-                                />
-                                <span className="text-xs text-zinc-500 pr-2">px</span>
-                            </div>
-                        </div>
                     </div>
 
                     {/* Font Shadows */}
@@ -484,50 +426,9 @@ function FontTab({ style, onChange, disabled }: FontTabProps) {
                         />
                     </div>
 
-                    {style.shadow && (
-                        <div className="flex items-center gap-2">
-                            <div className="w-6 h-6 rounded bg-black border border-zinc-700" />
-                            <div className="flex items-center gap-1">
-                                <div className="flex items-center bg-zinc-800 rounded border border-zinc-700">
-                                    <Input type="number" defaultValue={2} className="w-10 border-0 bg-transparent text-center text-white text-xs" />
-                                </div>
-                                <span className="text-xs text-zinc-500">x</span>
-                                <div className="flex items-center bg-zinc-800 rounded border border-zinc-700">
-                                    <Input type="number" defaultValue={2} className="w-10 border-0 bg-transparent text-center text-white text-xs" />
-                                </div>
-                                <span className="text-xs text-zinc-500">y</span>
-                                <div className="flex items-center bg-zinc-800 rounded border border-zinc-700">
-                                    <Input type="number" defaultValue={2} className="w-10 border-0 bg-transparent text-center text-white text-xs" />
-                                </div>
-                                <span className="text-xs text-zinc-500">blur</span>
-                            </div>
-                        </div>
-                    )}
                 </CollapsibleContent>
             </Collapsible>
 
-            {/* AI Keywords Highlighter */}
-            <div className="flex items-center justify-between py-2 border-t border-zinc-800">
-                <Label className="text-sm text-zinc-300">AI keywords highlighter</Label>
-                <Switch
-                    checked={style.highlightEnabled}
-                    onCheckedChange={(checked) => onChange({ highlightEnabled: checked })}
-                    className="data-[state=checked]:bg-green-500"
-                />
-            </div>
-
-            {style.highlightEnabled && (
-                <div className="flex flex-col gap-2">
-                    <div className="flex items-center gap-3 bg-zinc-800 rounded-md px-3 py-2 border border-zinc-700">
-                        <div className="w-5 h-5 rounded-full bg-green-500" />
-                        <span className="text-sm text-zinc-300 font-mono">04f827FF</span>
-                    </div>
-                    <div className="flex items-center gap-3 bg-zinc-800 rounded-md px-3 py-2 border border-zinc-700">
-                        <div className="w-5 h-5 rounded-full bg-yellow-400" />
-                        <span className="text-sm text-zinc-300 font-mono">FFFD03FF</span>
-                    </div>
-                </div>
-            )}
         </div>
     );
 }
@@ -564,36 +465,6 @@ function EffectsTab({ style, onChange, disabled }: EffectsTabProps) {
                         ))}
                     </SelectContent>
                 </Select>
-            </div>
-
-            {/* Lines */}
-            <div className="flex flex-col gap-2">
-                <Label className="text-sm text-zinc-400">Lines</Label>
-                <div className="flex gap-2">
-                    <Button
-                        variant="outline"
-                        size="sm"
-                        className="flex-1 bg-zinc-700 border-zinc-600 text-white"
-                    >
-                        Three lines
-                    </Button>
-                    <Button
-                        variant="outline"
-                        size="sm"
-                        className="flex-1 bg-zinc-800 border-zinc-700 text-zinc-400 hover:bg-zinc-700 hover:text-white"
-                    >
-                        One line
-                    </Button>
-                </div>
-            </div>
-
-            {/* Highlighted Word Color */}
-            <div className="flex items-center justify-between">
-                <Label className="text-sm text-zinc-400">Highlighted word color</Label>
-                <div
-                    className="w-8 h-8 rounded-full cursor-pointer border-2 border-zinc-600"
-                    style={{ backgroundColor: style.highlightColor || "#00FF00" }}
-                />
             </div>
         </div>
     );

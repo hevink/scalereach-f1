@@ -43,6 +43,8 @@ export interface EditingLayoutProps {
         clipInfoPanel?: ReactNode;
         /** Text Overlay panel component (shown in toolbar panel) */
         textOverlayPanel?: ReactNode;
+        /** Background style panel component (shown in toolbar panel) */
+        backgroundPanel?: ReactNode;
         /** Timeline editor component for the bottom row */
         timeline: ReactNode;
     };
@@ -156,6 +158,7 @@ function DesktopLayout({ children, header, onPanelResize, className, activeToolb
                     aiHookPanel={children.aiHookPanel}
                     clipInfoPanel={children.clipInfoPanel}
                     textOverlayPanel={children.textOverlayPanel}
+                    backgroundPanel={children.backgroundPanel}
                 />
             </div>
 
@@ -231,6 +234,7 @@ function MobileLayout({ children, header, className, activeToolbarPanel: control
                     aiHookPanel={children.aiHookPanel}
                     clipInfoPanel={children.clipInfoPanel}
                     textOverlayPanel={children.textOverlayPanel}
+                    backgroundPanel={children.backgroundPanel}
                 />
             </div>
 
