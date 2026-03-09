@@ -761,7 +761,7 @@ function DraggableTextOverlay({
                     style={{
                         fontFamily: overlay.fontFamily || "Inter",
                         fontSize: `${fontSize * containerScale}px`,
-                        fontWeight: "bold",
+                        fontWeight: 600,
                         color: overlay.color || "#FFFFFF",
                         backgroundColor: bgColor,
                         padding: `${4 * containerScale}px ${12 * containerScale}px`,
@@ -778,7 +778,7 @@ function DraggableTextOverlay({
                     style={{
                         fontFamily: overlay.fontFamily || "Inter",
                         fontSize: `${fontSize * containerScale}px`,
-                        fontWeight: "bold",
+                        fontWeight: 600,
                         color: overlay.color || "#FFFFFF",
                         backgroundColor: bgColor,
                         padding: `${4 * containerScale}px ${12 * containerScale}px`,
