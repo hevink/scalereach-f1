@@ -714,8 +714,8 @@ export default function ConfigurePage() {
                                                         );
                                                     })}
                                                 </CarouselContent>
-                                                <CarouselPrevious className="left-0 -translate-x-1/2" />
-                                                <CarouselNext className="right-0 translate-x-1/2" />
+                                                <CarouselPrevious className="hidden sm:flex left-0 -translate-x-1/2" />
+                                                <CarouselNext className="hidden sm:flex right-0 translate-x-1/2" />
                                             </Carousel>
                                         )}
                                     </div>
@@ -766,7 +766,7 @@ export default function ConfigurePage() {
                                         </div>
                                         <div className="flex items-center justify-between gap-4 px-4 py-3">
                                             <span className="text-sm font-medium shrink-0">Aspect Ratio</span>
-                                            <div className="w-48">
+                                            <div className="w-36 sm:w-48">
                                                 <AspectRatioSelector
                                                     value={config.aspectRatio ?? "9:16"}
                                                     onChange={(ratio) => updateConfig({ aspectRatio: ratio })}
@@ -784,7 +784,7 @@ export default function ConfigurePage() {
                                                 onValueChange={(value) => updateConfig({ language: value as SupportedLanguageCode })}
                                                 disabled={isSubmitting}
                                             >
-                                                <SelectTrigger className="w-48">
+                                                <SelectTrigger className="w-36 sm:w-48">
                                                     <SelectValue placeholder="Select language">
                                                         {SUPPORTED_LANGUAGES[(config.language ?? "auto") as SupportedLanguageCode]}
                                                     </SelectValue>

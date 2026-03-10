@@ -1180,8 +1180,10 @@ export default function ClipEditorPage({ params }: ClipEditorPageProps) {
     // Priority:
     // 1. Split screen ON → always use rawStorageUrl (has gameplay composition baked in by FFmpeg)
     // 2. Smart crop ON + smartCropStorageUrl ready → use face-tracked video (fills frame, no background needed)
-    // 3. Smart crop OFF → use original source video, render background style via canvas
-    // 4. Fallback → rawStorageUrl (has background baked in by FFmpeg)
+    // 3. Raw clip available → use it (trimmed video with background baked in by FFmpeg)
+    // 4. Original source video storageUrl → canvas renders background style live
+    //    Note: storageUrl may be audio-only (.m4a) for YouTube downloads, so prefer rawStorageUrl
+    // 5. Fallback → empty (no playable source)
     const splitScreenEnabled = videoConfigData?.config?.enableSplitScreen ?? false;
     const smartCropEnabled = videoConfigData?.config?.enableSmartCrop ?? false;
     const smartCropReady = smartCropEnabled && clip.smartCropStatus === "done" && !!clip.smartCropStorageUrl;
@@ -1197,15 +1199,34 @@ export default function ClipEditorPage({ params }: ClipEditorPageProps) {
         // Face-tracked video — already 9:16, fills the frame
         videoSrc = clip.smartCropStorageUrl!;
         isUsingRawClip = true; // trimmed clip, starts at 0
-    } else if (!smartCropEnabled && (video?.storageUrl || video?.sourceUrl)) {
-        // Original source video — canvas renders background style live
-        videoSrc = video?.storageUrl || video?.sourceUrl || "";
+    } else if (clip.rawStorageUrl) {
+        // Raw clip is available — always prefer it since video.storageUrl may be audio-only (.m4a)
+        videoSrc = clip.rawStorageUrl;
+        isUsingRawClip = true; // trimmed clip, starts at 0
+    } else if (video?.storageUrl && !video.storageUrl.endsWith(".m4a")) {
+        // Original source video (only if it's actually a video file, not audio-only)
+        videoSrc = video.storageUrl;
         isUsingRawClip = false; // full video, use clip boundaries
     } else {
-        // Fallback to raw clip (background baked in)
-        videoSrc = clip.rawStorageUrl || video?.storageUrl || video?.sourceUrl || "";
-        isUsingRawClip = !!clip.rawStorageUrl;
+        // No playable video source available
+        videoSrc = "";
+        isUsingRawClip = false;
     }
+
+    // Debug: log resolved video source
+    console.log("[ClipEditor] Video source resolved:", {
+        videoSrc: videoSrc?.substring(0, 120),
+        isUsingRawClip,
+        splitScreenEnabled,
+        smartCropEnabled,
+        smartCropReady,
+        clipRawUrl: !!clip.rawStorageUrl,
+        clipSmartCropUrl: !!clip.smartCropStorageUrl,
+        clipSmartCropStatus: clip.smartCropStatus,
+        videoStorageUrl: !!video?.storageUrl,
+        videoSourceUrl: !!video?.sourceUrl,
+        clipStatus: clip.status,
+    });
 
     // When using original source (full video), constrain playback to clip boundaries
     // When using raw/smart-crop clip, video starts at 0 (already trimmed)

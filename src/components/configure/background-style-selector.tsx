@@ -89,7 +89,7 @@ export function BackgroundStyleSelector({
                         const isSelected = value === style.value;
                         const isLocked = !isPaid && !FREE_STYLES.includes(style.value);
                         return (
-                            <CarouselItem key={style.value} className="pl-2 basis-1/6">
+                            <CarouselItem key={style.value} className="pl-2 basis-1/4 sm:basis-1/6">
                                 <button
                                     type="button"
                                     disabled={disabled}
@@ -122,8 +122,8 @@ export function BackgroundStyleSelector({
                         );
                     })}
                 </CarouselContent>
-                <CarouselPrevious className="left-0 -translate-x-1/2" />
-                <CarouselNext className="right-0 translate-x-1/2" />
+                <CarouselPrevious className="hidden sm:flex left-0 -translate-x-1/2" />
+                <CarouselNext className="hidden sm:flex right-0 translate-x-1/2" />
             </Carousel>
 
             {!isPaid && workspaceSlug && (

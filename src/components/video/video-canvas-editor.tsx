@@ -1167,6 +1167,17 @@ export const VideoCanvasEditor = forwardRef<VideoCanvasEditorRef, VideoCanvasEdi
                     style={{ left: -9999, top: -9999 }}
                     onLoadedMetadata={handleLoadedMetadata}
                     onTimeUpdate={handleTimeUpdate}
+                    onError={(e) => {
+                        const video = e.currentTarget;
+                        const err = video.error;
+                        console.error("[VideoCanvasEditor] Video load error:", {
+                            code: err?.code,
+                            message: err?.message,
+                            src: src?.substring(0, 120),
+                            networkState: video.networkState,
+                            readyState: video.readyState,
+                        });
+                    }}
                     playsInline
                     preload="auto"
                 />

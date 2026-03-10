@@ -221,13 +221,13 @@ export function SplitScreenSection({ config, onChange, disabled, userPlan, works
 
                         {/* Category Filter Chips */}
                         {!categoriesLoading && categories.length > 0 && (
-                            <div className="flex flex-wrap gap-2">
+                            <div className="flex gap-2 overflow-x-auto pb-1 -mx-1 px-1 no-scrollbar">
                                 <button
                                     type="button"
                                     onClick={() => handleCategoryFilter(null)}
                                     disabled={disabled}
                                     className={cn(
-                                        "px-3 py-1.5 rounded-full text-xs font-medium transition-all",
+                                        "px-3 py-1.5 rounded-full text-xs font-medium transition-all shrink-0",
                                         selectedCategorySlug === null
                                             ? "bg-primary text-primary-foreground shadow-sm"
                                             : "bg-muted text-muted-foreground hover:bg-muted/80"
@@ -242,7 +242,7 @@ export function SplitScreenSection({ config, onChange, disabled, userPlan, works
                                         onClick={() => handleCategoryFilter(category.slug)}
                                         disabled={disabled}
                                         className={cn(
-                                            "px-3 py-1.5 rounded-full text-xs font-medium transition-all flex items-center gap-1.5",
+                                            "px-3 py-1.5 rounded-full text-xs font-medium transition-all flex items-center gap-1.5 shrink-0",
                                             selectedCategorySlug === category.slug
                                                 ? "bg-primary text-primary-foreground shadow-sm"
                                                 : "bg-muted text-muted-foreground hover:bg-muted/80"
@@ -256,9 +256,9 @@ export function SplitScreenSection({ config, onChange, disabled, userPlan, works
                         )}
 
                         {videosLoading ? (
-                            <div className="grid grid-cols-4 gap-2.5">
+                            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
                                 {Array.from({ length: 8 }).map((_, i) => (
-                                    <Skeleton key={i} className="aspect-9/16 rounded-lg" />
+                                    <Skeleton key={i} className="aspect-video rounded-lg" />
                                 ))}
                             </div>
                         ) : filteredVideos.length === 0 ? (
@@ -276,7 +276,7 @@ export function SplitScreenSection({ config, onChange, disabled, userPlan, works
                                 <CarouselContent>
                                     {videoPages.map((page, pageIndex) => (
                                         <CarouselItem key={pageIndex}>
-                                            <div className="grid grid-cols-4 gap-2.5">
+                                            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
                                                 {page.map((video) => (
                                                     <VideoCard
                                                         key={video.id}
@@ -291,10 +291,10 @@ export function SplitScreenSection({ config, onChange, disabled, userPlan, works
                                     ))}
                                 </CarouselContent>
                                 {videoPages.length > 1 && (
-                                    <>
-                                        <CarouselPrevious className="left-0 -translate-x-1/2" />
-                                        <CarouselNext className="right-0 translate-x-1/2" />
-                                    </>
+                                    <div className="flex items-center justify-center gap-2 mt-3">
+                                        <CarouselPrevious className="static translate-x-0 translate-y-0" />
+                                        <CarouselNext className="static translate-x-0 translate-y-0" />
+                                    </div>
                                 )}
                             </Carousel>
                         )}
