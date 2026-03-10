@@ -182,11 +182,16 @@ export default function SocialPage() {
                   <Button
                     size="sm"
                     variant="outline"
-                    disabled={platform.comingSoon || !canConnect || connectAccount.isPending || !workspaceId}
+                    disabled={platform.comingSoon || connectAccount.isPending || !workspaceId}
                     title={platform.comingSoon ? "Coming soon" : !canConnect ? limitLabel : undefined}
-                    onClick={() =>
-                      workspaceId && canConnect && !platform.comingSoon && connectAccount.mutate({ platform: platform.id, workspaceId })
-                    }
+                    onClick={() => {
+                      if (!workspaceId || platform.comingSoon) return;
+                      if (!canConnect) {
+                        setUpgradeOpen(true);
+                        return;
+                      }
+                      connectAccount.mutate({ platform: platform.id, workspaceId });
+                    }}
                   >
                     + Connect
                   </Button>

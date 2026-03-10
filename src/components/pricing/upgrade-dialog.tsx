@@ -49,6 +49,11 @@ const FEATURE_MESSAGES: Record<string, { title: string; message: string; subtitl
         message: "Free plan users can only have one workspace. To create additional workspaces, upgrade any existing workspace to a paid plan.",
         subtitle: "Upgrade to Starter or Pro to unlock multiple workspaces, more minutes, and premium features.",
     },
+    "social accounts": {
+        title: "Account Limit Reached",
+        message: "You've reached the maximum number of connected social accounts on your current plan.",
+        subtitle: "Upgrade to a higher plan to connect more social accounts and post clips to all your platforms.",
+    },
 };
 
 // Scarcity — auto-increments from a base date
