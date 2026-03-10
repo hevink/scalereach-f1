@@ -5,10 +5,11 @@ import { workspaceApi } from "@/lib/api";
 import type { Workspace } from "@/lib/api/workspace";
 import { toast } from "sonner";
 
-export function useWorkspaces() {
+export function useWorkspaces(enabled = true) {
   return useQuery({
     queryKey: ["workspaces"],
     queryFn: workspaceApi.getAll,
+    enabled,
   });
 }
 

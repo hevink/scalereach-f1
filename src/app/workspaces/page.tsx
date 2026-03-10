@@ -54,7 +54,7 @@ export default function WorkspacesPage() {
   const router = useRouter();
   const { data: session, isPending: isSessionPending } =
     authClient.useSession();
-  const { data: workspaces = [], isLoading } = useWorkspaces();
+  const { data: workspaces = [], isLoading } = useWorkspaces(!!session?.user);
   const [lastUsedSlug, setLastUsedSlug] = useState<string | null>(null);
 
   const user = session?.user as ExtendedUser | undefined;
