@@ -62,8 +62,20 @@ export function ClipCard({ clip, index, onEdit, onFavorite, onDownload, onShare,
     const [scheduleOpen, setScheduleOpen] = useState(false);
     const [isRegenerating, setIsRegenerating] = useState(false);
     const isGenerating = clip.status === "generating" || clip.status === "detected";
+    const isFailed = clip.status === "failed";
     const isFreePlan = userPlan === "free";
     const isDev = process.env.NODE_ENV === "development";
+
+    const handleRetry = async () => {
+        setIsRegenerating(true);
+        try {
+            await clipsApi.regenerateClip(clip.id);
+        } catch (err) {
+            console.error("Clip retry failed:", err);
+        } finally {
+            setIsRegenerating(false);
+        }
+    };
 
     return (
         <div className="rounded-xl border bg-card overflow-hidden">
@@ -105,6 +117,34 @@ export function ClipCard({ clip, index, onEdit, onFavorite, onDownload, onShare,
                                 <div className="absolute inset-0 flex flex-col items-center justify-center gap-2">
                                     <IconLoader2 className="size-8 animate-spin text-primary" />
                                     <span className="text-xs text-muted-foreground">Generating clip...</span>
+                                </div>
+                            ) : isFailed ? (
+                                <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 p-4">
+                                    <div className="flex size-12 items-center justify-center rounded-full bg-destructive/10">
+                                        <HugeiconsIcon icon={Video01Icon} size={24} color="#ef4444" />
+                                    </div>
+                                    <div className="text-center">
+                                        <p className="text-sm font-medium text-destructive">Clip failed</p>
+                                        <p className="text-xs text-zinc-400 mt-1">
+                                            {clip.errorMessage?.includes("Sign in to confirm")
+                                                ? "YouTube temporarily blocked this download. Retrying usually fixes it."
+                                                : "Something went wrong generating this clip."}
+                                        </p>
+                                    </div>
+                                    <Button
+                                        size="sm"
+                                        variant="outline"
+                                        className="gap-1.5 mt-1"
+                                        onClick={handleRetry}
+                                        disabled={isRegenerating}
+                                    >
+                                        {isRegenerating ? (
+                                            <IconLoader2 className="size-3.5 animate-spin" />
+                                        ) : (
+                                            <HugeiconsIcon icon={RefreshIcon} size={14} color="currentColor" />
+                                        )}
+                                        {isRegenerating ? "Retrying..." : "Retry"}
+                                    </Button>
                                 </div>
                             ) : clip.storageUrl ? (
                                 <video

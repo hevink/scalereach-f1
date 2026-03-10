@@ -1,6 +1,6 @@
 "use client";
 
-import { use, useCallback, useEffect } from "react";
+import { use, useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import {
     IconArrowLeft,
@@ -29,6 +29,7 @@ import { useQuery } from "@tanstack/react-query";
 import { videoConfigApi } from "@/lib/api/video-config";
 import { analytics } from "@/lib/analytics";
 import type { ClipResponse } from "@/lib/api/clips";
+import { clipsApi } from "@/lib/api/clips";
 import { ShareManager } from "@/components/share/share-manager";
 import { ClipCard } from "@/components/clips/clip-card";
 
@@ -304,6 +305,71 @@ function ProcessingCard({ title, description, thumbnailUrl, step }: {
                     </p>
                 </div>
             </div>
+        </div>
+    );
+}
+
+function FailedClipsBanner({ failedClips, onRetryComplete }: { failedClips: ClipResponse[]; onRetryComplete: () => void }) {
+    const [isRetrying, setIsRetrying] = useState(false);
+    const [retryCount, setRetryCount] = useState(0);
+
+    const handleRetryAll = async () => {
+        setIsRetrying(true);
+        setRetryCount(0);
+        for (const clip of failedClips) {
+            try {
+                await clipsApi.regenerateClip(clip.id);
+                setRetryCount(prev => prev + 1);
+                // Stagger retries by 2s to avoid hitting YouTube rate limits again
+                if (clip !== failedClips[failedClips.length - 1]) {
+                    await new Promise(r => setTimeout(r, 2000));
+                }
+            } catch {
+                // Continue with next clip even if one fails
+            }
+        }
+        setIsRetrying(false);
+        onRetryComplete();
+    };
+
+    const isYouTubeError = failedClips.some(c => c.errorMessage?.includes("Sign in to confirm") || c.errorMessage?.includes("yt-dlp"));
+
+    return (
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 rounded-xl border border-destructive/20 bg-destructive/5 px-4 py-3">
+            <div className="flex items-center gap-3">
+                <div className="flex size-8 shrink-0 items-center justify-center rounded-full bg-destructive/10">
+                    <IconAlertCircle className="size-4 text-destructive" />
+                </div>
+                <div>
+                    <p className="text-sm text-foreground">
+                        {failedClips.length} clip{failedClips.length > 1 ? "s" : ""} failed to generate.
+                    </p>
+                    {isYouTubeError && (
+                        <p className="text-xs text-muted-foreground mt-0.5">
+                            YouTube temporarily blocked some downloads. Retrying with delays usually fixes this.
+                        </p>
+                    )}
+                </div>
+            </div>
+            <Button
+                size="sm"
+                variant="outline"
+                className="shrink-0 gap-1.5 w-full sm:w-auto border-destructive/30 hover:bg-destructive/10"
+                onClick={handleRetryAll}
+                disabled={isRetrying}
+            >
+                {isRetrying ? (
+                    <>
+                        <IconLoader2 className="size-3.5 animate-spin" />
+                        Retrying {retryCount}/{failedClips.length}...
+                    </>
+                ) : (
+                    <>
+                        <IconAlertCircle className="size-3.5" />
+                        Retry all failed
+                    </>
+                )}
+            </Button>
         </div>
     );
 }
@@ -644,6 +710,14 @@ export default function VideoClipsPage({ params }: VideoClipsPageProps) {
                                     Some clips are still being generated. This page will update automatically.
                                 </p>
                             </div>
+                        )}
+
+                        {/* Failed clips banner */}
+                        {clips.some(c => c.status === "failed") && (
+                            <FailedClipsBanner
+                                failedClips={clips.filter(c => c.status === "failed")}
+                                onRetryComplete={refetchClips}
+                            />
                         )}
 
                         {/* Schedule nudge — only shown when ALL clips are ready (none generating) */}
