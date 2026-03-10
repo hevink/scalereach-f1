@@ -1,6 +1,6 @@
 "use client";
 
-import { use, useCallback, useEffect, useState } from "react";
+import { use, useCallback, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import {
     IconArrowLeft,
@@ -15,6 +15,7 @@ import {
     IconLayoutRows,
 } from "@tabler/icons-react";
 import { FireIcon as FireAnimatedIcon } from "@/components/ui/fire-icon";
+import { motion } from "framer-motion";
 
 import Image from "next/image";
 import { Button } from "@/components/ui/button";
@@ -68,11 +69,15 @@ function VideoClipsLoading() {
                 </div>
             </div>
 
-            {/* Clips Skeleton */}
+            {/* Clips Skeleton — staggered fade-in */}
             <div className="flex-1 overflow-auto p-4 sm:p-6 flex justify-center">
                 <div className="space-y-6 max-w-4xl w-full">
                     {Array.from({ length: 3 }).map((_, i) => (
-                        <div key={i} className="rounded-xl border bg-card overflow-hidden">
+                        <div
+                            key={i}
+                            className="rounded-xl border bg-card overflow-hidden animate-pulse"
+                            style={{ animationDelay: `${i * 150}ms` }}
+                        >
                             {/* Title */}
                             <div className="px-5 py-3 border-b bg-muted/30">
                                 <Skeleton className="h-5 w-64" />
@@ -122,7 +127,6 @@ function VideoClipsLoading() {
         </div>
     );
 }
-
 interface VideoClipsErrorProps {
     error: Error | null;
     onBack: () => void;
@@ -179,15 +183,43 @@ interface NoClipsProps {
     thumbnailUrl?: string | null;
 }
 
-function ProcessingCard({ icon, title, description, thumbnailUrl, step, totalSteps }: {
-    icon: React.ReactNode;
+const PROCESSING_STEPS = [
+    { key: "downloading", label: "Downloading video from source" },
+    { key: "uploading", label: "Uploading video to storage" },
+    { key: "transcribing", label: "Converting speech to text" },
+    { key: "analyzing", label: "Detecting viral clips with AI" },
+] as const;
+
+function getActiveStepIndex(status: string): number {
+    const map: Record<string, number> = { downloading: 0, uploading: 1, transcribing: 2, analyzing: 3, processing: 3 };
+    return map[status] ?? -1;
+}
+
+function CheckFilledIcon({ className }: { className?: string }) {
+    return (
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className={className}>
+            <path fillRule="evenodd" d="M2.25 12c0-5.385 4.365-9.75 9.75-9.75s9.75 4.365 9.75 9.75-4.365 9.75-9.75 9.75S2.25 17.385 2.25 12Zm13.36-1.814a.75.75 0 1 0-1.22-.872l-3.236 4.53L9.53 12.22a.75.75 0 0 0-1.06 1.06l2.25 2.25a.75.75 0 0 0 1.14-.094l3.75-5.25Z" clipRule="evenodd" />
+        </svg>
+    );
+}
+
+function CheckOutlineIcon({ className }: { className?: string }) {
+    return (
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className={className}>
+            <path d="M9 12.75 11.25 15 15 9.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
+        </svg>
+    );
+}
+
+function ProcessingCard({ title, description, thumbnailUrl, step }: {
     title: string;
     description: string;
     thumbnailUrl?: string | null;
     step: number;
-    totalSteps: number;
+    icon?: React.ReactNode;
+    totalSteps?: number;
 }) {
-    const progress = (step / totalSteps) * 100;
+    const progress = Math.max(0, Math.min(((step + 0.5) / 4) * 100, 99));
 
     return (
         <div className="w-full max-w-lg mx-auto">
@@ -203,29 +235,73 @@ function ProcessingCard({ icon, title, description, thumbnailUrl, step, totalSte
                             unoptimized
                         />
                         <div className="absolute inset-0 bg-linear-to-t from-card via-card/40 to-transparent" />
-                        <div className="absolute bottom-3 left-3 right-3 flex items-center justify-center">
-                            {icon}
-                        </div>
                     </div>
                 )}
 
                 {/* Content */}
-                <div className="p-5 space-y-3">
-                    {!thumbnailUrl && (
-                        <div className="flex justify-center mb-1">{icon}</div>
-                    )}
+                <div className="p-5 space-y-4">
                     <div className="text-center">
                         <h3 className="font-semibold text-base">{title}</h3>
                         <p className="mt-1 text-sm text-muted-foreground">{description}</p>
                     </div>
 
-                    {/* Progress */}
+                    {/* Animated step list */}
+                    <div className="flex flex-col gap-3 px-2">
+                        {PROCESSING_STEPS.map((s, i) => {
+                            const isCompleted = i < step;
+                            const isActive = i === step;
+                            const isFuture = i > step;
+                            return (
+                                <motion.div
+                                    key={s.key}
+                                    className="flex items-center gap-3"
+                                    initial={{ opacity: 0, x: -10 }}
+                                    animate={{
+                                        opacity: isFuture ? 0.35 : 1,
+                                        x: 0,
+                                    }}
+                                    transition={{ duration: 0.4, delay: i * 0.08 }}
+                                >
+                                    {isCompleted ? (
+                                        <motion.div
+                                            initial={{ scale: 0.5 }}
+                                            animate={{ scale: 1 }}
+                                            transition={{ type: "spring", stiffness: 300, damping: 20 }}
+                                        >
+                                            <CheckFilledIcon className="size-6 text-primary shrink-0" />
+                                        </motion.div>
+                                    ) : isActive ? (
+                                        <motion.div
+                                            animate={{ rotate: 360 }}
+                                            transition={{ repeat: Infinity, duration: 1, ease: "linear" }}
+                                            className="shrink-0"
+                                        >
+                                            <IconLoader2 className="size-6 text-primary" />
+                                        </motion.div>
+                                    ) : (
+                                        <CheckOutlineIcon className="size-6 text-muted-foreground/40 shrink-0" />
+                                    )}
+                                    <span className={`text-sm ${isActive ? "text-primary font-medium" : isCompleted ? "text-foreground" : "text-muted-foreground/40"
+                                        }`}>
+                                        {s.label}
+                                    </span>
+                                </motion.div>
+                            );
+                        })}
+                    </div>
+
+                    {/* Progress bar */}
                     <div className="space-y-1.5">
                         <Progress value={progress} className="h-1.5" />
                         <p className="text-xs text-muted-foreground text-center">
-                            Step {step} of {totalSteps}
+                            Step {step + 1} of 4
                         </p>
                     </div>
+
+                    {/* Reassurance */}
+                    <p className="text-[11px] text-muted-foreground/70 text-center">
+                        You can leave this page — we&apos;ll notify you when it&apos;s done.
+                    </p>
                 </div>
             </div>
         </div>
@@ -234,97 +310,90 @@ function ProcessingCard({ icon, title, description, thumbnailUrl, step, totalSte
 
 function NoClips({ videoTitle, videoStatus, videoCreatedAt, thumbnailUrl }: NoClipsProps) {
     const timeElapsedMinutes = (Date.now() - new Date(videoCreatedAt).getTime()) / (1000 * 60);
-    const hasTimedOut = timeElapsedMinutes > 5;
+    const hasTimedOut = timeElapsedMinutes > 15;
 
-    if (videoStatus === "downloading" && !hasTimedOut) {
+    const stepIndex = getActiveStepIndex(videoStatus);
+
+    const STEP_TITLES: Record<string, { title: string; description: string }> = {
+        downloading: { title: "Downloading Video", description: `Fetching "${videoTitle}" from YouTube...` },
+        uploading: { title: "Uploading Video", description: "Uploading video to storage..." },
+        transcribing: { title: "Transcribing Audio", description: `Converting speech to text for "${videoTitle}"...` },
+        analyzing: { title: "Detecting Viral Clips", description: `AI is analyzing "${videoTitle}" for viral moments. This may take a few minutes.` },
+        processing: { title: "Detecting Viral Clips", description: `AI is analyzing "${videoTitle}" for viral moments. This may take a few minutes.` },
+    };
+
+    // Active processing states
+    if (stepIndex >= 0 && !hasTimedOut) {
+        const meta = STEP_TITLES[videoStatus] || STEP_TITLES.analyzing;
         return (
             <ProcessingCard
-                icon={<IconLoader2 className="size-8 animate-spin text-primary" />}
-                title="Downloading Video"
-                description={`Downloading "${videoTitle}" from YouTube...`}
+                title={meta.title}
+                description={meta.description}
                 thumbnailUrl={thumbnailUrl}
-                step={1}
-                totalSteps={4}
+                step={stepIndex}
             />
         );
     }
 
-    if (videoStatus === "uploading" && !hasTimedOut) {
+    // Pending / queued
+    if (videoStatus === "pending" && !hasTimedOut) {
         return (
-            <ProcessingCard
-                icon={<IconLoader2 className="size-8 animate-spin text-primary" />}
-                title="Uploading Video"
-                description="Uploading video to storage..."
-                thumbnailUrl={thumbnailUrl}
-                step={2}
-                totalSteps={4}
-            />
-        );
-    }
-
-    if (videoStatus === "transcribing" && !hasTimedOut) {
-        return (
-            <ProcessingCard
-                icon={<IconLoader2 className="size-8 animate-spin text-primary" />}
-                title="Transcribing Audio"
-                description={`Converting speech to text for "${videoTitle}"...`}
-                thumbnailUrl={thumbnailUrl}
-                step={3}
-                totalSteps={4}
-            />
-        );
-    }
-
-    if ((videoStatus === "analyzing" || videoStatus === "processing") && !hasTimedOut) {
-        return (
-            <ProcessingCard
-                icon={<IconLoader2 className="size-8 animate-spin text-primary" />}
-                title="Detecting Viral Clips"
-                description={`AI is analyzing "${videoTitle}" for viral moments. This may take a few minutes.`}
-                thumbnailUrl={thumbnailUrl}
-                step={4}
-                totalSteps={4}
-            />
-        );
-    }
-
-    if (videoStatus === "failed" || videoStatus === "error") {
-        return (
-            <div className="flex flex-col items-center justify-center gap-4 rounded-lg border border-destructive/30 bg-destructive/5 p-8">
-                <div className="flex size-12 items-center justify-center rounded-full bg-destructive/10">
-                    <IconAlertCircle className="size-6 text-destructive" />
-                </div>
-                <div className="text-center max-w-md">
-                    <h3 className="font-medium text-destructive">Something went wrong</h3>
-                    <p className="mt-2 text-sm text-muted-foreground">
-                        We couldn&apos;t process this video. Please try again or use a different video.
+            <div className="w-full max-w-lg mx-auto">
+                <div className="overflow-hidden rounded-xl border bg-card shadow-sm p-6 text-center space-y-3">
+                    <div className="flex justify-center">
+                        <div className="flex size-12 items-center justify-center rounded-full bg-muted">
+                            <IconClock className="size-6 text-muted-foreground animate-pulse" />
+                        </div>
+                    </div>
+                    <h3 className="font-semibold text-base">Queued for Processing</h3>
+                    <p className="text-sm text-muted-foreground">
+                        &ldquo;{videoTitle}&rdquo; is waiting in the queue. Processing will start soon.
+                    </p>
+                    <div className="flex justify-center pt-1">
+                        <div className="flex gap-1">
+                            <span className="size-1.5 rounded-full bg-primary animate-bounce [animation-delay:0ms]" />
+                            <span className="size-1.5 rounded-full bg-primary animate-bounce [animation-delay:150ms]" />
+                            <span className="size-1.5 rounded-full bg-primary animate-bounce [animation-delay:300ms]" />
+                        </div>
+                    </div>
+                    <p className="text-[11px] text-muted-foreground/70">
+                        You can leave this page — we&apos;ll notify you when it&apos;s done.
                     </p>
                 </div>
             </div>
         );
     }
 
-    if (videoStatus === "pending" && !hasTimedOut) {
+    // Failed / error
+    if (videoStatus === "failed" || videoStatus === "error") {
         return (
-            <ProcessingCard
-                icon={<IconClock className="size-8 text-muted-foreground" />}
-                title="Queued for Processing"
-                description={`"${videoTitle}" is waiting in the queue. Processing will start soon.`}
-                thumbnailUrl={thumbnailUrl}
-                step={0}
-                totalSteps={4}
-            />
+            <div className="w-full max-w-md mx-auto">
+                <div className="flex flex-col items-center justify-center gap-4 rounded-xl border border-destructive/30 bg-destructive/5 p-8">
+                    <div className="flex size-12 items-center justify-center rounded-full bg-destructive/10">
+                        <IconAlertCircle className="size-6 text-destructive" />
+                    </div>
+                    <div className="text-center max-w-sm">
+                        <h3 className="font-medium text-destructive">Something went wrong</h3>
+                        <p className="mt-2 text-sm text-muted-foreground">
+                            We couldn&apos;t process this video. Please try again or use a different video.
+                        </p>
+                    </div>
+                </div>
+            </div>
         );
     }
 
+    // Truly no clips
     return (
-        <div className="flex flex-col items-center justify-center gap-4 rounded-lg border bg-muted/30 p-8">
-            <IconVideo className="size-8 text-muted-foreground" />
-            <div className="text-center">
-                <h3 className="font-medium">No Clips Found</h3>
-                <p className="mt-1 text-sm text-muted-foreground">
-                    No viral clips were detected in this video. Try a video with more engaging content.
-                </p>
+        <div className="w-full max-w-md mx-auto">
+            <div className="flex flex-col items-center justify-center gap-4 rounded-xl border bg-muted/30 p-8">
+                <IconVideo className="size-8 text-muted-foreground" />
+                <div className="text-center">
+                    <h3 className="font-medium">No Clips Found</h3>
+                    <p className="mt-1 text-sm text-muted-foreground">
+                        No viral clips were detected in this video. Try a video with more engaging content.
+                    </p>
+                </div>
             </div>
         </div>
     );
@@ -428,11 +497,47 @@ export default function VideoClipsPage({ params }: VideoClipsPageProps) {
         }
     }, []);
 
-    // Video just completed but clips haven't loaded yet — avoid flashing "No Clips Found"
+    // Video just completed but clips haven't loaded yet — show a nice transition
     const isWaitingForClips = video?.status === "completed" && (!clips || clips.length === 0);
 
-    if (videoLoading || clipsLoading || isWaitingForClips) {
+    if (videoLoading || clipsLoading) {
         return <VideoClipsLoading />;
+    }
+
+    if (isWaitingForClips) {
+        return (
+            <div className="flex h-full flex-col bg-background">
+                {/* Real header while waiting */}
+                <div className="border-b px-4 sm:px-6 py-3 sm:py-4">
+                    <div className="flex items-start gap-2 sm:gap-3">
+                        <Skeleton className="size-8 sm:size-9 rounded-md shrink-0 mt-0.5" />
+                        <div>
+                            <h1 className="text-base sm:text-xl font-semibold truncate">
+                                {video?.title || "Loading..."}
+                            </h1>
+                            <p className="text-xs sm:text-sm text-muted-foreground mt-0.5">
+                                {video?.createdAt ? formatDate(video.createdAt) : ""}
+                            </p>
+                        </div>
+                    </div>
+                </div>
+                <div className="flex-1 flex items-center justify-center p-6">
+                    <div className="text-center space-y-4">
+                        <div className="flex justify-center">
+                            <div className="flex size-14 items-center justify-center rounded-full bg-primary/10">
+                                <IconLoader2 className="size-7 animate-spin text-primary" />
+                            </div>
+                        </div>
+                        <div>
+                            <h3 className="font-semibold text-base">Almost there...</h3>
+                            <p className="mt-1 text-sm text-muted-foreground">
+                                Loading your clips. This will only take a moment.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        );
     }
 
     if (videoError || clipsError) {

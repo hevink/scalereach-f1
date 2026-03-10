@@ -80,6 +80,8 @@ export interface TextOverlayData {
   y: number;
   fontSize: number;
   fontFamily: string;
+  fontWeight?: number;
+  lineHeight?: number;
   color: string;
   backgroundColor: string;
   backgroundOpacity: number;

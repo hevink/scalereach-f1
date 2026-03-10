@@ -26,6 +26,8 @@ export interface TextOverlay {
     y: number;
     fontSize: number;
     fontFamily: string | null;
+    fontWeight?: number;
+    lineHeight?: number;
     color: string;
     backgroundColor: string;
     backgroundOpacity: number;
@@ -73,6 +75,8 @@ function createDefaultOverlay(clipDuration: number, currentTime = 0): TextOverla
         y: 25,
         fontSize: 32,
         fontFamily: "Inter",
+        fontWeight: 600,
+        lineHeight: 1.2,
         color: "#FFFFFF",
         backgroundColor: "#000000",
         backgroundOpacity: 100,

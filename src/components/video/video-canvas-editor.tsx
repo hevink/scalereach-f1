@@ -39,6 +39,8 @@ export interface VideoCanvasEditorProps {
         y: number;
         fontSize: number;
         fontFamily: string;
+        fontWeight?: number;
+        lineHeight?: number;
         color: string;
         backgroundColor: string;
         backgroundOpacity: number;
@@ -518,6 +520,8 @@ interface DraggableTextOverlayProps {
         y: number;
         fontSize: number;
         fontFamily: string;
+        fontWeight?: number;
+        lineHeight?: number;
         color: string;
         backgroundColor: string;
         backgroundOpacity: number;
@@ -661,7 +665,7 @@ function DraggableTextOverlay({
         ? `${overlay.backgroundColor}${Math.round((overlay.backgroundOpacity / 100) * 255).toString(16).padStart(2, "0")}`
         : "transparent";
 
-    const overlayBorderRadius = `${overlay.borderRadius ?? 4}px`;
+    const overlayBorderRadius = `${(overlay.borderRadius ?? 4) * containerScale}px`;
 
     return (
         <div
@@ -761,13 +765,13 @@ function DraggableTextOverlay({
                     style={{
                         fontFamily: overlay.fontFamily || "Inter",
                         fontSize: `${fontSize * containerScale}px`,
-                        fontWeight: 600,
+                        fontWeight: overlay.fontWeight ?? 600,
                         color: overlay.color || "#FFFFFF",
                         backgroundColor: bgColor,
-                        padding: `${4 * containerScale}px ${12 * containerScale}px`,
+                        padding: `${2 * containerScale}px ${6 * containerScale}px`,
                         borderRadius: overlayBorderRadius,
                         textShadow: "none",
-                        lineHeight: 1.3,
+                        lineHeight: overlay.lineHeight ?? 1.2,
                         caretColor: "#3b82f6",
                     }}
                     rows={Math.max(1, editText.split("\n").length)}
@@ -778,14 +782,14 @@ function DraggableTextOverlay({
                     style={{
                         fontFamily: overlay.fontFamily || "Inter",
                         fontSize: `${fontSize * containerScale}px`,
-                        fontWeight: 600,
+                        fontWeight: overlay.fontWeight ?? 600,
                         color: overlay.color || "#FFFFFF",
                         backgroundColor: bgColor,
-                        padding: `${4 * containerScale}px ${12 * containerScale}px`,
+                        padding: `${2 * containerScale}px ${6 * containerScale}px`,
                         borderRadius: overlayBorderRadius,
                         textShadow: "none",
                         whiteSpace: "pre-wrap",
-                        lineHeight: 1.3,
+                        lineHeight: overlay.lineHeight ?? 1.2,
                     }}
                 >
                     {overlay.text}

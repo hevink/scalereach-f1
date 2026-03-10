@@ -645,10 +645,12 @@ export default function ClipEditorPage({ params }: ClipEditorPageProps) {
                 y: 20,
                 fontSize: 36,
                 fontFamily: "Inter",
+                fontWeight: 600,
+                lineHeight: 1.2,
                 color: "#000000",
                 backgroundColor: "#FFFFFF",
                 backgroundOpacity: 100,
-                borderRadius: 4,
+                borderRadius: 12,
                 maxWidth: 80,
                 startTime: 0,
                 endTime: 3,
@@ -913,6 +915,8 @@ export default function ClipEditorPage({ params }: ClipEditorPageProps) {
                 await captionsApi.updateTextOverlays(clipId, textOverlays.map((o) => ({
                     ...o,
                     fontFamily: o.fontFamily ?? "Inter",
+                    fontWeight: o.fontWeight ?? 600,
+                    lineHeight: o.lineHeight ?? 1.2,
                     animation: "none" as const,
                 })));
             } catch (err: any) {
