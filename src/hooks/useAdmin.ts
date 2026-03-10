@@ -219,3 +219,22 @@ export function useAdminUserClips(userId: string | null, page = 1, limit = 20) {
     staleTime: 30 * 1000,
   });
 }
+
+export function useYouTubeHealth() {
+  return useQuery({
+    queryKey: ["admin", "youtube-health"],
+    queryFn: adminApi.getYouTubeHealth,
+    staleTime: 30 * 1000,
+    refetchInterval: 60 * 1000,
+  });
+}
+
+export function useTestYouTubeCookie() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (url: string) => adminApi.testYouTubeCookie(url),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["admin", "youtube-health"] });
+    },
+  });
+}

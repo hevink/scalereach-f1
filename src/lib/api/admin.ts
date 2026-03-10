@@ -310,6 +310,29 @@ export interface AdminUserClipsResponse {
   totalPages: number;
 }
 
+export interface YouTubeHealthStatus {
+  cookie: {
+    status: "valid" | "expired" | "missing" | "error";
+    expiry: string | null;
+    daysLeft: number | null;
+    count: number;
+    path: string;
+  };
+  pot: {
+    status: "running" | "stopped" | "not_configured";
+    url: string | null;
+  };
+  ytdlp: {
+    version: string;
+  };
+  test?: {
+    ok: boolean;
+    elapsed_ms: number;
+    videoInfo?: any;
+    error?: string;
+  };
+}
+
 export const adminApi = {
   // Dashboard stats
   getStats: async () => {
@@ -469,6 +492,17 @@ export const adminApi = {
 
   generateMagicLink: async (userId: string) => {
     const response = await api.post<{ magicLink: string }>(`/api/admin/users/${userId}/magic-link`);
+    return response.data;
+  },
+
+  // YouTube health
+  getYouTubeHealth: async () => {
+    const response = await api.get<YouTubeHealthStatus>("/api/admin/youtube-health");
+    return response.data;
+  },
+
+  testYouTubeCookie: async (url: string) => {
+    const response = await api.post<YouTubeHealthStatus>("/api/admin/youtube-health", { url });
     return response.data;
   },
 };
