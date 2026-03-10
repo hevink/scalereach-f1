@@ -629,7 +629,7 @@ export default function ClipEditorPage({ params }: ClipEditorPageProps) {
     // Use a ref to only run once after both captionData and clip are loaded
     const textOverlaysInitialized = useRef(false);
     useEffect(() => {
-        if (!captionData || !clip) return;
+        if (!captionData || !clip || videoConfigData === undefined) return;
         if (textOverlaysInitialized.current) return;
         textOverlaysInitialized.current = true;
 
@@ -638,11 +638,17 @@ export default function ClipEditorPage({ params }: ClipEditorPageProps) {
 
         // If introTitle exists on the clip and isn't already a text overlay, inject it
         if (clip.introTitle && !hasIntroOverlay) {
+            // When split screen is enabled, position at the split boundary (center between videos)
+            // Otherwise default to 20% from top
+            const isSplitScreen = videoConfigData?.config?.enableSplitScreen ?? false;
+            const introY = isSplitScreen
+                ? (videoConfigData?.config?.splitRatio ?? 50)
+                : 20;
             const introOverlay = {
                 id: "intro-title",
                 text: clip.introTitle,
                 x: 50,
-                y: 20,
+                y: introY,
                 fontSize: 36,
                 fontFamily: "Inter",
                 fontWeight: 600,
@@ -660,7 +666,7 @@ export default function ClipEditorPage({ params }: ClipEditorPageProps) {
             // Always set from saved (even empty array) so deletions are reflected
             setTextOverlays(saved.map((o) => ({ ...o, borderRadius: o.borderRadius ?? 4 })));
         }
-    }, [captionData, clip]);
+    }, [captionData, clip, videoConfigData]);
 
     // Sync selected preset ID from hook
     useEffect(() => {
