@@ -138,7 +138,12 @@ export default function SocialPage() {
               Connect your social media accounts to post clips directly from ScaleReach.
             </p>
           </div>
-          <span className="text-xs text-muted-foreground">{limitLabel}</span>
+          <span className={`rounded-full px-3 py-1 text-xs font-medium ${accountLimit === 0
+            ? "bg-yellow-500/10 text-yellow-600 dark:text-yellow-400"
+            : accounts.length >= accountLimit
+              ? "bg-red-500/10 text-red-500"
+              : "text-muted-foreground"
+            }`}>{limitLabel}</span>
         </div>
 
         {accountLimit === 0 && (
@@ -212,37 +217,51 @@ export default function SocialPage() {
                             )}
                           </div>
                         </div>
-                        <AlertDialog>
-                          <AlertDialogTrigger
-                            render={
-                              <Button
-                                size="sm"
-                                variant="ghost"
-                                className="h-7 px-2 text-xs text-destructive hover:text-destructive"
-                              >
-                                Disconnect
-                              </Button>
-                            }
-                          />
-                          <AlertDialogContent>
-                            <AlertDialogHeader>
-                              <AlertDialogTitle>Disconnect Account</AlertDialogTitle>
-                              <AlertDialogDescription>
-                                Are you sure you want to disconnect <strong>{acc.accountName}</strong>? Any scheduled posts for this account will no longer be published.
-                              </AlertDialogDescription>
-                            </AlertDialogHeader>
-                            <AlertDialogFooter>
-                              <AlertDialogCancel disabled={disconnectAccount.isPending}>Cancel</AlertDialogCancel>
-                              <AlertDialogAction
-                                variant="destructive"
-                                disabled={disconnectAccount.isPending}
-                                onClick={(e) => { e.preventDefault(); disconnectAccount.mutateAsync(acc.id); }}
-                              >
-                                {disconnectAccount.isPending ? "Disconnecting..." : "Disconnect"}
-                              </AlertDialogAction>
-                            </AlertDialogFooter>
-                          </AlertDialogContent>
-                        </AlertDialog>
+                        <div className="flex items-center gap-1">
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            className="h-7 px-2 text-xs text-muted-foreground hover:text-foreground"
+                            disabled={connectAccount.isPending || !workspaceId}
+                            onClick={() => {
+                              if (!workspaceId || platform.comingSoon) return;
+                              connectAccount.mutate({ platform: platform.id, workspaceId });
+                            }}
+                          >
+                            Reconnect
+                          </Button>
+                          <AlertDialog>
+                            <AlertDialogTrigger
+                              render={
+                                <Button
+                                  size="sm"
+                                  variant="ghost"
+                                  className="h-7 px-2 text-xs text-destructive hover:text-destructive"
+                                >
+                                  Disconnect
+                                </Button>
+                              }
+                            />
+                            <AlertDialogContent>
+                              <AlertDialogHeader>
+                                <AlertDialogTitle>Disconnect Account</AlertDialogTitle>
+                                <AlertDialogDescription>
+                                  Are you sure you want to disconnect <strong>{acc.accountName}</strong>? Any scheduled posts for this account will no longer be published.
+                                </AlertDialogDescription>
+                              </AlertDialogHeader>
+                              <AlertDialogFooter>
+                                <AlertDialogCancel disabled={disconnectAccount.isPending}>Cancel</AlertDialogCancel>
+                                <AlertDialogAction
+                                  variant="destructive"
+                                  disabled={disconnectAccount.isPending}
+                                  onClick={(e) => { e.preventDefault(); disconnectAccount.mutateAsync(acc.id); }}
+                                >
+                                  {disconnectAccount.isPending ? "Disconnecting..." : "Disconnect"}
+                                </AlertDialogAction>
+                              </AlertDialogFooter>
+                            </AlertDialogContent>
+                          </AlertDialog>
+                        </div>
                       </div>
                     ))}
                   </div>
@@ -358,7 +377,10 @@ export default function SocialPage() {
                       <p className="truncate text-[11px] text-muted-foreground/70">{post.caption}</p>
                     )}
                     {post.errorMessage && (
-                      <p className="text-[11px] text-destructive">{post.errorMessage}</p>
+                      <div className="mt-0.5 flex items-start gap-1.5 rounded-md bg-red-500/10 px-2 py-1">
+                        <span className="mt-px shrink-0 text-[10px] text-red-500">⚠</span>
+                        <p className="text-[11px] text-red-500">{post.errorMessage}</p>
+                      </div>
                     )}
                     {post.platformPostUrl && (
                       <a href={post.platformPostUrl} target="_blank" rel="noopener noreferrer" className="text-[11px] text-primary hover:underline">
