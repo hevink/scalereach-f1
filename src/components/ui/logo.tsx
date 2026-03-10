@@ -9,7 +9,7 @@ interface LogoIconProps {
 export function LogoIcon({ className = "h-8 w-8", size = 32 }: LogoIconProps) {
     return (
         <Image
-            src="/logo.svg"
+            src="/logo.png"
             alt="scalereach logo"
             width={size}
             height={size}

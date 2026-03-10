@@ -83,7 +83,7 @@ function BrandedHeader({ videoTitle, clipCount, onDownloadAll }: {
                 {/* Top bar with logo */}
                 <div className="flex items-center justify-between h-14">
                     <Link href="https://scalereach.ai" target="_blank" className="flex items-center gap-2 hover:opacity-80 transition-opacity">
-                        <Image src="/logo.svg" alt="ScaleReach" width={28} height={28} />
+                        <Image src="/logo.png" alt="ScaleReach" width={28} height={28} />
                         <span className="font-semibold text-base">scalereach</span>
                     </Link>
                     <Link
@@ -134,7 +134,7 @@ function BrandedFooter() {
             <div className="max-w-5xl mx-auto px-4 sm:px-6 py-8">
                 <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
                     <div className="flex items-center gap-2">
-                        <Image src="/logo.svg" alt="ScaleReach" width={20} height={20} className="opacity-60" />
+                        <Image src="/logo.png" alt="ScaleReach" width={20} height={20} className="opacity-60" />
                         <span className="text-sm text-muted-foreground">
                             Powered by <span className="font-medium text-foreground">scalereach</span>
                         </span>
