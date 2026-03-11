@@ -111,7 +111,7 @@ export default function WorkerLogsPage() {
                 </div>
 
                 <div className="flex items-center gap-2">
-                    <Select value={logType} onValueChange={(v) => { setLogType(v); }}>
+                    <Select value={logType} onValueChange={(v) => { if (v) setLogType(v); }}>
                         <SelectTrigger className="w-24 h-8 text-xs">
                             <SelectValue />
                         </SelectTrigger>
@@ -122,7 +122,7 @@ export default function WorkerLogsPage() {
                         </SelectContent>
                     </Select>
 
-                    <Select value={lineCount} onValueChange={(v) => { setLineCount(v); }}>
+                    <Select value={lineCount} onValueChange={(v) => { if (v) setLineCount(v); }}>
                         <SelectTrigger className="w-28 h-8 text-xs">
                             <SelectValue />
                         </SelectTrigger>

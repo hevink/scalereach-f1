@@ -230,25 +230,21 @@ function EditorHeader({
             <Breadcrumb>
                 <BreadcrumbList>
                     <BreadcrumbItem>
-                        <BreadcrumbLink
-                            render={
-                                <Link href={`/${workspaceSlug}`}>
-                                    Videos
-                                </Link>
-                            }
-                        />
+                        <BreadcrumbLink asChild>
+                            <Link href={`/${workspaceSlug}`}>
+                                Videos
+                            </Link>
+                        </BreadcrumbLink>
                     </BreadcrumbItem>
                     {videoId && (
                         <>
                             <BreadcrumbSeparator />
                             <BreadcrumbItem>
-                                <BreadcrumbLink
-                                    render={
-                                        <Link href={`/${workspaceSlug}/videos/${videoId}/clips`}>
-                                            {videoTitle || "Video"}
-                                        </Link>
-                                    }
-                                />
+                                <BreadcrumbLink asChild>
+                                    <Link href={`/${workspaceSlug}/videos/${videoId}/clips`}>
+                                        {videoTitle || "Video"}
+                                    </Link>
+                                </BreadcrumbLink>
                             </BreadcrumbItem>
                         </>
                     )}
