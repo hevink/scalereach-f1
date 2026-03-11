@@ -6,6 +6,7 @@ import { IconPlayerPlay, IconPlayerPause, IconRefresh } from "@tabler/icons-reac
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import type { Caption, CaptionStyle, CaptionWord } from "@/lib/api/captions";
+import { getFontFamily } from "./caption-style-panel";
 
 // ============================================================================
 // Types
@@ -254,7 +255,7 @@ function CaptionOverlay({ caption, style, currentTime, scaleFactor }: CaptionOve
             <div
                 className="inline-block px-3 py-2 rounded-md"
                 style={{
-                    fontFamily: style.fontFamily,
+                    fontFamily: getFontFamily(style.fontFamily),
                     fontSize: `${Math.round((style.fontSize || 24) * scaleFactor)}px`,
                     fontWeight: 700,
                     color: style.textColor,

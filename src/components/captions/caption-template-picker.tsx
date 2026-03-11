@@ -7,6 +7,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import type { CaptionTemplate, CaptionStyle } from "@/lib/api/captions";
+import { getFontFamily } from "./caption-style-panel";
 
 /**
  * CaptionTemplatePickerProps interface
@@ -45,7 +46,7 @@ function getPreviewStyle(style: CaptionStyle): React.CSSProperties {
            0 0 ${scaledOutlineWidth * 2}px ${style.outlineColor || "#000000"}`;
 
     return {
-        fontFamily: style.fontFamily,
+        fontFamily: getFontFamily(style.fontFamily),
         fontSize: `${Math.min(style.fontSize, 16)}px`, // Cap preview font size
         fontWeight: 700,
         color: style.textColor,

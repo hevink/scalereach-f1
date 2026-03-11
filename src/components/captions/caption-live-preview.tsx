@@ -3,6 +3,7 @@
 import { useMemo } from "react";
 import { CaptionWord, CaptionStyle } from "@/lib/api/captions";
 import { cn } from "@/lib/utils";
+import { getFontFamily } from "./caption-style-panel";
 
 interface CaptionLivePreviewProps {
   words: CaptionWord[];
@@ -147,7 +148,7 @@ export function CaptionLivePreview({
                 "transition-all duration-150 inline-block",
               )}
               style={{
-                fontFamily: style.fontFamily || "sans-serif",
+                fontFamily: getFontFamily(style.fontFamily) || "sans-serif",
                 fontSize: `${baseFontSize}px`,
                 fontWeight: 700,
                 margin: scaleMargin,

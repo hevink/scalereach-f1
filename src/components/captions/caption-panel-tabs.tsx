@@ -28,6 +28,7 @@ import {
 } from "@/components/ui/collapsible";
 import type { CaptionStyle } from "@/lib/api/captions";
 import type { CaptionStylePreset } from "./caption-style-presets";
+import { getFontFamily } from "./caption-style-panel";
 
 // ============================================================================
 // Types
@@ -296,7 +297,7 @@ function PresetCard({ preset, isSelected, onClick }: PresetCardProps) {
                     <span
                         className="text-[10px] font-bold leading-tight"
                         style={{
-                            fontFamily: preset.style.fontFamily,
+                            fontFamily: getFontFamily(preset.style.fontFamily),
                             color: preset.style.textColor || "#FFFFFF",
                             textShadow: preset.style.shadow ? "1px 1px 2px rgba(0,0,0,0.8)" : "none",
                         }}
@@ -306,7 +307,7 @@ function PresetCard({ preset, isSelected, onClick }: PresetCardProps) {
                     <span
                         className="text-[10px] font-bold leading-tight"
                         style={{
-                            fontFamily: preset.style.fontFamily,
+                            fontFamily: getFontFamily(preset.style.fontFamily),
                             color: preset.style.highlightColor || preset.style.textColor || "#00FF00",
                             textShadow: preset.style.shadow ? "1px 1px 2px rgba(0,0,0,0.8)" : "none",
                         }}

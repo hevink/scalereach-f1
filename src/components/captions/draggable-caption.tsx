@@ -3,6 +3,7 @@
 import { useState, useRef, useCallback, useEffect } from "react";
 import { cn } from "@/lib/utils";
 import type { CaptionStyle } from "@/lib/api/captions";
+import { getFontFamily } from "./caption-style-panel";
 
 interface DraggableCaptionProps {
   text: string;
@@ -123,7 +124,7 @@ export function DraggableCaption({
   }, [isDragging, isResizing, containerRef, onStyleChange]);
 
   const captionStyle: React.CSSProperties = {
-    fontFamily: style.fontFamily || "Inter",
+    fontFamily: getFontFamily(style.fontFamily || "Inter"),
     fontSize: `${style.fontSize || 32}px`,
     fontWeight: 700,
     color: style.textColor || "#FFFFFF",

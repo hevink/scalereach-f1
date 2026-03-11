@@ -17,6 +17,7 @@ import {
   Righteous,
   Russo_One,
   Black_Ops_One,
+  Noto_Sans,
 } from "next/font/google";
 import "./globals.css";
 import { ThemeProvider } from "next-themes";
@@ -143,6 +144,14 @@ const blackOpsOne = Black_Ops_One({
   display: "swap",
 });
 
+// Universal fallback font for non-Latin scripts (Hindi, Arabic, CJK, etc.)
+const notoSans = Noto_Sans({
+  weight: ["400", "500", "600", "700", "800"],
+  variable: "--font-noto-sans",
+  subsets: ["latin", "latin-ext", "devanagari", "cyrillic", "cyrillic-ext", "greek", "greek-ext", "vietnamese"],
+  display: "swap",
+});
+
 export const metadata: Metadata = constructMetadata();
 
 export default function RootLayout({
@@ -153,7 +162,7 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <body
-        className={`${geistSans.variable} ${geistMono.variable} ${bangers.variable} ${permanentMarker.variable} ${anton.variable} ${bebasNeue.variable} ${oswald.variable} ${montserrat.variable} ${poppins.variable} ${lexend.variable} ${titanOne.variable} ${libreBaskerville.variable} ${lilitaOne.variable} ${inter.variable} ${righteous.variable} ${russoOne.variable} ${blackOpsOne.variable} antialiased`}
+        className={`${geistSans.variable} ${geistMono.variable} ${bangers.variable} ${permanentMarker.variable} ${anton.variable} ${bebasNeue.variable} ${oswald.variable} ${montserrat.variable} ${poppins.variable} ${lexend.variable} ${titanOne.variable} ${libreBaskerville.variable} ${lilitaOne.variable} ${inter.variable} ${righteous.variable} ${russoOne.variable} ${blackOpsOne.variable} ${notoSans.variable} antialiased`}
       >
         <QueryProvider>
           <PostHogProvider>

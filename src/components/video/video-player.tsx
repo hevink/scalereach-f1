@@ -31,6 +31,7 @@ import {
 } from "@/components/ui/tooltip";
 import type { Caption, CaptionStyle } from "@/lib/api/captions";
 import { DraggableCaption } from "@/components/captions/draggable-caption";
+import { getFontFamily } from "@/components/captions/caption-style-panel";
 
 // ============================================================================
 // Types
@@ -252,7 +253,7 @@ const CaptionOverlay = React.memo(function CaptionOverlay({ caption, style, curr
             <div
                 className="inline-block px-3 py-2 rounded-md max-w-[90%] transition-all duration-200"
                 style={{
-                    fontFamily: mergedStyle.fontFamily,
+                    fontFamily: getFontFamily(mergedStyle.fontFamily),
                     fontSize: `${mergedStyle.fontSize}px`,
                     color: mergedStyle.textColor,
                     backgroundColor: mergedStyle.backgroundColor

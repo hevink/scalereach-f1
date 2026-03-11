@@ -6,6 +6,7 @@ import { cn } from "@/lib/utils";
 import { Play, Pause, Volume2, VolumeX } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
+import { getFontFamily } from "./caption-style-panel";
 
 interface VideoPreviewWithCaptionsProps {
   /** Video source URL */
@@ -257,7 +258,7 @@ export function VideoPreviewWithCaptions({
                     (isKaraoke || isWordByWord || isBounce || isFade) && "transition-all duration-150"
                   )}
                   style={{
-                    fontFamily: style.fontFamily || "sans-serif",
+                    fontFamily: getFontFamily(style.fontFamily) || "sans-serif",
                     fontSize: `${Math.round((style.fontSize || 24) * scaleFactor)}px`,
                     fontWeight: 700,
                     margin: scaleMargin,

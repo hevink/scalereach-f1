@@ -79,27 +79,28 @@ export const SUPPORTED_FONTS = [
  */
 export const FONT_FAMILY_MAP: Record<string, string> = {
   // Viral-optimized fonts (Google Fonts)
-  "Bangers": "var(--font-bangers), cursive",
-  "Permanent Marker": "var(--font-permanent-marker), cursive",
-  "Anton": "var(--font-anton), sans-serif",
-  "Bebas Neue": "var(--font-bebas-neue), sans-serif",
-  "Oswald": "var(--font-oswald), sans-serif",
-  "Righteous": "var(--font-righteous), cursive",
-  "Russo One": "var(--font-russo-one), sans-serif",
-  "Black Ops One": "var(--font-black-ops-one), cursive",
+  // All entries include 'Noto Sans' as fallback for non-Latin scripts (Hindi, Arabic, CJK, etc.)
+  "Bangers": "var(--font-bangers), var(--font-noto-sans), cursive",
+  "Permanent Marker": "var(--font-permanent-marker), var(--font-noto-sans), cursive",
+  "Anton": "var(--font-anton), var(--font-noto-sans), sans-serif",
+  "Bebas Neue": "var(--font-bebas-neue), var(--font-noto-sans), sans-serif",
+  "Oswald": "var(--font-oswald), var(--font-noto-sans), sans-serif",
+  "Righteous": "var(--font-righteous), var(--font-noto-sans), cursive",
+  "Russo One": "var(--font-russo-one), var(--font-noto-sans), sans-serif",
+  "Black Ops One": "var(--font-black-ops-one), var(--font-noto-sans), cursive",
   // Custom viral fonts (require custom font files - using fallbacks)
-  "Moji Pop": "'Moji Pop', 'Comic Sans MS', cursive",
-  "Line": "'Line', 'Arial Rounded MT Bold', sans-serif",
-  "Brishti": "'Brishti', 'Brush Script MT', cursive",
-  "Deep": "'Deep', 'Impact', sans-serif",
-  "Depo B": "'Depo B', 'Arial Black', sans-serif",
+  "Moji Pop": "'Moji Pop', var(--font-noto-sans), 'Comic Sans MS', cursive",
+  "Line": "'Line', var(--font-noto-sans), 'Arial Rounded MT Bold', sans-serif",
+  "Brishti": "'Brishti', var(--font-noto-sans), 'Brush Script MT', cursive",
+  "Deep": "'Deep', var(--font-noto-sans), 'Impact', sans-serif",
+  "Depo B": "'Depo B', var(--font-noto-sans), 'Arial Black', sans-serif",
   // Standard fonts
-  "Inter": "Inter, sans-serif",
-  "Roboto": "Roboto, sans-serif",
-  "Open Sans": "'Open Sans', sans-serif",
-  "Montserrat": "Montserrat, sans-serif",
-  "Poppins": "Poppins, sans-serif",
-  "Georgia": "Georgia, serif",
+  "Inter": "Inter, var(--font-noto-sans), sans-serif",
+  "Roboto": "Roboto, var(--font-noto-sans), sans-serif",
+  "Open Sans": "'Open Sans', var(--font-noto-sans), sans-serif",
+  "Montserrat": "Montserrat, var(--font-noto-sans), sans-serif",
+  "Poppins": "Poppins, var(--font-noto-sans), sans-serif",
+  "Georgia": "Georgia, var(--font-noto-sans), serif",
 };
 
 /**
