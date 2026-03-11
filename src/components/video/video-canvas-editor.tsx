@@ -949,8 +949,14 @@ export const VideoCanvasEditor = forwardRef<VideoCanvasEditorRef, VideoCanvasEdi
                     // Check if video roughly fills the canvas (same aspect ratio)
                     const videoFillsCanvas = Math.abs(videoAspect - canvasAspect) < 0.1;
 
-                    if (videoFillsCanvas) {
-                        // Video fills the entire canvas — no background needed
+                    // If the video fills the canvas AND no custom background/scale is set,
+                    // draw it directly. Otherwise always render background + scaled video
+                    // so the user gets a live preview of their layout changes (e.g. when
+                    // editing a raw clip that already has the background baked in).
+                    const isDefaultLayout = backgroundStyle === "black" && videoScale === 125;
+
+                    if (videoFillsCanvas && isDefaultLayout) {
+                        // Video fills the entire canvas with default settings — no background needed
                         ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
                     } else {
                         // ── Draw background ──
