@@ -16,6 +16,7 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
   SidebarMenuBadge,
+  useSidebar,
 } from "@/components/ui/sidebar";
 import { useMyVideos } from "@/hooks/useVideo";
 
@@ -28,7 +29,13 @@ export function NavMain({ currentSlug, workspaceId }: NavMainProps) {
   const pathname = usePathname();
   const router = useRouter();
   const searchParams = useSearchParams();
+  const { isMobile, setOpenMobile } = useSidebar();
   const { data: videos } = useMyVideos(workspaceId || "", !!workspaceId);
+
+  const navigate = (url: string) => {
+    router.push(url);
+    if (isMobile) setOpenMobile(false);
+  };
 
   // Count videos by status
   const processingCount = videos?.filter(
@@ -110,7 +117,7 @@ export function NavMain({ currentSlug, workspaceId }: NavMainProps) {
                 <SidebarMenuItem key={item.title}>
                   <SidebarMenuButton
                     isActive={active}
-                    onClick={() => router.push(item.url)}
+                    onClick={() => navigate(item.url)}
                     tooltip={item.title}
                   >
                     <IconComponent
@@ -140,7 +147,7 @@ export function NavMain({ currentSlug, workspaceId }: NavMainProps) {
             <SidebarMenu>
               <SidebarMenuItem>
                 <SidebarMenuButton
-                  onClick={() => router.push(`/${currentSlug}?filter=processing`)}
+                  onClick={() => navigate(`/${currentSlug}?filter=processing`)}
                   tooltip="Processing Queue"
                 >
                   <HugeClockIcon className="animate-pulse text-amber-500" />
@@ -167,7 +174,7 @@ export function NavMain({ currentSlug, workspaceId }: NavMainProps) {
                 <SidebarMenuItem key={item.title}>
                   <SidebarMenuButton
                     isActive={active}
-                    onClick={() => router.push(item.url)}
+                    onClick={() => navigate(item.url)}
                     tooltip={item.title}
                   >
                     <IconComponent
@@ -198,7 +205,7 @@ export function NavMain({ currentSlug, workspaceId }: NavMainProps) {
                 <SidebarMenuItem key={item.title}>
                   <SidebarMenuButton
                     isActive={active}
-                    onClick={() => router.push(item.url)}
+                    onClick={() => navigate(item.url)}
                     tooltip={item.title}
                   >
                     <IconComponent />

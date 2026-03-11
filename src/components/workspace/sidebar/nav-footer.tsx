@@ -14,6 +14,7 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
   SidebarMenuBadge,
+  useSidebar,
 } from "@/components/ui/sidebar";
 import { useWorkspaceBySlug } from "@/hooks/useWorkspace";
 import { useMinutesBalance } from "@/hooks/useMinutes";
@@ -27,7 +28,13 @@ interface NavFooterProps {
 export function NavFooter({ currentSlug }: NavFooterProps) {
   const pathname = usePathname();
   const router = useRouter();
+  const { isMobile, setOpenMobile } = useSidebar();
   const { data: workspace } = useWorkspaceBySlug(currentSlug);
+
+  const navigate = (url: string) => {
+    router.push(url);
+    if (isMobile) setOpenMobile(false);
+  };
   const { data: minutesData } = useMinutesBalance(workspace?.id);
   const { openShortcutsHelp } = useWorkspaceShortcuts();
 
@@ -47,7 +54,7 @@ export function NavFooter({ currentSlug }: NavFooterProps) {
       title: "Settings",
       icon: isSettingsActive ? HugeSettingsIcon : HugeSettingsIcon,
       onClick: () => {
-        router.push(settingsUrl);
+        navigate(settingsUrl);
       },
       isActive: isSettingsActive,
     },
@@ -80,7 +87,7 @@ export function NavFooter({ currentSlug }: NavFooterProps) {
       <SidebarMenuItem>
         <SidebarMenuButton
           tooltip={isAgency ? "Unlimited minutes (Agency plan)" : `${minutesRemaining} min remaining`}
-          onClick={() => router.push(`/${currentSlug}/pricing`)}
+          onClick={() => navigate(`/${currentSlug}/pricing`)}
           className={cn(isLowMinutes && "text-amber-600 dark:text-amber-500")}
         >
           <HugeClockIcon className={cn(isLowMinutes && "text-amber-500")} />
@@ -102,7 +109,7 @@ export function NavFooter({ currentSlug }: NavFooterProps) {
         <SidebarMenuItem className="my-1">
           <SidebarMenuButton
             tooltip="Upgrade to Pro: 400 min/month, no watermark, longer videos"
-            onClick={() => router.push(`/${currentSlug}/pricing`)}
+            onClick={() => navigate(`/${currentSlug}/pricing`)}
             className="h-auto py-2 bg-linear-to-r from-primary/10 to-primary/5 border border-primary/20 hover:from-primary/15 hover:to-primary/10"
           >
             <HugeSparklesIcon className="text-primary shrink-0" />
@@ -121,7 +128,7 @@ export function NavFooter({ currentSlug }: NavFooterProps) {
         <SidebarMenuItem>
           <SidebarMenuButton
             tooltip="Upgrade Plan"
-            onClick={() => router.push(`/${currentSlug}/pricing`)}
+            onClick={() => navigate(`/${currentSlug}/pricing`)}
             className="bg-linear-to-r from-primary/10 to-primary/5 hover:from-primary/20 hover:to-primary/10 border border-primary/20"
           >
             <HugeSparklesIcon className="text-primary" />
