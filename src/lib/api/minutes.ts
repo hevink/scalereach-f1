@@ -33,6 +33,7 @@ export interface MinuteTransaction {
   description: string | null;
   metadata: string | null;
   createdAt: string;
+  videoTitle: string | null;
 }
 
 export interface UploadValidation {

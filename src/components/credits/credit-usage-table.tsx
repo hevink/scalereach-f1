@@ -197,11 +197,24 @@ export function CreditUsageTable({ workspaceSlug }: CreditUsageTableProps) {
                 accessorKey: "description",
                 header: "Description",
                 cell: ({ row }) => {
-                    const description = row.getValue("description") as string | null;
+                    const rawDescription = row.getValue("description") as string | null;
                     const type = row.getValue("type") as string;
                     const videoId = row.original.videoId;
+                    const videoTitle = row.original.videoTitle;
                     const config = getTypeConfig(type);
                     const TypeIcon = config.icon;
+
+                    // Format description: if it's a raw "type video" string, show a proper message with video title
+                    let description = rawDescription;
+                    if (rawDescription && /^(upload|regenerate|dubbing)\s+video$/i.test(rawDescription.trim())) {
+                        const typeLabels: Record<string, string> = {
+                            upload: "Uploaded video",
+                            regenerate: "Regenerated clips for",
+                            dubbing: "Dubbed video",
+                        };
+                        const label = typeLabels[type] || rawDescription;
+                        description = videoTitle ? `${label} "${videoTitle}"` : label;
+                    }
 
                     if (!description) {
                         return (
