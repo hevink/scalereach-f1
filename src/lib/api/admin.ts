@@ -505,4 +505,10 @@ export const adminApi = {
     const response = await api.post<YouTubeHealthStatus>("/api/admin/youtube-health", { url });
     return response.data;
   },
+
+  // Worker status (debug dashboard)
+  getWorkerStatus: async () => {
+    const response = await api.get("/api/admin/worker-status");
+    return response.data;
+  },
 };

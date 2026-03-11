@@ -7,7 +7,7 @@ import { Spinner } from "@/components/ui/spinner";
 import {
     IconShieldLock, IconArrowLeft, IconHome, IconUsers,
     IconBuildingCommunity, IconVideo, IconCreditCard, IconMenu2, IconX,
-    IconAlertTriangle, IconBrandYoutube,
+    IconAlertTriangle, IconBrandYoutube, IconServer, IconTerminal2,
 } from "@tabler/icons-react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
@@ -24,6 +24,8 @@ const navItems = [
     { href: "/admin/failed", label: "Failed", icon: IconAlertTriangle },
     { href: "/admin/payments", label: "Payments", icon: IconCreditCard },
     { href: "/admin/youtube", label: "YouTube", icon: IconBrandYoutube },
+    { href: "/admin/worker", label: "Worker", icon: IconServer },
+    { href: "/admin/logs", label: "Logs", icon: IconTerminal2 },
 ];
 
 function NavLinks({ pathname, hasIssues, stats, failedCount, onNavigate }: {

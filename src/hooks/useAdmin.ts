@@ -238,3 +238,12 @@ export function useTestYouTubeCookie() {
     },
   });
 }
+
+export function useWorkerStatus() {
+  return useQuery({
+    queryKey: ["admin", "worker-status"],
+    queryFn: adminApi.getWorkerStatus,
+    staleTime: 15 * 1000,
+    refetchInterval: 30 * 1000,
+  });
+}
