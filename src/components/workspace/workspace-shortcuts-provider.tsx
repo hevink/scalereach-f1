@@ -5,6 +5,7 @@ import { useWorkspaceKeyboardShortcuts } from "@/hooks/useWorkspaceKeyboardShort
 import { KeyboardShortcutsHelp, type ShortcutCategory } from "@/components/ui/keyboard-shortcut";
 import { CreateProjectDialog } from "@/components/project/create-project-dialog";
 import { useRouter } from "next/navigation";
+import { useWorkspaces } from "@/hooks/useWorkspace";
 
 /**
  * Workspace-level keyboard shortcuts organized by category
@@ -13,6 +14,11 @@ const WORKSPACE_KEYBOARD_SHORTCUTS: ShortcutCategory[] = [
   {
     name: "Navigation",
     shortcuts: [
+      {
+        label: "Switch workspace",
+        shortcut: "⌥1–9",
+        description: "Switch to workspace by position",
+      },
       {
         label: "Go to Dashboard",
         shortcut: "G+D",
@@ -211,6 +217,7 @@ export function WorkspaceShortcutsProvider({
   workspaceId,
 }: WorkspaceShortcutsProviderProps) {
   const router = useRouter();
+  const { data: workspaces = [] } = useWorkspaces();
 
   // Dialog states
   const [isCreateProjectDialogOpen, setIsCreateProjectDialogOpen] = useState(false);
@@ -237,6 +244,7 @@ export function WorkspaceShortcutsProvider({
   const { sequenceInProgress, currentSequence } = useWorkspaceKeyboardShortcuts({
     workspaceSlug,
     enabled: true,
+    workspaces,
     onCreateProject: openCreateProjectDialog,
     onQuickSearch: openQuickSearch,
     onShowShortcuts: openShortcutsHelp,

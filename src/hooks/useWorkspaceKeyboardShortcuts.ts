@@ -11,6 +11,8 @@ export interface WorkspaceShortcutsConfig {
   workspaceSlug: string;
   /** Whether shortcuts are enabled */
   enabled?: boolean;
+  /** List of workspaces for ⌘+number switching */
+  workspaces?: { slug: string }[];
   /** Callback when create project shortcut is triggered */
   onCreateProject?: () => void;
   /** Callback when quick search shortcut is triggered */
@@ -85,6 +87,7 @@ export function useWorkspaceKeyboardShortcuts(
   const {
     workspaceSlug,
     enabled = true,
+    workspaces = [],
     onCreateProject,
     onQuickSearch,
     onShowShortcuts,
@@ -141,6 +144,26 @@ export function useWorkspaceKeyboardShortcuts(
         onQuickSearch?.();
         clearSequence();
         return;
+      }
+
+      // Handle Option+1 through Option+9 for workspace switching
+      if (hasAlt && !event.ctrlKey && !event.metaKey && !hasShift) {
+        const codeMatch = event.code.match(/^Digit(\d)$/);
+        if (codeMatch && workspaces.length > 0) {
+          const num = Number.parseInt(codeMatch[1], 10);
+          if (num >= 1 && num <= 9) {
+            const index = num - 1;
+            if (index < workspaces.length) {
+              event.preventDefault();
+              const targetSlug = workspaces[index].slug;
+              if (targetSlug !== workspaceSlug) {
+                router.push(`/${targetSlug}`);
+              }
+              clearSequence();
+              return;
+            }
+          }
+        }
       }
 
       // Skip other shortcuts if in input
@@ -260,6 +283,7 @@ export function useWorkspaceKeyboardShortcuts(
       enabled,
       currentSequence,
       workspaceSlug,
+      workspaces,
       router,
       onCreateProject,
       onQuickSearch,
