@@ -8,7 +8,7 @@ import {
 } from "@/components/ui/select";
 import {
     IconPlayerPause, IconPlayerPlay, IconTrash,
-    IconArrowDown, IconArrowDownOff,
+    IconArrowDown, IconArrowUp,
 } from "@tabler/icons-react";
 import { cn } from "@/lib/utils";
 
@@ -144,7 +144,7 @@ export default function WorkerLogsPage() {
                         onClick={() => setAutoScroll(!autoScroll)}
                         title={autoScroll ? "Auto-scroll on" : "Auto-scroll off"}
                     >
-                        {autoScroll ? <IconArrowDown className="h-3.5 w-3.5" /> : <IconArrowDownOff className="h-3.5 w-3.5" />}
+                        {autoScroll ? <IconArrowDown className="h-3.5 w-3.5" /> : <IconArrowUp className="h-3.5 w-3.5" />}
                     </Button>
 
                     <Button
