@@ -174,7 +174,7 @@ export function VideoCard({
                     // Mobile: flex row layout
                     "flex items-center gap-3 px-4 py-3",
                     // Desktop: grid table layout
-                    "md:grid md:grid-cols-[80px_1fr_140px_100px] lg:grid-cols-[80px_1fr_140px_140px_100px] xl:grid-cols-[80px_1fr_140px_140px_100px_100px] md:gap-6 md:px-6 md:py-5",
+                    "md:grid md:grid-cols-[120px_1fr_120px_100px] lg:grid-cols-[120px_1fr_120px_120px_100px] xl:grid-cols-[120px_1fr_120px_120px_80px_100px] md:gap-6 md:px-6 md:py-5",
                     "bg-card",
                     "transition-all duration-150 ease-out",
                     "hover:bg-accent/30",
@@ -193,7 +193,7 @@ export function VideoCard({
                 aria-label={`View clips for ${video.title?.trim() || "Untitled Video"}`}
             >
                 {/* Thumbnail column */}
-                <div className="shrink-0 w-14 h-14 md:w-20 md:h-20 rounded-lg overflow-hidden bg-muted relative shadow-sm">
+                <div className="shrink-0 w-14 h-14 md:w-[120px] md:h-[68px] rounded-lg overflow-hidden bg-muted relative shadow-sm">
                     {thumbnailUrl ? (
                         <img
                             src={thumbnailUrl}
@@ -264,7 +264,7 @@ export function VideoCard({
                     </div>
                 </div>
 
-                {/* Video type column - desktop only */}
+                {/* Video type column - laptop+ only */}
                 <div className="hidden lg:flex items-center justify-center text-xs font-medium">
                     Viral Clips
                 </div>

@@ -23,10 +23,10 @@ import {
   IconX,
   IconFile,
   IconAlertCircle,
-  IconVideo,
   // IconFolder,
 } from "@tabler/icons-react";
 import { YouTubeIcon } from "@/components/icons/youtube-icon";
+import { HugeVideoIcon } from "@/components/icons/huge-icons";
 import { Progress } from "@/components/ui/progress";
 import Uppy from "@uppy/core";
 import AwsS3 from "@uppy/aws-s3";
@@ -352,7 +352,7 @@ export default function WorkspacePage({ params }: WorkspacePageProps) {
             <Skeleton className="size-5 rounded" />
             <Skeleton className="h-6 w-28 rounded" />
           </div>
-          <SkeletonVideoGrid count={10} />
+          <SkeletonVideoGrid count={10} viewMode={typeof window !== "undefined" ? (localStorage.getItem("video-view-mode") as "list" | "grid") || "list" : "list"} />
         </div>
       </div>
     </div>
@@ -389,9 +389,11 @@ export default function WorkspacePage({ params }: WorkspacePageProps) {
         {/* Hero Section with Upload UI - Responsive padding */}
         {/* @validates Requirement 31.3 - Mobile-friendly experience */}
         <div className="w-full max-w-2xl pt-4 sm:pt-8 pb-8 sm:pb-12 px-4">
-          {/* Header with workspace name and credit balance - Responsive layout */}
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4 mb-6 sm:mb-8">
-            <h1 className="text-2xl sm:text-4xl font-bold">{workspace.name}</h1>
+          {/* Header with greeting and credit balance */}
+          <div className="flex items-center justify-between gap-4 mb-6 sm:mb-8">
+            <h1 className="text-xl sm:text-2xl font-semibold truncate">
+              <span className="mr-1">👋</span> Hey, {session?.user?.name?.split(" ")[0] || "there"}
+            </h1>
             {/* Credit Balance Display - Requirement 27.1 */}
             <CreditBalance workspaceId={workspace.id} workspaceSlug={slug} variant="compact" showWarning plan={workspace.plan} />
           </div>
@@ -559,7 +561,7 @@ export default function WorkspacePage({ params }: WorkspacePageProps) {
                 isLoading={videosLoading || sessionPending}
                 headerSlot={
                   <div className="flex items-center gap-2">
-                    <IconVideo className="size-5" />
+                    <HugeVideoIcon className="size-5" />
                     <h2 className="text-lg font-semibold">Videos ({videos?.length || 0})</h2>
                   </div>
                 }

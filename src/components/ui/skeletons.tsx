@@ -756,9 +756,20 @@ export interface SkeletonVideoGridProps {
     count?: number;
     /** Additional className */
     className?: string;
+    /** View mode to match */
+    viewMode?: "list" | "grid";
 }
 
-export function SkeletonVideoGrid({ count = 10, className }: SkeletonVideoGridProps) {
+export function SkeletonVideoGrid({ count = 10, className, viewMode = "list" }: SkeletonVideoGridProps) {
+    if (viewMode === "grid") {
+        return (
+            <div className={cn("grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3", className)}>
+                {Array.from({ length: count }).map((_, i) => (
+                    <SkeletonVideoGridItem key={i} />
+                ))}
+            </div>
+        );
+    }
     return <SkeletonVideoList count={count} className={className} />;
 }
 

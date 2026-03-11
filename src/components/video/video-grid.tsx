@@ -6,7 +6,8 @@ import { VideoLite } from "@/lib/api/video";
 import { VideoCard } from "./video-card";
 import { VideoGridCard } from "./video-grid-card";
 import { SkeletonVideoGrid } from "@/components/ui/skeletons";
-import { IconVideo, IconUpload, IconList, IconLayoutGrid } from "@tabler/icons-react";
+import { IconUpload, IconList, IconLayoutGrid } from "@tabler/icons-react";
+import { HugeVideoIcon } from "@/components/icons/huge-icons";
 import { cn } from "@/lib/utils";
 
 interface VideoGridProps {
@@ -31,7 +32,18 @@ export function VideoGrid({
     headerSlot,
 }: VideoGridProps) {
     const [deletingIds, setDeletingIds] = useState<Set<string>>(new Set());
-    const [viewMode, setViewMode] = useState<"list" | "grid">("list");
+    const [viewMode, setViewMode] = useState<"list" | "grid">(() => {
+        if (typeof window !== "undefined") {
+            const saved = localStorage.getItem("video-view-mode");
+            if (saved === "list" || saved === "grid") return saved;
+        }
+        return "list";
+    });
+
+    const handleViewModeChange = useCallback((mode: "list" | "grid") => {
+        setViewMode(mode);
+        localStorage.setItem("video-view-mode", mode);
+    }, []);
 
     const handleDelete = useCallback(async (videoId: string) => {
         if (!onDeleteVideo) return;
@@ -48,7 +60,7 @@ export function VideoGrid({
     }, [onDeleteVideo]);
 
     if (isLoading) {
-        return <SkeletonVideoGrid count={10} className={className} />;
+        return <SkeletonVideoGrid count={10} className={className} viewMode={viewMode} />;
     }
 
     if (videos.length === 0) {
@@ -61,7 +73,7 @@ export function VideoGrid({
             },
             {
                 num: "2",
-                icon: <IconVideo className="size-5" />,
+                icon: <HugeVideoIcon className="size-5" />,
                 title: "AI generates your clips",
                 desc: "ScaleReach finds the best moments and adds captions automatically.",
             },
@@ -131,7 +143,7 @@ export function VideoGrid({
                 {headerSlot ?? <div />}
                 <div className="inline-flex rounded-lg border bg-muted/40 p-0.5 gap-0.5">
                     <button
-                        onClick={() => setViewMode("list")}
+                        onClick={() => handleViewModeChange("list")}
                         className={cn(
                             "flex items-center gap-1.5 rounded-md px-2.5 py-1.5 text-xs font-medium transition-colors",
                             viewMode === "list"
@@ -143,7 +155,7 @@ export function VideoGrid({
                         List
                     </button>
                     <button
-                        onClick={() => setViewMode("grid")}
+                        onClick={() => handleViewModeChange("grid")}
                         className={cn(
                             "flex items-center gap-1.5 rounded-md px-2.5 py-1.5 text-xs font-medium transition-colors",
                             viewMode === "grid"
@@ -160,7 +172,7 @@ export function VideoGrid({
             {/* List view */}
             {viewMode === "list" && (
                 <div data-testid="video-grid" className="rounded-lg border overflow-hidden" role="list" aria-label="Video list">
-                    <div className="hidden md:grid md:grid-cols-[80px_1fr_140px_100px] lg:grid-cols-[80px_1fr_140px_140px_100px] xl:grid-cols-[80px_1fr_140px_140px_100px_100px] gap-6 px-6 py-3 text-xs font-semibold text-muted-foreground uppercase tracking-wider bg-muted/30 border-b">
+                    <div className="hidden md:grid md:grid-cols-[120px_1fr_120px_100px] lg:grid-cols-[120px_1fr_120px_120px_100px] xl:grid-cols-[120px_1fr_120px_120px_80px_100px] gap-6 px-6 py-3 text-xs font-semibold text-muted-foreground uppercase tracking-wider bg-muted/30 border-b">
                         <div>Thumbnail</div>
                         <div>Description</div>
                         <div className="text-center">Source</div>
