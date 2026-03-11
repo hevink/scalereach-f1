@@ -516,7 +516,7 @@ export default function WorkspacePricingPage() {
                             animate={{ opacity: 1 }}
                             className="mt-3 text-center text-xs"
                         >
-                            <span className="text-primary font-medium">Save up to 30%</span> with annual billing
+                            <span className="text-primary font-medium">Save up to 50%</span> with annual billing
                         </motion.div>
                     </div>
                 </motion.div>
