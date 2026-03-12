@@ -131,6 +131,23 @@ export function WorkspaceLayoutContent({
         },
     ]);
 
+    // Hide sidebar on clip editor page
+    const isClipEditor = /\/clips\/[^/]+$/.test(pathname);
+
+    // Force dark mode on clip editor — no light mode for editing
+    const previousThemeRef = React.useRef<string | undefined>(undefined);
+    useEffect(() => {
+        if (isClipEditor) {
+            if (theme !== "dark") {
+                previousThemeRef.current = theme;
+                setTheme("dark");
+            }
+        } else if (previousThemeRef.current) {
+            setTheme(previousThemeRef.current);
+            previousThemeRef.current = undefined;
+        }
+    }, [isClipEditor]); // eslint-disable-line react-hooks/exhaustive-deps
+
     useEffect(() => {
         if (sessionPending || workspaceLoading) return;
 
@@ -156,23 +173,6 @@ export function WorkspaceLayoutContent({
     if (!workspace) {
         return null;
     }
-
-    // Hide sidebar on clip editor page
-    const isClipEditor = /\/clips\/[^/]+$/.test(pathname);
-
-    // Force dark mode on clip editor — no light mode for editing
-    const previousThemeRef = React.useRef<string | undefined>(undefined);
-    useEffect(() => {
-        if (isClipEditor) {
-            if (theme !== "dark") {
-                previousThemeRef.current = theme;
-                setTheme("dark");
-            }
-        } else if (previousThemeRef.current) {
-            setTheme(previousThemeRef.current);
-            previousThemeRef.current = undefined;
-        }
-    }, [isClipEditor]); // eslint-disable-line react-hooks/exhaustive-deps
 
     if (isClipEditor) {
         return (

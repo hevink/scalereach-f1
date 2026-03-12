@@ -176,4 +176,10 @@ export const videoApi = {
     const response = await api.post<{ message: string; clipsFound: number }>(`/api/videos/${id}/analyze`);
     return response.data;
   },
+
+  // Full video regeneration (download → transcribe → analyze → generate clips)
+  regenerateVideo: async (id: string): Promise<{ message: string; videoId: string }> => {
+    const response = await api.post<{ message: string; videoId: string }>(`/api/videos/${id}/regenerate`);
+    return response.data;
+  },
 };

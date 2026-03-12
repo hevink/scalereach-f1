@@ -45,7 +45,9 @@ import {
     IconCopy,
     IconExternalLink,
     IconDownload,
+    IconRefresh,
 } from "@tabler/icons-react";
+import { videoApi } from "@/lib/api/video";
 
 interface VideoCardProps {
     video: VideoLite;
@@ -77,6 +79,20 @@ export function VideoCard({
     const [isDeletingLocal, setIsDeletingLocal] = useState(false);
     const [isRenaming, setIsRenaming] = useState(false);
     const [copySuccess, setCopySuccess] = useState(false);
+    const [isRegenerating, setIsRegenerating] = useState(false);
+
+    const isDev = process.env.NODE_ENV === "development";
+
+    const handleRegenerate = async () => {
+        setIsRegenerating(true);
+        try {
+            await videoApi.regenerateVideo(video.id);
+        } catch (err) {
+            console.error("Video regenerate failed:", err);
+        } finally {
+            setIsRegenerating(false);
+        }
+    };
 
     const formatDuration = (seconds: number): string => {
         const mins = Math.floor(seconds / 60);
@@ -392,6 +408,23 @@ export function VideoCard({
                             {onDelete && (
                                 <>
                                     <DropdownMenuSeparator />
+                                    {isDev && (
+                                        <DropdownMenuItem
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                handleRegenerate();
+                                            }}
+                                            disabled={isRegenerating || isProcessing}
+                                            className="cursor-pointer"
+                                        >
+                                            {isRegenerating ? (
+                                                <IconLoader2 className="size-4 mr-2 animate-spin" />
+                                            ) : (
+                                                <IconRefresh className="size-4 mr-2" />
+                                            )}
+                                            {isRegenerating ? "Regenerating..." : "Regenerate"}
+                                        </DropdownMenuItem>
+                                    )}
                                     <DropdownMenuItem
                                         onSelect={(e) => e.preventDefault()}
                                         onClick={(e) => {
