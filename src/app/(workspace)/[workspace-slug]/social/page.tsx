@@ -5,7 +5,7 @@ import { useParams, useSearchParams } from "next/navigation";
 import { toast } from "sonner";
 import { useWorkspaceBySlug } from "@/hooks/useWorkspace";
 import { useSocialAccounts, useConnectSocialAccount, useDisconnectSocialAccount } from "@/hooks/useSocialAccounts";
-import { useScheduledPosts, useCancelPost } from "@/hooks/useScheduledPosts";
+import { useScheduledPosts, useCancelPost, useRetryPost } from "@/hooks/useScheduledPosts";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
@@ -21,7 +21,7 @@ import {
   AlertDialogCancel,
 } from "@/components/ui/alert-dialog";
 import { format, parseISO } from "date-fns";
-import { IconVideo } from "@tabler/icons-react";
+import { IconVideo, IconRefresh, IconAlertTriangle } from "@tabler/icons-react";
 import { CalendarProvider } from "@/components/social/calendar/calendar-context";
 import { CalendarClientContainer } from "@/components/social/calendar/calendar-client-container";
 import { UpgradeDialog } from "@/components/pricing/upgrade-dialog";
@@ -62,6 +62,80 @@ const SOCIAL_ACCOUNT_LIMITS: Record<string, number> = {
   agency: 999,
 };
 
+/** Map known platform error codes to friendly messages */
+const KNOWN_ERROR_CODES: Record<string, { title: string; description: string }> = {
+  unaudited_client_can_only_post_to_private_accounts: {
+    title: "TikTok privacy restriction",
+    description: "Your TikTok account can only receive posts set to private while our app is under review. Change your post privacy to \"Only Me\" or wait for TikTok approval.",
+  },
+  access_token_invalid: {
+    title: "Account disconnected",
+    description: "Your account token has expired. Please reconnect your account and try again.",
+  },
+  token_expired: {
+    title: "Session expired",
+    description: "Your account session has expired. Please reconnect your account from the Connected Accounts section.",
+  },
+  spam_risk_too_many_pending_share: {
+    title: "Too many pending posts",
+    description: "TikTok has flagged too many pending posts. Wait a bit before scheduling more.",
+  },
+  rate_limit_exceeded: {
+    title: "Rate limit reached",
+    description: "Too many requests sent to the platform. Please wait a few minutes and retry.",
+  },
+  scope_not_authorized: {
+    title: "Missing permissions",
+    description: "The connected account doesn't have the required permissions. Please reconnect with full access.",
+  },
+  video_file_too_large: {
+    title: "File too large",
+    description: "The video exceeds the platform's maximum file size. Try a shorter or lower-resolution clip.",
+  },
+};
+
+function parsePostError(raw: string): { title: string; description: string } {
+  // Try to extract JSON from error strings like: `TikTok init upload error: {"code":"...","message":"..."}`
+  const jsonMatch = raw.match(/\{[\s\S]*\}/);
+  if (jsonMatch) {
+    try {
+      const parsed = JSON.parse(jsonMatch[0]);
+      const code = parsed.code || parsed.error_code || parsed.error?.code;
+      if (code && KNOWN_ERROR_CODES[code]) {
+        return KNOWN_ERROR_CODES[code];
+      }
+      // Unknown code but has a message — show the message cleanly
+      const msg = parsed.message || parsed.error?.message || parsed.error_description;
+      if (msg) {
+        const platform = raw.match(/^(TikTok|YouTube|Instagram|Facebook|LinkedIn|Threads)/i)?.[0] || "Platform";
+        return { title: `${platform} error`, description: msg };
+      }
+    } catch {
+      // JSON parse failed, fall through
+    }
+  }
+
+  // Known prefix patterns without JSON
+  const prefixPatterns: [RegExp, string][] = [
+    [/tiktok/i, "TikTok"],
+    [/youtube/i, "YouTube"],
+    [/instagram/i, "Instagram"],
+    [/facebook/i, "Facebook"],
+    [/linkedin/i, "LinkedIn"],
+    [/threads/i, "Threads"],
+  ];
+  for (const [regex, platform] of prefixPatterns) {
+    if (regex.test(raw)) {
+      // Strip the technical prefix like "TikTok init upload error: "
+      const cleaned = raw.replace(/^[^:]+:\s*/, "").trim();
+      return { title: `${platform} posting failed`, description: cleaned || raw };
+    }
+  }
+
+  // Fallback — just show it as-is but with a generic title
+  return { title: "Posting failed", description: raw };
+}
+
 export default function SocialPage() {
   const params = useParams<{ "workspace-slug": string }>();
   const workspaceSlug = params["workspace-slug"];
@@ -84,6 +158,7 @@ export default function SocialPage() {
   const connectAccount = useConnectSocialAccount();
   const disconnectAccount = useDisconnectSocialAccount(workspaceId);
   const cancelPost = useCancelPost(workspaceId);
+  const retryPost = useRetryPost(workspaceId);
 
   const [statusFilter, setStatusFilter] = useState<string>("");
   const [upgradeOpen, setUpgradeOpen] = useState(false);
@@ -100,10 +175,10 @@ export default function SocialPage() {
         : `${accounts.length}/${accountLimit} accounts connected`;
 
   return (
-    <div className="flex flex-col gap-8 p-6">
+    <div className="flex flex-col gap-6 p-4 sm:gap-8 sm:p-6">
       {/* Calendar */}
       <section>
-        <div className="mb-4 flex items-center justify-between">
+        <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <h2 className="mb-1 text-lg font-semibold">Post Calendar</h2>
             <p className="text-sm text-muted-foreground">
@@ -132,14 +207,14 @@ export default function SocialPage() {
 
       {/* Connected Accounts */}
       <section>
-        <div className="mb-4 flex items-center justify-between">
+        <div className="mb-4 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <h2 className="mb-1 text-lg font-semibold">Connected Accounts</h2>
             <p className="text-sm text-muted-foreground">
               Connect your social media accounts to post clips directly from ScaleReach.
             </p>
           </div>
-          <span className={`rounded-full px-3 py-1 text-xs font-medium ${accountLimit === 0
+          <span className={`self-start rounded-full px-3 py-1 text-xs font-medium ${accountLimit === 0
             ? "bg-yellow-500/10 text-yellow-600 dark:text-yellow-400"
             : accounts.length >= accountLimit
               ? "bg-red-500/10 text-red-500"
@@ -285,12 +360,12 @@ export default function SocialPage() {
 
       {/* Scheduled Posts list */}
       <section>
-        <div className="mb-4 flex items-center justify-between">
+        <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <h2 className="text-lg font-semibold">Scheduled Posts</h2>
             <p className="text-sm text-muted-foreground">All posts scheduled from your clips and uploads.</p>
           </div>
-          <div className="flex gap-1.5">
+          <div className="flex flex-wrap gap-1.5">
             {["", "pending", "posted", "failed"].map((s) => (
               <button
                 key={s}
@@ -320,9 +395,9 @@ export default function SocialPage() {
               const scheduledDate = post.scheduledAt ? parseISO(post.scheduledAt) : parseISO(post.createdAt);
               const postedDate = post.postedAt ? parseISO(post.postedAt) : null;
               return (
-                <div key={post.id} className="flex items-center gap-4 rounded-xl border bg-card p-3">
+                <div key={post.id} className="flex items-center gap-3 rounded-xl border bg-card p-3 sm:gap-4">
                   {/* Thumbnail */}
-                  <div className="relative size-16 shrink-0 overflow-hidden rounded-lg bg-muted/40">
+                  <div className="relative size-12 shrink-0 overflow-hidden rounded-lg bg-muted/40 sm:size-16">
                     {post.clipThumbnailUrl ? (
                       <img src={post.clipThumbnailUrl} alt={post.clipTitle || ""} className="absolute inset-0 size-full object-cover" />
                     ) : post.mediaThumbnailUrl ? (
@@ -381,12 +456,36 @@ export default function SocialPage() {
                     {post.caption && (
                       <p className="truncate text-[11px] text-muted-foreground/70">{post.caption}</p>
                     )}
-                    {post.errorMessage && (
-                      <div className="mt-0.5 flex items-start gap-1.5 rounded-md bg-red-500/10 px-2 py-1">
-                        <span className="mt-px shrink-0 text-[10px] text-red-500">⚠</span>
-                        <p className="text-[11px] text-red-500">{post.errorMessage}</p>
-                      </div>
-                    )}
+                    {post.errorMessage && (() => {
+                      const error = parsePostError(post.errorMessage);
+                      return (
+                        <div className="mt-1 flex items-start gap-2.5 rounded-lg border border-red-500/20 bg-red-500/5 px-3 py-2.5">
+                          <div className="flex size-6 shrink-0 items-center justify-center rounded-full bg-red-500/10">
+                            <IconAlertTriangle size={13} className="text-red-500" />
+                          </div>
+                          <div className="flex min-w-0 flex-1 flex-col gap-1">
+                            <p className="text-xs font-medium text-red-600 dark:text-red-400">{error.title}</p>
+                            <p className="text-[11px] leading-relaxed text-red-500/80 dark:text-red-400/70">{error.description}</p>
+                            <div className="mt-1 flex items-center gap-3">
+                              <button
+                                type="button"
+                                onClick={() => retryPost.mutate(post.id)}
+                                disabled={retryPost.isPending}
+                                className="flex items-center gap-1.5 rounded-md bg-red-500/10 px-2.5 py-1 text-[11px] font-medium text-red-600 transition-colors hover:bg-red-500/20 disabled:opacity-50 dark:text-red-400"
+                              >
+                                <IconRefresh size={12} className={retryPost.isPending ? "animate-spin" : ""} />
+                                {retryPost.isPending ? "Retrying..." : "Retry"}
+                              </button>
+                              {post.retryCount > 0 && (
+                                <span className="text-[10px] text-red-400/60">
+                                  {post.retryCount} {post.retryCount === 1 ? "attempt" : "attempts"}
+                                </span>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })()}
                     {post.platformPostUrl && (
                       <a href={post.platformPostUrl} target="_blank" rel="noopener noreferrer" className="text-[11px] text-primary hover:underline">
                         View post →
@@ -402,6 +501,18 @@ export default function SocialPage() {
                       onClick={() => cancelPost.mutate(post.id)}
                     >
                       Cancel
+                    </Button>
+                  )}
+                  {post.status === "failed" && !post.errorMessage && (
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="shrink-0 gap-1.5 border-red-500/20 text-red-600 hover:bg-red-500/10 hover:text-red-600 dark:text-red-400"
+                      onClick={() => retryPost.mutate(post.id)}
+                      disabled={retryPost.isPending}
+                    >
+                      <IconRefresh size={13} className={retryPost.isPending ? "animate-spin" : ""} />
+                      Retry
                     </Button>
                   )}
                 </div>

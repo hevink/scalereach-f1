@@ -370,7 +370,7 @@ export function CreatePostFromCalendarModal({ workspaceId }: Props) {
 
   return (
     <Dialog open={open} onOpenChange={(o) => !o && closeCreateModal()}>
-      <DialogContent className="!max-w-3xl gap-0 p-0 overflow-hidden [&>button]:hidden">
+      <DialogContent className="!max-w-3xl gap-0 p-0 overflow-hidden [&>button]:hidden max-sm:!max-w-[100vw] max-sm:!h-[100dvh] max-sm:!rounded-none max-sm:!border-0">
         {/* Header */}
         <div className="flex items-center border-b px-5 py-3.5">
           <div className="flex-1 min-w-0">
@@ -383,24 +383,24 @@ export function CreatePostFromCalendarModal({ workspaceId }: Props) {
           </div>
 
           {/* Step indicator */}
-          <div className="flex items-center gap-2 text-xs">
+          <div className="flex items-center gap-1.5 text-xs sm:gap-2">
             <div className={cn(
               "flex size-5 items-center justify-center rounded-full text-[10px] font-bold transition-colors",
               step === "clip" ? "bg-primary text-primary-foreground" : "bg-emerald-500 text-white"
             )}>
               {step === "details" ? <IconCheck size={10} strokeWidth={3} /> : "1"}
             </div>
-            <span className={cn("transition-colors", step === "clip" ? "font-medium text-foreground" : "text-muted-foreground")}>
+            <span className={cn("hidden transition-colors sm:inline", step === "clip" ? "font-medium text-foreground" : "text-muted-foreground")}>
               Pick source
             </span>
-            <div className={cn("h-px w-4 rounded-full transition-colors", step === "details" ? "bg-primary" : "bg-border")} />
+            <div className={cn("h-px w-3 rounded-full transition-colors sm:w-4", step === "details" ? "bg-primary" : "bg-border")} />
             <div className={cn(
               "flex size-5 items-center justify-center rounded-full text-[10px] font-bold transition-colors",
               step === "details" ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground"
             )}>
               2
             </div>
-            <span className={cn("transition-colors", step === "details" ? "font-medium text-foreground" : "text-muted-foreground")}>
+            <span className={cn("hidden transition-colors sm:inline", step === "details" ? "font-medium text-foreground" : "text-muted-foreground")}>
               Details
             </span>
           </div>
@@ -446,7 +446,7 @@ export function CreatePostFromCalendarModal({ workspaceId }: Props) {
             {sourceTab === "clip" ? (
               <>
                 {loadingClips ? (
-                  <div className="grid grid-cols-3 gap-3">
+                  <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
                     {Array.from({ length: 6 }).map((_, i) => (
                       <div key={i} className="flex flex-col overflow-hidden rounded-xl border border-border">
                         <div className="aspect-4/5 animate-pulse bg-muted/60" />
@@ -463,7 +463,7 @@ export function CreatePostFromCalendarModal({ workspaceId }: Props) {
                     <p className="text-sm">No ready clips in this workspace yet.</p>
                   </div>
                 ) : (
-                  <div className="grid grid-cols-3 gap-3 max-h-[520px] overflow-y-auto p-1">
+                  <div className="grid grid-cols-2 gap-3 max-h-[520px] overflow-y-auto p-1 sm:grid-cols-3">
                     {clips.map((clip) => {
                       const isSelected = selectedClip?.id === clip.id;
                       const platforms = clip.recommendedPlatforms || [];
@@ -639,24 +639,33 @@ export function CreatePostFromCalendarModal({ workspaceId }: Props) {
 
         {/* Step 2 — Details */}
         {step === "details" && (selectedClip || (sourceTab === "upload" && uploadState === "done")) && (
-          <div className="flex divide-x">
+          <div className="flex flex-col sm:flex-row sm:divide-x max-sm:overflow-y-auto max-sm:max-h-[calc(100dvh-56px)]">
             {/* Left: preview */}
-            <div className="flex w-44 shrink-0 flex-col gap-2.5 p-4">
+            <div className="flex shrink-0 gap-3 border-b p-4 sm:w-44 sm:flex-col sm:gap-2.5 sm:border-b-0">
               {sourceTab === "clip" && selectedClip ? (
                 <>
-                  <div className="relative aspect-9/16 w-full overflow-hidden rounded-xl bg-muted/40">
+                  <div className="relative aspect-square w-20 shrink-0 overflow-hidden rounded-xl bg-muted/40 sm:aspect-9/16 sm:w-full">
                     <ClipThumbnail clip={selectedClip} />
                   </div>
-                  <p className="line-clamp-3 text-xs font-medium leading-snug text-foreground">
-                    {selectedClip.title || <span className="italic text-muted-foreground">Untitled clip</span>}
-                  </p>
-                  {selectedClip.recommendedPlatforms && selectedClip.recommendedPlatforms.length > 0 && (
-                    <div className="flex flex-wrap gap-1">
-                      {selectedClip.recommendedPlatforms.slice(0, 3).map((p) => (
-                        <PlatformChip key={p} platform={p} />
-                      ))}
-                    </div>
-                  )}
+                  <div className="flex min-w-0 flex-1 flex-col gap-1 sm:flex-none">
+                    <p className="line-clamp-2 text-xs font-medium leading-snug text-foreground sm:line-clamp-3">
+                      {selectedClip.title || <span className="italic text-muted-foreground">Untitled clip</span>}
+                    </p>
+                    {selectedClip.recommendedPlatforms && selectedClip.recommendedPlatforms.length > 0 && (
+                      <div className="flex flex-wrap gap-1">
+                        {selectedClip.recommendedPlatforms.slice(0, 3).map((p) => (
+                          <PlatformChip key={p} platform={p} />
+                        ))}
+                      </div>
+                    )}
+                    <button
+                      type="button"
+                      onClick={() => setStep("clip")}
+                      className="self-start text-[11px] text-muted-foreground underline hover:text-foreground"
+                    >
+                      Change source
+                    </button>
+                  </div>
                 </>
               ) : (
                 <>

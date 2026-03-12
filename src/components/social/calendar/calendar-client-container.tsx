@@ -16,11 +16,13 @@ export function CalendarClientContainer({ workspaceId }: Props) {
   const { view } = useCalendarContext();
 
   return (
-    <div className="overflow-hidden rounded-xl border">
+    <div className="flex max-h-[90vh] flex-col overflow-hidden rounded-xl border">
       <CalendarHeader />
-      {view === "month" && <CalendarMonthView />}
-      {view === "week" && <CalendarWeekView />}
-      {view === "day" && <CalendarDayView />}
+      <div className="flex-1 overflow-y-auto">
+        {view === "month" && <CalendarMonthView />}
+        {view === "week" && <CalendarWeekView />}
+        {view === "day" && <CalendarDayView />}
+      </div>
       <CreatePostFromCalendarModal workspaceId={workspaceId} />
       <EditPostModal workspaceId={workspaceId} />
     </div>

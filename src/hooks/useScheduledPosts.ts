@@ -46,6 +46,20 @@ export function useCancelPost(workspaceId: string | undefined) {
   });
 }
 
+export function useRetryPost(workspaceId: string | undefined) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (id: string) => socialApi.retryPost(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["social", "posts", workspaceId] });
+      toast.success("Post queued for retry");
+    },
+    onError: (error: Error) => {
+      toast.error(error.message || "Failed to retry post");
+    },
+  });
+}
+
 export function useUpdatePost(workspaceId: string | undefined) {
   const queryClient = useQueryClient();
   return useMutation({

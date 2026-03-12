@@ -129,6 +129,11 @@ export const socialApi = {
     return res.data;
   },
 
+  retryPost: async (id: string) => {
+    const res = await api.post<ScheduledPost>(`/api/social/posts/${id}/retry`);
+    return res.data;
+  },
+
   updatePost: async (id: string, payload: { caption?: string; hashtags?: string[]; scheduledAt?: string }) => {
     const res = await api.patch<ScheduledPost>(`/api/social/posts/${id}`, payload);
     return res.data;
