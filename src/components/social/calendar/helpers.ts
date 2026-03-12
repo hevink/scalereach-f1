@@ -109,6 +109,11 @@ export const PLATFORM_LABELS: Record<string, string> = {
   youtube:   "YouTube",
   twitter:   "Twitter / X",
   threads:   "Threads",
+  facebook:  "Facebook",
+  facebook_reels: "FB Reels",
+  instagram_reels: "IG Reels",
+  youtube_shorts: "YT Shorts",
+  linkedin:  "LinkedIn",
 };
 
 export const WEEK_DAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];

@@ -35,6 +35,7 @@ import {
   FacebookIcon,
   ThreadsIcon,
 } from "@/components/icons/platform-icons";
+import { SocialAccountAvatar } from "@/components/social/social-account-avatar";
 
 const PLATFORMS: { id: string; label: string; Icon: React.ElementType; comingSoon?: boolean }[] = [
   { id: "tiktok", label: "TikTok", Icon: TikTokIcon },
@@ -207,9 +208,13 @@ export default function SocialPage() {
                     {connected.map((acc) => (
                       <div key={acc.id} className="flex items-center justify-between rounded-lg bg-muted/40 px-3 py-2">
                         <div className="flex items-center gap-2">
-                          {acc.avatarUrl && (
-                            <img src={acc.avatarUrl} alt="" className="size-6 rounded-full" />
-                          )}
+                          <SocialAccountAvatar
+                            avatarUrl={acc.avatarUrl}
+                            accountName={acc.accountName}
+                            platform={acc.platform}
+                            size="sm"
+                            showBadge={false}
+                          />
                           <div>
                             <p className="text-xs font-medium">{acc.accountName}</p>
                             {acc.accountHandle && (
