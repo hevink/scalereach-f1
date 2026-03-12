@@ -28,6 +28,7 @@ interface Workspace {
   name: string;
   slug: string;
   description: string | null;
+  logo?: string | null;
   role: "owner" | "admin" | "member";
 }
 
@@ -61,7 +62,8 @@ export function WorkspaceSwitcher({
   isLoading = false,
   onWorkspaceCreated,
 }: WorkspaceSwitcherProps) {
-  const { isMobile } = useSidebar();
+  const { isMobile, state } = useSidebar();
+  const isCollapsed = state === "collapsed";
   const router = useRouter();
   const [activeWorkspace, setActiveWorkspace] = useState(
     workspaces.find((w) => w.slug === currentSlug) || workspaces[0]
@@ -134,18 +136,26 @@ export function WorkspaceSwitcher({
                 className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
                 size="lg"
               >
-                <div className="flex aspect-square size-8 items-center justify-center rounded-lg bg-sidebar-primary text-sidebar-primary-foreground">
-                  <IconBuilding className="size-4" />
+                <div className={`flex aspect-square size-8 items-center justify-center overflow-hidden rounded-md ${activeWorkspace.logo ? "" : "bg-sidebar-primary text-sidebar-primary-foreground"}`}>
+                  {activeWorkspace.logo ? (
+                    <img src={activeWorkspace.logo} alt={activeWorkspace.name} className="size-full object-cover" />
+                  ) : (
+                    <IconBuilding className="size-4" />
+                  )}
                 </div>
-                <div className="grid flex-1 text-left text-sm leading-tight">
-                  <span className="truncate font-medium">
-                    {activeWorkspace.name}
-                  </span>
-                  <span className="truncate text-xs">
-                    {getRoleLabel(activeWorkspace.role)}
-                  </span>
-                </div>
-                <IconChevronsDown className="ml-auto size-4" />
+                {!isCollapsed && (
+                  <>
+                    <div className="grid flex-1 text-left text-sm leading-tight">
+                      <span className="truncate font-medium">
+                        {activeWorkspace.name}
+                      </span>
+                      <span className="truncate text-xs">
+                        {getRoleLabel(activeWorkspace.role)}
+                      </span>
+                    </div>
+                    <IconChevronsDown className="ml-auto size-4" />
+                  </>
+                )}
               </SidebarMenuButton>
             }
           />
@@ -165,8 +175,12 @@ export function WorkspaceSwitcher({
                   key={workspace.id}
                   onClick={() => handleWorkspaceChange(workspace.slug)}
                 >
-                  <div className="flex size-6 items-center justify-center rounded-md border">
-                    <IconBuilding className="size-3.5 shrink-0" />
+                  <div className="flex size-6 items-center justify-center overflow-hidden rounded-md border">
+                    {workspace.logo ? (
+                      <img src={workspace.logo} alt={workspace.name} className="size-full object-cover" />
+                    ) : (
+                      <IconBuilding className="size-3.5 shrink-0" />
+                    )}
                   </div>
                   {workspace.name}
                   <DropdownMenuShortcut>⌥{index + 1}</DropdownMenuShortcut>
