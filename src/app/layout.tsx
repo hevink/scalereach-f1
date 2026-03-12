@@ -166,7 +166,7 @@ export default function RootLayout({
       >
         <QueryProvider>
           <PostHogProvider>
-            <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
+            <ThemeProvider attribute="class" defaultTheme="dark">
               <TooltipProvider>
                 <Toaster richColors position="bottom-center" />
                 <CrispChat />
