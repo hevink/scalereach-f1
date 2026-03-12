@@ -71,7 +71,7 @@ function NavLinks({ pathname, hasIssues, stats, failedCount, onNavigate }: {
                 <div className="space-y-2 text-xs px-1">
                     <div className="flex justify-between items-center">
                         <span className="text-muted-foreground">Active Users</span>
-                        <span className="font-semibold tabular-nums">{stats?.activeUsers ?? "—"}</span>
+                        <span className="font-semibold tabular-nums">{stats?.activeUsers ?? "-"}</span>
                     </div>
                     <div className="flex justify-between items-center">
                         <span className="text-muted-foreground">New Today</span>

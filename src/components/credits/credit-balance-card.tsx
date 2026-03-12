@@ -148,7 +148,7 @@ export function CreditBalanceCard({ workspaceSlug }: CreditBalanceCardProps) {
                             </div>
                             <div className="flex items-center gap-3 text-xs text-muted-foreground">
                                 {isAgency ? (
-                                    <span className="text-primary font-medium">Agency plan — unlimited</span>
+                                    <span className="text-primary font-medium">Agency plan - unlimited</span>
                                 ) : resetDateFormatted ? (
                                     <span className="flex items-center gap-1">
                                         <IconCalendar className="size-3" />

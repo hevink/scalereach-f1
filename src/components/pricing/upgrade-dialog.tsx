@@ -41,7 +41,7 @@ const FEATURE_MESSAGES: Record<string, { title: string; message: string; subtitl
     },
     "share clips": {
         title: "Upgrade Required",
-        message: "Clip sharing is a very powerful feature — share your best clips with your fans and community to grow your reach.",
+        message: "Clip sharing is a very powerful feature - share your best clips with your fans and community to grow your reach.",
         subtitle: "Upgrade to Pro to create public share links, track views & downloads, and let anyone watch your clips without signing in.",
     },
     "create workspace": {
@@ -56,7 +56,7 @@ const FEATURE_MESSAGES: Record<string, { title: string; message: string; subtitl
     },
 };
 
-// Scarcity — auto-increments from a base date
+// Scarcity - auto-increments from a base date
 function getScarcityClaimed(base: number, total: number, daysInterval: number): number {
     const baseDate = new Date("2026-02-25");
     const now = new Date();
@@ -86,7 +86,7 @@ function ScarcityBar({ planKey }: { planKey: string }) {
         <div className="mt-3 space-y-1.5">
             <div className="flex items-center justify-between text-xs">
                 <span className={isSoldOut ? "text-destructive font-medium" : "text-amber-600 dark:text-amber-400 font-medium"}>
-                    {isSoldOut ? "🔒 Sold out — join waitlist" : `🔥 Only ${remaining} spot${remaining === 1 ? "" : "s"} left`}
+                    {isSoldOut ? "🔒 Sold out - join waitlist" : `🔥 Only ${remaining} spot${remaining === 1 ? "" : "s"} left`}
                 </span>
                 <span className="text-muted-foreground">{claimed}/{total} claimed</span>
             </div>

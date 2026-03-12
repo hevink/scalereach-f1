@@ -280,7 +280,7 @@ function ClipCard({ clip, index, onDownload }: ClipCardProps) {
                                 </div>
                             </TooltipTrigger>
                             <TooltipContent>
-                                <p>Virality Score — {clip.viralityScore >= 90 ? "High potential" : clip.viralityScore >= 70 ? "Good potential" : "Moderate potential"}</p>
+                                <p>Virality Score - {clip.viralityScore >= 90 ? "High potential" : clip.viralityScore >= 70 ? "Good potential" : "Moderate potential"}</p>
                             </TooltipContent>
                         </Tooltip>
                     </TooltipProvider>

@@ -34,7 +34,7 @@ export default function AdminFailedPage() {
     const handleRetryClip = async (clipId: string) => {
         try {
             await retryClip.mutateAsync(clipId);
-            toast.success("Clip reset — will regenerate on next video processing");
+            toast.success("Clip reset - will regenerate on next video processing");
         } catch {
             toast.error("Failed to retry clip");
         }
@@ -65,7 +65,7 @@ export default function AdminFailedPage() {
                         Failed Items
                     </h1>
                     <p className="text-sm text-muted-foreground mt-0.5">
-                        All failed videos and clips — retry individually or all at once
+                        All failed videos and clips - retry individually or all at once
                     </p>
                 </div>
                 <Button variant="outline" size="sm" onClick={() => refetch()} className="gap-2 self-start">

@@ -837,7 +837,7 @@ export const VideoCanvasEditor = forwardRef<VideoCanvasEditorRef, VideoCanvasEdi
         const ratio = ASPECT_RATIOS[aspectRatio];
         const aspectValue = ratio.width / ratio.height;
 
-        // Canvas internal resolution — must match the selected aspect ratio
+        // Canvas internal resolution - must match the selected aspect ratio
         const canvasSize = React.useMemo(() => {
             const BASE = 480;
             if (aspectRatio === "16:9") return { width: 854, height: BASE };
@@ -956,7 +956,7 @@ export const VideoCanvasEditor = forwardRef<VideoCanvasEditorRef, VideoCanvasEdi
                     const isDefaultLayout = backgroundStyle === "black" && videoScale === 125;
 
                     if (videoFillsCanvas && isDefaultLayout) {
-                        // Video fills the entire canvas with default settings — no background needed
+                        // Video fills the entire canvas with default settings - no background needed
                         ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
                     } else {
                         // ── Draw background ──
@@ -1016,11 +1016,11 @@ export const VideoCanvasEditor = forwardRef<VideoCanvasEditorRef, VideoCanvasEdi
                         const fgScale = videoScale / 100;
                         let dw: number, dh: number, dx: number, dy: number;
                         if (videoAspect > canvasAspect) {
-                            // Video is wider than canvas — fit width, scale up
+                            // Video is wider than canvas - fit width, scale up
                             dw = canvas.width * fgScale;
                             dh = dw / videoAspect;
                         } else {
-                            // Video is taller — fit height, scale up
+                            // Video is taller - fit height, scale up
                             dh = canvas.height * fgScale;
                             dw = dh * videoAspect;
                         }

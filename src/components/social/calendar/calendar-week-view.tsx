@@ -48,7 +48,7 @@ export function CalendarWeekView() {
             >
               {dayPosts.length === 0 ? (
                 <div className="flex flex-1 flex-col items-center justify-center gap-1">
-                  <span className="text-[11px] text-muted-foreground/40">—</span>
+                  <span className="text-[11px] text-muted-foreground/40">-</span>
                   <span className="hidden text-[10px] text-muted-foreground/40 group-hover:inline">
                     + add
                   </span>

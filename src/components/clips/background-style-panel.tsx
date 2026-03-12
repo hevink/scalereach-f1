@@ -57,7 +57,7 @@ export function BackgroundStylePanel({
 
     return (
         <div className="space-y-5">
-            {/* Background Style Section — hidden for 16:9 since video fills the frame */}
+            {/* Background Style Section - hidden for 16:9 since video fills the frame */}
             {aspectRatio !== "16:9" && <div className="space-y-2">
                 <h4 className="text-xs font-medium text-zinc-300 uppercase tracking-wide">Background Style</h4>
                 <p className="text-[10px] text-zinc-500">

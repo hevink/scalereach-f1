@@ -100,7 +100,7 @@ export function ClipCard({ clip, index, onEdit, onFavorite, onDownload, onShare,
                                 </div>
                             </TooltipTrigger>
                             <TooltipContent>
-                                <p>Virality Score — {clip.viralityScore >= 90 ? "High potential" : clip.viralityScore >= 70 ? "Good potential" : "Moderate potential"}</p>
+                                <p>Virality Score - {clip.viralityScore >= 90 ? "High potential" : clip.viralityScore >= 70 ? "Good potential" : "Moderate potential"}</p>
                             </TooltipContent>
                         </Tooltip>
                     )}

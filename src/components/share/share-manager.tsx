@@ -93,11 +93,11 @@ export function ShareManager({
             );
 
             if (data.exists && data.shareUrl) {
-                // Already public — skip confirmation, open modal directly
+                // Already public - skip confirmation, open modal directly
                 setShareLink(data.shareUrl);
                 setIsModalOpen(true);
             } else {
-                // Not public yet — ask for confirmation
+                // Not public yet - ask for confirmation
                 setShowConfirmDialog(true);
             }
         } catch {
@@ -235,7 +235,7 @@ export function ShareManager({
                 {buttonProps.label}
             </Button>
 
-            {/* Confirmation Dialog — only shown for first-time share */}
+            {/* Confirmation Dialog - only shown for first-time share */}
             <AlertDialog open={showConfirmDialog} onOpenChange={(open) => !isCreating && setShowConfirmDialog(open)}>
                 <AlertDialogContent>
                     <AlertDialogHeader>
@@ -244,7 +244,7 @@ export function ShareManager({
                             Make Clips Public?
                         </AlertDialogTitle>
                         <AlertDialogDescription>
-                            This will generate a public link that anyone can use to view and download your clips — no sign-in required. You can revoke access anytime.
+                            This will generate a public link that anyone can use to view and download your clips - no sign-in required. You can revoke access anytime.
                         </AlertDialogDescription>
                     </AlertDialogHeader>
                     <AlertDialogFooter>

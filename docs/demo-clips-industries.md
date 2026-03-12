@@ -1,4 +1,4 @@
-# Demo Clips — Industry & Niche Guide
+# Demo Clips - Industry & Niche Guide
 
 A list of industries and content niches to source demo clips from, showcasing ScaleReach's clip generation capabilities across different verticals.
 

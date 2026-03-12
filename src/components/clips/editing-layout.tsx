@@ -52,7 +52,7 @@ export interface EditingLayoutProps {
     className?: string;
     header?: ReactNode;
     onPanelResize?: (sizes: { captionEditor: number; videoPlayer: number }) => void;
-    /** Controlled toolbar panel (optional — if omitted, uses internal state) */
+    /** Controlled toolbar panel (optional - if omitted, uses internal state) */
     activeToolbarPanel?: ToolbarPanel;
     /** Callback when toolbar panel changes */
     onToolbarPanelChange?: (panel: ToolbarPanel) => void;

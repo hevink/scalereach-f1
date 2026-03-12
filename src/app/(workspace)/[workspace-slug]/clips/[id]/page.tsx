@@ -342,12 +342,12 @@ export default function ClipEditorPage({ params }: ClipEditorPageProps) {
     const [currentTime, setCurrentTime] = useState(0);
     const [isPlaying, setIsPlaying] = useState(false);
     const [clipBoundaries, setClipBoundaries] = useState<{ start: number; end: number } | null>(null);
-    // Local edited words — single source of truth for caption edits
+    // Local edited words - single source of truth for caption edits
     // Both video overlay and transcript panel derive from this
     const [localWords, setLocalWords] = useState<CaptionWord[] | null>(null);
     // Local transcript captions state (paragraph-grouped) for inline editing
     const [localTranscriptCaptions, setLocalTranscriptCaptions] = useState<Caption[] | null>(null);
-    // Track unsaved changes — granular per concern
+    // Track unsaved changes - granular per concern
     const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
     const [dirtyWords, setDirtyWords] = useState(false);
     const [dirtyStyle, setDirtyStyle] = useState(false);
@@ -1022,7 +1022,7 @@ export default function ClipEditorPage({ params }: ClipEditorPageProps) {
     const handleUndo = useCallback(() => {
         if (!canUndo) return;
         undoCaptionEdit();
-        // captionUndoState will now hold the previous state — apply it
+        // captionUndoState will now hold the previous state - apply it
         // We read via refs to get the latest values synchronously
         const undoState = captionUndoState;
         if (!undoState) return;
@@ -1194,15 +1194,15 @@ export default function ClipEditorPage({ params }: ClipEditorPageProps) {
     let isUsingRawClip: boolean;
 
     if (splitScreenEnabled && clip.rawStorageUrl) {
-        // Split screen — rawStorageUrl has the gameplay composition baked in, use it directly
+        // Split screen - rawStorageUrl has the gameplay composition baked in, use it directly
         videoSrc = clip.rawStorageUrl;
         isUsingRawClip = true; // trimmed clip, starts at 0
     } else if (smartCropReady) {
-        // Face-tracked video — already 9:16, fills the frame
+        // Face-tracked video - already 9:16, fills the frame
         videoSrc = clip.smartCropStorageUrl!;
         isUsingRawClip = true; // trimmed clip, starts at 0
     } else if (clip.rawStorageUrl) {
-        // Raw clip is available — always prefer it since video.storageUrl may be audio-only (.m4a)
+        // Raw clip is available - always prefer it since video.storageUrl may be audio-only (.m4a)
         videoSrc = clip.rawStorageUrl;
         isUsingRawClip = true; // trimmed clip, starts at 0
     } else if (video?.storageUrl && !video.storageUrl.endsWith(".m4a")) {
@@ -1235,7 +1235,7 @@ export default function ClipEditorPage({ params }: ClipEditorPageProps) {
     const videoStartTime = isUsingRawClip ? 0 : clipWithBoundaries.startTime;
     const videoEndTime = isUsingRawClip ? (clipWithBoundaries.endTime - clipWithBoundaries.startTime) : clipWithBoundaries.endTime;
 
-    // Captions for video overlay — derived from localWords (or server data) via captionsForVideo useMemo
+    // Captions for video overlay - derived from localWords (or server data) via captionsForVideo useMemo
     const videoCaptions = captionsForVideo;
 
     // Captions for transcript panel (sentence-based paragraphs)
@@ -1313,9 +1313,9 @@ export default function ClipEditorPage({ params }: ClipEditorPageProps) {
                     /* Center Panel: Video Canvas Editor with Caption Overlay */
                     videoPlayer: (
                         <div className="flex flex-col gap-2 h-full">
-                            {/* Preview toolbar — aspect ratio + layout controls */}
+                            {/* Preview toolbar - aspect ratio + layout controls */}
                             <div className="flex items-center gap-3 px-1">
-                                {/* Aspect ratio pills — hidden for split screen (composition is baked in) */}
+                                {/* Aspect ratio pills - hidden for split screen (composition is baked in) */}
                                 {!splitScreenEnabled && (
                                     <div className="flex items-center gap-1 bg-zinc-800/60 rounded-lg p-0.5">
                                         {(["9:16", "1:1", "16:9"] as const).map((r) => (
@@ -1347,7 +1347,7 @@ export default function ClipEditorPage({ params }: ClipEditorPageProps) {
                                     </div>
                                 )}
 
-                                {/* Layout: Fit / Scale indicator — hidden for 16:9 and split screen */}
+                                {/* Layout: Fit / Scale indicator - hidden for 16:9 and split screen */}
                                 {aspectRatio !== "16:9" && !splitScreenEnabled && (
                                     <div className="flex items-center gap-2 text-[11px] text-zinc-400">
                                         <span>Layout:</span>

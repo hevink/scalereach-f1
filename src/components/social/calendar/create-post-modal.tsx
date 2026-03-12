@@ -416,7 +416,7 @@ export function CreatePostFromCalendarModal({ workspaceId }: Props) {
           </div>
         </div>
 
-        {/* Step 1 — Source picker (Clip or Upload) */}
+        {/* Step 1 - Source picker (Clip or Upload) */}
         {step === "clip" && (
           <div className="flex flex-col gap-3 p-5">
             {/* Tab switcher */}
@@ -637,7 +637,7 @@ export function CreatePostFromCalendarModal({ workspaceId }: Props) {
           </div>
         )}
 
-        {/* Step 2 — Details */}
+        {/* Step 2 - Details */}
         {step === "details" && (selectedClip || (sourceTab === "upload" && uploadState === "done")) && (
           <div className="flex flex-col sm:flex-row sm:divide-x max-sm:overflow-y-auto max-sm:max-h-[calc(100dvh-56px)]">
             {/* Left: preview */}
@@ -758,7 +758,7 @@ export function CreatePostFromCalendarModal({ workspaceId }: Props) {
                 />
               </div>
 
-              {/* Caption & Hashtags — with per-platform customization */}
+              {/* Caption & Hashtags - with per-platform customization */}
               {selectedAccountIds.size > 1 && (
                 <div className="flex items-center justify-between">
                   <Label className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">Content</Label>

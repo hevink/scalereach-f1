@@ -66,7 +66,7 @@ Add text overlay support to the clip editor: a text track in the timeline (dragg
 - Export TextTrack
 
 ## Verification
-1. `bun run check` — zero new TypeScript errors
+1. `bun run check` - zero new TypeScript errors
 2. Click "Text" in toolbar → panel opens with "+ Add Text"
 3. Add text → block appears in timeline, text appears on video
 4. Drag block edges to change timing

@@ -131,7 +131,7 @@ export function ExportOptions({
 
   return (
     <div className={cn("flex flex-col gap-5", className)} data-slot="export-options">
-      {/* Format Selector — Card-style toggle */}
+      {/* Format Selector - Card-style toggle */}
       <div className="flex flex-col gap-2.5">
         <Label className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
           Format
@@ -170,7 +170,7 @@ export function ExportOptions({
         </div>
       </div>
 
-      {/* Resolution Selector — Card-style toggle */}
+      {/* Resolution Selector - Card-style toggle */}
       <div className="flex flex-col gap-2.5">
         <Label className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
           Resolution

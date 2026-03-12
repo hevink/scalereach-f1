@@ -29,7 +29,7 @@ export function useSupportedLanguages() {
   return useQuery({
     queryKey: ["translations", "languages"],
     queryFn: () => translationsApi.getSupportedLanguages(),
-    staleTime: 24 * 60 * 60 * 1000, // 24 hours — languages don't change
+    staleTime: 24 * 60 * 60 * 1000, // 24 hours - languages don't change
   });
 }
 

@@ -45,7 +45,7 @@ function StatusBadge({ status }: { status: string }) {
 }
 
 function formatDuration(seconds: number | null) {
-    if (!seconds) return "—";
+    if (!seconds) return "-";
     const m = Math.floor(seconds / 60);
     const s = Math.floor(seconds % 60);
     return `${m}:${s.toString().padStart(2, "0")}`;
@@ -122,10 +122,10 @@ function VideoClipsRow({ clips }: { clips: AdminUserClip[] }) {
                     <TableCell>
                         {c.viralityScore != null
                             ? <Badge variant="outline" className="text-xs">{c.viralityScore}%</Badge>
-                            : <span className="text-muted-foreground text-xs">—</span>}
+                            : <span className="text-muted-foreground text-xs">-</span>}
                     </TableCell>
                     <TableCell className="text-sm text-muted-foreground">{formatDuration(c.duration)}</TableCell>
-                    <TableCell className="text-sm text-muted-foreground">{c.quality || "—"}</TableCell>
+                    <TableCell className="text-sm text-muted-foreground">{c.quality || "-"}</TableCell>
                     <TableCell className="text-sm text-muted-foreground">
                         {formatDistanceToNow(new Date(c.createdAt), { addSuffix: true })}
                     </TableCell>
@@ -189,7 +189,7 @@ function VideoRow({ video, allClips }: { video: AdminUserVideo; allClips: AdminU
                         )}
                     </div>
                 </TableCell>
-                <TableCell className="text-sm text-muted-foreground">{video.workspaceName || "—"}</TableCell>
+                <TableCell className="text-sm text-muted-foreground">{video.workspaceName || "-"}</TableCell>
                 <TableCell className="text-sm text-muted-foreground whitespace-nowrap">
                     {formatDistanceToNow(new Date(video.createdAt), { addSuffix: true })}
                 </TableCell>
@@ -242,22 +242,22 @@ function WorkspacesSection({ workspaces }: { workspaces: AdminUserWorkspace[] })
                     <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-sm">
                         <div>
                             <p className="text-xs text-muted-foreground">Billing Cycle</p>
-                            <p className="font-medium capitalize">{ws.billingCycle || "—"}</p>
+                            <p className="font-medium capitalize">{ws.billingCycle || "-"}</p>
                         </div>
                         <div>
                             <p className="text-xs text-muted-foreground">Subscription ID</p>
-                            <p className="font-mono text-xs truncate">{ws.subscriptionId || "—"}</p>
+                            <p className="font-mono text-xs truncate">{ws.subscriptionId || "-"}</p>
                         </div>
                         <div>
                             <p className="text-xs text-muted-foreground">Renewal Date</p>
                             <p className="font-medium">
-                                {ws.subscriptionRenewalDate ? format(new Date(ws.subscriptionRenewalDate), "MMM d, yyyy") : "—"}
+                                {ws.subscriptionRenewalDate ? format(new Date(ws.subscriptionRenewalDate), "MMM d, yyyy") : "-"}
                             </p>
                         </div>
                         <div>
                             <p className="text-xs text-muted-foreground">Cancelled At</p>
                             <p className="font-medium">
-                                {ws.subscriptionCancelledAt ? format(new Date(ws.subscriptionCancelledAt), "MMM d, yyyy") : "—"}
+                                {ws.subscriptionCancelledAt ? format(new Date(ws.subscriptionCancelledAt), "MMM d, yyyy") : "-"}
                             </p>
                         </div>
                     </div>
@@ -377,7 +377,7 @@ export default function AdminUserDetailPage() {
                 ].map(({ label, value, icon: Icon, color }) => (
                     <Card key={label} className={failedClips > 0 && label === "Failed Clips" ? "border-red-200 dark:border-red-900" : ""}>
                         <CardContent className="pt-4 pb-4">
-                            <div className={`text-2xl font-bold tabular-nums ${color}`}>{value ?? "—"}</div>
+                            <div className={`text-2xl font-bold tabular-nums ${color}`}>{value ?? "-"}</div>
                             <div className="text-xs text-muted-foreground flex items-center gap-1 mt-1">
                                 <Icon className={`h-3.5 w-3.5 ${color}`} /> {label}
                             </div>

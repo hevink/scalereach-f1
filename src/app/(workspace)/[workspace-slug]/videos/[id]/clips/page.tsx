@@ -69,7 +69,7 @@ function VideoClipsLoading() {
                 </div>
             </div>
 
-            {/* Clips Skeleton — staggered fade-in */}
+            {/* Clips Skeleton - staggered fade-in */}
             <div className="flex-1 overflow-auto p-4 sm:p-6 flex justify-center">
                 <div className="space-y-6 max-w-4xl w-full">
                     {Array.from({ length: 3 }).map((_, i) => (
@@ -300,7 +300,7 @@ function ProcessingCard({ title, description, thumbnailUrl, step }: {
 
                     {/* Reassurance */}
                     <p className="text-[11px] text-muted-foreground/70 text-center">
-                        You can leave this page — we&apos;ll notify you when it&apos;s done.
+                        You can leave this page - we&apos;ll notify you when it&apos;s done.
                     </p>
                 </div>
             </div>
@@ -422,7 +422,7 @@ function NoClips({ videoTitle, videoStatus, videoCreatedAt, thumbnailUrl }: NoCl
                         </div>
                     </div>
                     <p className="text-[11px] text-muted-foreground/70">
-                        You can leave this page — we&apos;ll notify you when it&apos;s done.
+                        You can leave this page - we&apos;ll notify you when it&apos;s done.
                     </p>
                 </div>
             </div>
@@ -562,7 +562,7 @@ export default function VideoClipsPage({ params }: VideoClipsPageProps) {
         }
     }, []);
 
-    // Video just completed but clips haven't loaded yet — show a nice transition
+    // Video just completed but clips haven't loaded yet - show a nice transition
     const isWaitingForClips = video?.status === "completed" && (!clips || clips.length === 0);
 
     if (videoLoading || clipsLoading) {
@@ -726,7 +726,7 @@ export default function VideoClipsPage({ params }: VideoClipsPageProps) {
                             />
                         )}
 
-                        {/* Schedule nudge — only shown when ALL clips are ready (none generating) */}
+                        {/* Schedule nudge - only shown when ALL clips are ready (none generating) */}
                         {!clips.some(c => c.status === "generating" || c.status === "detected") && (
                             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 rounded-xl border border-primary/20 bg-primary/5 px-4 py-3">
                                 <div className="flex items-center gap-3">
@@ -734,7 +734,7 @@ export default function VideoClipsPage({ params }: VideoClipsPageProps) {
                                         <IconCalendar className="size-4 text-primary" />
                                     </div>
                                     <p className="text-sm text-foreground">
-                                        Your clips are ready — schedule them to TikTok, Instagram, YouTube Shorts & more.
+                                        Your clips are ready - schedule them to TikTok, Instagram, YouTube Shorts & more.
                                     </p>
                                 </div>
                                 <Button

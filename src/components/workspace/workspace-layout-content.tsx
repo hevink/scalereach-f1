@@ -124,7 +124,7 @@ export function WorkspaceLayoutContent({
         {
             key: "d",
             handler: () => {
-                // Don't allow theme toggle on clip editor — dark mode only
+                // Don't allow theme toggle on clip editor - dark mode only
                 if (/\/clips\/[^/]+$/.test(pathname)) return;
                 setTheme(theme === "dark" ? "light" : "dark");
             },
@@ -134,7 +134,7 @@ export function WorkspaceLayoutContent({
     // Hide sidebar on clip editor page
     const isClipEditor = /\/clips\/[^/]+$/.test(pathname);
 
-    // Force dark mode on clip editor — no light mode for editing
+    // Force dark mode on clip editor - no light mode for editing
     const previousThemeRef = React.useRef<string | undefined>(undefined);
     useEffect(() => {
         if (isClipEditor) {

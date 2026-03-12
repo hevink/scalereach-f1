@@ -216,7 +216,7 @@ export function SplitScreenSection({ config, onChange, disabled, userPlan, works
                     <div className="space-y-2.5">
                         <Label className="text-sm font-medium">Background Video</Label>
                         <p className="text-xs text-muted-foreground">
-                            Select one or more — each clip gets a random pick from your selection. Leave all unselected for fully random.
+                            Select one or more - each clip gets a random pick from your selection. Leave all unselected for fully random.
                         </p>
 
                         {/* Category Filter Chips */}

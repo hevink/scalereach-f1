@@ -1,4 +1,4 @@
-// @ts-nocheck — Passkey feature disabled, will re-enable later
+// @ts-nocheck - Passkey feature disabled, will re-enable later
 "use client";
 
 import { IconDots, IconPencil, IconTrash } from "@tabler/icons-react";

@@ -30,7 +30,11 @@ export function NavMain({ currentSlug, workspaceId }: NavMainProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { isMobile, setOpenMobile } = useSidebar();
-  const { data: videos } = useMyVideos(workspaceId || "", !!workspaceId);
+
+  // Don't fetch videos when on a clip detail page (e.g. /wowww/videos/xxx/clips)
+  // to avoid unnecessary polling
+  const isOnClipsPage = pathname.includes("/clips") && pathname.includes("/videos/");
+  const { data: videos } = useMyVideos(workspaceId || "", !!workspaceId && !isOnClipsPage);
 
   const navigate = (url: string) => {
     router.push(url);

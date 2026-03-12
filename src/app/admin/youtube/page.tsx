@@ -143,7 +143,7 @@ export default function YouTubeHealthPage() {
                                     {data?.ytdlp?.version || "unknown"}
                                 </Badge>
                                 <p className="text-2xl font-bold font-mono">
-                                    {data?.ytdlp?.version || "—"}
+                                    {data?.ytdlp?.version || "-"}
                                 </p>
                                 <p className="text-xs text-muted-foreground">
                                     Keep updated for best compatibility

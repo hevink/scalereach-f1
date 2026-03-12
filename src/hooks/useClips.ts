@@ -136,7 +136,7 @@ export function useToggleFavorite() {
       await queryClient.cancelQueries({ queryKey: clipKeys.byId(clipId) });
       await queryClient.cancelQueries({ queryKey: clipKeys.all });
 
-      // Snapshot the previous value — check individual cache first, then video lists
+      // Snapshot the previous value - check individual cache first, then video lists
       let previousClip = queryClient.getQueryData<ClipResponse>(
         clipKeys.byId(clipId)
       );

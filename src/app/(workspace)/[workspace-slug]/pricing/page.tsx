@@ -25,7 +25,7 @@ import { plans, type Plan } from "@/lib/pricing-config";
 // Pricing Data
 // ============================================================================
 
-// Scarcity data — update these numbers as spots fill up
+// Scarcity data - update these numbers as spots fill up
 const PLAN_SCARCITY: Record<string, { total: number; claimed: number } | null> = {
     agency: { total: 10, claimed: 4 },
     pro: { total: 100, claimed: 28 },
@@ -64,7 +64,7 @@ function CornerDecoration({ position }: { position: "top-left" | "top-right" | "
     );
 }
 
-// Scarcity — auto-increments from a base date
+// Scarcity - auto-increments from a base date
 // Pro: +1/day from base of 28 on Feb 25 2026, cap at 100
 // Agency: +1 every 3 days from base of 4 on Feb 25 2026, cap at 10
 function getScarcityClaimed(base: number, total: number, daysInterval: number): number {
@@ -96,7 +96,7 @@ function ScarcityBar({ planKey }: { planKey: string }) {
         <div className="mt-3 space-y-1.5">
             <div className="flex items-center justify-between text-xs">
                 <span className={isSoldOut ? "text-destructive font-medium" : "text-amber-600 dark:text-amber-400 font-medium"}>
-                    {isSoldOut ? "🔒 Sold out — join waitlist" : `🔥 Only ${remaining} spot${remaining === 1 ? "" : "s"} left`}
+                    {isSoldOut ? "🔒 Sold out - join waitlist" : `🔥 Only ${remaining} spot${remaining === 1 ? "" : "s"} left`}
                 </span>
                 <span className="text-muted-foreground">{claimed}/{total} claimed</span>
             </div>
@@ -529,7 +529,7 @@ export default function WorkspacePricingPage() {
                     className="mb-8 rounded-xl border border-orange-500/30 bg-orange-500/10 px-5 py-4 text-sm text-orange-600 dark:text-orange-400 text-center"
                 >
                     <span className="font-semibold">Free plan temporarily unavailable.</span>{" "}
-                    Due to extremely high usage, we&apos;ve paused the free tier while we scale our infrastructure. Pick a paid plan to get started — all plans come with a full feature set.
+                    Due to extremely high usage, we&apos;ve paused the free tier while we scale our infrastructure. Pick a paid plan to get started - all plans come with a full feature set.
                 </motion.div>
 
                 {/* Pricing Cards Container */}
@@ -584,7 +584,7 @@ export default function WorkspacePricingPage() {
                             },
                             {
                                 q: "What happens to my videos when storage expires?",
-                                a: "Videos are automatically deleted from our servers after the storage period ends — 14 days for Free, 3 months for Starter, and 6 months for Pro. Download your clips before then.",
+                                a: "Videos are automatically deleted from our servers after the storage period ends - 14 days for Free, 3 months for Starter, and 6 months for Pro. Download your clips before then.",
                             },
                             {
                                 q: "Can I upgrade or downgrade anytime?",

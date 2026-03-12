@@ -91,9 +91,9 @@ export default function WorkerDashboardPage() {
                                 <IconClock className="h-4 w-4 text-muted-foreground" />
                             </CardHeader>
                             <CardContent>
-                                <p className="text-2xl font-bold">{data?.uptime_seconds ? formatUptime(data.uptime_seconds) : "—"}</p>
+                                <p className="text-2xl font-bold">{data?.uptime_seconds ? formatUptime(data.uptime_seconds) : "-"}</p>
                                 <p className="text-xs text-muted-foreground mt-1">
-                                    Since {data?.timestamp ? new Date(new Date(data.timestamp).getTime() - (data.uptime_seconds || 0) * 1000).toLocaleString() : "—"}
+                                    Since {data?.timestamp ? new Date(new Date(data.timestamp).getTime() - (data.uptime_seconds || 0) * 1000).toLocaleString() : "-"}
                                 </p>
                             </CardContent>
                         </Card>
@@ -114,7 +114,7 @@ export default function WorkerDashboardPage() {
                                             Load: {data.system.load_avg_1m} · {data.system.cpu_count} CPUs · Bun {data.system.bun_version}
                                         </p>
                                     </>
-                                ) : <p className="text-sm text-muted-foreground">—</p>}
+                                ) : <p className="text-sm text-muted-foreground">-</p>}
                             </CardContent>
                         </Card>
 
@@ -203,30 +203,30 @@ export default function WorkerDashboardPage() {
                                     </div>
                                     <div>
                                         <p className="text-muted-foreground text-xs">Version</p>
-                                        <p className="font-mono text-xs">{data.redis.version || "—"}</p>
+                                        <p className="font-mono text-xs">{data.redis.version || "-"}</p>
                                     </div>
                                     <div>
                                         <p className="text-muted-foreground text-xs">Memory</p>
-                                        <p className="font-mono text-xs">{data.redis.memory?.used_memory_human || "—"}</p>
+                                        <p className="font-mono text-xs">{data.redis.memory?.used_memory_human || "-"}</p>
                                     </div>
                                     <div>
                                         <p className="text-muted-foreground text-xs">Clients</p>
-                                        <p className="font-semibold tabular-nums">{data.redis.clients?.connected_clients || "—"}</p>
+                                        <p className="font-semibold tabular-nums">{data.redis.clients?.connected_clients || "-"}</p>
                                     </div>
                                     <div>
                                         <p className="text-muted-foreground text-xs">BullMQ Keys</p>
-                                        <p className="font-semibold tabular-nums">{data.redis.bullmq_keys_count ?? "—"}</p>
+                                        <p className="font-semibold tabular-nums">{data.redis.bullmq_keys_count ?? "-"}</p>
                                     </div>
                                     <div>
                                         <p className="text-muted-foreground text-xs">Commands</p>
-                                        <p className="font-mono text-xs">{data.redis.stats?.total_commands_processed || "—"}</p>
+                                        <p className="font-mono text-xs">{data.redis.stats?.total_commands_processed || "-"}</p>
                                     </div>
                                     <div>
                                         <p className="text-muted-foreground text-xs">Uptime</p>
-                                        <p className="font-mono text-xs">{data.redis.stats?.uptime_in_seconds ? formatUptime(Number(data.redis.stats.uptime_in_seconds)) : "—"}</p>
+                                        <p className="font-mono text-xs">{data.redis.stats?.uptime_in_seconds ? formatUptime(Number(data.redis.stats.uptime_in_seconds)) : "-"}</p>
                                     </div>
                                 </div>
-                            ) : <p className="text-sm text-muted-foreground">—</p>}
+                            ) : <p className="text-sm text-muted-foreground">-</p>}
                         </CardContent>
                     </Card>
                 </>

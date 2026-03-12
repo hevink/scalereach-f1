@@ -72,7 +72,7 @@ export function AudioTrack({ track }: AudioTrackProps) {
         }
     }, [videoSrc, clipDuration, state.trackWidth, totalBarWidth]);
 
-    // Draw static waveform (base layer — unplayed color + overlay layer — played color)
+    // Draw static waveform (base layer - unplayed color + overlay layer - played color)
     // Only redraws when waveform data, size, or mute state changes (NOT on currentTime)
     React.useEffect(() => {
         const baseCanvas = baseCanvasRef.current;
@@ -101,7 +101,7 @@ export function AudioTrack({ track }: AudioTrackProps) {
             baseCtx.fillRect(x, centerY - barHeight / 2, barWidth, barHeight);
         });
 
-        // Draw overlay canvas (played waveform — full width, clipped via CSS)
+        // Draw overlay canvas (played waveform - full width, clipped via CSS)
         overlayCanvas.width = state.trackWidth * dpr;
         overlayCanvas.height = track.height * dpr;
         const overlayCtx = overlayCanvas.getContext("2d");
@@ -116,7 +116,7 @@ export function AudioTrack({ track }: AudioTrackProps) {
         });
     }, [state.trackWidth, track.height, track.muted, isLoading, totalBarWidth]);
 
-    // Playback position — only updates the overlay clip width (no canvas redraw)
+    // Playback position - only updates the overlay clip width (no canvas redraw)
     const playedX = timeToX(currentTime);
 
     // Scrub on drag
@@ -165,7 +165,7 @@ export function AudioTrack({ track }: AudioTrackProps) {
                 ref={baseCanvasRef}
                 style={{ width: state.trackWidth, height: track.height, display: "block" }}
             />
-            {/* Overlay waveform (played color) — clipped to playback position */}
+            {/* Overlay waveform (played color) - clipped to playback position */}
             <div
                 className="absolute inset-0 overflow-hidden pointer-events-none"
                 style={{ width: playedX }}

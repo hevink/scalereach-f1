@@ -534,7 +534,7 @@ export function SchedulePostModal({
           </div>
         </div>
 
-        {/* Step 1 — Source picker */}
+        {/* Step 1 - Source picker */}
         {step === "clip" && (
           <div className="flex flex-col gap-3 p-5">
             {/* Tab switcher */}
@@ -810,7 +810,7 @@ export function SchedulePostModal({
           </div>
         )}
 
-        {/* Step 2 — Details */}
+        {/* Step 2 - Details */}
         {step === "details" && (selectedClip || (sourceTab === "upload" && uploadedMedia)) && (
           <div className="flex divide-x">
             {/* Left: preview */}
@@ -922,7 +922,7 @@ export function SchedulePostModal({
                 <DateTimeScrollPicker value={scheduledDate} onChange={setScheduledDate} />
               </div>
 
-              {/* Caption & Hashtags — with per-platform customization */}
+              {/* Caption & Hashtags - with per-platform customization */}
               {selectedAccountIds.size > 1 && (
                 <div className="flex items-center justify-between">
                   <Label className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">Content</Label>

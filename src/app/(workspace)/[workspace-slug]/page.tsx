@@ -382,7 +382,7 @@ export default function WorkspacePage({ params }: WorkspacePageProps) {
         onOpenChange={setShowUpgradeDialog}
         workspaceSlug={slug}
         feature="file upload"
-        description="Upload MP4, WebM, and MOV files directly — available on Starter and Pro plans."
+        description="Upload MP4, WebM, and MOV files directly - available on Starter and Pro plans."
       />
 
       <div className="flex flex-col items-center">

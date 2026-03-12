@@ -104,7 +104,7 @@ function parsePostError(raw: string): { title: string; description: string } {
       if (code && KNOWN_ERROR_CODES[code]) {
         return KNOWN_ERROR_CODES[code];
       }
-      // Unknown code but has a message — show the message cleanly
+      // Unknown code but has a message - show the message cleanly
       const msg = parsed.message || parsed.error?.message || parsed.error_description;
       if (msg) {
         const platform = raw.match(/^(TikTok|YouTube|Instagram|Facebook|LinkedIn|Threads)/i)?.[0] || "Platform";
@@ -132,7 +132,7 @@ function parsePostError(raw: string): { title: string; description: string } {
     }
   }
 
-  // Fallback — just show it as-is but with a generic title
+  // Fallback - just show it as-is but with a generic title
   return { title: "Posting failed", description: raw };
 }
 
