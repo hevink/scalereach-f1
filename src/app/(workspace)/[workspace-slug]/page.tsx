@@ -78,9 +78,10 @@ export default function WorkspacePage({ params }: WorkspacePageProps) {
   const searchParams = useSearchParams();
   const uploadToProject = searchParams.get("uploadToProject");
   const statusFilter = searchParams.get("filter") || undefined;
+  const sourceTypeFilter = searchParams.get("sourceType") || undefined;
   const { data: session, isPending: sessionPending } = useSession();
   const { data: workspace, isLoading: workspaceLoading, error } = useWorkspaceBySlug(slug);
-  const { data: videos, isLoading: videosLoading, error: videosError } = useMyVideos(workspace?.id || "", !!session?.user && !!workspace?.id, statusFilter);
+  const { data: videos, isLoading: videosLoading, error: videosError } = useMyVideos(workspace?.id || "", !!session?.user && !!workspace?.id, statusFilter, sourceTypeFilter);
 
   const queryClient = useQueryClient();
 

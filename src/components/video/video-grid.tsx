@@ -1,12 +1,12 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useMemo } from "react";
 import type React from "react";
 import { VideoLite } from "@/lib/api/video";
 import { VideoCard } from "./video-card";
 import { VideoGridCard } from "./video-grid-card";
 import { SkeletonVideoGrid } from "@/components/ui/skeletons";
-import { IconUpload, IconList, IconLayoutGrid } from "@tabler/icons-react";
+import { IconUpload, IconList, IconLayoutGrid, IconSearch, IconX } from "@tabler/icons-react";
 import { HugeVideoIcon } from "@/components/icons/huge-icons";
 import { cn } from "@/lib/utils";
 
@@ -39,6 +39,13 @@ export function VideoGrid({
         }
         return "list";
     });
+    const [searchQuery, setSearchQuery] = useState("");
+
+    const filteredVideos = useMemo(() => {
+        if (!searchQuery.trim()) return videos;
+        const q = searchQuery.toLowerCase().trim();
+        return videos.filter(v => v.title?.toLowerCase().includes(q));
+    }, [videos, searchQuery]);
 
     const handleViewModeChange = useCallback((mode: "list" | "grid") => {
         setViewMode(mode);
@@ -169,8 +176,49 @@ export function VideoGrid({
                 </div>
             </div>
 
+            {/* Search */}
+            <div className="flex items-center gap-2">
+                <div className="relative">
+                    <IconSearch className="absolute left-2.5 top-1/2 -translate-y-1/2 size-3.5 text-muted-foreground" />
+                    <input
+                        type="text"
+                        placeholder="Search videos..."
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e.target.value)}
+                        className="h-8 w-80 rounded-md border bg-muted/30 pl-8 pr-8 text-xs placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-ring"
+                    />
+                    {searchQuery && (
+                        <button
+                            onClick={() => setSearchQuery("")}
+                            className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                        >
+                            <IconX className="size-3" />
+                        </button>
+                    )}
+                </div>
+                {searchQuery.trim() && (
+                    <span className="text-xs text-muted-foreground">
+                        {filteredVideos.length} of {videos.length}
+                    </span>
+                )}
+            </div>
+
+            {/* Empty state for search */}
+            {filteredVideos.length === 0 && videos.length > 0 && (
+                <div className="text-center py-12 text-muted-foreground">
+                    <IconSearch className="size-8 mx-auto mb-3 opacity-40" />
+                    <p className="text-sm font-medium">No videos match "{searchQuery}"</p>
+                    <button
+                        onClick={() => setSearchQuery("")}
+                        className="text-xs text-primary hover:underline mt-1"
+                    >
+                        Clear search
+                    </button>
+                </div>
+            )}
+
             {/* List view */}
-            {viewMode === "list" && (
+            {viewMode === "list" && filteredVideos.length > 0 && (
                 <div data-testid="video-grid" className="rounded-lg border overflow-hidden" role="list" aria-label="Video list">
                     <div className="hidden md:grid md:grid-cols-[120px_1fr_120px_100px] lg:grid-cols-[120px_1fr_120px_120px_100px] xl:grid-cols-[120px_1fr_120px_120px_80px_100px] gap-6 px-6 py-3 text-xs font-semibold text-muted-foreground uppercase tracking-wider bg-muted/30 border-b">
                         <div>Thumbnail</div>
@@ -181,7 +229,7 @@ export function VideoGrid({
                         <div className="text-right">Actions</div>
                     </div>
                     <div className="divide-y divide-border">
-                        {videos.map((video) => (
+                        {filteredVideos.map((video) => (
                             <div
                                 key={video.id}
                                 role="listitem"
@@ -205,14 +253,14 @@ export function VideoGrid({
             )}
 
             {/* Grid view */}
-            {viewMode === "grid" && (
+            {viewMode === "grid" && filteredVideos.length > 0 && (
                 <div
                     data-testid="video-grid-cards"
                     className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3"
                     role="list"
                     aria-label="Video grid"
                 >
-                    {videos.map((video) => (
+                    {filteredVideos.map((video) => (
                         <div
                             key={video.id}
                             role="listitem"

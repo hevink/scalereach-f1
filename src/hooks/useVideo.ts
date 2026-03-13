@@ -67,10 +67,10 @@ export const videoKeys = {
  * Get user's videos for a workspace
  * Requirements: 30.4
  */
-export function useMyVideos(workspaceId: string, enabled = true, filter?: string) {
+export function useMyVideos(workspaceId: string, enabled = true, filter?: string, sourceType?: string) {
   return useQuery({
-    queryKey: [...videoKeys.myVideos(workspaceId), filter],
-    queryFn: () => videoApi.getMyVideos(workspaceId, filter),
+    queryKey: [...videoKeys.myVideos(workspaceId), filter, sourceType],
+    queryFn: () => videoApi.getMyVideos(workspaceId, filter, sourceType),
     enabled: enabled && !!workspaceId,
     retry: (failureCount, error) => {
       if ((error as any)?.status === 401 || (error as any)?.status === 403) {
