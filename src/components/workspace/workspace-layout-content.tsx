@@ -191,7 +191,7 @@ export function WorkspaceLayoutContent({
                 <SidebarInset>
                     <header className="flex h-12 shrink-0 items-center gap-2 border-b px-4">
                         <SidebarTrigger className="-ml-1" />
-                        <Separator orientation="vertical" className="mx-1 h-12! border-muted" />
+                        <Separator orientation="vertical" className="mx-1 h-12!" />
                         <NavBreadcrumb pathname={pathname} />
                         <div className="ml-auto">
                             <PlanBadge
