@@ -482,7 +482,7 @@ export default function VideoClipsPage({ params }: VideoClipsPageProps) {
         refetch: refetchClips,
     } = useClipsByVideo(videoId);
 
-    const isProcessing = !!video?.status && !["completed", "failed", "error"].includes(video.status);
+    const isProcessing = !!video?.status && !["completed", "failed", "error", "expired"].includes(video.status);
 
     // Adaptive polling for video status during processing
     const { data: statusData } = useVideoStatus(videoId, isProcessing);
@@ -618,6 +618,53 @@ export default function VideoClipsPage({ params }: VideoClipsPageProps) {
         return <VideoNotFound onBack={handleBack} />;
     }
 
+    if (video.status === "expired") {
+        return (
+            <div className="flex h-full flex-col bg-background">
+                <div className="border-b px-4 sm:px-6 py-3 sm:py-4">
+                    <div className="flex items-start gap-2 sm:gap-3 min-w-0">
+                        <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={handleBack}
+                            className="mt-0.5 shrink-0 size-8 sm:size-9"
+                            aria-label="Go back"
+                        >
+                            <IconArrowLeft className="size-4 sm:size-5" />
+                        </Button>
+                        <div className="min-w-0">
+                            <h1 className="text-base sm:text-xl font-semibold truncate">
+                                {video.title || "Untitled Video"}
+                            </h1>
+                            <p className="text-xs sm:text-sm text-muted-foreground mt-0.5">
+                                {formatDate(video.createdAt)}
+                            </p>
+                        </div>
+                    </div>
+                </div>
+                <div className="flex-1 flex items-center justify-center p-8">
+                    <div className="text-center space-y-4 max-w-md">
+                        <div className="flex justify-center">
+                            <div className="flex size-16 items-center justify-center rounded-full bg-orange-500/10">
+                                <IconClock className="size-8 text-orange-500" />
+                            </div>
+                        </div>
+                        <div>
+                            <h2 className="text-lg font-semibold">Video Expired</h2>
+                            <p className="mt-2 text-sm text-muted-foreground">
+                                This video and its clips have been removed from storage because the retention period has ended. Upload the video again to generate new clips.
+                            </p>
+                        </div>
+                        <Button onClick={handleBack} variant="outline">
+                            <IconArrowLeft className="size-4 mr-2" />
+                            Back to Videos
+                        </Button>
+                    </div>
+                </div>
+            </div>
+        );
+    }
+
     // Derive metadata for tags
     const sourceType = video.sourceType === "youtube" ? "YouTube" : "Local file";
     const aspectRatio = configData?.config?.aspectRatio || "9:16";
@@ -688,10 +735,10 @@ export default function VideoClipsPage({ params }: VideoClipsPageProps) {
                         <FireAnimatedIcon />
                         Viral Clips
                     </Badge>
-                    {video.createdAt && (
+                    {video.expiresAt && (
                         <Badge variant="outline" className="gap-1.5 text-[11px] sm:text-xs text-primary border-primary/30">
                             <IconCalendar className="size-3" />
-                            Expires: {formatDate(new Date(new Date(video.createdAt).getTime() + 30 * 24 * 60 * 60 * 1000).toISOString())}
+                            Expires: {formatDate(video.expiresAt)}
                         </Badge>
                     )}
                 </div>

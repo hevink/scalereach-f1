@@ -111,6 +111,10 @@ export function VideoCard({
     };
 
     const getStatusBadge = () => {
+        if (video.status === "expired") {
+            return <Badge variant="outline" className="text-xs text-orange-500 border-orange-500/30">Expired</Badge>;
+        }
+
         if (isProcessing) {
             return (
                 <Badge variant="secondary" className="text-xs gap-1 shrink-0">
@@ -238,11 +242,15 @@ export function VideoCard({
                             <span className="font-medium">Created:</span>
                             <span>{new Date(video.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</span>
                         </span>
-                        <span className="text-muted-foreground/40 hidden sm:inline">•</span>
-                        <span className="hidden sm:flex items-center gap-1">
-                            <span className="font-medium">Expires:</span>
-                            <span>{new Date(new Date(video.createdAt).getTime() + 14 * 24 * 60 * 60 * 1000).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</span>
-                        </span>
+                        {video.status !== "expired" && (
+                            <>
+                                <span className="text-muted-foreground/40 hidden sm:inline">•</span>
+                                <span className="hidden sm:flex items-center gap-1">
+                                    <span className="font-medium">Expires:</span>
+                                    <span>{video.expiresAt ? new Date(video.expiresAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : "Never"}</span>
+                                </span>
+                            </>
+                        )}
                     </div>
                     {/* Source badge - shown inline on mobile only */}
                     <div className="flex md:hidden items-center gap-2 mt-1.5">

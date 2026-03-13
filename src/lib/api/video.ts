@@ -19,10 +19,11 @@ export interface VideoLite {
   title: string | null;
   duration: number | null;
   thumbnailUrl: string | null;
-  status: "pending" | "pending_config" | "downloading" | "uploading" | "transcribing" | "analyzing" | "completed" | "failed";
+  status: "pending" | "pending_config" | "downloading" | "uploading" | "transcribing" | "analyzing" | "completed" | "failed" | "expired";
   sourceType: "youtube" | "upload";
   sourceUrl: string | null;
   createdAt: string;
+  expiresAt: string | null;
 }
 
 export interface Video extends VideoLite {

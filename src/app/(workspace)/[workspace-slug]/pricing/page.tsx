@@ -584,7 +584,7 @@ export default function WorkspacePricingPage() {
                             },
                             {
                                 q: "What happens to my videos when storage expires?",
-                                a: "Videos are automatically deleted from our servers after the storage period ends - 14 days for Free, 3 months for Starter, and 6 months for Pro. Download your clips before then.",
+                                a: "Videos are automatically deleted from our servers after the storage period ends - 15 days for Free, and 6 months for all paid plans. Download your clips before then.",
                             },
                             {
                                 q: "Can I upgrade or downgrade anytime?",
