@@ -44,7 +44,7 @@ const PLATFORMS: { id: string; label: string; Icon: React.ElementType; comingSoo
   { id: "youtube", label: "YouTube Shorts", Icon: YouTubeIcon },
   { id: "twitter", label: "Twitter / X", Icon: TwitterIcon, comingSoon: true },
   { id: "linkedin", label: "LinkedIn", Icon: LinkedInIcon },
-  { id: "threads", label: "Threads", Icon: ThreadsIcon },
+  { id: "threads", label: "Threads", Icon: ThreadsIcon, comingSoon: true },
 ];
 
 const STATUS_COLORS: Record<string, string> = {
