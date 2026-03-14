@@ -76,14 +76,14 @@ export const plans: Record<string, Plan> = {
     },
     agency: {
         name: "Agency",
-        badge: "Unlimited",
+        badge: "Best Value",
         description: "For agencies and teams that need it all",
         monthly: 99,
         annually: 49,
         originalMonthly: 149,
         originalAnnually: 99,
         features: [
-            "Unlimited Minutes",
+            "5,000 Minutes/Month",
             "Without Watermark",
             "Up to 3h File Length",
             "4K Clip Quality",

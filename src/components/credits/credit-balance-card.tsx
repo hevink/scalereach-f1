@@ -58,11 +58,12 @@ export function CreditBalanceCard({ workspaceSlug }: CreditBalanceCardProps) {
     const { data: balance, isLoading } = useMinutesBalance(workspace?.id);
 
     const isAgency = workspace?.plan === "agency";
+    const isUnlimited = (balance?.minutesRemaining === -1 || balance?.minutesTotal === -1);
     const used = balance?.minutesUsed ?? 0;
     const total = balance?.minutesTotal ?? 0;
     const remaining = balance?.minutesRemaining ?? 0;
-    const usagePercentage = !isAgency && total > 0 ? Math.round((used / total) * 100) : 0;
-    const isLow = !isAgency && usagePercentage > 80;
+    const usagePercentage = !isUnlimited && total > 0 ? Math.round((used / total) * 100) : 0;
+    const isLow = !isUnlimited && usagePercentage > 80;
 
     const resetDateFormatted = balance?.minutesResetDate
         ? new Date(balance.minutesResetDate).toLocaleDateString("en-US", {
@@ -102,7 +103,7 @@ export function CreditBalanceCard({ workspaceSlug }: CreditBalanceCardProps) {
                     <div className="flex items-center gap-5 p-6 flex-1">
                         {/* Radial chart */}
                         <div className="relative shrink-0">
-                            {isAgency ? (
+                            {isUnlimited ? (
                                 <div className="size-[120px] rounded-full border-10 border-primary/20 flex items-center justify-center">
                                     <IconInfinity className="size-8 text-primary" />
                                 </div>
@@ -138,17 +139,17 @@ export function CreditBalanceCard({ workspaceSlug }: CreditBalanceCardProps) {
                                     "text-4xl font-bold tabular-nums tracking-tight",
                                     isLow ? "text-rose-500" : "text-foreground"
                                 )}>
-                                    {isAgency ? "∞" : remaining.toLocaleString()}
+                                    {isUnlimited ? "∞" : remaining.toLocaleString()}
                                 </span>
-                                {!isAgency && (
+                                {!isUnlimited && (
                                     <span className="text-sm text-muted-foreground">
                                         / {total.toLocaleString()} min
                                     </span>
                                 )}
                             </div>
                             <div className="flex items-center gap-3 text-xs text-muted-foreground">
-                                {isAgency ? (
-                                    <span className="text-primary font-medium">Agency plan - unlimited</span>
+                                {isUnlimited ? (
+                                    <span className="text-primary font-medium">Unlimited minutes</span>
                                 ) : resetDateFormatted ? (
                                     <span className="flex items-center gap-1">
                                         <IconCalendar className="size-3" />
@@ -177,7 +178,7 @@ export function CreditBalanceCard({ workspaceSlug }: CreditBalanceCardProps) {
                             <div className="rounded-lg bg-muted/40 px-3 py-2.5">
                                 <p className="text-[10px] text-muted-foreground uppercase tracking-wide font-medium mb-1">Total</p>
                                 <p className="text-sm font-bold tabular-nums">
-                                    {isAgency ? "∞" : `${total.toLocaleString()}`}
+                                    {isUnlimited ? "∞" : `${total.toLocaleString()}`}
                                     <span className="text-[10px] font-normal text-muted-foreground ml-1">min</span>
                                 </p>
                             </div>
@@ -189,7 +190,7 @@ export function CreditBalanceCard({ workspaceSlug }: CreditBalanceCardProps) {
                                 </p>
                             </div>
                         </div>
-                        {!isAgency && (
+                        {!isUnlimited && (
                             <Button
                                 size="sm"
                                 className="w-full gap-1.5"

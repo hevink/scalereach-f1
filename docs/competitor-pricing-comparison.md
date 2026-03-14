@@ -8,7 +8,7 @@ A comprehensive comparison of ScaleReach vs major competitors in the AI video cl
 
 | Tool | Starter/Basic | Pro/Growth | Agency/Business | Free Plan |
 |------|---------------|------------|-----------------|-----------|
-| **ScaleReach** | **~~$29~~ $10/mo** (200 min) | **~~$29~~ $12.50/mo** (400 min) | **~~$99~~ $49/mo** (Unlimited) | ❌ Paused |
+| **ScaleReach** | **~~$29~~ $10/mo** (200 min) | **~~$29~~ $12.50/mo** (400 min) | **~~$99~~ $49/mo** (5,000 min) | ❌ Paused |
 | Opus Clip | $15/mo (150 credits) | $29/mo (300 credits) | Custom | ✅ 60 min |
 | Klap | $23/mo (10 videos) | $63/mo (30 videos) | $151/mo (100 videos) | ✅ Limited |
 | Vizard | $14.50/mo (120 min) | $19.50/mo (300 min) | Custom | ✅ 60 min |

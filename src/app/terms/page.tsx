@@ -84,9 +84,9 @@ export default function TermsOfServicePage() {
               The Service is offered through various subscription plans with different features, limits, and pricing. Details of available plans are provided on our pricing page. We reserve the right to modify our pricing and plans at any time.
             </p>
 
-            <h3 className="text-xl font-medium mt-6 mb-3">4.1.1 Agency Plan - Fair Use Policy</h3>
+            <h3 className="text-xl font-medium mt-6 mb-3">4.1.1 Agency Plan</h3>
             <p className="text-muted-foreground leading-relaxed">
-              The Agency plan includes unlimited video uploads. However, to ensure fair access and platform stability for all users, Agency plan accounts are subject to a fair use limit of <strong>300 minutes of video processing per day</strong> (rolling 24-hour window). This limit is not currently enforced but is reserved as a protective measure against abuse. ScaleReach reserves the right to enforce this limit at any time, with or without prior notice, if usage patterns are found to negatively impact platform performance or other users.
+              The Agency plan includes <strong>5,000 minutes of video processing per month</strong>. Annual subscribers receive <strong>60,000 minutes upfront</strong> (equivalent to 12 months). Minutes reset on each billing cycle for monthly subscribers. To ensure fair access and platform stability, Agency plan accounts are also subject to a fair use limit of <strong>300 minutes of video processing per day</strong> (rolling 24-hour window). This daily limit is not currently enforced but is reserved as a protective measure against abuse. ScaleReach reserves the right to enforce this limit at any time, with or without prior notice, if usage patterns are found to negatively impact platform performance or other users.
             </p>
 
             <h3 className="text-xl font-medium mt-6 mb-3">4.2 Billing</h3>

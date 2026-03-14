@@ -13,9 +13,9 @@ Videos in ScaleReach have a limited storage lifetime based on the user's workspa
 | Free     | 14 days          | One-time 50 minutes    |
 | Starter  | 90 days (3 mo)   | Monthly 200 minutes    |
 | Pro      | 180 days (6 mo)  | Monthly 400 minutes    |
-| Agency   | Unlimited        | Never expires          |
+| Agency   | 180 days (6 mo)  | Monthly 5,000 minutes  |
 
-The expiration date is calculated at video creation time using `getVideoExpiryDate(plan)` from `plan-config.ts`. For Agency plan, `expiresAt` is set to `null` (never expires).
+The expiration date is calculated at video creation time using `getVideoExpiryDate(plan)` from `plan-config.ts`.
 
 ---
 

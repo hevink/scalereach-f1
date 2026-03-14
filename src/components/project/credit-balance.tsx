@@ -96,7 +96,7 @@ function CompactCreditBalance({
                     </TooltipTrigger>
                     <TooltipContent>
                         <p>
-                            {isUnlimited ? "Unlimited minutes (Agency plan)" : `${minutesRemaining} minutes remaining`}
+                            {isUnlimited ? "Unlimited minutes" : `${minutesRemaining} minutes remaining`}
                             {isLow && showWarning && !isUnlimited && " - Running low!"}
                         </p>
                     </TooltipContent>
@@ -228,7 +228,7 @@ export function CreditBalance({
         );
     }
 
-    const isUnlimited = plan === "agency" || minutesData.minutesRemaining === -1 || minutesData.minutesTotal === -1;
+    const isUnlimited = minutesData.minutesRemaining === -1 || minutesData.minutesTotal === -1;
     const minutesRemaining = minutesData.minutesRemaining;
     const minutesTotal = minutesData.minutesTotal;
     const isLow = !isUnlimited && minutesTotal > 0 && (minutesRemaining / minutesTotal) < 0.2;

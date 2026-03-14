@@ -45,7 +45,8 @@ export function NavFooter({ currentSlug }: NavFooterProps) {
   const minutesRemaining = minutesData?.minutesRemaining ?? 0;
   const minutesTotal = minutesData?.minutesTotal ?? 0;
   const isAgency = workspace?.plan === "agency";
-  const isLowMinutes = !isAgency && minutesTotal > 0 && (minutesRemaining / minutesTotal) < 0.2;
+  const isUnlimited = minutesData?.minutesRemaining === -1 || minutesData?.minutesTotal === -1;
+  const isLowMinutes = !isUnlimited && minutesTotal > 0 && (minutesRemaining / minutesTotal) < 0.2;
 
   const isFree = workspace?.plan === "free";
 
@@ -86,7 +87,7 @@ export function NavFooter({ currentSlug }: NavFooterProps) {
       {/* Minutes Display */}
       <SidebarMenuItem>
         <SidebarMenuButton
-          tooltip={isAgency ? "Unlimited minutes (Agency plan)" : `${minutesRemaining} min remaining`}
+          tooltip={isUnlimited ? "Unlimited minutes" : `${minutesRemaining} min remaining`}
           onClick={() => navigate(`/${currentSlug}/pricing`)}
           className={cn(isLowMinutes && "text-amber-600 dark:text-amber-500")}
         >
@@ -100,7 +101,7 @@ export function NavFooter({ currentSlug }: NavFooterProps) {
               : "bg-primary/10 text-primary"
           )}
         >
-          {isAgency ? "∞" : `${minutesRemaining} min`}
+          {isUnlimited ? "∞" : `${minutesRemaining} min`}
         </SidebarMenuBadge>
       </SidebarMenuItem>
 
