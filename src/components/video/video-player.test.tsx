@@ -740,9 +740,10 @@ describe('VideoPlayer Component - Property-Based Tests', () => {
             endTime: fc.float({ min: 51, max: 100, noNaN: true }),
             words: fc.array(
                 fc.record({
+                    id: fc.uuid(),
                     word: fc.string({ minLength: 1, maxLength: 20 }).filter(s => s.trim().length > 0),
-                    startTime: fc.float({ min: 0, max: 100, noNaN: true }),
-                    endTime: fc.float({ min: 0, max: 100, noNaN: true }),
+                    start: fc.float({ min: 0, max: 100, noNaN: true }),
+                    end: fc.float({ min: 0, max: 100, noNaN: true }),
                     highlight: fc.boolean(),
                 }),
                 { minLength: 1, maxLength: 10 }
@@ -1112,9 +1113,10 @@ describe('VideoPlayer Component - Property-Based Tests', () => {
             endTime: fc.float({ min: 41, max: 80, noNaN: true }),
             words: fc.array(
                 fc.record({
+                    id: fc.uuid(),
                     word: fc.string({ minLength: 1, maxLength: 20 }).filter(s => s.trim().length > 0),
-                    startTime: fc.float({ min: 0, max: 100, noNaN: true }),
-                    endTime: fc.float({ min: 0, max: 100, noNaN: true }),
+                    start: fc.float({ min: 0, max: 100, noNaN: true }),
+                    end: fc.float({ min: 0, max: 100, noNaN: true }),
                     highlight: fc.boolean(),
                 }),
                 { minLength: 1, maxLength: 10 }
@@ -1269,7 +1271,7 @@ describe('VideoPlayer Component - Property-Based Tests', () => {
                             text: `Caption ${i} text`,
                             startTime: 40 + i * 2, // Staggered starts: 40, 42, 44, ...
                             endTime: 60 + i * 2,   // Staggered ends: 60, 62, 64, ...
-                            words: [{ word: `Caption${i}`, startTime: 40, endTime: 60, highlight: false }],
+                            words: [{ id: `word-${i}`, word: `Caption${i}`, start: 40, end: 60, highlight: false }],
                         }));
 
                         const { container, unmount } = render(
@@ -1311,7 +1313,7 @@ describe('VideoPlayer Component - Property-Based Tests', () => {
                 text: 'Test caption text',
                 startTime: 10,
                 endTime: 20,
-                words: [{ word: 'Test', startTime: 10, endTime: 15, highlight: false }],
+                words: [{ id: 'w1', word: 'Test', start: 10, end: 15, highlight: false }],
             };
 
             mockDuration = 100;
@@ -1360,14 +1362,14 @@ describe('VideoPlayer Component - Property-Based Tests', () => {
                     text: 'First caption',
                     startTime: 10,
                     endTime: 20,
-                    words: [{ word: 'First', startTime: 10, endTime: 20, highlight: false }],
+                    words: [{ id: 'w1', word: 'First', start: 10, end: 20, highlight: false }],
                 },
                 {
                     id: 'caption-2',
                     text: 'Second caption',
                     startTime: 25,
                     endTime: 35,
-                    words: [{ word: 'Second', startTime: 25, endTime: 35, highlight: false }],
+                    words: [{ id: 'w2', word: 'Second', start: 25, end: 35, highlight: false }],
                 },
             ];
 
@@ -1420,7 +1422,7 @@ describe('VideoPlayer Component - Property-Based Tests', () => {
                 text: 'Boundary test caption',
                 startTime: 10,
                 endTime: 20,
-                words: [{ word: 'Boundary', startTime: 10, endTime: 20, highlight: false }],
+                words: [{ id: 'w1', word: 'Boundary', start: 10, end: 20, highlight: false }],
             };
 
             mockDuration = 100;
@@ -1605,9 +1607,10 @@ describe('VideoPlayer Component - Property-Based Tests', () => {
             endTime: fc.float({ min: 41, max: 80, noNaN: true }),
             words: fc.array(
                 fc.record({
+                    id: fc.uuid(),
                     word: fc.string({ minLength: 1, maxLength: 20 }).filter(s => s.trim().length > 0),
-                    startTime: fc.float({ min: 0, max: 100, noNaN: true }),
-                    endTime: fc.float({ min: 0, max: 100, noNaN: true }),
+                    start: fc.float({ min: 0, max: 100, noNaN: true }),
+                    end: fc.float({ min: 0, max: 100, noNaN: true }),
                     highlight: fc.boolean(),
                 }),
                 { minLength: 1, maxLength: 10 }
@@ -2176,7 +2179,7 @@ describe('VideoPlayer Component - Property-Based Tests', () => {
                 text: 'Test caption for style updates',
                 startTime: 10,
                 endTime: 50,
-                words: [{ word: 'Test', startTime: 10, endTime: 50, highlight: false }],
+                words: [{ id: 'w1', word: 'Test', start: 10, end: 50, highlight: false }],
             };
 
             mockDuration = 100;
@@ -2261,7 +2264,7 @@ describe('VideoPlayer Component - Property-Based Tests', () => {
                 text: 'Test caption with default style',
                 startTime: 10,
                 endTime: 50,
-                words: [{ word: 'Test', startTime: 10, endTime: 50, highlight: false }],
+                words: [{ id: 'w1', word: 'Test', start: 10, end: 50, highlight: false }],
             };
 
             mockDuration = 100;
@@ -2395,22 +2398,23 @@ describe('VideoPlayer Component - Property-Based Tests', () => {
             { minLength: 3, maxLength: 8 }
         ).map(wordData => {
             let currentTime = 0;
-            const words = wordData.map(({ word, duration, highlight }) => {
-                const startTime = currentTime / 1000; // Convert to seconds
-                const endTime = (currentTime + duration) / 1000;
+            const words = wordData.map(({ word, duration, highlight }, i) => {
+                const start = currentTime / 1000; // Convert to seconds
+                const end = (currentTime + duration) / 1000;
                 currentTime += duration;
                 return {
+                    id: `word-${i}`,
                     word,
-                    startTime,
-                    endTime,
+                    start,
+                    end,
                     highlight,
                 };
             });
             return {
                 id: 'test-caption',
                 text: words.map(w => w.word).join(' '),
-                startTime: words[0]?.startTime ?? 0,
-                endTime: words[words.length - 1]?.endTime ?? 10,
+                startTime: words[0]?.start ?? 0,
+                endTime: words[words.length - 1]?.end ?? 10,
                 words,
             };
         });
@@ -2440,7 +2444,7 @@ describe('VideoPlayer Component - Property-Based Tests', () => {
 
                         const targetWord = caption.words[targetWordIndex];
                         // Set current time to middle of target word
-                        const testTime = (targetWord.startTime + targetWord.endTime) / 2;
+                        const testTime = (targetWord.start + targetWord.end) / 2;
 
                         mockDuration = caption.endTime + 10;
                         mockCurrentTime = 0;
@@ -2502,7 +2506,7 @@ describe('VideoPlayer Component - Property-Based Tests', () => {
                         // Set time to middle word
                         const middleIndex = Math.floor(caption.words.length / 2);
                         const middleWord = caption.words[middleIndex];
-                        const testTime = (middleWord.startTime + middleWord.endTime) / 2;
+                        const testTime = (middleWord.start + middleWord.end) / 2;
 
                         mockDuration = caption.endTime + 10;
                         mockCurrentTime = 0;
@@ -2559,7 +2563,7 @@ describe('VideoPlayer Component - Property-Based Tests', () => {
 
                         const middleIndex = Math.floor(caption.words.length / 2);
                         const middleWord = caption.words[middleIndex];
-                        const testTime = (middleWord.startTime + middleWord.endTime) / 2;
+                        const testTime = (middleWord.start + middleWord.end) / 2;
 
                         mockDuration = caption.endTime + 10;
                         mockCurrentTime = 0;
@@ -2616,7 +2620,7 @@ describe('VideoPlayer Component - Property-Based Tests', () => {
 
                         const middleIndex = Math.floor(caption.words.length / 2);
                         const middleWord = caption.words[middleIndex];
-                        const testTime = (middleWord.startTime + middleWord.endTime) / 2;
+                        const testTime = (middleWord.start + middleWord.end) / 2;
 
                         mockDuration = caption.endTime + 10;
                         mockCurrentTime = 0;
@@ -2677,7 +2681,7 @@ describe('VideoPlayer Component - Property-Based Tests', () => {
 
                         const middleIndex = Math.floor(caption.words.length / 2);
                         const middleWord = caption.words[middleIndex];
-                        const testTime = (middleWord.startTime + middleWord.endTime) / 2;
+                        const testTime = (middleWord.start + middleWord.end) / 2;
 
                         mockDuration = caption.endTime + 10;
                         mockCurrentTime = 0;
@@ -2734,7 +2738,7 @@ describe('VideoPlayer Component - Property-Based Tests', () => {
 
                         const middleIndex = Math.floor(caption.words.length / 2);
                         const middleWord = caption.words[middleIndex];
-                        const testTime = (middleWord.startTime + middleWord.endTime) / 2;
+                        const testTime = (middleWord.start + middleWord.end) / 2;
 
                         mockDuration = caption.endTime + 10;
                         mockCurrentTime = 0;
@@ -2790,12 +2794,12 @@ describe('VideoPlayer Component - Property-Based Tests', () => {
                 startTime: 0,
                 endTime: 10,
                 words: [
-                    { word: 'This', startTime: 0, endTime: 1, highlight: false },
-                    { word: 'is', startTime: 1, endTime: 2, highlight: false },
-                    { word: 'a', startTime: 2, endTime: 3, highlight: false },
-                    { word: 'highlighted', startTime: 3, endTime: 5, highlight: true }, // This word should be highlighted
-                    { word: 'word', startTime: 5, endTime: 6, highlight: false },
-                    { word: 'test', startTime: 6, endTime: 7, highlight: false },
+                    { id: 'w1', word: 'This', start: 0, end: 1, highlight: false },
+                    { id: 'w2', word: 'is', start: 1, end: 2, highlight: false },
+                    { id: 'w3', word: 'a', start: 2, end: 3, highlight: false },
+                    { id: 'w4', word: 'highlighted', start: 3, end: 5, highlight: true }, // This word should be highlighted
+                    { id: 'w5', word: 'word', start: 5, end: 6, highlight: false },
+                    { id: 'w6', word: 'test', start: 6, end: 7, highlight: false },
                 ],
             };
 
@@ -2849,9 +2853,9 @@ describe('VideoPlayer Component - Property-Based Tests', () => {
                 startTime: 0,
                 endTime: 10,
                 words: [
-                    { word: 'Plain', startTime: 0, endTime: 2, highlight: false },
-                    { word: 'text', startTime: 2, endTime: 4, highlight: false },
-                    { word: 'caption', startTime: 4, endTime: 6, highlight: false },
+                    { id: 'w1', word: 'Plain', start: 0, end: 2, highlight: false },
+                    { id: 'w2', word: 'text', start: 2, end: 4, highlight: false },
+                    { id: 'w3', word: 'caption', start: 4, end: 6, highlight: false },
                 ],
             };
 
@@ -2904,10 +2908,10 @@ describe('VideoPlayer Component - Property-Based Tests', () => {
                 startTime: 0,
                 endTime: 12,
                 words: [
-                    { word: 'Word', startTime: 0, endTime: 3, highlight: false },
-                    { word: 'one', startTime: 3, endTime: 6, highlight: false },
-                    { word: 'two', startTime: 6, endTime: 9, highlight: false },
-                    { word: 'three', startTime: 9, endTime: 12, highlight: false },
+                    { id: 'w1', word: 'Word', start: 0, end: 3, highlight: false },
+                    { id: 'w2', word: 'one', start: 3, end: 6, highlight: false },
+                    { id: 'w3', word: 'two', start: 6, end: 9, highlight: false },
+                    { id: 'w4', word: 'three', start: 9, end: 12, highlight: false },
                 ],
             };
 
@@ -2965,11 +2969,11 @@ describe('VideoPlayer Component - Property-Based Tests', () => {
                 startTime: 0,
                 endTime: 10,
                 words: [
-                    { word: 'Gap', startTime: 0, endTime: 2, highlight: false },
+                    { id: 'w1', word: 'Gap', start: 0, end: 2, highlight: false },
                     // Gap from 2 to 4
-                    { word: 'between', startTime: 4, endTime: 6, highlight: false },
+                    { id: 'w2', word: 'between', start: 4, end: 6, highlight: false },
                     // Gap from 6 to 8
-                    { word: 'words', startTime: 8, endTime: 10, highlight: false },
+                    { id: 'w3', word: 'words', start: 8, end: 10, highlight: false },
                 ],
             };
 

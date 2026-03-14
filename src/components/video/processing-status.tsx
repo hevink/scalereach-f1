@@ -111,6 +111,15 @@ const STATUS_CONFIG: Record<VideoStatus, StatusConfig> = {
         borderColor: "border-red-500/30",
         badgeVariant: "destructive",
     },
+    expired: {
+        label: "Expired",
+        description: "Video has expired",
+        icon: <IconClock className="size-5" />,
+        color: "text-muted-foreground",
+        bgColor: "bg-muted/50",
+        borderColor: "border-muted",
+        badgeVariant: "secondary",
+    },
 };
 
 // Processing stages in order for progress visualization
@@ -133,6 +142,7 @@ const STAGE_ESTIMATED_TIMES: Record<VideoStatus, number> = {
     analyzing: 120,
     completed: 0,
     failed: 0,
+    expired: 0,
 };
 
 // Get stage index for progress calculation

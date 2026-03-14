@@ -471,9 +471,9 @@ describe("Authentication Flow - Property-Based Tests", () => {
   });
 
   describe("Email encoding properties", () => {
-    it("should always properly encode emails in URL", () => {
-      fc.assert(
-        fc.property(
+    it("should always properly encode emails in URL", async () => {
+      await fc.assert(
+        fc.asyncProperty(
           fc.emailAddress(),
           async (email) => {
             vi.mocked(api.get).mockResolvedValueOnce({ data: { available: true } });
@@ -490,9 +490,9 @@ describe("Authentication Flow - Property-Based Tests", () => {
   });
 
   describe("User update properties", () => {
-    it("should always send valid update payloads", () => {
-      fc.assert(
-        fc.property(
+    it("should always send valid update payloads", async () => {
+      await fc.assert(
+        fc.asyncProperty(
           fc.record({
             name: fc.option(fc.string({ minLength: 1, maxLength: 100 }), { nil: undefined }),
             username: fc.option(fc.string({ minLength: 3, maxLength: 30 }).filter(s => /^[a-z0-9_]+$/.test(s)), { nil: undefined }),

@@ -21,12 +21,14 @@ const simpleVideoArbitrary = fc.record({
     sourceUrl: fc.webUrl(),
     status: fc.constantFrom(
         'pending' as const,
+        'pending_config' as const,
         'downloading' as const,
         'uploading' as const,
         'transcribing' as const,
         'analyzing' as const,
         'completed' as const,
-        'failed' as const
+        'failed' as const,
+        'expired' as const
     ),
     title: fc.oneof(
         fc.string({ minLength: 1, maxLength: 100 }).filter(s => s.trim().length > 0),
@@ -36,9 +38,11 @@ const simpleVideoArbitrary = fc.record({
         fc.integer({ min: 1, max: 7200 }),
         fc.constant(null)
     ),
+    thumbnailUrl: fc.oneof(fc.webUrl(), fc.constant(null)),
     storageKey: fc.oneof(fc.string(), fc.constant(null)),
     storageUrl: fc.oneof(fc.webUrl(), fc.constant(null)),
     transcript: fc.oneof(fc.string(), fc.constant(null)),
+    transcriptLanguage: fc.oneof(fc.constantFrom('en', 'hi', 'es', 'fr'), fc.constant(null)),
     errorMessage: fc.oneof(fc.string(), fc.constant(null)),
     metadata: fc.oneof(
         fc.dictionary(fc.string(), fc.string()),
@@ -46,6 +50,7 @@ const simpleVideoArbitrary = fc.record({
     ),
     createdAt: fc.date().map(d => d.toISOString()),
     updatedAt: fc.date().map(d => d.toISOString()),
+    expiresAt: fc.oneof(fc.date().map(d => d.toISOString()), fc.constant(null)),
 }) as fc.Arbitrary<Video>;
 
 describe('VideoCard Component - Property-Based Tests', () => {
@@ -60,13 +65,16 @@ describe('VideoCard Component - Property-Based Tests', () => {
             status: 'completed',
             title: 'Test Video',
             duration: 120,
+            thumbnailUrl: null,
             storageKey: null,
             storageUrl: null,
             transcript: null,
+            transcriptLanguage: null,
             errorMessage: null,
             metadata: null,
             createdAt: new Date().toISOString(),
             updatedAt: new Date().toISOString(),
+            expiresAt: null,
         };
 
         const { container } = render(<VideoCard video={testVideo} onClick={vi.fn()} />);

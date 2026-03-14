@@ -41,6 +41,7 @@ const STATUS_CONFIG: Record<Video["status"], { label: string; variant: "default"
     analyzing: { label: "Analyzing", variant: "default", icon: <IconLoader2 className="size-3 animate-spin" /> },
     completed: { label: "Completed", variant: "outline", icon: <IconCheck className="size-3" /> },
     failed: { label: "Failed", variant: "destructive", icon: <IconX className="size-3" /> },
+    expired: { label: "Expired", variant: "secondary", icon: <IconClock className="size-3" /> },
 };
 
 /**

@@ -23,7 +23,9 @@ describe('VideoGrid Component - Unit Tests', () => {
             status: 'completed',
             title: 'Test Video 1',
             duration: 120,
+            thumbnailUrl: null,
             createdAt: '2024-01-01T00:00:00Z',
+            expiresAt: null,
         },
         {
             id: '2',
@@ -32,7 +34,9 @@ describe('VideoGrid Component - Unit Tests', () => {
             status: 'transcribing',
             title: 'Test Video 2',
             duration: 180,
+            thumbnailUrl: null,
             createdAt: '2024-01-02T00:00:00Z',
+            expiresAt: null,
         },
     ];
 
@@ -170,11 +174,14 @@ describe('VideoGrid Component - Property-Based Tests', () => {
             'transcribing' as const,
             'analyzing' as const,
             'completed' as const,
-            'failed' as const
+            'failed' as const,
+            'expired' as const
         ),
         title: fc.option(fc.string({ minLength: 1, maxLength: 100 }), { nil: null }),
         duration: fc.option(fc.integer({ min: 1, max: 7200 }), { nil: null }),
+        thumbnailUrl: fc.option(fc.webUrl(), { nil: null }),
         createdAt: fc.integer({ min: 1577836800000, max: 1767225600000 }).map(ts => new Date(ts).toISOString()),
+        expiresAt: fc.option(fc.integer({ min: 1577836800000, max: 1767225600000 }).map(ts => new Date(ts).toISOString()), { nil: null }),
     }) as fc.Arbitrary<VideoLite>;
 
     /**

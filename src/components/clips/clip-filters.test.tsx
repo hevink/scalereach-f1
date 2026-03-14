@@ -732,7 +732,7 @@ describe('ClipFilters Component', () => {
                 fc.property(
                     filtersArbitrary.filter(f =>
                         // Only test with non-default filters
-                        f.minScore > 0 || f.maxScore < 100 || f.favorited === true ||
+                        (f.minScore ?? 0) > 0 || (f.maxScore ?? 100) < 100 || f.favorited === true ||
                         f.sortBy !== 'score' || f.sortOrder !== 'desc'
                     ),
                     (filters) => {

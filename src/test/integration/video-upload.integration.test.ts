@@ -50,13 +50,16 @@ const createMockVideo = (overrides?: Partial<Video>): Video => ({
   status: "pending",
   title: "Test Video",
   duration: 212,
+  thumbnailUrl: null,
   storageKey: null,
   storageUrl: null,
   transcript: null,
+  transcriptLanguage: null,
   errorMessage: null,
   metadata: null,
   createdAt: new Date().toISOString(),
   updatedAt: new Date().toISOString(),
+  expiresAt: null,
   ...overrides,
 });
 
@@ -161,10 +164,11 @@ describe("Video Upload Flow - YouTube URL Submission", () => {
 
       vi.mocked(api.post).mockResolvedValueOnce({ data: mockResponse });
 
-      const result = await videoApi.submitYouTubeUrl("https://www.youtube.com/watch?v=dQw4w9WgXcQ");
+      const result = await videoApi.submitYouTubeUrl("https://www.youtube.com/watch?v=dQw4w9WgXcQ", "workspace-123");
 
       expect(api.post).toHaveBeenCalledWith("/api/videos/youtube", {
         youtubeUrl: "https://www.youtube.com/watch?v=dQw4w9WgXcQ",
+        workspaceId: "workspace-123",
         projectId: undefined,
         workspaceSlug: undefined,
         config: undefined,
@@ -204,12 +208,14 @@ describe("Video Upload Flow - YouTube URL Submission", () => {
 
       await videoApi.submitYouTubeUrl(
         "https://www.youtube.com/watch?v=dQw4w9WgXcQ",
+        "workspace-123",
         undefined,
         "my-workspace"
       );
 
       expect(api.post).toHaveBeenCalledWith("/api/videos/youtube", {
         youtubeUrl: "https://www.youtube.com/watch?v=dQw4w9WgXcQ",
+        workspaceId: "workspace-123",
         projectId: undefined,
         workspaceSlug: "my-workspace",
         config: undefined,
@@ -235,6 +241,7 @@ describe("Video Upload Flow - YouTube URL Submission", () => {
 
       await videoApi.submitYouTubeUrl(
         "https://www.youtube.com/watch?v=dQw4w9WgXcQ",
+        "workspace-123",
         "project-123",
         "my-workspace",
         config
@@ -242,6 +249,7 @@ describe("Video Upload Flow - YouTube URL Submission", () => {
 
       expect(api.post).toHaveBeenCalledWith("/api/videos/youtube", {
         youtubeUrl: "https://www.youtube.com/watch?v=dQw4w9WgXcQ",
+        workspaceId: "workspace-123",
         projectId: "project-123",
         workspaceSlug: "my-workspace",
         config,
@@ -256,7 +264,7 @@ describe("Video Upload Flow - YouTube URL Submission", () => {
       vi.mocked(api.post).mockRejectedValueOnce(error);
 
       await expect(
-        videoApi.submitYouTubeUrl("https://www.youtube.com/watch?v=dQw4w9WgXcQ")
+        videoApi.submitYouTubeUrl("https://www.youtube.com/watch?v=dQw4w9WgXcQ", "workspace-123")
       ).rejects.toThrow("Video already exists");
     });
   });
@@ -279,13 +287,15 @@ describe("Video Upload Flow - Direct File Upload", () => {
       const result = await uploadApi.initUpload(
         "test-video.mp4",
         15 * 1024 * 1024, // 15MB
-        "video/mp4"
+        "video/mp4",
+        "workspace-123"
       );
 
       expect(api.post).toHaveBeenCalledWith("/api/upload/init", {
         filename: "test-video.mp4",
         fileSize: 15 * 1024 * 1024,
         contentType: "video/mp4",
+        workspaceId: "workspace-123",
         projectId: undefined,
       });
       expect(result.uploadId).toBe("upload-789");
@@ -300,6 +310,7 @@ describe("Video Upload Flow - Direct File Upload", () => {
         "test-video.mp4",
         15 * 1024 * 1024,
         "video/mp4",
+        "workspace-123",
         "project-123"
       );
 
@@ -307,6 +318,7 @@ describe("Video Upload Flow - Direct File Upload", () => {
         filename: "test-video.mp4",
         fileSize: 15 * 1024 * 1024,
         contentType: "video/mp4",
+        workspaceId: "workspace-123",
         projectId: "project-123",
       });
     });
@@ -318,7 +330,7 @@ describe("Video Upload Flow - Direct File Upload", () => {
       vi.mocked(api.post).mockRejectedValueOnce(error);
 
       await expect(
-        uploadApi.initUpload("large-video.mp4", 3 * 1024 * 1024 * 1024, "video/mp4")
+        uploadApi.initUpload("large-video.mp4", 3 * 1024 * 1024 * 1024, "video/mp4", "workspace-123")
       ).rejects.toThrow("File size exceeds maximum allowed");
     });
   });
@@ -522,9 +534,9 @@ describe("Video Upload Flow - Property-Based Tests", () => {
   });
 
   describe("YouTube URL validation properties", () => {
-    it("should always encode URLs properly regardless of special characters", () => {
-      fc.assert(
-        fc.property(
+    it("should always encode URLs properly regardless of special characters", async () => {
+      await fc.assert(
+        fc.asyncProperty(
           fc.webUrl(),
           async (url) => {
             vi.mocked(api.get).mockResolvedValueOnce({ data: { valid: false } });
@@ -541,16 +553,16 @@ describe("Video Upload Flow - Property-Based Tests", () => {
   });
 
   describe("Upload initialization properties", () => {
-    it("should always send positive file sizes", () => {
-      fc.assert(
-        fc.property(
+    it("should always send positive file sizes", async () => {
+      await fc.assert(
+        fc.asyncProperty(
           fc.string({ minLength: 1, maxLength: 100 }),
           fc.integer({ min: 1, max: 2 * 1024 * 1024 * 1024 }), // Up to 2GB
           fc.constantFrom("video/mp4", "video/webm", "video/quicktime"),
           async (filename, fileSize, contentType) => {
             vi.mocked(api.post).mockResolvedValueOnce({ data: createMockInitUploadResponse() });
 
-            await uploadApi.initUpload(filename, fileSize, contentType);
+            await uploadApi.initUpload(filename, fileSize, contentType, "workspace-123");
 
             const calledData = vi.mocked(api.post).mock.calls[0][1] as { fileSize: number };
             expect(calledData.fileSize).toBeGreaterThan(0);
@@ -589,7 +601,7 @@ describe("Video Upload Flow - E2E Scenarios", () => {
     };
     vi.mocked(api.post).mockResolvedValueOnce({ data: submitResponse });
 
-    const submission = await videoApi.submitYouTubeUrl("https://www.youtube.com/watch?v=dQw4w9WgXcQ");
+    const submission = await videoApi.submitYouTubeUrl("https://www.youtube.com/watch?v=dQw4w9WgXcQ", "workspace-123");
     expect(submission.video.status).toBe("pending");
 
     // Step 3: Poll for status (simulating progress)
@@ -616,7 +628,7 @@ describe("Video Upload Flow - E2E Scenarios", () => {
     const initResponse = createMockInitUploadResponse();
     vi.mocked(api.post).mockResolvedValueOnce({ data: initResponse });
 
-    const init = await uploadApi.initUpload("video.mp4", 15 * 1024 * 1024, "video/mp4");
+    const init = await uploadApi.initUpload("video.mp4", 15 * 1024 * 1024, "video/mp4", "workspace-123");
     expect(init.uploadId).toBeDefined();
     expect(init.partUrls.length).toBeGreaterThan(0);
 
@@ -650,7 +662,7 @@ describe("Video Upload Flow - E2E Scenarios", () => {
     const initResponse = createMockInitUploadResponse();
     vi.mocked(api.post).mockResolvedValueOnce({ data: initResponse });
 
-    const init = await uploadApi.initUpload("video.mp4", 15 * 1024 * 1024, "video/mp4");
+    const init = await uploadApi.initUpload("video.mp4", 15 * 1024 * 1024, "video/mp4", "workspace-123");
 
     // Simulate user cancellation - abort upload
     vi.mocked(api.post).mockResolvedValueOnce({ data: {} });

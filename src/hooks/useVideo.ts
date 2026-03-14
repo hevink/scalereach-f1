@@ -27,6 +27,7 @@ const STAGE_MULTIPLIERS: Record<VideoStatus, number> = {
   analyzing: 0.3,         // Very fast - almost done, user is excited!
   completed: 0,           // Stop polling
   failed: 0,              // Stop polling
+  expired: 0,             // Stop polling
 };
 
 // Calculate adaptive polling interval

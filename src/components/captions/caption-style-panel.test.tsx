@@ -47,7 +47,7 @@ const defaultStyle: CaptionStyle = {
 };
 
 describe("CaptionStylePanel", () => {
-  let mockOnChange: ReturnType<typeof vi.fn>;
+  let mockOnChange: (style: CaptionStyle) => void;
 
   beforeEach(() => {
     mockOnChange = vi.fn();
