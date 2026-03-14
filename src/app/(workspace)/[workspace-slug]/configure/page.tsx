@@ -172,7 +172,7 @@ function CaptionPreviewPopup({ template }: { template: CaptionTemplate }) {
                     ))}
                 </div>
             </div>
-            <p className="text-[10px] text-muted-foreground text-center">Words highlight as spoken</p>
+            <p className="text-[10px] text-muted-foreground text-center">Words bounce in with effect</p>
         </div>
     );
 }
