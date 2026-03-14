@@ -52,10 +52,10 @@ export function AiHookPanel({ introTitle, onSave, isSaving, disabled }: AiHookPa
                             placeholder="Wait for it... 🔥"
                             className="bg-zinc-800 border-zinc-700 text-white text-sm resize-none"
                             rows={2}
-                            maxLength={60}
+                            maxLength={30}
                             disabled={disabled}
                         />
-                        <p className="text-[10px] text-zinc-500">{text.length}/60 characters</p>
+                        <p className="text-[10px] text-zinc-500">{text.length}/30 characters · max 2 lines</p>
                     </div>
 
                     <Button
@@ -75,7 +75,7 @@ export function AiHookPanel({ introTitle, onSave, isSaving, disabled }: AiHookPa
                     <div className="rounded-lg bg-zinc-800/50 p-3 space-y-1.5">
                         <p className="text-[10px] font-medium text-zinc-400 uppercase tracking-wide">Tips</p>
                         <ul className="text-[11px] text-zinc-500 space-y-1 list-disc pl-3">
-                            <li>Keep it under 7 words for max impact</li>
+                            <li>Keep it under 5 words for 2-line fit</li>
                             <li>Use curiosity gaps: "Nobody talks about this"</li>
                             <li>Promise value: "This changed everything"</li>
                             <li>Add emojis for visual punch 🔥</li>
