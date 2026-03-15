@@ -247,3 +247,31 @@ export function useWorkerStatus() {
     refetchInterval: 30 * 1000,
   });
 }
+
+export function useAdminAffiliates() {
+  return useQuery({
+    queryKey: ["admin", "affiliates"],
+    queryFn: adminApi.getAffiliateOverview,
+    staleTime: 30 * 1000,
+  });
+}
+
+export function useAdminAffiliateReferrals(userId: string | null) {
+  return useQuery({
+    queryKey: ["admin", "affiliate-referrals", userId],
+    queryFn: () => adminApi.getAffiliateReferrals(userId!),
+    enabled: !!userId,
+    staleTime: 30 * 1000,
+  });
+}
+
+export function useMarkCommissionPaid() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (commissionId: string) => adminApi.markCommissionPaid(commissionId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["admin", "affiliates"] });
+      queryClient.invalidateQueries({ queryKey: ["admin", "affiliate-referrals"] });
+    },
+  });
+}

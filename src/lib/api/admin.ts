@@ -333,6 +333,42 @@ export interface YouTubeHealthStatus {
   };
 }
 
+export interface AdminAffiliate {
+  userId: string;
+  name: string | null;
+  email: string;
+  referralCode: string | null;
+  totalReferrals: number;
+  convertedReferrals: number;
+  totalEarnedCents: number;
+  pendingCents: number;
+  paidCents: number;
+  revenueGeneratedCents: number;
+}
+
+export interface AdminAffiliateReferral {
+  id: string;
+  referredUserId: string;
+  referredName: string | null;
+  referredEmail: string;
+  status: string;
+  createdAt: string;
+  convertedAt: string | null;
+  totalCommissionCents: number;
+  totalPaymentCents: number;
+  commissions: Array<{
+    id: string;
+    paymentAmountCents: number;
+    commissionAmountCents: number;
+    commissionRate: number;
+    status: string;
+    planName: string | null;
+    paymentId: string | null;
+    createdAt: string;
+    paidAt: string | null;
+  }>;
+}
+
 export const adminApi = {
   // Dashboard stats
   getStats: async () => {
@@ -509,6 +545,22 @@ export const adminApi = {
   // Worker status (debug dashboard)
   getWorkerStatus: async () => {
     const response = await api.get("/api/admin/worker-status");
+    return response.data;
+  },
+
+  // Affiliate management
+  getAffiliateOverview: async () => {
+    const response = await api.get<{ affiliates: AdminAffiliate[] }>("/api/admin/affiliate/overview");
+    return response.data;
+  },
+
+  getAffiliateReferrals: async (userId: string) => {
+    const response = await api.get<{ referrals: AdminAffiliateReferral[] }>(`/api/admin/affiliate/referrals/${userId}`);
+    return response.data;
+  },
+
+  markCommissionPaid: async (commissionId: string) => {
+    const response = await api.post(`/api/admin/affiliate/commissions/${commissionId}/pay`);
     return response.data;
   },
 };

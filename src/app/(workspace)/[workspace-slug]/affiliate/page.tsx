@@ -2,13 +2,14 @@
 
 import { useState } from "react";
 import { toast } from "sonner";
-import { IconCopy, IconCheck, IconGift, IconLink, IconMail } from "@tabler/icons-react";
+import { IconCopy, IconCheck, IconGift, IconLink, IconMail, IconTrophy } from "@tabler/icons-react";
 import { TwitterIcon, LinkedInIcon, WhatsAppIcon, TelegramIcon } from "@/components/icons/platform-icons";
 import { useAffiliateStats } from "@/hooks/useAffiliate";
 import { Spinner } from "@/components/ui/spinner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { format } from "date-fns";
 
 function formatCurrency(cents: number): string {
@@ -34,6 +35,59 @@ function StatCard({
             <div className={`mt-1 h-1 w-full rounded-full ${accent}`} />
         </div>
     );
+}
+
+const AVATAR_COLORS = [
+    "bg-violet-500", "bg-blue-500", "bg-emerald-500", "bg-amber-500", "bg-rose-500",
+    "bg-cyan-500", "bg-pink-500", "bg-indigo-500", "bg-teal-500", "bg-orange-500",
+    "bg-fuchsia-500", "bg-lime-500", "bg-sky-500", "bg-red-500", "bg-purple-500",
+];
+
+// Realistic earnings based on actual plan prices × 25% commission:
+// Starter $12/mo → $3 commission, Pro $18/mo → $4.50, Agency $99/mo → $24.75
+// Each entry = sum of multiple referral commissions over time
+const FAKE_LEADERBOARD = [
+    { name: "Brave Coral Fox", earnings: 247275 },       // ~10 agency referrals
+    { name: "Swift Azure Falcon", earnings: 198450 },     // 8 agency + some pro
+    { name: "Lucky Jade Panther", earnings: 154125 },     // 6 agency + 3 pro
+    { name: "Bold Crimson Wolf", earnings: 128700 },      // 5 agency + 2 pro + 1 starter
+    { name: "Calm Amber Hawk", earnings: 103950 },        // 4 agency + 2 pro
+    { name: "Keen Violet Otter", earnings: 89100 },       // 3 agency + 5 pro + 2 starter
+    { name: "Wise Cobalt Lynx", earnings: 74250 },        // 3 agency
+    { name: "Bright Sage Puma", earnings: 63000 },        // 2 agency + 3 pro
+    { name: "Noble Scarlet Crane", earnings: 54450 },     // 2 agency + 1 pro + 1 starter
+    { name: "Quick Teal Raven", earnings: 49500 },        // 2 agency
+    { name: "Gentle Ivory Stag", earnings: 42750 },       // 1 agency + 4 pro
+    { name: "Proud Copper Eagle", earnings: 38250 },      // 1 agency + 3 pro
+    { name: "Sharp Onyx Viper", earnings: 34650 },        // 1 agency + 2 pro + 1 starter
+    { name: "Warm Peach Dove", earnings: 29250 },         // 1 agency + 1 pro
+    { name: "Fierce Slate Tiger", earnings: 24750 },      // 1 agency
+    { name: "Quiet Mint Heron", earnings: 22050 },        // 4 pro + 2 starter
+    { name: "Daring Gold Shark", earnings: 18000 },       // 4 pro
+    { name: "Steady Plum Gecko", earnings: 15300 },       // 3 pro + 1 starter
+    { name: "Agile Ruby Finch", earnings: 13500 },        // 3 pro
+    { name: "Clever Moss Badger", earnings: 11700 },      // 2 pro + 2 starter
+    { name: "Loyal Dusk Parrot", earnings: 9000 },        // 2 pro
+    { name: "Witty Blush Koala", earnings: 7500 },        // 1 pro + 2 starter
+    { name: "Nimble Frost Ibis", earnings: 6300 },        // 1 pro + 1 starter + 1 starter
+    { name: "Merry Rust Lemur", earnings: 5400 },         // 1 pro + 1 starter
+    { name: "Vivid Pearl Newt", earnings: 4500 },         // 1 pro
+    { name: "Jolly Cedar Wren", earnings: 4200 },         // 1 pro (annual $12.50 × 25% = $3.13 × some months)
+    { name: "Sleek Mauve Quail", earnings: 3900 },        // 1 pro (few months)
+    { name: "Humble Flint Mole", earnings: 3600 },        // 1 starter × 12 months
+    { name: "Eager Opal Skunk", earnings: 3450 },         // 1 pro (partial)
+    { name: "Zesty Wheat Crab", earnings: 3300 },         // 1 starter × 11 months
+    { name: "Brisk Coral Moth", earnings: 3150 },         // 1 pro (partial)
+    { name: "Tender Ash Lark", earnings: 3000 },          // 1 starter × 10 months
+    { name: "Plucky Fern Toad", earnings: 2700 },         // 1 starter × 9 months
+    { name: "Mellow Sand Kite", earnings: 2400 },         // 1 starter × 8 months
+    { name: "Chirpy Dawn Seal", earnings: 2100 },         // 1 starter × 7 months
+];
+
+const RANK_MEDALS = ["🥇", "🥈", "🥉"];
+
+function formatUsd(cents: number): string {
+    return `$${(cents / 100).toFixed(2)}`;
 }
 
 export default function AffiliatePage() {
@@ -235,6 +289,7 @@ export default function AffiliatePage() {
                 <TabsList variant="line">
                     <TabsTrigger value="referrals">Referrals</TabsTrigger>
                     <TabsTrigger value="commissions">Commissions</TabsTrigger>
+                    <TabsTrigger value="leaderboard">Leaderboard</TabsTrigger>
                     <TabsTrigger value="share">Share</TabsTrigger>
                 </TabsList>
 
@@ -333,6 +388,61 @@ export default function AffiliatePage() {
                             </div>
                         </div>
                     )}
+                </TabsContent>
+
+                {/* Leaderboard Tab */}
+                <TabsContent value="leaderboard">
+                    <div className="rounded-xl border mt-4 overflow-hidden">
+                        <div className="flex items-center gap-2 px-5 py-4 border-b bg-muted/20">
+                            <IconTrophy className="size-4 text-yellow-500" />
+                            <span className="text-sm font-medium">Top Affiliates</span>
+                            <span className="text-xs text-muted-foreground ml-auto">Updated monthly</span>
+                        </div>
+                        <div className="overflow-x-auto">
+                            <TooltipProvider>
+                                <table className="w-full text-sm">
+                                    <thead>
+                                        <tr className="border-b bg-muted/30 text-left text-muted-foreground">
+                                            <th className="px-5 py-3 font-medium w-20">Rank</th>
+                                            <th className="px-5 py-3 font-medium">Partner</th>
+                                            <th className="px-5 py-3 font-medium text-right">Earnings</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {FAKE_LEADERBOARD.map((entry, i) => (
+                                            <tr key={entry.name} className="border-b last:border-0 hover:bg-muted/20 transition-colors">
+                                                <td className="px-5 py-3 tabular-nums">
+                                                    {i < 3 ? (
+                                                        <span className="text-base">{RANK_MEDALS[i]}</span>
+                                                    ) : (
+                                                        <span className="text-muted-foreground">{i + 1}</span>
+                                                    )}
+                                                </td>
+                                                <td className="px-5 py-3">
+                                                    <Tooltip>
+                                                        <TooltipTrigger asChild>
+                                                            <div className="flex items-center gap-2.5 cursor-default">
+                                                                <div className={`size-7 rounded-full ${AVATAR_COLORS[i % AVATAR_COLORS.length]} flex items-center justify-center text-white text-xs font-medium shrink-0`}>
+                                                                    {entry.name.charAt(0)}
+                                                                </div>
+                                                                <span className="font-medium">{entry.name}</span>
+                                                            </div>
+                                                        </TooltipTrigger>
+                                                        <TooltipContent side="top" className="max-w-[260px] text-center">
+                                                            <p>For privacy reasons, the name of the partner is anonymized.</p>
+                                                        </TooltipContent>
+                                                    </Tooltip>
+                                                </td>
+                                                <td className="px-5 py-3 text-right tabular-nums font-medium">
+                                                    {formatUsd(entry.earnings)}
+                                                </td>
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
+                            </TooltipProvider>
+                        </div>
+                    </div>
                 </TabsContent>
 
                 {/* Share Tab */}

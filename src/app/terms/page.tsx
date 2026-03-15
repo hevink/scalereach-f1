@@ -110,9 +110,44 @@ export default function TermsOfServicePage() {
             </p>
           </section>
 
+          {/* Affiliate Program */}
+          <section>
+            <h2 className="text-2xl font-semibold mb-4">5. Affiliate Program</h2>
+
+            <h3 className="text-xl font-medium mt-6 mb-3">5.1 Program Overview</h3>
+            <p className="text-muted-foreground leading-relaxed">
+              ScaleReach offers an affiliate program that allows registered users to earn commissions by referring new paying customers. By participating in the affiliate program, you agree to the terms outlined in this section.
+            </p>
+
+            <h3 className="text-xl font-medium mt-6 mb-3">5.2 Commission Structure</h3>
+            <p className="text-muted-foreground leading-relaxed">
+              Affiliates earn a 25% lifetime commission on every payment made by a referred customer. Commissions are calculated based on the actual payment amount received by ScaleReach, excluding taxes, refunds, and chargebacks.
+            </p>
+
+            <h3 className="text-xl font-medium mt-6 mb-3">5.3 Minimum Withdrawal Threshold</h3>
+            <p className="text-muted-foreground leading-relaxed">
+              Affiliate commissions can only be withdrawn once the total pending balance reaches a minimum of <strong>$100.00 USD</strong>. Balances below this threshold will accumulate until the minimum is met. There is no expiration on accumulated commissions.
+            </p>
+
+            <h3 className="text-xl font-medium mt-6 mb-3">5.4 Payout Process</h3>
+            <p className="text-muted-foreground leading-relaxed">
+              Payouts are processed manually on a monthly basis. Once your pending balance meets the $100 minimum threshold, you may request a withdrawal. ScaleReach reserves the right to verify referral activity before processing any payout.
+            </p>
+
+            <h3 className="text-xl font-medium mt-6 mb-3">5.5 Prohibited Activities</h3>
+            <p className="text-muted-foreground leading-relaxed">
+              Self-referrals, fraudulent signups, cookie stuffing, spam, and any form of referral manipulation are strictly prohibited. ScaleReach reserves the right to revoke commissions, suspend affiliate privileges, or terminate accounts found engaging in prohibited activities.
+            </p>
+
+            <h3 className="text-xl font-medium mt-6 mb-3">5.6 Program Modifications</h3>
+            <p className="text-muted-foreground leading-relaxed">
+              ScaleReach reserves the right to modify commission rates, payout thresholds, or terminate the affiliate program at any time with reasonable notice. Any changes will not affect commissions already earned and pending payout.
+            </p>
+          </section>
+
           {/* User Content */}
           <section>
-            <h2 className="text-2xl font-semibold mb-4">5. User Content</h2>
+            <h2 className="text-2xl font-semibold mb-4">6. User Content</h2>
 
             <h3 className="text-xl font-medium mt-6 mb-3">5.1 Ownership</h3>
             <p className="text-muted-foreground leading-relaxed">
@@ -138,7 +173,7 @@ export default function TermsOfServicePage() {
 
           {/* Intellectual Property */}
           <section>
-            <h2 className="text-2xl font-semibold mb-4">6. Intellectual Property</h2>
+            <h2 className="text-2xl font-semibold mb-4">7. Intellectual Property</h2>
 
             <h3 className="text-xl font-medium mt-6 mb-3">6.1 ScaleReach Property</h3>
             <p className="text-muted-foreground leading-relaxed">
@@ -153,7 +188,7 @@ export default function TermsOfServicePage() {
 
           {/* Google API & YouTube Integration */}
           <section>
-            <h2 className="text-2xl font-semibold mb-4">7. Google API &amp; YouTube Integration</h2>
+            <h2 className="text-2xl font-semibold mb-4">8. Google API &amp; YouTube Integration</h2>
             <p className="text-muted-foreground leading-relaxed">
               ScaleReach integrates with YouTube and other Google services to allow you to publish content directly to your connected accounts. By connecting your Google/YouTube account, you agree to the following:
             </p>
@@ -175,7 +210,7 @@ export default function TermsOfServicePage() {
 
           {/* Acceptable Use */}
           <section>
-            <h2 className="text-2xl font-semibold mb-4">8. Acceptable Use Policy</h2>
+            <h2 className="text-2xl font-semibold mb-4">9. Acceptable Use Policy</h2>
             <p className="text-muted-foreground leading-relaxed">
               You agree not to use the Service to:
             </p>
@@ -195,7 +230,7 @@ export default function TermsOfServicePage() {
 
           {/* Service Availability */}
           <section>
-            <h2 className="text-2xl font-semibold mb-4">9. Service Availability and Limitations</h2>
+            <h2 className="text-2xl font-semibold mb-4">10. Service Availability and Limitations</h2>
             <p className="text-muted-foreground leading-relaxed">
               We strive to provide reliable and uninterrupted access to the Service. However, we do not guarantee that the Service will be available at all times or that it will be free from errors or interruptions. The Service may be subject to limitations, delays, and other problems inherent in the use of the internet and electronic communications.
             </p>
@@ -206,7 +241,7 @@ export default function TermsOfServicePage() {
 
           {/* Disclaimer of Warranties */}
           <section>
-            <h2 className="text-2xl font-semibold mb-4">10. Disclaimer of Warranties</h2>
+            <h2 className="text-2xl font-semibold mb-4">11. Disclaimer of Warranties</h2>
             <p className="text-muted-foreground leading-relaxed uppercase font-medium">
               THE SERVICE IS PROVIDED &quot;AS IS&quot; AND &quot;AS AVAILABLE&quot; WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO IMPLIED WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE, TITLE, AND NON-INFRINGEMENT.
             </p>
@@ -224,7 +259,7 @@ export default function TermsOfServicePage() {
 
           {/* Limitation of Liability */}
           <section>
-            <h2 className="text-2xl font-semibold mb-4">11. Limitation of Liability</h2>
+            <h2 className="text-2xl font-semibold mb-4">12. Limitation of Liability</h2>
             <p className="text-muted-foreground leading-relaxed uppercase font-medium">
               TO THE MAXIMUM EXTENT PERMITTED BY APPLICABLE LAW, SCALEREACH AND ITS OFFICERS, DIRECTORS, EMPLOYEES, AGENTS, AND AFFILIATES SHALL NOT BE LIABLE FOR ANY INDIRECT, INCIDENTAL, SPECIAL, CONSEQUENTIAL, OR PUNITIVE DAMAGES, INCLUDING BUT NOT LIMITED TO LOSS OF PROFITS, DATA, USE, GOODWILL, OR OTHER INTANGIBLE LOSSES, RESULTING FROM:
             </p>
@@ -241,7 +276,7 @@ export default function TermsOfServicePage() {
 
           {/* Indemnification */}
           <section>
-            <h2 className="text-2xl font-semibold mb-4">12. Indemnification</h2>
+            <h2 className="text-2xl font-semibold mb-4">13. Indemnification</h2>
             <p className="text-muted-foreground leading-relaxed">
               You agree to indemnify, defend, and hold harmless ScaleReach and its officers, directors, employees, agents, and affiliates from and against any and all claims, damages, obligations, losses, liabilities, costs, and expenses (including attorney&apos;s fees) arising from:
             </p>
@@ -256,7 +291,7 @@ export default function TermsOfServicePage() {
 
           {/* Termination */}
           <section>
-            <h2 className="text-2xl font-semibold mb-4">13. Termination</h2>
+            <h2 className="text-2xl font-semibold mb-4">14. Termination</h2>
             <p className="text-muted-foreground leading-relaxed">
               We may terminate or suspend your access to the Service immediately, without prior notice or liability, for any reason, including if you breach these Terms. Upon termination:
             </p>
@@ -269,7 +304,7 @@ export default function TermsOfServicePage() {
 
           {/* Governing Law */}
           <section>
-            <h2 className="text-2xl font-semibold mb-4">14. Governing Law and Dispute Resolution</h2>
+            <h2 className="text-2xl font-semibold mb-4">15. Governing Law and Dispute Resolution</h2>
             <p className="text-muted-foreground leading-relaxed">
               These Terms shall be governed by and construed in accordance with the laws of the State of Delaware, United States, without regard to its conflict of law provisions. Any disputes arising out of or relating to these Terms or the Service shall be resolved through binding arbitration in accordance with the rules of the American Arbitration Association, except that either party may seek injunctive or other equitable relief in any court of competent jurisdiction.
             </p>
@@ -280,7 +315,7 @@ export default function TermsOfServicePage() {
 
           {/* Modifications */}
           <section>
-            <h2 className="text-2xl font-semibold mb-4">15. Modifications to Terms</h2>
+            <h2 className="text-2xl font-semibold mb-4">16. Modifications to Terms</h2>
             <p className="text-muted-foreground leading-relaxed">
               We reserve the right to modify these Terms at any time. If we make material changes, we will notify you by email or by posting a notice on the Service prior to the changes becoming effective. Your continued use of the Service after the effective date of the revised Terms constitutes your acceptance of the changes.
             </p>
@@ -288,7 +323,7 @@ export default function TermsOfServicePage() {
 
           {/* Severability */}
           <section>
-            <h2 className="text-2xl font-semibold mb-4">16. Severability</h2>
+            <h2 className="text-2xl font-semibold mb-4">17. Severability</h2>
             <p className="text-muted-foreground leading-relaxed">
               If any provision of these Terms is held to be invalid or unenforceable, such provision shall be struck and the remaining provisions shall be enforced to the fullest extent under law.
             </p>
@@ -296,7 +331,7 @@ export default function TermsOfServicePage() {
 
           {/* Entire Agreement */}
           <section>
-            <h2 className="text-2xl font-semibold mb-4">17. Entire Agreement</h2>
+            <h2 className="text-2xl font-semibold mb-4">18. Entire Agreement</h2>
             <p className="text-muted-foreground leading-relaxed">
               These Terms, together with our Privacy Policy and any other legal notices published by us on the Service, constitute the entire agreement between you and ScaleReach regarding the Service and supersede all prior agreements and understandings.
             </p>
@@ -304,7 +339,7 @@ export default function TermsOfServicePage() {
 
           {/* Contact Information */}
           <section>
-            <h2 className="text-2xl font-semibold mb-4">18. Contact Us</h2>
+            <h2 className="text-2xl font-semibold mb-4">19. Contact Us</h2>
             <p className="text-muted-foreground leading-relaxed">
               If you have any questions about these Terms, please contact us at:
             </p>

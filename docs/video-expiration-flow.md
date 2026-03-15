@@ -2,7 +2,7 @@
 
 ## Overview
 
-Videos in ScaleReach have a limited storage lifetime based on the user's workspace plan. When a video expires, it is automatically cleaned up — all associated files (video, audio, thumbnails, clips, exports, dubbing) are deleted from R2 storage and the database records are removed.
+Videos in ScaleReach have a limited storage lifetime based on the user's workspace plan. When a video expires, it is automatically cleaned up - all associated files (video, audio, thumbnails, clips, exports, dubbing) are deleted from R2 storage and the database records are removed.
 
 ---
 
@@ -30,9 +30,9 @@ expiresAt: getVideoExpiryDate(workspace?.plan || "free")
 This sets `expiresAt = now + storageDuration` (in seconds) based on the plan. The value is stored in the `video.expires_at` column (nullable timestamp, indexed).
 
 Entry points that set expiration:
-- `upload.controller.ts` — direct file upload
-- `uppy-upload.controller.ts` — Uppy chunked upload
-- `video.controller.ts` — YouTube URL import
+- `upload.controller.ts` - direct file upload
+- `uppy-upload.controller.ts` - Uppy chunked upload
+- `video.controller.ts` - YouTube URL import
 
 ---
 
@@ -51,7 +51,7 @@ A background job runs every 24 hours that finds and deletes expired videos:
   4. Collects all dubbing/dubbed clip audio R2 keys
   5. Deletes all R2 files (best-effort, continues if some are already gone)
   6. Deletes the video DB record (cascades to clips, exports, dubbings via foreign keys)
-- Errors on individual videos don't abort the batch — it continues with the next video
+- Errors on individual videos don't abort the batch - it continues with the next video
 
 **Schedule:**
 - Runs 30 seconds after server startup
@@ -76,7 +76,7 @@ A background job runs every 24 hours that finds and deletes expired videos:
 
 ### 3. Access After Expiration
 
-There is **no real-time access check** on the `getVideoById` endpoint — it does not reject requests for expired videos. Instead, the video simply disappears once the cleanup job runs. Between expiration time and the next cleanup run (up to 24 hours), the video may still be accessible.
+There is **no real-time access check** on the `getVideoById` endpoint - it does not reject requests for expired videos. Instead, the video simply disappears once the cleanup job runs. Between expiration time and the next cleanup run (up to 24 hours), the video may still be accessible.
 
 ---
 
