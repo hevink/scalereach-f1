@@ -23,7 +23,7 @@ export function PlanBadge({ plan, workspaceSlug }: PlanBadgeProps) {
             label: "Free",
             icon: null,
             variant: "secondary" as const,
-            limits: ["2GB uploads", "30 min videos", "50 minutes one-time"],
+            limits: ["2GB uploads", "30 min videos", "0 minutes"],
         },
         starter: {
             label: "Starter",

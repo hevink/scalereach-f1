@@ -580,7 +580,7 @@ export default function WorkspacePricingPage() {
                         {[
                             {
                                 q: "Do my minutes expire?",
-                                a: "Free plan minutes expire after 60 days from account creation. Paid plan (Starter & Pro) minutes reset every month and never expire while your subscription is active.",
+                                a: "Free plan does not include any minutes — upgrade to a paid plan to start processing videos. Paid plan (Starter & Pro) minutes reset every month and never expire while your subscription is active.",
                             },
                             {
                                 q: "What happens to my videos when storage expires?",

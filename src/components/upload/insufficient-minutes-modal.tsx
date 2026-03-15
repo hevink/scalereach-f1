@@ -195,7 +195,7 @@ export function InsufficientMinutesModal(props: InsufficientMinutesModalProps) {
             title: "Not Enough Minutes",
             message: `You have ${props.minutesRemaining} minutes remaining, but this video needs ${props.minutesNeeded} minutes to process.`,
             subtitle: props.currentPlan === "Free"
-                ? "Free plan includes 50 one-time minutes. Upgrade to Starter (200/month) or Pro (300/month) for more."
+                ? "Free plan does not include any minutes. Upgrade to Starter (200/month) or Pro (400/month) to get started."
                 : "Your monthly minutes will reset on your renewal date. Upgrade for more minutes per month.",
         };
     };
