@@ -151,23 +151,23 @@ export function VideoGrid({
                             </div>
                         </div>
 
-                        <div className="overflow-hidden rounded-3xl border border-border/70 bg-background/20">
+                        <div className="overflow-hidden rounded-2xl border border-border/70 bg-background/20">
                             {steps.map((step, index) => (
                                 <div
                                     key={step.num}
                                     className={cn(
-                                        "flex gap-5 px-6 py-6 sm:px-7 sm:py-7",
+                                        "flex gap-4 px-5 py-5 sm:px-6",
                                         index !== steps.length - 1 && "border-b border-border/70"
                                     )}
                                 >
-                                    <div className="flex size-12 shrink-0 items-center justify-center rounded-2xl bg-primary/10 text-primary">
+                                    <div className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary">
                                         {step.icon}
                                     </div>
 
                                     <div className="min-w-0 flex-1">
                                         <div className="flex items-center justify-between gap-3">
                                             <p
-                                                className="text-xl font-semibold tracking-tight text-foreground sm:text-[1.75rem] sm:leading-[1.15]"
+                                                className="text-lg font-semibold tracking-tight text-foreground"
                                                 style={{ fontFamily: "var(--font-lexend)" }}
                                             >
                                                 {step.title}
@@ -176,7 +176,7 @@ export function VideoGrid({
                                                 Step {step.num}
                                             </span>
                                         </div>
-                                        <p className="mt-3 max-w-lg text-base leading-8 text-muted-foreground">
+                                        <p className="mt-2 max-w-md text-sm leading-6 text-muted-foreground">
                                             {step.desc}
                                         </p>
                                     </div>
