@@ -326,7 +326,7 @@ export default function AdminUserDetailPage() {
                         <div className="flex flex-col sm:flex-row gap-5">
                             <div className="flex items-center gap-4">
                                 <Avatar className="h-16 w-16">
-                                    <AvatarImage src={user.image || undefined} />
+                                    <AvatarImage src={user.image || `https://avatar.vercel.sh/${user.id || user.email}`} />
                                     <AvatarFallback className="text-2xl">{user.name?.charAt(0) || "U"}</AvatarFallback>
                                 </Avatar>
                                 <div>

@@ -97,18 +97,14 @@ export default function InvitePage({ params }: { params: Promise<{ token: string
             <Card className="w-full max-w-md">
                 <CardHeader className="text-center">
                     <div className="mx-auto">
-                        {invitation.workspace.logo ? (
+                        <div className="mx-auto">
                             <Avatar className="size-16">
-                                <AvatarImage src={invitation.workspace.logo} alt={invitation.workspace.name} />
+                                <AvatarImage src={invitation.workspace.logo || `https://avatar.vercel.sh/${invitation.workspace.slug || invitation.workspace.name}`} alt={invitation.workspace.name} />
                                 <AvatarFallback className="text-2xl">
                                     {invitation.workspace.name.charAt(0)}
                                 </AvatarFallback>
                             </Avatar>
-                        ) : (
-                            <div className="flex size-16 items-center justify-center rounded-full bg-primary/10">
-                                <IconUsers className="size-8 text-primary" />
-                            </div>
-                        )}
+                        </div>
                     </div>
                     <CardTitle className="mt-4">Join {invitation.workspace.name}</CardTitle>
                     <CardDescription>

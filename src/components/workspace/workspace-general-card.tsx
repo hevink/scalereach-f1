@@ -899,7 +899,7 @@ export function WorkspaceGeneralCard({
             handleLogoClick={handleLogoClick}
             isUploadingLogo={isUploadingLogo}
             logoFallback={logoFallback}
-            displayLogo={displayLogo}
+            displayLogo={displayLogo || `https://avatar.vercel.sh/${workspaceData?.slug || workspaceData?.name}`}
           />
           <NameInputSection
             isPending={isPending}

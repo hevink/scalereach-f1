@@ -63,7 +63,7 @@ export function SocialAccountAvatar({
 
     return (
         <Avatar size={size} className={className}>
-            {avatarUrl && <AvatarImage src={avatarUrl} alt={accountName} />}
+            <AvatarImage src={avatarUrl || `https://avatar.vercel.sh/${accountName}`} alt={accountName} />
             <AvatarFallback>{initial}</AvatarFallback>
             {showBadge && Icon && (
                 <AvatarBadge className={cn("text-white", badgeColor)}>

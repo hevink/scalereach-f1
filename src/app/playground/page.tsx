@@ -75,7 +75,7 @@ export default function PlaygroundPage() {
                             <CardHeader><CardTitle>Avatars</CardTitle></CardHeader>
                             <CardContent className="flex flex-wrap gap-4 items-center">
                                 <Avatar>
-                                    <AvatarImage src="https://github.com/shadcn.png" alt="shadcn" />
+                                    <AvatarImage src="https://avatar.vercel.sh/shadcn" alt="shadcn" />
                                     <AvatarFallback>SC</AvatarFallback>
                                 </Avatar>
                                 <Avatar><AvatarFallback>AB</AvatarFallback></Avatar>

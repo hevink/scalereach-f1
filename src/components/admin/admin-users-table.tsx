@@ -205,7 +205,7 @@ export function AdminUsersTable() {
                                                 <TableCell>
                                                     <div className="flex items-center gap-3">
                                                         <Avatar className="h-8 w-8">
-                                                            <AvatarImage src={user.image || undefined} />
+                                                            <AvatarImage src={user.image || `https://avatar.vercel.sh/${user.id || user.email}`} />
                                                             <AvatarFallback className="text-xs">{user.name?.charAt(0) || "U"}</AvatarFallback>
                                                         </Avatar>
                                                         <div>
@@ -290,7 +290,7 @@ export function AdminUsersTable() {
                                         onClick={() => router.push(`/admin/users/${user.id}`)}
                                     >
                                         <Avatar className="h-10 w-10 shrink-0">
-                                            <AvatarImage src={user.image || undefined} />
+                                            <AvatarImage src={user.image || `https://avatar.vercel.sh/${user.id || user.email}`} />
                                             <AvatarFallback>{user.name?.charAt(0) || "U"}</AvatarFallback>
                                         </Avatar>
                                         <div className="flex-1 min-w-0">

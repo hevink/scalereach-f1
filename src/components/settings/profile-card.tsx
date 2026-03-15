@@ -729,7 +729,7 @@ export function ProfileCard() {
         <div className="flex flex-col gap-6">
           <AvatarUploadSection
             avatarFallback={avatarFallback}
-            displayAvatar={displayAvatar}
+            displayAvatar={displayAvatar || `https://avatar.vercel.sh/${profileData.email || profileData.name}`}
             fileInputRef={fileInputRef}
             handleAvatarChange={handleAvatarChange}
             handleAvatarClick={handleAvatarClick}

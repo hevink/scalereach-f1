@@ -149,7 +149,7 @@ export function AdminWorkspacesTable() {
                                     <TableCell>
                                         <div className="flex items-center gap-3">
                                             <Avatar className="h-8 w-8">
-                                                <AvatarImage src={workspace.logo || undefined} />
+                                                <AvatarImage src={workspace.logo || `https://avatar.vercel.sh/${workspace.slug}`} />
                                                 <AvatarFallback>{workspace.name?.charAt(0) || "W"}</AvatarFallback>
                                             </Avatar>
                                             <div>

@@ -104,17 +104,16 @@ export function NavUser() {
                 size="lg"
               >
                 <Avatar className="h-8 w-8 rounded-lg">
-                  {user.image && (
-                    <AvatarImage
-                      alt={user.name || "User"}
-                      referrerPolicy="no-referrer"
-                      src={user.image}
-                    />
-                  )}
+                  <AvatarImage
+                    alt={user.name || "User"}
+                    referrerPolicy="no-referrer"
+                    src={user.image || `https://avatar.vercel.sh/${user.id || user.email}`}
+                  />
                   <AvatarFallback className="rounded-lg">
                     {initials}
                   </AvatarFallback>
                 </Avatar>
+
                 <div className="grid flex-1 text-left text-sm leading-tight">
                   <span className="truncate font-medium">
                     {user.name || "User"}
@@ -163,7 +162,7 @@ export function NavUser() {
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
-      </SidebarMenuItem>
-    </SidebarMenu>
+      </SidebarMenuItem >
+    </SidebarMenu >
   );
 }

@@ -236,7 +236,7 @@ export function AdminUserDetail({ user, open, onClose }: AdminUserDetailProps) {
                         {user && (
                             <div className="flex items-center gap-3">
                                 <Avatar className="h-9 w-9">
-                                    <AvatarImage src={user.image || undefined} />
+                                    <AvatarImage src={user.image || `https://avatar.vercel.sh/${user.id || user.email}`} />
                                     <AvatarFallback>{user.name?.charAt(0) || "U"}</AvatarFallback>
                                 </Avatar>
                                 <div>
