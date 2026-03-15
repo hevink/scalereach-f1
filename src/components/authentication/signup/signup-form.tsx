@@ -1,7 +1,7 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { IconChevronLeft, IconEye, IconEyeOff } from "@tabler/icons-react";
+import { IconChevronLeft, IconEye, IconEyeOff, IconMail } from "@tabler/icons-react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import { Controller, useForm } from "react-hook-form";
@@ -87,6 +87,7 @@ export function SignUpForm() {
   const [checkingUsername, setCheckingUsername] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [signupSuccess, setSignupSuccess] = useState(false);
 
   const form = useForm<SignupFormData>({
     resolver: zodResolver(signupSchema),
@@ -265,10 +266,11 @@ export function SignUpForm() {
 
       if (redirect) {
         router.push(redirect);
-      } else {
-        router.push("/onboarding");
+        router.refresh();
+        return;
       }
-      router.refresh();
+
+      setSignupSuccess(true);
     } catch (error) {
       const errorMessage = getAuthErrorMessage(
         error as { code?: string; message?: string } | null,
@@ -318,64 +320,51 @@ export function SignUpForm() {
 
   return (
     <div className="flex flex-col">
-      {/* biome-ignore lint/a11y/noNoninteractiveElementInteractions: Form is interactive and needs keyboard handling for multi-step navigation */}
-      <form
-        className="flex flex-col gap-6"
-        onKeyDown={handleKeyDown}
-        onSubmit={form.handleSubmit(onSubmit)}
-      >
-        <div className="flex flex-col gap-4">
-          {currentStep === 1 && (
-            <Controller
-              control={form.control}
-              name="email"
-              render={({ field, fieldState }) => (
-                <div className="flex flex-col gap-2">
-                  <Label
-                    className="flex flex-col items-start gap-2"
-                    htmlFor={field.name}
-                  >
-                    Email
-                    <Input
-                      {...field}
-                      aria-invalid={fieldState.invalid}
-                      autoComplete="email"
-                      autoFocus
-                      disabled={isLoading || checkingEmail}
-                      id={field.name}
-                      placeholder="you@example.com"
-                      type="email"
-                    />
-                  </Label>
-                  {fieldState.invalid && (
-                    <FieldError errors={[fieldState.error]} />
-                  )}
-                </div>
-              )}
-            />
-          )}
-
-          {currentStep === 2 && (
-            <>
+      {signupSuccess ? (
+        <div className="flex flex-col items-center gap-4 py-4">
+          <div className="flex size-12 items-center justify-center rounded-full bg-blue-500/10">
+            <IconMail className="size-6 text-blue-500" />
+          </div>
+          <div className="text-center space-y-1">
+            <p className="text-sm text-zinc-600 dark:text-zinc-400">
+              We&apos;ve sent a verification email to{" "}
+              <span className="font-medium text-zinc-900 dark:text-white">
+                {form.getValues("email")}
+              </span>
+            </p>
+            <p className="text-xs text-zinc-500">
+              Please check your inbox and click the link to verify your account.
+            </p>
+          </div>
+        </div>
+      ) : (
+        /* biome-ignore lint/a11y/noNoninteractiveElementInteractions: Form is interactive and needs keyboard handling for multi-step navigation */
+        <form
+          className="flex flex-col gap-6"
+          onKeyDown={handleKeyDown}
+          onSubmit={form.handleSubmit(onSubmit)}
+        >
+          <div className="flex flex-col gap-4">
+            {currentStep === 1 && (
               <Controller
                 control={form.control}
-                name="name"
+                name="email"
                 render={({ field, fieldState }) => (
                   <div className="flex flex-col gap-2">
                     <Label
                       className="flex flex-col items-start gap-2"
                       htmlFor={field.name}
                     >
-                      Name
+                      Email
                       <Input
                         {...field}
                         aria-invalid={fieldState.invalid}
-                        autoComplete="name"
+                        autoComplete="email"
                         autoFocus
-                        disabled={isLoading}
+                        disabled={isLoading || checkingEmail}
                         id={field.name}
-                        placeholder="Your name"
-                        type="text"
+                        placeholder="you@example.com"
+                        type="email"
                       />
                     </Label>
                     {fieldState.invalid && (
@@ -384,211 +373,243 @@ export function SignUpForm() {
                   </div>
                 )}
               />
+            )}
 
-              <Controller
-                control={form.control}
-                name="username"
-                render={({ field, fieldState }) => (
-                  <div className="flex flex-col gap-2">
-                    <Label
-                      className="flex flex-col items-start gap-2"
-                      htmlFor={field.name}
-                    >
-                      Username
-                      <Input
-                        {...field}
-                        aria-invalid={showUsernameError}
-                        autoComplete="username"
-                        disabled={isLoading}
-                        id={field.name}
-                        placeholder="username"
-                        type="text"
-                      />
-                    </Label>
-                    {checkingUsername && (
-                      <FieldDescription>
-                        Checking availability…
-                      </FieldDescription>
-                    )}
-                    {!checkingUsername &&
-                      username &&
-                      username.trim().length >= 3 &&
-                      usernameAvailable === true && (
-                        <FieldDescription className="text-green-600 dark:text-green-400">
-                          Username is available
+            {currentStep === 2 && (
+              <>
+                <Controller
+                  control={form.control}
+                  name="name"
+                  render={({ field, fieldState }) => (
+                    <div className="flex flex-col gap-2">
+                      <Label
+                        className="flex flex-col items-start gap-2"
+                        htmlFor={field.name}
+                      >
+                        Name
+                        <Input
+                          {...field}
+                          aria-invalid={fieldState.invalid}
+                          autoComplete="name"
+                          autoFocus
+                          disabled={isLoading}
+                          id={field.name}
+                          placeholder="Your name"
+                          type="text"
+                        />
+                      </Label>
+                      {fieldState.invalid && (
+                        <FieldError errors={[fieldState.error]} />
+                      )}
+                    </div>
+                  )}
+                />
+
+                <Controller
+                  control={form.control}
+                  name="username"
+                  render={({ field, fieldState }) => (
+                    <div className="flex flex-col gap-2">
+                      <Label
+                        className="flex flex-col items-start gap-2"
+                        htmlFor={field.name}
+                      >
+                        Username
+                        <Input
+                          {...field}
+                          aria-invalid={showUsernameError}
+                          autoComplete="username"
+                          disabled={isLoading}
+                          id={field.name}
+                          placeholder="username"
+                          type="text"
+                        />
+                      </Label>
+                      {checkingUsername && (
+                        <FieldDescription>
+                          Checking availability…
                         </FieldDescription>
                       )}
-                    {fieldState.invalid && (
-                      <FieldError errors={[fieldState.error]} />
-                    )}
-                    {usernameAvailable === false && !fieldState.invalid && (
-                      <FieldError
-                        errors={[{ message: "Username is not available" }]}
-                      />
-                    )}
-                  </div>
-                )}
-              />
-            </>
-          )}
-
-          {currentStep === 3 && (
-            <>
-              <Controller
-                control={form.control}
-                name="password"
-                render={({ field, fieldState }) => (
-                  <div className="flex flex-col gap-2">
-                    <Label
-                      className="flex flex-col items-start gap-2"
-                      htmlFor={field.name}
-                    >
-                      Password
-                      <div className="flex w-full gap-0.5">
-                        <Input
-                          {...field}
-                          aria-invalid={fieldState.invalid}
-                          autoComplete="new-password"
-                          autoFocus
-                          className="flex-1"
-                          disabled={isLoading}
-                          id={field.name}
-                          placeholder="Create a password"
-                          type={showPassword ? "text" : "password"}
+                      {!checkingUsername &&
+                        username &&
+                        username.trim().length >= 3 &&
+                        usernameAvailable === true && (
+                          <FieldDescription className="text-green-600 dark:text-green-400">
+                            Username is available
+                          </FieldDescription>
+                        )}
+                      {fieldState.invalid && (
+                        <FieldError errors={[fieldState.error]} />
+                      )}
+                      {usernameAvailable === false && !fieldState.invalid && (
+                        <FieldError
+                          errors={[{ message: "Username is not available" }]}
                         />
-                        <Button
-                          aria-label={
-                            showPassword ? "Hide password" : "Show password"
-                          }
-                          className="size-10 shrink-0"
-                          disabled={isLoading}
-                          onClick={() => setShowPassword(!showPassword)}
-                          size="icon"
-                          tabIndex={-1}
-                          type="button"
-                          variant="outline"
-                        >
-                          {showPassword ? (
-                            <IconEyeOff className="size-4" />
-                          ) : (
-                            <IconEye className="size-4" />
-                          )}
-                        </Button>
-                      </div>
-                    </Label>
-                    {fieldState.invalid && fieldState.isTouched && (
-                      <FieldError errors={[fieldState.error]} />
-                    )}
-                  </div>
-                )}
-              />
-
-              <Controller
-                control={form.control}
-                name="confirmPassword"
-                render={({ field, fieldState }) => (
-                  <div className="flex flex-col gap-2">
-                    <Label
-                      className="flex flex-col items-start gap-2"
-                      htmlFor={field.name}
-                    >
-                      Confirm Password
-                      <div className="flex w-full gap-0.5">
-                        <Input
-                          {...field}
-                          aria-invalid={fieldState.invalid}
-                          autoComplete="new-password"
-                          className="flex-1"
-                          disabled={isLoading}
-                          id={field.name}
-                          placeholder="Confirm your password"
-                          type={showConfirmPassword ? "text" : "password"}
-                        />
-                        <Button
-                          aria-label={
-                            showConfirmPassword
-                              ? "Hide password"
-                              : "Show password"
-                          }
-                          className="size-10 shrink-0"
-                          disabled={isLoading}
-                          onClick={() =>
-                            setShowConfirmPassword(!showConfirmPassword)
-                          }
-                          size="icon"
-                          tabIndex={-1}
-                          type="button"
-                          variant="outline"
-                        >
-                          {showConfirmPassword ? (
-                            <IconEyeOff className="size-4" />
-                          ) : (
-                            <IconEye className="size-4" />
-                          )}
-                        </Button>
-                      </div>
-                    </Label>
-                    {fieldState.invalid && fieldState.isTouched && (
-                      <FieldError errors={[fieldState.error]} />
-                    )}
-                  </div>
-                )}
-              />
-            </>
-          )}
-        </div>
-
-        <div className="flex flex-col gap-2">
-          <div className="flex gap-3">
-            {currentStep > 1 && (
-              <Button
-                className="flex-1"
-                disabled={isLoading}
-                onClick={handleBack}
-                type="button"
-                variant="outline"
-              >
-                <IconChevronLeft className="size-4" />
-                Back
-              </Button>
+                      )}
+                    </div>
+                  )}
+                />
+              </>
             )}
-            {currentStep < 3 ? (
-              <Button
-                className="flex-1"
-                disabled={
-                  isLoading ||
-                  checkingEmail ||
-                  (currentStep === 2 && usernameAvailable === false)
-                }
-                loading={isLoading || checkingEmail}
-                onClick={handleNext}
-                type="button"
-              >
-                {currentStep === 1 ? "Continue with email" : "Next"}
-              </Button>
-            ) : (
-              <Button
-                className="flex-1"
-                disabled={isLoading || usernameAvailable === false}
-                loading={isLoading}
-                type="submit"
-              >
-                Create account
-              </Button>
+
+            {currentStep === 3 && (
+              <>
+                <Controller
+                  control={form.control}
+                  name="password"
+                  render={({ field, fieldState }) => (
+                    <div className="flex flex-col gap-2">
+                      <Label
+                        className="flex flex-col items-start gap-2"
+                        htmlFor={field.name}
+                      >
+                        Password
+                        <div className="flex w-full gap-0.5">
+                          <Input
+                            {...field}
+                            aria-invalid={fieldState.invalid}
+                            autoComplete="new-password"
+                            autoFocus
+                            className="flex-1"
+                            disabled={isLoading}
+                            id={field.name}
+                            placeholder="Create a password"
+                            type={showPassword ? "text" : "password"}
+                          />
+                          <Button
+                            aria-label={
+                              showPassword ? "Hide password" : "Show password"
+                            }
+                            className="size-10 shrink-0"
+                            disabled={isLoading}
+                            onClick={() => setShowPassword(!showPassword)}
+                            size="icon"
+                            tabIndex={-1}
+                            type="button"
+                            variant="outline"
+                          >
+                            {showPassword ? (
+                              <IconEyeOff className="size-4" />
+                            ) : (
+                              <IconEye className="size-4" />
+                            )}
+                          </Button>
+                        </div>
+                      </Label>
+                      {fieldState.invalid && fieldState.isTouched && (
+                        <FieldError errors={[fieldState.error]} />
+                      )}
+                    </div>
+                  )}
+                />
+
+                <Controller
+                  control={form.control}
+                  name="confirmPassword"
+                  render={({ field, fieldState }) => (
+                    <div className="flex flex-col gap-2">
+                      <Label
+                        className="flex flex-col items-start gap-2"
+                        htmlFor={field.name}
+                      >
+                        Confirm Password
+                        <div className="flex w-full gap-0.5">
+                          <Input
+                            {...field}
+                            aria-invalid={fieldState.invalid}
+                            autoComplete="new-password"
+                            className="flex-1"
+                            disabled={isLoading}
+                            id={field.name}
+                            placeholder="Confirm your password"
+                            type={showConfirmPassword ? "text" : "password"}
+                          />
+                          <Button
+                            aria-label={
+                              showConfirmPassword
+                                ? "Hide password"
+                                : "Show password"
+                            }
+                            className="size-10 shrink-0"
+                            disabled={isLoading}
+                            onClick={() =>
+                              setShowConfirmPassword(!showConfirmPassword)
+                            }
+                            size="icon"
+                            tabIndex={-1}
+                            type="button"
+                            variant="outline"
+                          >
+                            {showConfirmPassword ? (
+                              <IconEyeOff className="size-4" />
+                            ) : (
+                              <IconEye className="size-4" />
+                            )}
+                          </Button>
+                        </div>
+                      </Label>
+                      {fieldState.invalid && fieldState.isTouched && (
+                        <FieldError errors={[fieldState.error]} />
+                      )}
+                    </div>
+                  )}
+                />
+              </>
             )}
           </div>
-          {currentStep === 1 && (
-            <>
-              <div className="flex items-center gap-3">
-                <div className="h-px flex-1 bg-border" />
-                <span className="text-xs font-semibold text-muted-foreground">OR</span>
-                <div className="h-px flex-1 bg-border" />
-              </div>
-              <LoginWithGoogle isSignUp />
-            </>
-          )}
-        </div>
-      </form>
+
+          <div className="flex flex-col gap-2">
+            <div className="flex gap-3">
+              {currentStep > 1 && (
+                <Button
+                  className="flex-1"
+                  disabled={isLoading}
+                  onClick={handleBack}
+                  type="button"
+                  variant="outline"
+                >
+                  <IconChevronLeft className="size-4" />
+                  Back
+                </Button>
+              )}
+              {currentStep < 3 ? (
+                <Button
+                  className="flex-1"
+                  disabled={
+                    isLoading ||
+                    checkingEmail ||
+                    (currentStep === 2 && usernameAvailable === false)
+                  }
+                  loading={isLoading || checkingEmail}
+                  onClick={handleNext}
+                  type="button"
+                >
+                  {currentStep === 1 ? "Continue with email" : "Next"}
+                </Button>
+              ) : (
+                <Button
+                  className="flex-1"
+                  disabled={isLoading || usernameAvailable === false}
+                  loading={isLoading}
+                  type="submit"
+                >
+                  Create account
+                </Button>
+              )}
+            </div>
+            {currentStep === 1 && (
+              <>
+                <div className="flex items-center gap-3">
+                  <div className="h-px flex-1 bg-border" />
+                  <span className="text-xs font-semibold text-muted-foreground">OR</span>
+                  <div className="h-px flex-1 bg-border" />
+                </div>
+                <LoginWithGoogle isSignUp />
+              </>
+            )}
+          </div>
+        </form>
+      )}
     </div>
   );
 }

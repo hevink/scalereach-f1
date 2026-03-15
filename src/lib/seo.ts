@@ -157,6 +157,12 @@ export const pageMetadata = {
     noIndex: true,
   }),
 
+  checkEmail: constructMetadata({
+    title: "Check Your Email - ScaleReach",
+    description: "We've sent you a verification email. Please check your inbox to complete your account setup.",
+    noIndex: true,
+  }),
+
   twoFactorVerify: constructMetadata({
     title: "Two-Factor Authentication - ScaleReach",
     description: "Complete two-factor authentication to access your ScaleReach account.",
