@@ -34,8 +34,12 @@ export function VideoGrid({
     const [deletingIds, setDeletingIds] = useState<Set<string>>(new Set());
     const [viewMode, setViewMode] = useState<"list" | "grid">(() => {
         if (typeof window !== "undefined") {
-            const saved = localStorage.getItem("video-view-mode");
-            if (saved === "list" || saved === "grid") return saved;
+            try {
+                const saved = window.localStorage.getItem("video-view-mode");
+                if (saved === "list" || saved === "grid") return saved;
+            } catch {
+                // Ignore unavailable storage in tests or privacy-restricted contexts.
+            }
         }
         return "list";
     });
@@ -49,7 +53,12 @@ export function VideoGrid({
 
     const handleViewModeChange = useCallback((mode: "list" | "grid") => {
         setViewMode(mode);
-        localStorage.setItem("video-view-mode", mode);
+
+        try {
+            window.localStorage.setItem("video-view-mode", mode);
+        } catch {
+            // Keep the UI working even when storage persistence is unavailable.
+        }
     }, []);
 
     const handleDelete = useCallback(async (videoId: string) => {
@@ -82,7 +91,7 @@ export function VideoGrid({
                 num: "2",
                 icon: <HugeVideoIcon className="size-5" />,
                 title: "AI generates your clips",
-                desc: "ScaleReach finds the best moments and adds captions automatically.",
+                desc: "ScaleReach finds the best moments, reframes them, and adds captions automatically.",
             },
             {
                 num: "3",
@@ -93,51 +102,88 @@ export function VideoGrid({
                     </svg>
                 ),
                 title: "Schedule & post everywhere",
-                desc: "Publish to TikTok, Instagram, YouTube Shorts, and more in one click.",
+                desc: "Publish to TikTok, Instagram, YouTube Shorts, and more from one workflow.",
             },
         ];
 
+        const highlightBadges = ["YouTube URLs", "Direct uploads", "Auto captions", "Multi-platform posting"];
+
         return (
-            <div className={cn("flex flex-col items-center py-16 px-6", className)}>
-                {/* Header */}
-                <div className="text-center mb-10">
-                    <h3 className="text-2xl font-semibold mb-2">No videos yet</h3>
-                    <p className="text-muted-foreground max-w-md">
-                        Paste a YouTube link or upload a file above to get started
-                    </p>
-                </div>
-
-                {/* Steps */}
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 w-full max-w-3xl">
-                    {steps.map((step, index) => (
-                        <div
-                            key={step.num}
-                            className="relative flex flex-col items-center text-center p-6"
-                        >
-                            {/* Step indicator */}
-                            <div className="flex items-center justify-center size-12 rounded-full bg-primary/10 text-primary mb-4">
-                                {step.icon}
-                            </div>
-
-                            {/* Step number */}
-                            <span className="absolute top-4 right-4 text-xs font-medium text-muted-foreground/50">
-                                {step.num}
-                            </span>
-
-                            {/* Content */}
-                            <p className="text-sm font-medium mb-1">{step.title}</p>
-                            <p className="text-xs text-muted-foreground leading-relaxed">{step.desc}</p>
-
-                            {/* Arrow connector (desktop only) */}
-                            {index < steps.length - 1 && (
-                                <div className="hidden sm:flex absolute -right-3 top-1/2 -translate-y-1/2 text-muted-foreground/30">
-                                    <svg className="size-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-                                        <path d="M9 6l6 6-6 6" />
-                                    </svg>
+            <div className={cn("py-8 sm:py-10", className)}>
+                <div className="mx-auto max-w-5xl rounded-[28px] border border-border/70 bg-card px-6 py-7 sm:px-8 sm:py-8">
+                    <div className="grid gap-8 lg:grid-cols-[minmax(0,0.95fr)_minmax(0,1.05fr)] lg:gap-10">
+                        <div className="space-y-5">
+                            {headerSlot && (
+                                <div className="flex items-center text-muted-foreground">
+                                    {headerSlot}
                                 </div>
                             )}
+
+                            <div className="space-y-4">
+                                <span className="inline-flex items-center rounded-full border border-border/70 px-3 py-1 text-[11px] font-medium uppercase tracking-[0.18em] text-muted-foreground">
+                                    Create your first video
+                                </span>
+
+                                <div className="space-y-3">
+                                    <h3
+                                        className="text-3xl font-semibold tracking-tight text-foreground sm:text-4xl"
+                                        style={{ fontFamily: "var(--font-lexend)" }}
+                                    >
+                                        No videos yet
+                                    </h3>
+
+                                    <p className="max-w-xl text-sm leading-7 text-muted-foreground sm:text-base">
+                                        Paste a YouTube link or upload a file above to get started. ScaleReach turns long-form
+                                        content into short clips in three simple steps.
+                                    </p>
+                                </div>
+                            </div>
+
+                            <div className="flex flex-wrap gap-2">
+                                {highlightBadges.map((badge) => (
+                                    <span
+                                        key={badge}
+                                        className="rounded-full border border-border/70 px-3 py-1.5 text-xs text-muted-foreground"
+                                    >
+                                        {badge}
+                                    </span>
+                                ))}
+                            </div>
                         </div>
-                    ))}
+
+                        <div className="overflow-hidden rounded-3xl border border-border/70 bg-background/20">
+                            {steps.map((step, index) => (
+                                <div
+                                    key={step.num}
+                                    className={cn(
+                                        "flex gap-5 px-6 py-6 sm:px-7 sm:py-7",
+                                        index !== steps.length - 1 && "border-b border-border/70"
+                                    )}
+                                >
+                                    <div className="flex size-12 shrink-0 items-center justify-center rounded-2xl bg-primary/10 text-primary">
+                                        {step.icon}
+                                    </div>
+
+                                    <div className="min-w-0 flex-1">
+                                        <div className="flex items-center justify-between gap-3">
+                                            <p
+                                                className="text-xl font-semibold tracking-tight text-foreground sm:text-[1.75rem] sm:leading-[1.15]"
+                                                style={{ fontFamily: "var(--font-lexend)" }}
+                                            >
+                                                {step.title}
+                                            </p>
+                                            <span className="shrink-0 text-[11px] font-medium uppercase tracking-[0.18em] text-muted-foreground">
+                                                Step {step.num}
+                                            </span>
+                                        </div>
+                                        <p className="mt-3 max-w-lg text-base leading-8 text-muted-foreground">
+                                            {step.desc}
+                                        </p>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
                 </div>
             </div>
         );
