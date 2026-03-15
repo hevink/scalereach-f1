@@ -8,6 +8,7 @@ import {
   HugeAlertIcon,
   HugeKeyboardIcon,
 } from "@/components/icons/huge-icons";
+import { IconGift } from "@tabler/icons-react";
 import { usePathname, useRouter } from "next/navigation";
 import {
   SidebarMenu,
@@ -49,6 +50,9 @@ export function NavFooter({ currentSlug }: NavFooterProps) {
   const isLowMinutes = !isUnlimited && minutesTotal > 0 && (minutesRemaining / minutesTotal) < 0.2;
 
   const isFree = workspace?.plan === "free";
+
+  const affiliateUrl = `/${currentSlug}/affiliate`;
+  const isAffiliateActive = pathname === affiliateUrl;
 
   const footerItems = [
     {
@@ -137,6 +141,24 @@ export function NavFooter({ currentSlug }: NavFooterProps) {
           </SidebarMenuButton>
         </SidebarMenuItem>
       )}
+
+      {/* Affiliate Program */}
+      <SidebarMenuItem>
+        <SidebarMenuButton
+          isActive={isAffiliateActive}
+          onClick={() => navigate(affiliateUrl)}
+          tooltip="Affiliate Program - Earn 25%"
+        >
+          <IconGift
+            size={20}
+            className={isAffiliateActive ? "text-emerald-500" : ""}
+          />
+          <span className="font-[490] text-[13px]">Affiliate</span>
+        </SidebarMenuButton>
+        <SidebarMenuBadge className="bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 text-[10px]">
+          New
+        </SidebarMenuBadge>
+      </SidebarMenuItem>
 
       {footerItems.map((item) => {
         const IconComponent = item.icon;

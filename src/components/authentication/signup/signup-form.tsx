@@ -15,6 +15,7 @@ import { Label } from "@/components/ui/label";
 import { authClient } from "@/lib/auth-client";
 import { getAuthErrorMessage } from "@/lib/auth-errors";
 import { userApi } from "@/lib/api/user";
+import { affiliateApi } from "@/lib/api/affiliate";
 import { analytics } from "@/lib/analytics";
 
 const signupSchema = z
@@ -243,6 +244,25 @@ export function SignUpForm() {
         name: data.name,
         username: data.username,
       });
+
+      // Track affiliate referral if user came from a referral link
+      try {
+        const ref = localStorage.getItem("ref");
+        const refTs = localStorage.getItem("ref_ts");
+        if (ref && result.data?.user?.id) {
+          // Only track if referral is less than 30 days old
+          const thirtyDays = 30 * 24 * 60 * 60 * 1000;
+          if (!refTs || Date.now() - parseInt(refTs) < thirtyDays) {
+            await affiliateApi.trackReferral(ref, result.data.user.id);
+          }
+          localStorage.removeItem("ref");
+          localStorage.removeItem("ref_ts");
+        }
+      } catch (e) {
+        // Non-fatal: don't block signup if referral tracking fails
+        console.error("Referral tracking failed:", e);
+      }
+
       if (redirect) {
         router.push(redirect);
       } else {
@@ -255,6 +275,9 @@ export function SignUpForm() {
         { type: "signup" }
       );
       toast.error(errorMessage);
+      // Fix #12: Clear stale ref on signup failure to prevent indefinite persistence
+      localStorage.removeItem("ref");
+      localStorage.removeItem("ref_ts");
     } finally {
       setIsLoading(false);
     }

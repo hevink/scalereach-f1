@@ -27,11 +27,17 @@ export function LoginWithGoogle({
   const handleGoogleSignIn = async () => {
     setIsLoading(true);
     try {
-      // Check for last used workspace for callback
-      const lastUsedWorkspace = localStorage.getItem("lastUsedWorkspace");
-      const callbackURL = lastUsedWorkspace
-        ? `${FRONTEND_URL}/${lastUsedWorkspace}`
-        : `${FRONTEND_URL}/workspaces`;
+      // For signups, always route through /onboarding so affiliate ref tracking fires
+      // For logins, use last workspace or /workspaces
+      let callbackURL: string;
+      if (isSignUp) {
+        callbackURL = `${FRONTEND_URL}/onboarding`;
+      } else {
+        const lastUsedWorkspace = localStorage.getItem("lastUsedWorkspace");
+        callbackURL = lastUsedWorkspace
+          ? `${FRONTEND_URL}/${lastUsedWorkspace}`
+          : `${FRONTEND_URL}/workspaces`;
+      }
 
       const result = await authClient.signIn.social({
         provider: "google",

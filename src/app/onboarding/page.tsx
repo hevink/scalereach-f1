@@ -7,6 +7,7 @@ import { Spinner } from "@/components/ui/spinner";
 import { authClient, type ExtendedUser } from "@/lib/auth-client";
 import { workspaceApi } from "@/lib/api";
 import { userApi } from "@/lib/api";
+import { affiliateApi } from "@/lib/api/affiliate";
 
 export default function OnboardingPage() {
   const router = useRouter();
@@ -20,6 +21,18 @@ export default function OnboardingPage() {
     if (!user) {
       router.replace("/login");
       return;
+    }
+
+    // Track affiliate referral for OAuth signups (ref stored in localStorage by /r/[username])
+    const ref = localStorage.getItem("ref");
+    const refTs = localStorage.getItem("ref_ts");
+    if (ref && user.id && !user.isOnboarded) {
+      const thirtyDays = 30 * 24 * 60 * 60 * 1000;
+      if (!refTs || Date.now() - parseInt(refTs) < thirtyDays) {
+        affiliateApi.trackReferral(ref, user.id).catch(() => { });
+      }
+      localStorage.removeItem("ref");
+      localStorage.removeItem("ref_ts");
     }
 
     if (user.isOnboarded) {
