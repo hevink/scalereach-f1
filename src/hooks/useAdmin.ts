@@ -280,6 +280,15 @@ export function useBurstWorkerStatus() {
   });
 }
 
+export function useScalerState() {
+  return useQuery({
+    queryKey: ["admin", "scaler-state"],
+    queryFn: adminApi.getScalerState,
+    staleTime: 10 * 1000,
+    refetchInterval: 15 * 1000,
+  });
+}
+
 export function useAdminAffiliates() {
   return useQuery({
     queryKey: ["admin", "affiliates"],

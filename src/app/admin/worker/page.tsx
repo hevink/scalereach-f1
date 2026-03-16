@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -15,7 +15,7 @@ import {
     IconGitBranch, IconClock, IconActivity, IconPlayerPlay,
     IconPlayerStop, IconCloud, IconBolt, IconLoader2,
 } from "@tabler/icons-react";
-import { useWorkerStatus, useEC2Status, useControlEC2, useBurstWorkerStatus } from "@/hooks/useAdmin";
+import { useWorkerStatus, useEC2Status, useControlEC2, useBurstWorkerStatus, useScalerState } from "@/hooks/useAdmin";
 import { cn } from "@/lib/utils";
 import type { EC2Instance } from "@/lib/api/admin";
 
@@ -71,16 +71,43 @@ const stateColors: Record<string, { bg: string; text: string; dot: string }> = {
     unknown: { bg: "bg-zinc-500/10", text: "text-zinc-500", dot: "bg-zinc-400" },
 };
 
-function InstanceCard({ instance, onStart, onStop, isControlling }: {
+function InstanceCard({ instance, onStart, onStop, isControlling, scalerState }: {
     instance: EC2Instance;
     onStart: () => void;
     onStop: () => void;
     isControlling: boolean;
+    scalerState?: any;
 }) {
     const colors = stateColors[instance.state] || stateColors.unknown;
     const isRunning = instance.state === "running";
     const isStopped = instance.state === "stopped";
     const isTransitioning = instance.state === "pending" || instance.state === "stopping";
+
+    // Countdown timer for burst instance
+    const [now, setNow] = useState(Date.now());
+    const isBurst = instance.role === "burst";
+
+    // Tick every second for countdown
+    useEffect(() => {
+        if (!isBurst || !isRunning) return;
+        const interval = setInterval(() => setNow(Date.now()), 1000);
+        return () => clearInterval(interval);
+    }, [isBurst, isRunning]);
+
+    let shutdownCountdown: string | null = null;
+    let countdownPct = 0;
+    if (isBurst && isRunning && scalerState && !scalerState.error && scalerState.shutdownAt > 0) {
+        const remaining = Math.max(0, scalerState.shutdownAt - now);
+        const totalMs = scalerState.scaleDownIdleMs || 600000;
+        countdownPct = Math.min(100, ((totalMs - remaining) / totalMs) * 100);
+        if (remaining > 0) {
+            const mins = Math.floor(remaining / 60000);
+            const secs = Math.floor((remaining % 60000) / 1000);
+            shutdownCountdown = `${mins}:${secs.toString().padStart(2, "0")}`;
+        } else {
+            shutdownCountdown = "Shutting down...";
+        }
+    }
 
     return (
         <Card className="relative overflow-hidden">
@@ -129,6 +156,33 @@ function InstanceCard({ instance, onStart, onStop, isControlling }: {
                         </div>
                     )}
                 </div>
+
+                {/* Shutdown countdown for burst */}
+                {isBurst && isRunning && shutdownCountdown && (
+                    <div className="rounded-lg border border-amber-500/20 bg-amber-500/5 p-2.5 space-y-1.5">
+                        <div className="flex items-center justify-between text-xs">
+                            <span className="text-amber-600 font-medium">Auto-shutdown in</span>
+                            <span className="font-mono font-bold text-amber-600 tabular-nums">{shutdownCountdown}</span>
+                        </div>
+                        <div className="w-full h-1.5 bg-amber-500/10 rounded-full overflow-hidden">
+                            <div
+                                className="h-full bg-amber-500 rounded-full transition-all duration-1000"
+                                style={{ width: `${countdownPct}%` }}
+                            />
+                        </div>
+                        <p className="text-[10px] text-muted-foreground">Queue empty — stops after {scalerState?.scaleDownIdleMs ? Math.round(scalerState.scaleDownIdleMs / 60000) : 10} min idle</p>
+                    </div>
+                )}
+                {isBurst && isRunning && scalerState && !scalerState.error && scalerState.total > 0 && (
+                    <div className="rounded-lg border border-blue-500/20 bg-blue-500/5 p-2.5">
+                        <div className="flex items-center justify-between text-xs">
+                            <span className="text-blue-600 font-medium">Processing jobs</span>
+                            <span className="font-mono font-bold text-blue-600 tabular-nums">{scalerState.total} in queue</span>
+                        </div>
+                        <p className="text-[10px] text-muted-foreground mt-1">Timer resets while jobs are active</p>
+                    </div>
+                )}
+
                 <div className="flex gap-2 pt-1">
                     <AlertDialog>
                         <AlertDialogTrigger
@@ -289,6 +343,7 @@ export default function WorkerDashboardPage() {
     const { data: baseData, isLoading: baseLoading, refetch: baseRefetch, isRefetching } = useWorkerStatus();
     const { data: burstData, isLoading: burstLoading, refetch: burstRefetch } = useBurstWorkerStatus();
     const { data: ec2Data, isLoading: ec2Loading, refetch: ec2Refetch } = useEC2Status();
+    const { data: scalerData, refetch: scalerRefetch } = useScalerState();
     const controlEC2 = useControlEC2();
     const [controllingId, setControllingId] = useState<string | null>(null);
 
@@ -299,7 +354,7 @@ export default function WorkerDashboardPage() {
         });
     };
 
-    const refreshAll = () => { baseRefetch(); burstRefetch(); ec2Refetch(); };
+    const refreshAll = () => { baseRefetch(); burstRefetch(); ec2Refetch(); scalerRefetch(); };
 
     return (
         <div className="space-y-6">
@@ -337,6 +392,7 @@ export default function WorkerDashboardPage() {
                             onStart={() => handleEC2Action(ec2Data.burst.id, "start")}
                             onStop={() => handleEC2Action(ec2Data.burst.id, "stop")}
                             isControlling={controllingId === ec2Data.burst.id}
+                            scalerState={scalerData}
                         />
                     </div>
                 ) : (

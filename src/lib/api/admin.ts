@@ -582,6 +582,11 @@ export const adminApi = {
     return response.data;
   },
 
+  getScalerState: async () => {
+    const response = await api.get("/api/admin/scaler-state");
+    return response.data;
+  },
+
   // Affiliate management
   getAffiliateOverview: async () => {
     const response = await api.get<{ affiliates: AdminAffiliate[] }>("/api/admin/affiliate/overview");
