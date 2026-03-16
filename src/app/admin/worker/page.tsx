@@ -184,52 +184,82 @@ function InstanceCard({ instance, onStart, onStop, isControlling, scalerState }:
                 )}
 
                 <div className="flex gap-2 pt-1">
-                    <AlertDialog>
-                        <AlertDialogTrigger
-                            className={cn("flex-1 inline-flex items-center justify-center gap-1.5 rounded-md border px-3 py-1.5 text-xs font-medium transition-colors",
-                                "text-emerald-600 border-emerald-200 hover:bg-emerald-50 dark:hover:bg-emerald-950/20",
-                                (isRunning || isTransitioning || isControlling) && "opacity-50 pointer-events-none"
-                            )}
+                    {isStopped || isTransitioning ? (
+                        <Button
+                            size="sm"
+                            variant="outline"
+                            className="flex-1 text-emerald-600 border-emerald-500/30 hover:bg-emerald-500/10"
+                            disabled={isRunning || isTransitioning || isControlling}
+                            onClick={onStart}
                         >
-                            {isControlling ? <IconLoader2 className="h-3.5 w-3.5 animate-spin" /> : <IconPlayerPlay className="h-3.5 w-3.5" />}
+                            {isControlling ? <IconLoader2 className="h-3.5 w-3.5 mr-1.5 animate-spin" /> : <IconPlayerPlay className="h-3.5 w-3.5 mr-1.5" />}
                             Start
-                        </AlertDialogTrigger>
-                        <AlertDialogContent>
-                            <AlertDialogHeader>
-                                <AlertDialogTitle>Start {instance.role === "base" ? "Base" : "Burst"} Instance?</AlertDialogTitle>
-                                <AlertDialogDescription>
-                                    This will start EC2 instance {instance.id} ({instance.type}). It may take 30-60 seconds to become available.
-                                </AlertDialogDescription>
-                            </AlertDialogHeader>
-                            <AlertDialogFooter>
-                                <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                <AlertDialogAction onClick={onStart}>Start Instance</AlertDialogAction>
-                            </AlertDialogFooter>
-                        </AlertDialogContent>
-                    </AlertDialog>
-                    <AlertDialog>
-                        <AlertDialogTrigger
-                            className={cn("flex-1 inline-flex items-center justify-center gap-1.5 rounded-md border px-3 py-1.5 text-xs font-medium transition-colors",
-                                "text-red-600 border-red-200 hover:bg-red-50 dark:hover:bg-red-950/20",
-                                (isStopped || isTransitioning || isControlling) && "opacity-50 pointer-events-none"
-                            )}
+                        </Button>
+                    ) : (
+                        <AlertDialog>
+                            <AlertDialogTrigger render={
+                                <Button
+                                    size="sm"
+                                    variant="outline"
+                                    className="flex-1 text-emerald-600 border-emerald-500/30 hover:bg-emerald-500/10"
+                                    disabled={isRunning || isTransitioning || isControlling}
+                                >
+                                    {isControlling ? <IconLoader2 className="h-3.5 w-3.5 mr-1.5 animate-spin" /> : <IconPlayerPlay className="h-3.5 w-3.5 mr-1.5" />}
+                                    Start
+                                </Button>
+                            } />
+                            <AlertDialogContent>
+                                <AlertDialogHeader>
+                                    <AlertDialogTitle>Start {instance.role === "base" ? "Base" : "Burst"} Instance?</AlertDialogTitle>
+                                    <AlertDialogDescription>
+                                        This will start EC2 instance {instance.id} ({instance.type}). It may take 30-60 seconds to become available.
+                                    </AlertDialogDescription>
+                                </AlertDialogHeader>
+                                <AlertDialogFooter>
+                                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                    <AlertDialogAction onClick={onStart}>Start Instance</AlertDialogAction>
+                                </AlertDialogFooter>
+                            </AlertDialogContent>
+                        </AlertDialog>
+                    )}
+                    {isRunning ? (
+                        <AlertDialog>
+                            <AlertDialogTrigger render={
+                                <Button
+                                    size="sm"
+                                    variant="outline"
+                                    className="flex-1 text-red-600 border-red-500/30 hover:bg-red-500/10"
+                                    disabled={isStopped || isTransitioning || isControlling}
+                                >
+                                    {isControlling ? <IconLoader2 className="h-3.5 w-3.5 mr-1.5 animate-spin" /> : <IconPlayerStop className="h-3.5 w-3.5 mr-1.5" />}
+                                    Stop
+                                </Button>
+                            } />
+                            <AlertDialogContent>
+                                <AlertDialogHeader>
+                                    <AlertDialogTitle>Stop {instance.role === "base" ? "Base" : "Burst"} Instance?</AlertDialogTitle>
+                                    <AlertDialogDescription>
+                                        This will stop EC2 instance {instance.id}. Any running jobs will be interrupted. Are you sure?
+                                    </AlertDialogDescription>
+                                </AlertDialogHeader>
+                                <AlertDialogFooter>
+                                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                    <AlertDialogAction onClick={onStop} className="bg-red-600 hover:bg-red-700 text-white">Stop Instance</AlertDialogAction>
+                                </AlertDialogFooter>
+                            </AlertDialogContent>
+                        </AlertDialog>
+                    ) : (
+                        <Button
+                            size="sm"
+                            variant="outline"
+                            className="flex-1 text-red-600 border-red-500/30 hover:bg-red-500/10"
+                            disabled={isStopped || isTransitioning || isControlling}
+                            onClick={onStop}
                         >
-                            {isControlling ? <IconLoader2 className="h-3.5 w-3.5 animate-spin" /> : <IconPlayerStop className="h-3.5 w-3.5" />}
+                            {isControlling ? <IconLoader2 className="h-3.5 w-3.5 mr-1.5 animate-spin" /> : <IconPlayerStop className="h-3.5 w-3.5 mr-1.5" />}
                             Stop
-                        </AlertDialogTrigger>
-                        <AlertDialogContent>
-                            <AlertDialogHeader>
-                                <AlertDialogTitle>Stop {instance.role === "base" ? "Base" : "Burst"} Instance?</AlertDialogTitle>
-                                <AlertDialogDescription>
-                                    This will stop EC2 instance {instance.id}. Any running jobs will be interrupted. Are you sure?
-                                </AlertDialogDescription>
-                            </AlertDialogHeader>
-                            <AlertDialogFooter>
-                                <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                <AlertDialogAction onClick={onStop} className="bg-red-600 hover:bg-red-700">Stop Instance</AlertDialogAction>
-                            </AlertDialogFooter>
-                        </AlertDialogContent>
-                    </AlertDialog>
+                        </Button>
+                    )}
                 </div>
             </CardContent>
         </Card>
