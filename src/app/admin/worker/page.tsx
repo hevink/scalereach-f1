@@ -6,11 +6,16 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
+    AlertDialog, AlertDialogAction, AlertDialogCancel,
+    AlertDialogContent, AlertDialogDescription, AlertDialogFooter,
+    AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
+import {
     IconRefresh, IconServer, IconCpu, IconDatabase,
     IconGitBranch, IconClock, IconActivity, IconPlayerPlay,
     IconPlayerStop, IconCloud, IconBolt, IconLoader2,
 } from "@tabler/icons-react";
-import { useWorkerStatus, useEC2Status, useControlEC2 } from "@/hooks/useAdmin";
+import { useWorkerStatus, useEC2Status, useControlEC2, useBurstWorkerStatus } from "@/hooks/useAdmin";
 import { cn } from "@/lib/utils";
 import type { EC2Instance } from "@/lib/api/admin";
 
@@ -79,9 +84,7 @@ function InstanceCard({ instance, onStart, onStop, isControlling }: {
 
     return (
         <Card className="relative overflow-hidden">
-            {isRunning && (
-                <div className="absolute top-0 left-0 right-0 h-0.5 bg-emerald-500" />
-            )}
+            {isRunning && <div className="absolute top-0 left-0 right-0 h-0.5 bg-emerald-500" />}
             <CardHeader className="pb-3">
                 <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
@@ -126,44 +129,165 @@ function InstanceCard({ instance, onStart, onStop, isControlling }: {
                         </div>
                     )}
                 </div>
-
                 <div className="flex gap-2 pt-1">
-                    <Button
-                        size="sm"
-                        variant="outline"
-                        className="flex-1 text-emerald-600 border-emerald-200 hover:bg-emerald-50"
-                        disabled={isRunning || isTransitioning || isControlling}
-                        onClick={onStart}
-                    >
-                        {isControlling ? (
-                            <IconLoader2 className="h-3.5 w-3.5 mr-1.5 animate-spin" />
-                        ) : (
-                            <IconPlayerPlay className="h-3.5 w-3.5 mr-1.5" />
-                        )}
-                        Start
-                    </Button>
-                    <Button
-                        size="sm"
-                        variant="outline"
-                        className="flex-1 text-red-600 border-red-200 hover:bg-red-50"
-                        disabled={isStopped || isTransitioning || isControlling}
-                        onClick={onStop}
-                    >
-                        {isControlling ? (
-                            <IconLoader2 className="h-3.5 w-3.5 mr-1.5 animate-spin" />
-                        ) : (
-                            <IconPlayerStop className="h-3.5 w-3.5 mr-1.5" />
-                        )}
-                        Stop
-                    </Button>
+                    <AlertDialog>
+                        <AlertDialogTrigger
+                            className={cn("flex-1 inline-flex items-center justify-center gap-1.5 rounded-md border px-3 py-1.5 text-xs font-medium transition-colors",
+                                "text-emerald-600 border-emerald-200 hover:bg-emerald-50 dark:hover:bg-emerald-950/20",
+                                (isRunning || isTransitioning || isControlling) && "opacity-50 pointer-events-none"
+                            )}
+                        >
+                            {isControlling ? <IconLoader2 className="h-3.5 w-3.5 animate-spin" /> : <IconPlayerPlay className="h-3.5 w-3.5" />}
+                            Start
+                        </AlertDialogTrigger>
+                        <AlertDialogContent>
+                            <AlertDialogHeader>
+                                <AlertDialogTitle>Start {instance.role === "base" ? "Base" : "Burst"} Instance?</AlertDialogTitle>
+                                <AlertDialogDescription>
+                                    This will start EC2 instance {instance.id} ({instance.type}). It may take 30-60 seconds to become available.
+                                </AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <AlertDialogFooter>
+                                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                <AlertDialogAction onClick={onStart}>Start Instance</AlertDialogAction>
+                            </AlertDialogFooter>
+                        </AlertDialogContent>
+                    </AlertDialog>
+                    <AlertDialog>
+                        <AlertDialogTrigger
+                            className={cn("flex-1 inline-flex items-center justify-center gap-1.5 rounded-md border px-3 py-1.5 text-xs font-medium transition-colors",
+                                "text-red-600 border-red-200 hover:bg-red-50 dark:hover:bg-red-950/20",
+                                (isStopped || isTransitioning || isControlling) && "opacity-50 pointer-events-none"
+                            )}
+                        >
+                            {isControlling ? <IconLoader2 className="h-3.5 w-3.5 animate-spin" /> : <IconPlayerStop className="h-3.5 w-3.5" />}
+                            Stop
+                        </AlertDialogTrigger>
+                        <AlertDialogContent>
+                            <AlertDialogHeader>
+                                <AlertDialogTitle>Stop {instance.role === "base" ? "Base" : "Burst"} Instance?</AlertDialogTitle>
+                                <AlertDialogDescription>
+                                    This will stop EC2 instance {instance.id}. Any running jobs will be interrupted. Are you sure?
+                                </AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <AlertDialogFooter>
+                                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                <AlertDialogAction onClick={onStop} className="bg-red-600 hover:bg-red-700">Stop Instance</AlertDialogAction>
+                            </AlertDialogFooter>
+                        </AlertDialogContent>
+                    </AlertDialog>
                 </div>
             </CardContent>
         </Card>
     );
 }
 
+function WorkerStatsSection({ title, icon: Icon, data, color }: {
+    title: string;
+    icon: React.ElementType;
+    data: any;
+    color: string;
+}) {
+    if (!data || data.error) {
+        return (
+            <Card className="relative overflow-hidden">
+                <div className={cn("absolute top-0 left-0 right-0 h-0.5", color)} />
+                <CardContent className="py-6 text-center text-sm text-muted-foreground">
+                    {data?.error || `${title} unavailable`}
+                </CardContent>
+            </Card>
+        );
+    }
+
+    return (
+        <Card className="relative overflow-hidden">
+            <div className={cn("absolute top-0 left-0 right-0 h-0.5", color)} />
+            <CardHeader className="pb-2">
+                <CardTitle className="text-sm font-semibold flex items-center gap-2">
+                    <Icon className="h-4 w-4" /> {title}
+                    {data.mode === "burst" && <Badge variant="outline" className="text-[10px] ml-1">burst</Badge>}
+                </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+                {/* Uptime + System row */}
+                <div className="grid grid-cols-2 gap-4">
+                    <div>
+                        <p className="text-xs text-muted-foreground mb-1">Uptime</p>
+                        <p className="text-lg font-bold">{data.uptime_seconds ? formatUptime(data.uptime_seconds) : "-"}</p>
+                    </div>
+                    {data.system && (
+                        <div>
+                            <p className="text-xs text-muted-foreground mb-1">RAM</p>
+                            <p className="text-lg font-bold">{data.system.memory_used_pct}</p>
+                            <p className="text-[10px] text-muted-foreground">
+                                {data.system.memory_used_mb}MB / {data.system.memory_total_mb}MB · {data.system.cpu_count} CPUs · Load {data.system.load_avg_1m}
+                            </p>
+                        </div>
+                    )}
+                </div>
+
+                {/* Git */}
+                {data.git && !data.git.error && (
+                    <div className="text-xs">
+                        <p className="text-muted-foreground mb-1">Git</p>
+                        <p className="font-mono font-semibold">{data.git.short} <span className="font-normal text-muted-foreground">· {data.git.branch}</span></p>
+                        <p className="text-muted-foreground truncate">{data.git.message}</p>
+                    </div>
+                )}
+
+                {/* Workers */}
+                {data.workers && (
+                    <div>
+                        <p className="text-xs text-muted-foreground mb-2">Workers</p>
+                        <div className="flex flex-wrap gap-2">
+                            {Object.entries(data.workers)
+                                .filter(([k]) => k !== "total_concurrency")
+                                .map(([name, info]: [string, any]) => (
+                                    <div key={name} className={cn(
+                                        "inline-flex items-center gap-1.5 px-2 py-1 rounded-md border text-[11px]",
+                                        info.running ? "border-emerald-500/20 bg-emerald-500/5" : "border-red-500/20 bg-red-500/5"
+                                    )}>
+                                        <span className={cn("w-1.5 h-1.5 rounded-full", info.running ? "bg-emerald-500" : "bg-red-500")} />
+                                        {name.replace("Worker", "")} ×{info.concurrency}
+                                    </div>
+                                ))}
+                        </div>
+                    </div>
+                )}
+
+                {/* Queues */}
+                {data.queues && (
+                    <div>
+                        <p className="text-xs text-muted-foreground mb-2">Queues</p>
+                        <div className="grid grid-cols-1 gap-2">
+                            {Object.entries(data.queues).map(([name, stats]: [string, any]) => (
+                                <QueueCard key={name} name={name} stats={stats} />
+                            ))}
+                        </div>
+                    </div>
+                )}
+
+                {/* Redis */}
+                {data.redis && (
+                    <div className="flex items-center gap-3 text-xs">
+                        <span className="text-muted-foreground">Redis:</span>
+                        <Badge variant={data.redis.status === "healthy" ? "default" : "destructive"} className="text-[10px]">
+                            {data.redis.status}
+                        </Badge>
+                        <span className="tabular-nums">{data.redis.latency_ms}ms</span>
+                        {data.redis.memory?.used_memory_human && (
+                            <span className="text-muted-foreground">{data.redis.memory.used_memory_human}</span>
+                        )}
+                    </div>
+                )}
+            </CardContent>
+        </Card>
+    );
+}
+
 export default function WorkerDashboardPage() {
-    const { data, isLoading, refetch, isRefetching } = useWorkerStatus();
+    const { data: baseData, isLoading: baseLoading, refetch: baseRefetch, isRefetching } = useWorkerStatus();
+    const { data: burstData, isLoading: burstLoading, refetch: burstRefetch } = useBurstWorkerStatus();
     const { data: ec2Data, isLoading: ec2Loading, refetch: ec2Refetch } = useEC2Status();
     const controlEC2 = useControlEC2();
     const [controllingId, setControllingId] = useState<string | null>(null);
@@ -175,6 +299,8 @@ export default function WorkerDashboardPage() {
         });
     };
 
+    const refreshAll = () => { baseRefetch(); burstRefetch(); ec2Refetch(); };
+
     return (
         <div className="space-y-6">
             <div className="flex items-center justify-between">
@@ -182,7 +308,7 @@ export default function WorkerDashboardPage() {
                     <h1 className="text-xl md:text-2xl font-bold">Worker Dashboard</h1>
                     <p className="text-sm text-muted-foreground">Infrastructure, queues, and instance management</p>
                 </div>
-                <Button variant="outline" size="sm" onClick={() => { refetch(); ec2Refetch(); }} disabled={isRefetching}>
+                <Button variant="outline" size="sm" onClick={refreshAll} disabled={isRefetching}>
                     <IconRefresh className={cn("h-4 w-4 mr-2", isRefetching && "animate-spin")} />
                     Refresh
                 </Button>
@@ -222,166 +348,33 @@ export default function WorkerDashboardPage() {
                 )}
             </div>
 
-            {isLoading ? (
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    {[1, 2, 3].map((i) => <Skeleton key={i} className="h-32" />)}
-                </div>
-            ) : data?.error ? (
-                <Card>
-                    <CardContent className="py-8 text-center">
-                        <p className="text-red-500 text-sm">{data.error}</p>
-                    </CardContent>
-                </Card>
-            ) : (
-                <>
-                    {/* Top row: uptime, system, git */}
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                        <Card>
-                            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                                <CardTitle className="text-sm font-medium text-muted-foreground">Uptime</CardTitle>
-                                <IconClock className="h-4 w-4 text-muted-foreground" />
-                            </CardHeader>
-                            <CardContent>
-                                <p className="text-2xl font-bold">{data?.uptime_seconds ? formatUptime(data.uptime_seconds) : "-"}</p>
-                                <p className="text-xs text-muted-foreground mt-1">
-                                    Since {data?.timestamp ? new Date(new Date(data.timestamp).getTime() - (data.uptime_seconds || 0) * 1000).toLocaleString() : "-"}
-                                </p>
-                            </CardContent>
-                        </Card>
-
-                        <Card>
-                            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                                <CardTitle className="text-sm font-medium text-muted-foreground">System</CardTitle>
-                                <IconCpu className="h-4 w-4 text-muted-foreground" />
-                            </CardHeader>
-                            <CardContent className="space-y-1">
-                                {data?.system ? (
-                                    <>
-                                        <p className="text-lg font-bold">{data.system.memory_used_pct} RAM</p>
-                                        <p className="text-xs text-muted-foreground">
-                                            {data.system.memory_used_mb}MB / {data.system.memory_total_mb}MB
-                                        </p>
-                                        <p className="text-xs text-muted-foreground">
-                                            Load: {data.system.load_avg_1m} · {data.system.cpu_count} CPUs · Bun {data.system.bun_version}
-                                        </p>
-                                    </>
-                                ) : <p className="text-sm text-muted-foreground">-</p>}
-                            </CardContent>
-                        </Card>
-
-                        <Card>
-                            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                                <CardTitle className="text-sm font-medium text-muted-foreground">Git</CardTitle>
-                                <IconGitBranch className="h-4 w-4 text-muted-foreground" />
-                            </CardHeader>
-                            <CardContent className="space-y-1">
-                                {data?.git && !data.git.error ? (
-                                    <>
-                                        <p className="text-sm font-mono font-semibold">{data.git.short}</p>
-                                        <p className="text-xs text-muted-foreground truncate" title={data.git.message}>{data.git.message}</p>
-                                        <p className="text-xs text-muted-foreground">{data.git.branch} · {data.git.author}</p>
-                                    </>
-                                ) : <p className="text-sm text-muted-foreground">unavailable</p>}
-                            </CardContent>
-                        </Card>
+            {/* Worker Stats - Side by Side */}
+            <div>
+                <h2 className="text-sm font-semibold text-muted-foreground mb-3 flex items-center gap-2">
+                    <IconServer className="h-4 w-4" /> Worker Status
+                </h2>
+                {baseLoading && burstLoading ? (
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <Skeleton className="h-64" />
+                        <Skeleton className="h-64" />
                     </div>
-
-                    {/* Workers */}
-                    <Card>
-                        <CardHeader>
-                            <CardTitle className="text-base font-semibold flex items-center gap-2">
-                                <IconServer className="h-4 w-4" /> Workers
-                            </CardTitle>
-                        </CardHeader>
-                        <CardContent>
-                            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
-                                {data?.workers && Object.entries(data.workers)
-                                    .filter(([k]) => k !== "total_concurrency")
-                                    .map(([name, info]: [string, any]) => (
-                                        <div key={name} className="rounded-lg border p-3 text-center">
-                                            <div className={cn(
-                                                "inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[10px] font-medium mb-2",
-                                                info.running
-                                                    ? "bg-emerald-500/10 text-emerald-600 border border-emerald-500/20"
-                                                    : "bg-red-500/10 text-red-600 border border-red-500/20"
-                                            )}>
-                                                <span className={cn("w-1.5 h-1.5 rounded-full", info.running ? "bg-emerald-500" : "bg-red-500")} />
-                                                {info.running ? "Running" : "Stopped"}
-                                            </div>
-                                            <p className="text-xs font-medium truncate">{name.replace("Worker", "")}</p>
-                                            <p className="text-[10px] text-muted-foreground">×{info.concurrency}</p>
-                                        </div>
-                                    ))}
-                            </div>
-                        </CardContent>
-                    </Card>
-
-                    {/* Queues */}
-                    <Card>
-                        <CardHeader>
-                            <CardTitle className="text-base font-semibold flex items-center gap-2">
-                                <IconActivity className="h-4 w-4" /> Queues
-                            </CardTitle>
-                        </CardHeader>
-                        <CardContent>
-                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-                                {data?.queues && Object.entries(data.queues).map(([name, stats]: [string, any]) => (
-                                    <QueueCard key={name} name={name} stats={stats} />
-                                ))}
-                            </div>
-                        </CardContent>
-                    </Card>
-
-                    {/* Redis */}
-                    <Card>
-                        <CardHeader>
-                            <CardTitle className="text-base font-semibold flex items-center gap-2">
-                                <IconDatabase className="h-4 w-4" /> Redis
-                            </CardTitle>
-                        </CardHeader>
-                        <CardContent>
-                            {data?.redis ? (
-                                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
-                                    <div>
-                                        <p className="text-muted-foreground text-xs">Status</p>
-                                        <Badge variant={data.redis.status === "healthy" ? "default" : "destructive"} className="mt-1">
-                                            {data.redis.status}
-                                        </Badge>
-                                    </div>
-                                    <div>
-                                        <p className="text-muted-foreground text-xs">Latency</p>
-                                        <p className="font-semibold tabular-nums">{data.redis.latency_ms}ms</p>
-                                    </div>
-                                    <div>
-                                        <p className="text-muted-foreground text-xs">Version</p>
-                                        <p className="font-mono text-xs">{data.redis.version || "-"}</p>
-                                    </div>
-                                    <div>
-                                        <p className="text-muted-foreground text-xs">Memory</p>
-                                        <p className="font-mono text-xs">{data.redis.memory?.used_memory_human || "-"}</p>
-                                    </div>
-                                    <div>
-                                        <p className="text-muted-foreground text-xs">Clients</p>
-                                        <p className="font-semibold tabular-nums">{data.redis.clients?.connected_clients || "-"}</p>
-                                    </div>
-                                    <div>
-                                        <p className="text-muted-foreground text-xs">BullMQ Keys</p>
-                                        <p className="font-semibold tabular-nums">{data.redis.bullmq_keys_count ?? "-"}</p>
-                                    </div>
-                                    <div>
-                                        <p className="text-muted-foreground text-xs">Commands</p>
-                                        <p className="font-mono text-xs">{data.redis.stats?.total_commands_processed || "-"}</p>
-                                    </div>
-                                    <div>
-                                        <p className="text-muted-foreground text-xs">Uptime</p>
-                                        <p className="font-mono text-xs">{data.redis.stats?.uptime_in_seconds ? formatUptime(Number(data.redis.stats.uptime_in_seconds)) : "-"}</p>
-                                    </div>
-                                </div>
-                            ) : <p className="text-sm text-muted-foreground">-</p>}
-                        </CardContent>
-                    </Card>
-                </>
-            )}
+                ) : (
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <WorkerStatsSection
+                            title="Base Worker (8GB)"
+                            icon={IconCloud}
+                            data={baseData}
+                            color="bg-blue-500"
+                        />
+                        <WorkerStatsSection
+                            title="Burst Worker (32GB)"
+                            icon={IconBolt}
+                            data={burstData}
+                            color="bg-amber-500"
+                        />
+                    </div>
+                )}
+            </div>
         </div>
     );
 }

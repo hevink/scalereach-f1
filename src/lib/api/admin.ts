@@ -577,6 +577,11 @@ export const adminApi = {
     return response.data;
   },
 
+  getBurstWorkerStatus: async () => {
+    const response = await api.get("/api/admin/burst-status");
+    return response.data;
+  },
+
   // Affiliate management
   getAffiliateOverview: async () => {
     const response = await api.get<{ affiliates: AdminAffiliate[] }>("/api/admin/affiliate/overview");

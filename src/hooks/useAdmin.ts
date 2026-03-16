@@ -271,6 +271,15 @@ export function useControlEC2() {
   });
 }
 
+export function useBurstWorkerStatus() {
+  return useQuery({
+    queryKey: ["admin", "burst-status"],
+    queryFn: adminApi.getBurstWorkerStatus,
+    staleTime: 15 * 1000,
+    refetchInterval: 30 * 1000,
+  });
+}
+
 export function useAdminAffiliates() {
   return useQuery({
     queryKey: ["admin", "affiliates"],
