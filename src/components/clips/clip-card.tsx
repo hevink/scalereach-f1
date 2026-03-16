@@ -33,6 +33,7 @@ import {
 } from "@/components/icons/platform-icons";
 import { SchedulePostModal } from "@/components/social/SchedulePostModal";
 import { clipsApi } from "@/lib/api/clips";
+import { GlassVideoPlayer } from "@/components/clips/glass-video-player";
 
 export interface ClipCardProps {
     clip: ClipResponse;
@@ -44,6 +45,7 @@ export interface ClipCardProps {
     userPlan: "free" | "starter" | "pro" | "agency";
     workspaceSlug: string;
     workspaceId?: string;
+    isDemo?: boolean;
 }
 
 const PLATFORM_CONFIG: Record<RecommendedPlatform, { icon: React.ElementType; label: string; tooltip: string }> = {
@@ -55,7 +57,7 @@ const PLATFORM_CONFIG: Record<RecommendedPlatform, { icon: React.ElementType; la
     facebook_reels: { icon: FacebookIcon, label: "FB Reels", tooltip: "Facebook Reels" },
 };
 
-export function ClipCard({ clip, index, onEdit, onFavorite, onDownload, onShare, userPlan, workspaceSlug, workspaceId }: ClipCardProps) {
+export function ClipCard({ clip, index, onEdit, onFavorite, onDownload, onShare, userPlan, workspaceSlug, workspaceId, isDemo = false }: ClipCardProps) {
     const [activeTab, setActiveTab] = useState<"transcript" | "description">("transcript");
     const [upgradeFeature, setUpgradeFeature] = useState<string | null>(null);
     const [isDownloading, setIsDownloading] = useState(false);
@@ -147,11 +149,10 @@ export function ClipCard({ clip, index, onEdit, onFavorite, onDownload, onShare,
                                     </Button>
                                 </div>
                             ) : clip.storageUrl ? (
-                                <video
+                                <GlassVideoPlayer
                                     src={clip.storageUrl}
                                     poster={clip.thumbnailUrl}
-                                    className="absolute inset-0 h-full w-full object-contain"
-                                    controls
+                                    className="absolute inset-0"
                                 />
                             ) : clip.thumbnailUrl ? (
                                 <img
@@ -257,7 +258,7 @@ export function ClipCard({ clip, index, onEdit, onFavorite, onDownload, onShare,
                                     setIsDownloading(false);
                                 }
                             }}
-                            disabled={!clip.storageUrl || isGenerating || isDownloading}
+                            disabled={!clip.storageUrl || isGenerating || isDownloading || isDemo}
                         >
                             {isDownloading ? (
                                 <IconLoader2 className="size-4 animate-spin" />
@@ -272,7 +273,7 @@ export function ClipCard({ clip, index, onEdit, onFavorite, onDownload, onShare,
                                 size="sm"
                                 variant="outline"
                                 className="gap-1.5 sm:gap-2 h-8 sm:h-9 px-2.5 sm:px-3"
-                                disabled={isGenerating}
+                                disabled={isGenerating || isDemo}
                                 onClick={() => setUpgradeFeature("Remove watermark")}
                             >
                                 <HugeiconsIcon icon={SparklesIcon} size={16} color="currentColor" />
@@ -291,7 +292,7 @@ export function ClipCard({ clip, index, onEdit, onFavorite, onDownload, onShare,
                                     onEdit(clip.id);
                                 }
                             }}
-                            disabled={isGenerating}
+                            disabled={isGenerating || isDemo}
                         >
                             <HugeiconsIcon icon={Edit02Icon} size={16} color="currentColor" />
                             <span className="hidden sm:inline">Edit</span>
@@ -302,7 +303,7 @@ export function ClipCard({ clip, index, onEdit, onFavorite, onDownload, onShare,
                                 size="sm"
                                 variant="outline"
                                 className="gap-1.5 sm:gap-2 h-8 sm:h-9 px-2.5 sm:px-3"
-                                disabled={isGenerating}
+                                disabled={isGenerating || isDemo}
                                 onClick={() => setScheduleOpen(true)}
                             >
                                 <HugeiconsIcon icon={Calendar01Icon} size={16} color="currentColor" />
@@ -315,7 +316,7 @@ export function ClipCard({ clip, index, onEdit, onFavorite, onDownload, onShare,
                                 size="sm"
                                 variant="outline"
                                 className="gap-1.5 sm:gap-2 h-8 sm:h-9 px-2.5 sm:px-3"
-                                disabled={isGenerating || isRegenerating}
+                                disabled={isGenerating || isRegenerating || isDemo}
                                 onClick={async () => {
                                     setIsRegenerating(true);
                                     try {
@@ -346,6 +347,7 @@ export function ClipCard({ clip, index, onEdit, onFavorite, onDownload, onShare,
                                 clip.favorited && "text-red-500 hover:text-red-600"
                             )}
                             onClick={(e) => onFavorite(e, clip.id)}
+                            disabled={isDemo}
                         >
                             <HugeiconsIcon icon={FavouriteIcon} size={18} color={clip.favorited ? "#ef4444" : "currentColor"} fill={clip.favorited ? "#ef4444" : "none"} />
                         </Button>
@@ -355,6 +357,7 @@ export function ClipCard({ clip, index, onEdit, onFavorite, onDownload, onShare,
                             variant="ghost"
                             className="size-8 sm:size-9"
                             onClick={() => onShare(clip)}
+                            disabled={isDemo}
                         >
                             <HugeiconsIcon icon={Share01Icon} size={18} color="currentColor" />
                         </Button>

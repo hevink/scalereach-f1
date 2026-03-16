@@ -9,6 +9,7 @@ import { SkeletonVideoGrid } from "@/components/ui/skeletons";
 import { IconUpload, IconList, IconLayoutGrid, IconSearch, IconX } from "@tabler/icons-react";
 import { HugeVideoIcon } from "@/components/icons/huge-icons";
 import { cn } from "@/lib/utils";
+import { DEMO_VIDEOS } from "@/lib/demo-video";
 
 interface VideoGridProps {
     videos: VideoLite[];
@@ -80,112 +81,8 @@ export function VideoGrid({
     }
 
     if (videos.length === 0) {
-        const steps = [
-            {
-                num: "1",
-                icon: <IconUpload className="size-5" />,
-                title: "Upload or paste a YouTube link",
-                desc: "Drop any video file or paste a YouTube URL above.",
-            },
-            {
-                num: "2",
-                icon: <HugeVideoIcon className="size-5" />,
-                title: "AI generates your clips",
-                desc: "ScaleReach finds the best moments, reframes them, and adds captions automatically.",
-            },
-            {
-                num: "3",
-                icon: (
-                    <svg className="size-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                        <circle cx="18" cy="5" r="3" /><circle cx="6" cy="12" r="3" /><circle cx="18" cy="19" r="3" />
-                        <line x1="8.59" x2="15.42" y1="13.51" y2="17.49" /><line x1="15.41" x2="8.59" y1="6.51" y2="10.49" />
-                    </svg>
-                ),
-                title: "Schedule & post everywhere",
-                desc: "Publish to TikTok, Instagram, YouTube Shorts, and more from one workflow.",
-            },
-        ];
-
-        const highlightBadges = ["YouTube URLs", "Direct uploads", "Auto captions", "Multi-platform posting"];
-
         return (
-            <div className={cn("py-8 sm:py-10", className)}>
-                <div className="mx-auto max-w-5xl rounded-[28px] border border-border/70 bg-card px-6 py-7 sm:px-8 sm:py-8">
-                    <div className="grid gap-8 lg:grid-cols-[minmax(0,0.95fr)_minmax(0,1.05fr)] lg:gap-10">
-                        <div className="space-y-5">
-                            {headerSlot && (
-                                <div className="flex items-center text-muted-foreground">
-                                    {headerSlot}
-                                </div>
-                            )}
-
-                            <div className="space-y-4">
-                                <span className="inline-flex items-center rounded-full border border-border/70 px-3 py-1 text-[11px] font-medium uppercase tracking-[0.18em] text-muted-foreground">
-                                    Create your first video
-                                </span>
-
-                                <div className="space-y-3">
-                                    <h3
-                                        className="text-3xl font-semibold tracking-tight text-foreground sm:text-4xl"
-                                        style={{ fontFamily: "var(--font-lexend)" }}
-                                    >
-                                        No videos yet
-                                    </h3>
-
-                                    <p className="max-w-xl text-sm leading-7 text-muted-foreground sm:text-base">
-                                        Paste a YouTube link or upload a file above to get started. ScaleReach turns long-form
-                                        content into short clips in three simple steps.
-                                    </p>
-                                </div>
-                            </div>
-
-                            <div className="flex flex-wrap gap-2">
-                                {highlightBadges.map((badge) => (
-                                    <span
-                                        key={badge}
-                                        className="rounded-full border border-border/70 px-3 py-1.5 text-xs text-muted-foreground"
-                                    >
-                                        {badge}
-                                    </span>
-                                ))}
-                            </div>
-                        </div>
-
-                        <div className="overflow-hidden rounded-2xl border border-border/70 bg-background/20">
-                            {steps.map((step, index) => (
-                                <div
-                                    key={step.num}
-                                    className={cn(
-                                        "flex gap-4 px-5 py-5 sm:px-6",
-                                        index !== steps.length - 1 && "border-b border-border/70"
-                                    )}
-                                >
-                                    <div className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary">
-                                        {step.icon}
-                                    </div>
-
-                                    <div className="min-w-0 flex-1">
-                                        <div className="flex items-center justify-between gap-3">
-                                            <p
-                                                className="text-lg font-semibold tracking-tight text-foreground"
-                                                style={{ fontFamily: "var(--font-lexend)" }}
-                                            >
-                                                {step.title}
-                                            </p>
-                                            <span className="shrink-0 text-[11px] font-medium uppercase tracking-[0.18em] text-muted-foreground">
-                                                Step {step.num}
-                                            </span>
-                                        </div>
-                                        <p className="mt-2 max-w-md text-sm leading-6 text-muted-foreground">
-                                            {step.desc}
-                                        </p>
-                                    </div>
-                                </div>
-                            ))}
-                        </div>
-                    </div>
-                </div>
-            </div>
+            <DemoVideoSection onVideoClick={onVideoClick} className={className} />
         );
     }
 
@@ -326,6 +223,57 @@ export function VideoGrid({
                     ))}
                 </div>
             )}
+        </div>
+    );
+}
+
+
+/**
+ * Shows demo videos in grid view using static data from DEMO_VIDEOS.
+ * No API call needed — thumbnails are hardcoded for instant loading.
+ */
+function DemoVideoSection({
+    onVideoClick,
+    className,
+}: {
+    onVideoClick: (videoId: string) => void;
+    className?: string;
+}) {
+    return (
+        <div className={cn("space-y-3 py-4", className)}>
+            <div className="flex items-center gap-2">
+                <HugeVideoIcon className="size-5" />
+                <h2 className="text-lg font-semibold">Demo Videos</h2>
+                <span className="inline-flex items-center rounded-full bg-primary/10 px-2 py-0.5 text-[10px] font-semibold text-primary uppercase tracking-wider">
+                    Try it
+                </span>
+            </div>
+            <p className="text-sm text-muted-foreground">
+                Explore real videos with AI-generated clips. Edit captions, try styles, and see the full workflow.
+            </p>
+
+            {/* Grid view */}
+            <div
+                data-testid="demo-video-grid"
+                className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3"
+                role="list"
+                aria-label="Demo video grid"
+            >
+                {DEMO_VIDEOS.map((video) => (
+                    <div key={video.id} role="listitem">
+                        <VideoGridCard
+                            video={video}
+                            onClick={() => onVideoClick(video.id)}
+                        />
+                    </div>
+                ))}
+            </div>
+
+            {/* "No videos yet" section — commented out for now
+            <div className="mx-auto max-w-5xl rounded-[28px] border border-border/70 bg-card px-6 py-7 sm:px-8 sm:py-8">
+                ...
+            </div>
+            */}
         </div>
     );
 }

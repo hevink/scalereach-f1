@@ -2,12 +2,10 @@
 
 import * as React from "react";
 import { cn } from "@/lib/utils";
-import { VideoPlayer, type VideoPlayerRef } from "@/components/video/video-player";
 import { Badge } from "@/components/ui/badge";
 import { FireIcon as FireAnimatedIcon } from "@/components/ui/fire-icon";
 import {
     IconClock,
-    IconHeart,
     IconHeartFilled,
 } from "@tabler/icons-react";
 import type { ClipResponse } from "@/lib/api/clips";
@@ -94,8 +92,6 @@ export function ClipPreview({
     showMetadata = true,
     className,
 }: ClipPreviewProps) {
-    const playerRef = React.useRef<VideoPlayerRef>(null);
-
     // Get the video source URL - prefer storageUrl, fallback to thumbnailUrl for poster
     const videoSrc = clip.storageUrl || "";
     const posterUrl = clip.thumbnailUrl || clip.storageUrl || undefined;
@@ -137,18 +133,17 @@ export function ClipPreview({
             role="region"
             aria-label={`Clip preview: ${clip.title}`}
         >
-            {/* Video Player - Requirement 8.1, 8.2 */}
-            <VideoPlayer
-                ref={playerRef}
+            {/* Video Player - native browser controls */}
+            <video
                 src={videoSrc}
                 poster={posterUrl}
-                startTime={clip.startTime}
-                endTime={clip.endTime}
                 autoPlay={autoPlay}
                 loop={loop}
-                onTimeUpdate={onTimeUpdate}
+                controls
+                playsInline
+                onTimeUpdate={onTimeUpdate ? (e) => onTimeUpdate((e.target as HTMLVideoElement).currentTime) : undefined}
                 onEnded={onEnded}
-                className="aspect-video w-full"
+                className="w-full rounded-t-lg bg-black"
             />
 
             {/* Metadata section */}

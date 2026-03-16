@@ -653,7 +653,7 @@ export default function ClipEditorPage({ params }: ClipEditorPageProps) {
                 backgroundColor: "#FFFFFF",
                 backgroundOpacity: 100,
                 borderRadius: 12,
-                maxWidth: 80,
+                maxWidth: 90,
                 startTime: 0,
                 endTime: 3,
             };

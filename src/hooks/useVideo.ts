@@ -115,6 +115,15 @@ export function useVideo(id: string) {
     enabled: !!id,
     retry: 3,
     retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000),
+    refetchInterval: (query) => {
+      const video = query.state.data as Video | undefined;
+      if (!video) return false;
+      const processingStatuses = ["pending", "downloading", "uploading", "transcribing", "analyzing"];
+      if (processingStatuses.includes(video.status)) {
+        return 5000; // Poll every 5s while processing
+      }
+      return false;
+    },
   });
 }
 

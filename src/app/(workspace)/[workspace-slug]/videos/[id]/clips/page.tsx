@@ -31,6 +31,7 @@ import type { ClipResponse } from "@/lib/api/clips";
 import { clipsApi } from "@/lib/api/clips";
 import { ShareManager } from "@/components/share/share-manager";
 import { ClipCard } from "@/components/clips/clip-card";
+import { isDemoVideo } from "@/lib/demo-video";
 
 interface VideoClipsPageProps {
     params: Promise<{ "workspace-slug": string; id: string }>;
@@ -669,9 +670,23 @@ export default function VideoClipsPage({ params }: VideoClipsPageProps) {
     const sourceType = video.sourceType === "youtube" ? "YouTube" : "Local file";
     const aspectRatio = configData?.config?.aspectRatio || "9:16";
     const hasSplitScreen = configData?.config?.enableSplitScreen || false;
+    const isDemo = isDemoVideo(videoId);
 
     return (
         <div className="flex h-full flex-col bg-background">
+            {/* Demo Banner */}
+            {isDemo && (
+                <div className="bg-primary/10 border-b border-primary/20 px-4 sm:px-6 py-2.5 flex items-center justify-between gap-3">
+                    <div className="flex items-center gap-2 text-sm">
+                        <span className="inline-flex items-center rounded-full bg-primary/20 px-2 py-0.5 text-[11px] font-semibold text-primary">
+                            DEMO
+                        </span>
+                        <span className="text-muted-foreground">
+                            This is a demo video. Edit clips, try captions, and explore the full workflow.
+                        </span>
+                    </div>
+                </div>
+            )}
             {/* Header */}
             <div className="border-b px-4 sm:px-6 py-3 sm:py-4">
                 <div className="flex items-start justify-between gap-2">
@@ -696,7 +711,7 @@ export default function VideoClipsPage({ params }: VideoClipsPageProps) {
                     </div>
 
                     {/* Share Button */}
-                    {workspace && (
+                    {workspace && !isDemo && (
                         <div className="shrink-0">
                             <ShareManager
                                 videoId={videoId}
@@ -774,7 +789,7 @@ export default function VideoClipsPage({ params }: VideoClipsPageProps) {
                         )}
 
                         {/* Schedule nudge - only shown when ALL clips are ready (none generating) */}
-                        {!clips.some(c => c.status === "generating" || c.status === "detected") && (
+                        {!isDemo && !clips.some(c => c.status === "generating" || c.status === "detected") && (
                             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 rounded-xl border border-primary/20 bg-primary/5 px-4 py-3">
                                 <div className="flex items-center gap-3">
                                     <div className="flex size-8 shrink-0 items-center justify-center rounded-full bg-primary/10">
@@ -806,6 +821,7 @@ export default function VideoClipsPage({ params }: VideoClipsPageProps) {
                                 userPlan={(workspace?.plan as "free" | "starter" | "pro" | "agency") || "free"}
                                 workspaceSlug={slug}
                                 workspaceId={workspace?.id}
+                                isDemo={isDemo}
                             />
                         ))}
                     </div>
