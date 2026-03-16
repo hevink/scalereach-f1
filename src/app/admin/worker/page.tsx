@@ -1,15 +1,18 @@
 "use client";
 
+import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
     IconRefresh, IconServer, IconCpu, IconDatabase,
-    IconGitBranch, IconClock, IconActivity,
+    IconGitBranch, IconClock, IconActivity, IconPlayerPlay,
+    IconPlayerStop, IconCloud, IconBolt, IconLoader2,
 } from "@tabler/icons-react";
-import { useWorkerStatus } from "@/hooks/useAdmin";
+import { useWorkerStatus, useEC2Status, useControlEC2 } from "@/hooks/useAdmin";
 import { cn } from "@/lib/utils";
+import type { EC2Instance } from "@/lib/api/admin";
 
 function formatUptime(seconds: number) {
     const d = Math.floor(seconds / 86400);
@@ -22,7 +25,6 @@ function formatUptime(seconds: number) {
 
 function QueueCard({ name, stats }: { name: string; stats: any }) {
     if (!stats) return null;
-    const total = stats.waiting + stats.active + stats.completed + stats.failed;
     return (
         <div className="rounded-lg border p-3 space-y-2">
             <div className="flex items-center justify-between">
@@ -55,20 +57,169 @@ function QueueCard({ name, stats }: { name: string; stats: any }) {
     );
 }
 
+const stateColors: Record<string, { bg: string; text: string; dot: string }> = {
+    running: { bg: "bg-emerald-500/10", text: "text-emerald-600", dot: "bg-emerald-500" },
+    stopped: { bg: "bg-zinc-500/10", text: "text-zinc-500", dot: "bg-zinc-400" },
+    pending: { bg: "bg-amber-500/10", text: "text-amber-600", dot: "bg-amber-500" },
+    stopping: { bg: "bg-orange-500/10", text: "text-orange-600", dot: "bg-orange-500" },
+    terminated: { bg: "bg-red-500/10", text: "text-red-600", dot: "bg-red-500" },
+    unknown: { bg: "bg-zinc-500/10", text: "text-zinc-500", dot: "bg-zinc-400" },
+};
+
+function InstanceCard({ instance, onStart, onStop, isControlling }: {
+    instance: EC2Instance;
+    onStart: () => void;
+    onStop: () => void;
+    isControlling: boolean;
+}) {
+    const colors = stateColors[instance.state] || stateColors.unknown;
+    const isRunning = instance.state === "running";
+    const isStopped = instance.state === "stopped";
+    const isTransitioning = instance.state === "pending" || instance.state === "stopping";
+
+    return (
+        <Card className="relative overflow-hidden">
+            {isRunning && (
+                <div className="absolute top-0 left-0 right-0 h-0.5 bg-emerald-500" />
+            )}
+            <CardHeader className="pb-3">
+                <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                        {instance.role === "base" ? (
+                            <IconCloud className="h-5 w-5 text-blue-500" />
+                        ) : (
+                            <IconBolt className="h-5 w-5 text-amber-500" />
+                        )}
+                        <div>
+                            <CardTitle className="text-sm font-semibold">
+                                {instance.role === "base" ? "Base Instance" : "Burst Instance"}
+                            </CardTitle>
+                            <p className="text-[10px] text-muted-foreground font-mono">{instance.id}</p>
+                        </div>
+                    </div>
+                    <div className={cn("inline-flex items-center gap-1.5 px-2 py-1 rounded-full text-[11px] font-medium border", colors.bg, colors.text)}>
+                        <span className={cn("w-1.5 h-1.5 rounded-full", colors.dot, isTransitioning && "animate-pulse")} />
+                        {instance.state}
+                    </div>
+                </div>
+            </CardHeader>
+            <CardContent className="space-y-3">
+                <div className="grid grid-cols-2 gap-3 text-xs">
+                    <div>
+                        <p className="text-muted-foreground">Type</p>
+                        <p className="font-medium">{instance.type || "-"}</p>
+                    </div>
+                    <div>
+                        <p className="text-muted-foreground">IP</p>
+                        <p className="font-mono font-medium">{instance.ip || "-"}</p>
+                    </div>
+                    {instance.label && (
+                        <div>
+                            <p className="text-muted-foreground">Config</p>
+                            <p className="font-medium">{instance.label}</p>
+                        </div>
+                    )}
+                    {instance.launchTime && (
+                        <div>
+                            <p className="text-muted-foreground">Launched</p>
+                            <p className="font-medium">{new Date(instance.launchTime).toLocaleString()}</p>
+                        </div>
+                    )}
+                </div>
+
+                <div className="flex gap-2 pt-1">
+                    <Button
+                        size="sm"
+                        variant="outline"
+                        className="flex-1 text-emerald-600 border-emerald-200 hover:bg-emerald-50"
+                        disabled={isRunning || isTransitioning || isControlling}
+                        onClick={onStart}
+                    >
+                        {isControlling ? (
+                            <IconLoader2 className="h-3.5 w-3.5 mr-1.5 animate-spin" />
+                        ) : (
+                            <IconPlayerPlay className="h-3.5 w-3.5 mr-1.5" />
+                        )}
+                        Start
+                    </Button>
+                    <Button
+                        size="sm"
+                        variant="outline"
+                        className="flex-1 text-red-600 border-red-200 hover:bg-red-50"
+                        disabled={isStopped || isTransitioning || isControlling}
+                        onClick={onStop}
+                    >
+                        {isControlling ? (
+                            <IconLoader2 className="h-3.5 w-3.5 mr-1.5 animate-spin" />
+                        ) : (
+                            <IconPlayerStop className="h-3.5 w-3.5 mr-1.5" />
+                        )}
+                        Stop
+                    </Button>
+                </div>
+            </CardContent>
+        </Card>
+    );
+}
+
 export default function WorkerDashboardPage() {
     const { data, isLoading, refetch, isRefetching } = useWorkerStatus();
+    const { data: ec2Data, isLoading: ec2Loading, refetch: ec2Refetch } = useEC2Status();
+    const controlEC2 = useControlEC2();
+    const [controllingId, setControllingId] = useState<string | null>(null);
+
+    const handleEC2Action = (instanceId: string, action: "start" | "stop") => {
+        setControllingId(instanceId);
+        controlEC2.mutate({ instanceId, action }, {
+            onSettled: () => setTimeout(() => setControllingId(null), 3000),
+        });
+    };
 
     return (
         <div className="space-y-6">
             <div className="flex items-center justify-between">
                 <div>
                     <h1 className="text-xl md:text-2xl font-bold">Worker Dashboard</h1>
-                    <p className="text-sm text-muted-foreground">System status, queues, Redis, and git info</p>
+                    <p className="text-sm text-muted-foreground">Infrastructure, queues, and instance management</p>
                 </div>
-                <Button variant="outline" size="sm" onClick={() => refetch()} disabled={isRefetching}>
+                <Button variant="outline" size="sm" onClick={() => { refetch(); ec2Refetch(); }} disabled={isRefetching}>
                     <IconRefresh className={cn("h-4 w-4 mr-2", isRefetching && "animate-spin")} />
                     Refresh
                 </Button>
+            </div>
+
+            {/* EC2 Instances */}
+            <div>
+                <h2 className="text-sm font-semibold text-muted-foreground mb-3 flex items-center gap-2">
+                    <IconCloud className="h-4 w-4" /> EC2 Instances
+                </h2>
+                {ec2Loading ? (
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <Skeleton className="h-48" />
+                        <Skeleton className="h-48" />
+                    </div>
+                ) : ec2Data ? (
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <InstanceCard
+                            instance={ec2Data.base}
+                            onStart={() => handleEC2Action(ec2Data.base.id, "start")}
+                            onStop={() => handleEC2Action(ec2Data.base.id, "stop")}
+                            isControlling={controllingId === ec2Data.base.id}
+                        />
+                        <InstanceCard
+                            instance={ec2Data.burst}
+                            onStart={() => handleEC2Action(ec2Data.burst.id, "start")}
+                            onStop={() => handleEC2Action(ec2Data.burst.id, "stop")}
+                            isControlling={controllingId === ec2Data.burst.id}
+                        />
+                    </div>
+                ) : (
+                    <Card>
+                        <CardContent className="py-6 text-center text-sm text-muted-foreground">
+                            EC2 status unavailable — check env vars
+                        </CardContent>
+                    </Card>
+                )}
             </div>
 
             {isLoading ? (

@@ -248,6 +248,29 @@ export function useWorkerStatus() {
   });
 }
 
+export function useEC2Status() {
+  return useQuery({
+    queryKey: ["admin", "ec2-status"],
+    queryFn: adminApi.getEC2Status,
+    staleTime: 10 * 1000,
+    refetchInterval: 15 * 1000,
+  });
+}
+
+export function useControlEC2() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ instanceId, action }: { instanceId: string; action: "start" | "stop" }) =>
+      adminApi.controlEC2Instance(instanceId, action),
+    onSuccess: () => {
+      // Refetch EC2 status after control action
+      setTimeout(() => queryClient.invalidateQueries({ queryKey: ["admin", "ec2-status"] }), 2000);
+      setTimeout(() => queryClient.invalidateQueries({ queryKey: ["admin", "ec2-status"] }), 5000);
+      setTimeout(() => queryClient.invalidateQueries({ queryKey: ["admin", "ec2-status"] }), 10000);
+    },
+  });
+}
+
 export function useAdminAffiliates() {
   return useQuery({
     queryKey: ["admin", "affiliates"],

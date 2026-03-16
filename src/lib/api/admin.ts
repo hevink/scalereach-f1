@@ -335,6 +335,22 @@ export interface YouTubeHealthStatus {
   };
 }
 
+export interface EC2Instance {
+  id: string;
+  state: string;
+  type?: string;
+  ip?: string | null;
+  launchTime?: string | null;
+  cpuCount?: number | null;
+  role: "base" | "burst";
+  label?: string;
+}
+
+export interface EC2StatusResponse {
+  base: EC2Instance;
+  burst: EC2Instance;
+}
+
 export interface AdminAffiliate {
   userId: string;
   name: string | null;
@@ -547,6 +563,17 @@ export const adminApi = {
   // Worker status (debug dashboard)
   getWorkerStatus: async () => {
     const response = await api.get("/api/admin/worker-status");
+    return response.data;
+  },
+
+  // EC2 instance management
+  getEC2Status: async () => {
+    const response = await api.get<EC2StatusResponse>("/api/admin/ec2/status");
+    return response.data;
+  },
+
+  controlEC2Instance: async (instanceId: string, action: "start" | "stop") => {
+    const response = await api.post("/api/admin/ec2/control", { instanceId, action });
     return response.data;
   },
 
