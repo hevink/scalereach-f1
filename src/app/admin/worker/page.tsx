@@ -15,7 +15,7 @@ import {
     IconGitBranch, IconClock, IconActivity, IconPlayerPlay,
     IconPlayerStop, IconCloud, IconBolt, IconLoader2,
 } from "@tabler/icons-react";
-import { useWorkerStatus, useEC2Status, useControlEC2, useBurstWorkerStatus, useScalerState } from "@/hooks/useAdmin";
+import { useWorkerStatus, useEC2Status, useControlEC2, useBurstWorkerStatus, useScalerState, useForceScalerCheck } from "@/hooks/useAdmin";
 import { cn } from "@/lib/utils";
 import type { EC2Instance } from "@/lib/api/admin";
 
@@ -375,6 +375,7 @@ export default function WorkerDashboardPage() {
     const { data: ec2Data, isLoading: ec2Loading, refetch: ec2Refetch } = useEC2Status();
     const { data: scalerData, refetch: scalerRefetch } = useScalerState();
     const controlEC2 = useControlEC2();
+    const forceCheck = useForceScalerCheck();
     const [controllingId, setControllingId] = useState<string | null>(null);
 
     const handleEC2Action = (instanceId: string, action: "start" | "stop") => {
@@ -433,6 +434,36 @@ export default function WorkerDashboardPage() {
                     </Card>
                 )}
             </div>
+
+            {/* Autoscaler */}
+            {scalerData && !scalerData.error && (
+                <Card>
+                    <CardContent className="py-3 px-4">
+                        <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-4 text-xs">
+                                <span className="font-medium text-muted-foreground">Autoscaler</span>
+                                <span>Queue: <span className="font-mono font-semibold tabular-nums">{scalerData.total}</span> jobs</span>
+                                <span>Burst: <span className="font-semibold">{scalerData.burstState}</span></span>
+                                <span>Check interval: <span className="font-mono tabular-nums">{scalerData.checkIntervalMs / 1000}s</span></span>
+                                <span>Idle timeout: <span className="font-mono tabular-nums">{Math.round(scalerData.scaleDownIdleMs / 60000)}min</span></span>
+                                {scalerData.updatedAt && (
+                                    <span className="text-muted-foreground">Last check: {new Date(scalerData.updatedAt).toLocaleTimeString()}</span>
+                                )}
+                            </div>
+                            <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => forceCheck.mutate()}
+                                disabled={forceCheck.isPending}
+                                className="text-xs"
+                            >
+                                <IconRefresh className={cn("h-3.5 w-3.5 mr-1.5", forceCheck.isPending && "animate-spin")} />
+                                Force Check
+                            </Button>
+                        </div>
+                    </CardContent>
+                </Card>
+            )}
 
             {/* Worker Stats - Side by Side */}
             <div>

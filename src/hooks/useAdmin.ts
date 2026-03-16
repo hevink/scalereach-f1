@@ -289,6 +289,19 @@ export function useScalerState() {
   });
 }
 
+export function useForceScalerCheck() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: () => adminApi.forceScalerCheck(),
+    onSuccess: () => {
+      setTimeout(() => {
+        queryClient.invalidateQueries({ queryKey: ["admin", "scaler-state"] });
+        queryClient.invalidateQueries({ queryKey: ["admin", "ec2-status"] });
+      }, 2000);
+    },
+  });
+}
+
 export function useAdminAffiliates() {
   return useQuery({
     queryKey: ["admin", "affiliates"],
