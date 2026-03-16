@@ -2,7 +2,6 @@
 
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
-import Link from "next/link";
 import { useSession } from "@/lib/auth-client";
 import { AuthLayout } from "@/components/authentication/auth-layout";
 import { AuthNavigation } from "@/components/authentication/auth-navigation";
@@ -41,13 +40,17 @@ export default function SignUpPage() {
       <AuthNavigation />
       <p className="text-xs text-zinc-500 text-center">
         By proceeding you acknowledge that you have read, understood and agree to our{" "}
-        <Link href="/terms" className="text-zinc-400 hover:text-zinc-900 dark:hover:text-white underline">
+        <a href="https://scalereach.ai/terms" target="_blank" rel="noopener noreferrer" className="text-zinc-400 hover:text-zinc-900 dark:hover:text-white underline">
           Terms and Conditions
-        </Link>{" "}
+        </a>{" "}
         and{" "}
-        <Link href="/privacy" className="text-zinc-400 hover:text-zinc-900 dark:hover:text-white underline">
+        <a href="https://scalereach.ai/privacy" target="_blank" rel="noopener noreferrer" className="text-zinc-400 hover:text-zinc-900 dark:hover:text-white underline">
           Privacy Policy
-        </Link>
+        </a>
+        {". "}
+        <a href="https://scalereach.ai/affiliate-program-agreement" target="_blank" rel="noopener noreferrer" className="text-zinc-400 hover:text-zinc-900 dark:hover:text-white underline">
+          Affiliate Agreement
+        </a>
       </p>
     </AuthLayout>
   );

@@ -127,6 +127,12 @@ export const pageMetadata = {
       "Learn how ScaleReach protects your privacy and handles your data. Our commitment to keeping your videos and information secure.",
   }),
 
+  affiliateProgramAgreement: constructMetadata({
+    title: "Affiliate Program Agreement - ScaleReach",
+    description:
+      "Read the ScaleReach Affiliate Program Agreement. Learn about commission rates, payout terms, and the rules for participating in our affiliate program.",
+  }),
+
   forgotPassword: constructMetadata({
     title: "Forgot Password - ScaleReach",
     description: "Reset your ScaleReach account password.",
