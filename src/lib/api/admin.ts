@@ -52,6 +52,7 @@ export interface AdminUser {
   username?: string;
   image?: string;
   role?: string;
+  primaryPlatforms?: string[] | null;
   emailVerified: boolean;
   isOnboarded: boolean;
   twoFactorEnabled: boolean;
@@ -256,6 +257,7 @@ export interface AdminUserWorkspace {
   id: string;
   name: string;
   slug: string;
+  description?: string | null;
   plan: string;
   billingCycle: string | null;
   subscriptionId: string | null;

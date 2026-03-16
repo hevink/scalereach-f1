@@ -36,6 +36,23 @@ const STATUS_COLORS: Record<string, string> = {
     exported: "bg-purple-600",
 };
 
+const ONBOARDING_ROLE_LABELS: Record<string, string> = {
+    creator: "Content Creator",
+    agency: "Marketing Agency",
+    "social-manager": "Social Media Manager",
+    podcaster: "Podcaster",
+    other: "Other",
+};
+
+const PLATFORM_LABELS: Record<string, string> = {
+    tiktok: "TikTok",
+    youtube: "YouTube",
+    instagram: "Instagram",
+    linkedin: "LinkedIn",
+    facebook: "Facebook",
+    reddit: "Reddit",
+};
+
 function StatusBadge({ status }: { status: string }) {
     return (
         <Badge className={`${STATUS_COLORS[status] || "bg-gray-500"} text-white text-xs capitalize`}>
@@ -49,6 +66,15 @@ function formatDuration(seconds: number | null) {
     const m = Math.floor(seconds / 60);
     const s = Math.floor(seconds % 60);
     return `${m}:${s.toString().padStart(2, "0")}`;
+}
+
+function formatOnboardingRole(role?: string | null) {
+    if (!role) return null;
+    return ONBOARDING_ROLE_LABELS[role] ?? null;
+}
+
+function formatPlatform(platform: string) {
+    return PLATFORM_LABELS[platform] ?? platform;
 }
 
 // ── Failed Clips Summary ──────────────────────────────────────────────────────
@@ -233,6 +259,11 @@ function WorkspacesSection({ workspaces }: { workspaces: AdminUserWorkspace[] })
                                 )}
                             </div>
                             <p className="text-xs text-muted-foreground mt-0.5">/{ws.slug}</p>
+                            {ws.description && (
+                                <p className="text-sm text-muted-foreground mt-2 max-w-3xl">
+                                    {ws.description}
+                                </p>
+                            )}
                         </div>
                         <div className="text-xs text-muted-foreground">
                             Created {format(new Date(ws.createdAt), "MMM d, yyyy")}
@@ -300,6 +331,8 @@ export default function AdminUserDetailPage() {
     const readyClips = allClips.filter((c) => c.status === "ready").length;
     const failedClips = allClips.filter((c) => c.status === "failed").length;
     const failedVideos = videos.filter((v) => v.status === "failed").length;
+    const onboardingRole = formatOnboardingRole(user?.role);
+    const primaryPlatforms = user?.primaryPlatforms?.filter(Boolean) ?? [];
 
     return (
         <div className="space-y-5 max-w-7xl mx-auto">
@@ -323,41 +356,81 @@ export default function AdminUserDetailPage() {
                             </div>
                         </div>
                     ) : user ? (
-                        <div className="flex flex-col sm:flex-row gap-5">
-                            <div className="flex items-center gap-4">
-                                <Avatar className="h-16 w-16">
-                                    <AvatarImage src={user.image || `https://avatar.vercel.sh/${user.id || user.email}`} />
-                                    <AvatarFallback className="text-2xl">{user.name?.charAt(0) || "U"}</AvatarFallback>
-                                </Avatar>
-                                <div>
-                                    <div className="flex items-center gap-2 flex-wrap">
-                                        <h2 className="text-xl font-semibold">{user.name || "Unknown"}</h2>
-                                        <Badge variant={user.role === "admin" ? "default" : "secondary"}>{user.role || "user"}</Badge>
-                                        {user.emailVerified && <Badge variant="outline" className="text-xs gap-1"><IconCheck className="h-3 w-3" />Verified</Badge>}
-                                        {user.twoFactorEnabled && <Badge variant="outline" className="text-xs">2FA</Badge>}
-                                    </div>
-                                    <div className="flex items-center gap-1 text-sm text-muted-foreground mt-1">
-                                        <IconMail className="h-3.5 w-3.5" /> {user.email}
-                                    </div>
-                                    {user.username && (
-                                        <div className="flex items-center gap-1 text-sm text-muted-foreground">
-                                            <IconAt className="h-3.5 w-3.5" /> {user.username}
+                        <div className="space-y-5">
+                            <div className="flex flex-col sm:flex-row gap-5">
+                                <div className="flex items-center gap-4">
+                                    <Avatar className="h-16 w-16">
+                                        <AvatarImage src={user.image || `https://avatar.vercel.sh/${user.id || user.email}`} />
+                                        <AvatarFallback className="text-2xl">{user.name?.charAt(0) || "U"}</AvatarFallback>
+                                    </Avatar>
+                                    <div>
+                                        <div className="flex items-center gap-2 flex-wrap">
+                                            <h2 className="text-xl font-semibold">{user.name || "Unknown"}</h2>
+                                            <Badge variant={user.role === "admin" ? "default" : "secondary"}>{user.role || "user"}</Badge>
+                                            {user.emailVerified && <Badge variant="outline" className="text-xs gap-1"><IconCheck className="h-3 w-3" />Verified</Badge>}
+                                            {user.twoFactorEnabled && <Badge variant="outline" className="text-xs">2FA</Badge>}
                                         </div>
-                                    )}
+                                        <div className="flex items-center gap-1 text-sm text-muted-foreground mt-1">
+                                            <IconMail className="h-3.5 w-3.5" /> {user.email}
+                                        </div>
+                                        {user.username && (
+                                            <div className="flex items-center gap-1 text-sm text-muted-foreground">
+                                                <IconAt className="h-3.5 w-3.5" /> {user.username}
+                                            </div>
+                                        )}
+                                    </div>
+                                </div>
+                                <div className="flex flex-wrap gap-3 sm:ml-auto text-sm text-muted-foreground">
+                                    <div className="flex items-center gap-1.5">
+                                        <IconCalendar className="h-4 w-4" />
+                                        Joined {format(new Date(user.createdAt), "MMM d, yyyy")}
+                                    </div>
+                                    <div className="flex items-center gap-1.5">
+                                        <IconUser className="h-4 w-4" />
+                                        {user.isOnboarded ? "Onboarded" : "Not onboarded"}
+                                    </div>
+                                    <div className="flex items-center gap-1.5">
+                                        <IconShieldCheck className="h-4 w-4" />
+                                        {user.role || "user"}
+                                    </div>
                                 </div>
                             </div>
-                            <div className="flex flex-wrap gap-3 sm:ml-auto text-sm text-muted-foreground">
-                                <div className="flex items-center gap-1.5">
-                                    <IconCalendar className="h-4 w-4" />
-                                    Joined {format(new Date(user.createdAt), "MMM d, yyyy")}
+
+                            <div className="rounded-xl border bg-muted/20 p-4">
+                                <div className="flex items-center justify-between gap-3 flex-wrap">
+                                    <div>
+                                        <p className="text-sm font-medium">Onboarding answers</p>
+                                        <p className="text-xs text-muted-foreground">
+                                            Answers captured during signup and workspace setup.
+                                        </p>
+                                    </div>
+                                    <Badge variant="outline" className="text-xs">
+                                        {user.isOnboarded ? "Completed" : "Incomplete"}
+                                    </Badge>
                                 </div>
-                                <div className="flex items-center gap-1.5">
-                                    <IconUser className="h-4 w-4" />
-                                    {user.isOnboarded ? "Onboarded" : "Not onboarded"}
-                                </div>
-                                <div className="flex items-center gap-1.5">
-                                    <IconShieldCheck className="h-4 w-4" />
-                                    {user.role || "user"}
+
+                                <div className="grid gap-4 pt-4 md:grid-cols-2">
+                                    <div className="space-y-1.5">
+                                        <p className="text-xs text-muted-foreground">What best describes you?</p>
+                                        <p className="font-medium">
+                                            {onboardingRole || "Not captured"}
+                                        </p>
+                                    </div>
+
+                                    <div className="space-y-1.5">
+                                        <p className="text-xs text-muted-foreground">Which platforms do you post on?</p>
+                                        {primaryPlatforms.length > 0 ? (
+                                            <div className="flex flex-wrap gap-2">
+                                                {primaryPlatforms.map((platform) => (
+                                                    <Badge key={platform} variant="secondary" className="text-xs">
+                                                        {formatPlatform(platform)}
+                                                    </Badge>
+                                                ))}
+                                            </div>
+                                        ) : (
+                                            <p className="font-medium">No platforms saved</p>
+                                        )}
+                                    </div>
                                 </div>
                             </div>
                         </div>
