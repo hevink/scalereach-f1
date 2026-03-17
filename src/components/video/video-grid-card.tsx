@@ -44,7 +44,10 @@ import {
     IconCopy,
     IconExternalLink,
     IconDownload,
+    IconRefresh,
 } from "@tabler/icons-react";
+import { videoApi } from "@/lib/api/video";
+import { toast } from "sonner";
 
 interface VideoGridCardProps {
     video: VideoLite;
@@ -61,9 +64,23 @@ export function VideoGridCard({ video, onClick, onDelete, onRename, onDuplicate 
     const [isDeleting, setIsDeleting] = useState(false);
     const [isRenaming, setIsRenaming] = useState(false);
     const [copySuccess, setCopySuccess] = useState(false);
+    const [isRegenerating, setIsRegenerating] = useState(false);
 
     const processingStatuses = ["downloading", "uploading", "transcribing", "analyzing"];
     const isProcessing = processingStatuses.includes(video.status);
+
+    const handleRegenerate = async () => {
+        setIsRegenerating(true);
+        try {
+            await videoApi.regenerateVideo(video.id);
+            toast.success("Video queued for regeneration");
+        } catch (err) {
+            console.error("Video regenerate failed:", err);
+            toast.error("Failed to regenerate video");
+        } finally {
+            setIsRegenerating(false);
+        }
+    };
 
     const getThumbnailUrl = () => {
         if (video.thumbnailUrl) return video.thumbnailUrl;
@@ -149,8 +166,25 @@ export function VideoGridCard({ video, onClick, onDelete, onRename, onDuplicate 
                         </div>
                     )}
                     {video.status === "failed" && (
-                        <div className="absolute bottom-1.5 left-1.5">
+                        <div className="absolute bottom-1.5 left-1.5 flex items-center gap-1.5">
                             <Badge variant="destructive" className="text-[10px] py-0.5">Failed</Badge>
+                            <Button
+                                variant="secondary"
+                                size="sm"
+                                className="h-5 px-1.5 text-[10px] gap-1"
+                                disabled={isRegenerating}
+                                onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleRegenerate();
+                                }}
+                            >
+                                {isRegenerating ? (
+                                    <IconLoader2 className="size-2.5 animate-spin" />
+                                ) : (
+                                    <IconRefresh className="size-2.5" />
+                                )}
+                                {isRegenerating ? "Retrying..." : "Regenerate"}
+                            </Button>
                         </div>
                     )}
                     {/* Actions menu */}
@@ -238,6 +272,22 @@ export function VideoGridCard({ video, onClick, onDelete, onRename, onDuplicate 
                                 {onDelete && (
                                     <>
                                         <DropdownMenuSeparator />
+                                        {video.status === "failed" && (
+                                            <DropdownMenuItem
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    handleRegenerate();
+                                                }}
+                                                disabled={isRegenerating || isProcessing}
+                                            >
+                                                {isRegenerating ? (
+                                                    <IconLoader2 className="size-4 mr-2 animate-spin" />
+                                                ) : (
+                                                    <IconRefresh className="size-4 mr-2" />
+                                                )}
+                                                {isRegenerating ? "Regenerating..." : "Regenerate"}
+                                            </DropdownMenuItem>
+                                        )}
                                         <DropdownMenuItem
                                             className="text-destructive focus:text-destructive"
                                             onSelect={(e) => e.preventDefault()}

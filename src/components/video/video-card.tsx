@@ -36,6 +36,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { cn } from "@/lib/utils";
 import { downloadVideoTranscript } from "@/lib/api/subtitle";
+import { toast } from "sonner";
 import {
     IconFile,
     IconLoader2,
@@ -87,8 +88,10 @@ export function VideoCard({
         setIsRegenerating(true);
         try {
             await videoApi.regenerateVideo(video.id);
+            toast.success("Video queued for regeneration");
         } catch (err) {
             console.error("Video regenerate failed:", err);
+            toast.error("Failed to regenerate video");
         } finally {
             setIsRegenerating(false);
         }
@@ -268,6 +271,25 @@ export function VideoCard({
                             )}
                         </div>
                         {getStatusBadge()}
+                        {video.status === "failed" && (
+                            <Button
+                                variant="outline"
+                                size="sm"
+                                className="h-5 px-1.5 text-[10px] gap-1"
+                                disabled={isRegenerating}
+                                onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleRegenerate();
+                                }}
+                            >
+                                {isRegenerating ? (
+                                    <IconLoader2 className="size-2.5 animate-spin" />
+                                ) : (
+                                    <IconRefresh className="size-2.5" />
+                                )}
+                                {isRegenerating ? "Retrying..." : "Regenerate"}
+                            </Button>
+                        )}
                     </div>
                 </div>
 
@@ -301,8 +323,27 @@ export function VideoCard({
                 {/* Actions column */}
                 <div className="flex items-center justify-end gap-1 md:gap-2 shrink-0">
                     {/* Status badge - desktop only */}
-                    <div className="hidden md:block">
+                    <div className="hidden md:flex items-center gap-1.5">
                         {getStatusBadge()}
+                        {video.status === "failed" && (
+                            <Button
+                                variant="outline"
+                                size="sm"
+                                className="h-6 px-2 text-xs gap-1"
+                                disabled={isRegenerating}
+                                onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleRegenerate();
+                                }}
+                            >
+                                {isRegenerating ? (
+                                    <IconLoader2 className="size-3 animate-spin" />
+                                ) : (
+                                    <IconRefresh className="size-3" />
+                                )}
+                                {isRegenerating ? "Retrying..." : "Regenerate"}
+                            </Button>
+                        )}
                     </div>
 
                     <DropdownMenu>
@@ -416,7 +457,7 @@ export function VideoCard({
                             {onDelete && (
                                 <>
                                     <DropdownMenuSeparator />
-                                    {isDev && (
+                                    {(video.status === "failed" || isDev) && (
                                         <DropdownMenuItem
                                             onClick={(e) => {
                                                 e.stopPropagation();
