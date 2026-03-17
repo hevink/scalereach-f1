@@ -30,9 +30,9 @@ import {
     SelectValue,
 } from "@/components/ui/select";
 import { useVideo, useVideoStatus } from "@/hooks/useVideo";
-import { useClipsByVideo, useToggleFavorite } from "@/hooks/useClips";
+import { useClipsByVideo, useToggleFavorite, clipKeys } from "@/hooks/useClips";
 import { useWorkspaceBySlug } from "@/hooks/useWorkspace";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { videoConfigApi } from "@/lib/api/video-config";
 import { analytics } from "@/lib/analytics";
 import type { ClipFilters, ClipResponse } from "@/lib/api/clips";
@@ -330,17 +330,21 @@ function ProcessingCard({ title, description, thumbnailUrl, step }: {
     );
 }
 
-function FailedClipsBanner({ failedClips, onRetryComplete }: { failedClips: ClipResponse[]; onRetryComplete: () => void }) {
+function FailedClipsBanner({ failedClips, videoId, onRetryComplete, onRetryingChange }: { failedClips: ClipResponse[]; videoId: string; onRetryComplete: () => void; onRetryingChange: (isRetrying: boolean) => void }) {
     const [isRetrying, setIsRetrying] = useState(false);
     const [retryCount, setRetryCount] = useState(0);
+    const queryClient = useQueryClient();
 
     const handleRetryAll = async () => {
         setIsRetrying(true);
+        onRetryingChange(true);
         setRetryCount(0);
         for (const clip of failedClips) {
             try {
                 await clipsApi.regenerateClip(clip.id);
                 setRetryCount(prev => prev + 1);
+                // Invalidate after each retry so polling kicks in immediately
+                queryClient.invalidateQueries({ queryKey: clipKeys.byVideo(videoId) });
                 // Stagger retries by 2s to avoid hitting YouTube rate limits again
                 if (clip !== failedClips[failedClips.length - 1]) {
                     await new Promise(r => setTimeout(r, 2000));
@@ -350,6 +354,7 @@ function FailedClipsBanner({ failedClips, onRetryComplete }: { failedClips: Clip
             }
         }
         setIsRetrying(false);
+        onRetryingChange(false);
         onRetryComplete();
     };
 
@@ -491,6 +496,7 @@ export default function VideoClipsPage({ params }: VideoClipsPageProps) {
     const router = useRouter();
     const [quickFilter, setQuickFilter] = useState<VideoClipQuickFilter>("all");
     const [sortBy, setSortBy] = useState<ClipFilters["sortBy"]>("createdAt");
+    const [isRetryingAll, setIsRetryingAll] = useState(false);
 
     const {
         data: video,
@@ -820,7 +826,9 @@ export default function VideoClipsPage({ params }: VideoClipsPageProps) {
                         {clips.some(c => c.status === "failed") && (
                             <FailedClipsBanner
                                 failedClips={clips.filter(c => c.status === "failed")}
+                                videoId={videoId}
                                 onRetryComplete={refetchClips}
+                                onRetryingChange={setIsRetryingAll}
                             />
                         )}
 
@@ -931,6 +939,7 @@ export default function VideoClipsPage({ params }: VideoClipsPageProps) {
                                     workspaceSlug={slug}
                                     workspaceId={workspace?.id}
                                     isDemo={isDemo}
+                                    isRetryingAll={isRetryingAll}
                                 />
                             ))
                         )}

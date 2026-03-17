@@ -22,6 +22,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
 import type { ClipResponse, RecommendedPlatform } from "@/lib/api/clips";
+import { useQueryClient } from "@tanstack/react-query";
+import { clipKeys } from "@/hooks/useClips";
 import { UpgradeDialog } from "@/components/pricing/upgrade-dialog";
 import {
     YouTubeIcon,
@@ -46,6 +48,7 @@ export interface ClipCardProps {
     workspaceSlug: string;
     workspaceId?: string;
     isDemo?: boolean;
+    isRetryingAll?: boolean;
 }
 
 const PLATFORM_CONFIG: Record<RecommendedPlatform, { icon: React.ElementType; label: string; tooltip: string }> = {
@@ -57,12 +60,13 @@ const PLATFORM_CONFIG: Record<RecommendedPlatform, { icon: React.ElementType; la
     facebook_reels: { icon: FacebookIcon, label: "FB Reels", tooltip: "Facebook Reels" },
 };
 
-export function ClipCard({ clip, index, onEdit, onFavorite, onDownload, onShare, userPlan, workspaceSlug, workspaceId, isDemo = false }: ClipCardProps) {
+export function ClipCard({ clip, index, onEdit, onFavorite, onDownload, onShare, userPlan, workspaceSlug, workspaceId, isDemo = false, isRetryingAll = false }: ClipCardProps) {
     const [activeTab, setActiveTab] = useState<"transcript" | "description">("transcript");
     const [upgradeFeature, setUpgradeFeature] = useState<string | null>(null);
     const [isDownloading, setIsDownloading] = useState(false);
     const [scheduleOpen, setScheduleOpen] = useState(false);
     const [isRegenerating, setIsRegenerating] = useState(false);
+    const queryClient = useQueryClient();
     const isGenerating = clip.status === "generating" || clip.status === "detected";
     const isFailed = clip.status === "failed";
     const isFreePlan = userPlan === "free";
@@ -72,6 +76,9 @@ export function ClipCard({ clip, index, onEdit, onFavorite, onDownload, onShare,
         setIsRegenerating(true);
         try {
             await clipsApi.regenerateClip(clip.id);
+            // Invalidate clips query so it refetches immediately and sees "detected" status,
+            // which triggers the 5s polling interval until the clip finishes generating
+            queryClient.invalidateQueries({ queryKey: clipKeys.byVideo(clip.videoId) });
         } catch (err) {
             console.error("Clip retry failed:", err);
         } finally {
@@ -138,14 +145,14 @@ export function ClipCard({ clip, index, onEdit, onFavorite, onDownload, onShare,
                                         variant="outline"
                                         className="gap-1.5 mt-1"
                                         onClick={handleRetry}
-                                        disabled={isRegenerating}
+                                        disabled={isRegenerating || isRetryingAll}
                                     >
-                                        {isRegenerating ? (
+                                        {isRegenerating || isRetryingAll ? (
                                             <IconLoader2 className="size-3.5 animate-spin" />
                                         ) : (
                                             <HugeiconsIcon icon={RefreshIcon} size={14} color="currentColor" />
                                         )}
-                                        {isRegenerating ? "Retrying..." : "Retry"}
+                                        {isRegenerating || isRetryingAll ? "Retrying..." : "Retry"}
                                     </Button>
                                 </div>
                             ) : clip.storageUrl ? (
@@ -321,6 +328,7 @@ export function ClipCard({ clip, index, onEdit, onFavorite, onDownload, onShare,
                                     setIsRegenerating(true);
                                     try {
                                         await clipsApi.regenerateClip(clip.id);
+                                        queryClient.invalidateQueries({ queryKey: clipKeys.byVideo(clip.videoId) });
                                     } catch (err) {
                                         console.error("Clip regenerate failed:", err);
                                     } finally {
