@@ -12,6 +12,7 @@ import {
     IconAspectRatio,
     IconCalendar,
     IconLayoutRows,
+    IconFilter,
 } from "@tabler/icons-react";
 import { FireIcon as FireAnimatedIcon } from "@/components/ui/fire-icon";
 import { motion } from "framer-motion";
@@ -21,21 +22,40 @@ import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from "@/components/ui/select";
 import { useVideo, useVideoStatus } from "@/hooks/useVideo";
 import { useClipsByVideo, useToggleFavorite } from "@/hooks/useClips";
 import { useWorkspaceBySlug } from "@/hooks/useWorkspace";
 import { useQuery } from "@tanstack/react-query";
 import { videoConfigApi } from "@/lib/api/video-config";
 import { analytics } from "@/lib/analytics";
-import type { ClipResponse } from "@/lib/api/clips";
+import type { ClipFilters, ClipResponse } from "@/lib/api/clips";
 import { clipsApi } from "@/lib/api/clips";
 import { ShareManager } from "@/components/share/share-manager";
 import { ClipCard } from "@/components/clips/clip-card";
 import { isDemoVideo } from "@/lib/demo-video";
+import {
+    countVideoClipsByFilter,
+    filterVideoClips,
+    type VideoClipQuickFilter,
+} from "@/components/clips/video-clips-filtering";
 
 interface VideoClipsPageProps {
     params: Promise<{ "workspace-slug": string; id: string }>;
 }
+
+const QUICK_FILTER_OPTIONS: Array<{ value: VideoClipQuickFilter; label: string }> = [
+    { value: "all", label: "All" },
+    { value: "long", label: "Long" },
+    { value: "good", label: "Good" },
+    { value: "other", label: "Other" },
+];
 
 function formatDuration(seconds: number): string {
     const mins = Math.floor(seconds / 60);
@@ -468,6 +488,8 @@ function NoClips({ videoTitle, videoStatus, videoCreatedAt, thumbnailUrl }: NoCl
 export default function VideoClipsPage({ params }: VideoClipsPageProps) {
     const { "workspace-slug": slug, id: videoId } = use(params);
     const router = useRouter();
+    const [quickFilter, setQuickFilter] = useState<VideoClipQuickFilter>("all");
+    const [sortBy, setSortBy] = useState<ClipFilters["sortBy"]>("createdAt");
 
     const {
         data: video,
@@ -481,7 +503,10 @@ export default function VideoClipsPage({ params }: VideoClipsPageProps) {
         isLoading: clipsLoading,
         error: clipsError,
         refetch: refetchClips,
-    } = useClipsByVideo(videoId);
+    } = useClipsByVideo(videoId, {
+        sortBy,
+        sortOrder: "desc",
+    });
 
     const isProcessing = !!video?.status && !["completed", "failed", "error", "expired"].includes(video.status);
 
@@ -671,6 +696,13 @@ export default function VideoClipsPage({ params }: VideoClipsPageProps) {
     const aspectRatio = configData?.config?.aspectRatio || "9:16";
     const hasSplitScreen = configData?.config?.enableSplitScreen || false;
     const isDemo = isDemoVideo(videoId);
+    const clipCounts = {
+        all: clips?.length ?? 0,
+        long: clips ? countVideoClipsByFilter(clips, "long") : 0,
+        good: clips ? countVideoClipsByFilter(clips, "good") : 0,
+        other: clips ? countVideoClipsByFilter(clips, "other") : 0,
+    };
+    const visibleClips = clips ? filterVideoClips(clips, quickFilter) : [];
 
     return (
         <div className="flex h-full flex-col bg-background">
@@ -809,21 +841,95 @@ export default function VideoClipsPage({ params }: VideoClipsPageProps) {
                             </div>
                         )}
 
-                        {clips.map((clip, index) => (
-                            <ClipCard
-                                key={clip.id}
-                                clip={clip}
-                                index={index}
-                                onEdit={handleEditClip}
-                                onFavorite={handleFavorite}
-                                onDownload={handleDownload}
-                                onShare={handleShare}
-                                userPlan={(workspace?.plan as "free" | "starter" | "pro" | "agency") || "free"}
-                                workspaceSlug={slug}
-                                workspaceId={workspace?.id}
-                                isDemo={isDemo}
-                            />
-                        ))}
+                        <div className="rounded-xl border bg-card/60 px-4 py-3">
+                            <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+                                <div className="flex flex-wrap items-center gap-2">
+                                    <div className="mr-1 flex items-center gap-2 text-sm text-muted-foreground">
+                                        <IconFilter className="size-4" />
+                                        Filter
+                                    </div>
+                                    {QUICK_FILTER_OPTIONS.map((option) => {
+                                        const isActive = quickFilter === option.value;
+                                        const count = clipCounts[option.value];
+
+                                        return (
+                                            <Button
+                                                key={option.value}
+                                                type="button"
+                                                size="sm"
+                                                variant={isActive ? "default" : "outline"}
+                                                className="rounded-full"
+                                                onClick={() => setQuickFilter(option.value)}
+                                            >
+                                                {option.label}
+                                                <span className="ml-1.5 rounded-full bg-black/10 px-1.5 py-0.5 text-[11px] leading-none dark:bg-white/10">
+                                                    {count}
+                                                </span>
+                                            </Button>
+                                        );
+                                    })}
+                                </div>
+
+                                <div className="flex items-center gap-2">
+                                    <span className="shrink-0 text-xs text-muted-foreground">
+                                        Sort by
+                                    </span>
+                                    <Select
+                                        value={sortBy}
+                                        onValueChange={(value) =>
+                                            setSortBy(value as ClipFilters["sortBy"])
+                                        }
+                                    >
+                                        <SelectTrigger className="w-[160px]">
+                                            <SelectValue />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            <SelectItem value="createdAt">Newest</SelectItem>
+                                            <SelectItem value="score">Virality Score</SelectItem>
+                                            <SelectItem value="duration">Duration</SelectItem>
+                                        </SelectContent>
+                                    </Select>
+                                </div>
+                            </div>
+
+                            <p className="mt-3 text-xs text-muted-foreground">
+                                Showing {visibleClips.length} of {clips.length} clips
+                            </p>
+                        </div>
+
+                        {visibleClips.length === 0 ? (
+                            <div className="rounded-xl border border-dashed px-4 py-8 text-center">
+                                <p className="text-sm font-medium">No clips match this filter</p>
+                                <p className="mt-1 text-sm text-muted-foreground">
+                                    Try switching to another filter or go back to all clips.
+                                </p>
+                                <Button
+                                    type="button"
+                                    variant="outline"
+                                    size="sm"
+                                    className="mt-4"
+                                    onClick={() => setQuickFilter("all")}
+                                >
+                                    Show all clips
+                                </Button>
+                            </div>
+                        ) : (
+                            visibleClips.map((clip, index) => (
+                                <ClipCard
+                                    key={clip.id}
+                                    clip={clip}
+                                    index={index}
+                                    onEdit={handleEditClip}
+                                    onFavorite={handleFavorite}
+                                    onDownload={handleDownload}
+                                    onShare={handleShare}
+                                    userPlan={(workspace?.plan as "free" | "starter" | "pro" | "agency") || "free"}
+                                    workspaceSlug={slug}
+                                    workspaceId={workspace?.id}
+                                    isDemo={isDemo}
+                                />
+                            ))
+                        )}
                     </div>
                 )}
             </div>
