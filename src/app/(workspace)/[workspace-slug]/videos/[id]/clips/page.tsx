@@ -1,6 +1,6 @@
 "use client";
 
-import { use, useCallback, useEffect, useState } from "react";
+import { use, useCallback, useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import {
     IconArrowLeft,
@@ -44,6 +44,7 @@ import {
     countVideoClipsByFilter,
     filterVideoClips,
     type VideoClipQuickFilter,
+    sortVideoClips,
 } from "@/components/clips/video-clips-filtering";
 
 interface VideoClipsPageProps {
@@ -503,10 +504,7 @@ export default function VideoClipsPage({ params }: VideoClipsPageProps) {
         isLoading: clipsLoading,
         error: clipsError,
         refetch: refetchClips,
-    } = useClipsByVideo(videoId, {
-        sortBy,
-        sortOrder: "desc",
-    });
+    } = useClipsByVideo(videoId);
 
     const isProcessing = !!video?.status && !["completed", "failed", "error", "expired"].includes(video.status);
 
@@ -702,7 +700,13 @@ export default function VideoClipsPage({ params }: VideoClipsPageProps) {
         good: clips ? countVideoClipsByFilter(clips, "good") : 0,
         other: clips ? countVideoClipsByFilter(clips, "other") : 0,
     };
-    const visibleClips = clips ? filterVideoClips(clips, quickFilter) : [];
+    const visibleClips = useMemo(() => {
+        if (!clips) {
+            return [];
+        }
+
+        return sortVideoClips(filterVideoClips(clips, quickFilter), sortBy);
+    }, [clips, quickFilter, sortBy]);
 
     return (
         <div className="flex h-full flex-col bg-background">

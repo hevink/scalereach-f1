@@ -6,6 +6,7 @@ import {
     filterVideoClips,
     GOOD_CLIP_SCORE_THRESHOLD,
     LONG_CLIP_DURATION_SECONDS,
+    sortVideoClips,
 } from "./video-clips-filtering";
 
 function createClip(overrides: Partial<ClipResponse>): ClipResponse {
@@ -86,5 +87,37 @@ describe("video clips quick filtering", () => {
         expect(countVideoClipsByFilter(clips, "long")).toBe(2);
         expect(countVideoClipsByFilter(clips, "good")).toBe(2);
         expect(countVideoClipsByFilter(clips, "other")).toBe(1);
+    });
+
+    it("sorts clips by duration descending", () => {
+        expect(sortVideoClips(clips, "duration").map((clip) => clip.id)).toEqual([
+            "long-good",
+            "long",
+            "other",
+            "good",
+        ]);
+    });
+
+    it("sorts clips by score descending", () => {
+        expect(sortVideoClips(clips, "score").map((clip) => clip.id)).toEqual([
+            "long-good",
+            "good",
+            "other",
+            "long",
+        ]);
+    });
+
+    it("sorts clips by createdAt descending", () => {
+        const datedClips = [
+            createClip({ id: "oldest", createdAt: "2026-01-01T00:00:00.000Z" }),
+            createClip({ id: "middle", createdAt: "2026-01-02T00:00:00.000Z" }),
+            createClip({ id: "newest", createdAt: "2026-01-03T00:00:00.000Z" }),
+        ];
+
+        expect(sortVideoClips(datedClips, "createdAt").map((clip) => clip.id)).toEqual([
+            "newest",
+            "middle",
+            "oldest",
+        ]);
     });
 });
