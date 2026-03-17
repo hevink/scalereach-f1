@@ -586,6 +586,25 @@ export default function VideoClipsPage({ params }: VideoClipsPageProps) {
         }
     }, []);
 
+    // Derive metadata for tags (must be above early returns to keep hook order stable)
+    const sourceType = video?.sourceType === "youtube" ? "YouTube" : "Local file";
+    const aspectRatio = configData?.config?.aspectRatio || "9:16";
+    const hasSplitScreen = configData?.config?.enableSplitScreen || false;
+    const isDemo = isDemoVideo(videoId);
+    const clipCounts = {
+        all: clips?.length ?? 0,
+        long: clips ? countVideoClipsByFilter(clips, "long") : 0,
+        good: clips ? countVideoClipsByFilter(clips, "good") : 0,
+        other: clips ? countVideoClipsByFilter(clips, "other") : 0,
+    };
+    const visibleClips = useMemo(() => {
+        if (!clips) {
+            return [];
+        }
+
+        return sortVideoClips(filterVideoClips(clips, quickFilter), sortBy);
+    }, [clips, quickFilter, sortBy]);
+
     // Video just completed but clips haven't loaded yet - show a nice transition
     const isWaitingForClips = video?.status === "completed" && (!clips || clips.length === 0);
 
@@ -688,25 +707,6 @@ export default function VideoClipsPage({ params }: VideoClipsPageProps) {
             </div>
         );
     }
-
-    // Derive metadata for tags
-    const sourceType = video.sourceType === "youtube" ? "YouTube" : "Local file";
-    const aspectRatio = configData?.config?.aspectRatio || "9:16";
-    const hasSplitScreen = configData?.config?.enableSplitScreen || false;
-    const isDemo = isDemoVideo(videoId);
-    const clipCounts = {
-        all: clips?.length ?? 0,
-        long: clips ? countVideoClipsByFilter(clips, "long") : 0,
-        good: clips ? countVideoClipsByFilter(clips, "good") : 0,
-        other: clips ? countVideoClipsByFilter(clips, "other") : 0,
-    };
-    const visibleClips = useMemo(() => {
-        if (!clips) {
-            return [];
-        }
-
-        return sortVideoClips(filterVideoClips(clips, quickFilter), sortBy);
-    }, [clips, quickFilter, sortBy]);
 
     return (
         <div className="flex h-full flex-col bg-background">
