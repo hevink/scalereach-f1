@@ -11,7 +11,7 @@ import {
     IconPlayerPlay, IconCheck, IconX, IconLoader2,
     IconRefresh, IconClock,
 } from "@tabler/icons-react";
-import { useYouTubeHealth, useTestYouTubeCookie } from "@/hooks/useAdmin";
+import { useYouTubeHealth, useTestYouTubeCookie, useTestBurstYouTube } from "@/hooks/useAdmin";
 import { cn } from "@/lib/utils";
 
 function StatusBadge({ status, labels }: {
@@ -37,6 +37,7 @@ function StatusBadge({ status, labels }: {
 export default function YouTubeHealthPage() {
     const { data, isLoading, refetch, isRefetching } = useYouTubeHealth();
     const testMutation = useTestYouTubeCookie();
+    const burstTestMutation = useTestBurstYouTube();
     const [testUrl, setTestUrl] = useState("https://www.youtube.com/watch?v=dQw4w9WgXcQ");
 
     const handleTest = () => {
@@ -174,16 +175,28 @@ export default function YouTubeHealthPage() {
                             className="font-mono text-sm"
                             onKeyDown={(e) => e.key === "Enter" && handleTest()}
                         />
-                        <Button onClick={handleTest} disabled={testMutation.isPending}>
+                        <Button onClick={handleTest} disabled={testMutation.isPending} size="sm">
                             {testMutation.isPending ? (
-                                <><IconLoader2 className="h-4 w-4 mr-2 animate-spin" /> Testing...</>
+                                <><IconLoader2 className="h-4 w-4 mr-2 animate-spin" /> Base...</>
                             ) : (
-                                "Test"
+                                "Test Base (8GB)"
+                            )}
+                        </Button>
+                        <Button
+                            onClick={() => { if (testUrl.trim()) burstTestMutation.mutate(testUrl.trim()); }}
+                            disabled={burstTestMutation.isPending}
+                            variant="outline"
+                            size="sm"
+                        >
+                            {burstTestMutation.isPending ? (
+                                <><IconLoader2 className="h-4 w-4 mr-2 animate-spin" /> Burst...</>
+                            ) : (
+                                "Test Burst (32GB)"
                             )}
                         </Button>
                     </div>
 
-                    {/* Test result */}
+                    {/* Base test result */}
                     {testMutation.data?.test && (
                         <div className={cn(
                             "rounded-lg border p-4 space-y-2",
@@ -201,7 +214,7 @@ export default function YouTubeHealthPage() {
                                     "font-semibold",
                                     testMutation.data.test.ok ? "text-emerald-600" : "text-red-600"
                                 )}>
-                                    {testMutation.data.test.ok ? "Cookie Working" : "Cookie Failed"}
+                                    Base (8GB) — {testMutation.data.test.ok ? "Working" : "Failed"}
                                 </span>
                                 <Badge variant="secondary" className="ml-auto text-xs tabular-nums">
                                     {testMutation.data.test.elapsed_ms}ms
@@ -227,7 +240,58 @@ export default function YouTubeHealthPage() {
                     {testMutation.error && (
                         <div className="rounded-lg border border-red-500/20 bg-red-500/5 p-4">
                             <p className="text-sm text-red-600">
-                                Failed to reach worker: {(testMutation.error as Error).message}
+                                Base — Failed to reach worker: {(testMutation.error as Error).message}
+                            </p>
+                        </div>
+                    )}
+
+                    {/* Burst test result */}
+                    {burstTestMutation.data?.test && (
+                        <div className={cn(
+                            "rounded-lg border p-4 space-y-2",
+                            burstTestMutation.data.test.ok
+                                ? "bg-emerald-500/5 border-emerald-500/20"
+                                : "bg-red-500/5 border-red-500/20"
+                        )}>
+                            <div className="flex items-center gap-2">
+                                {burstTestMutation.data.test.ok ? (
+                                    <IconCheck className="h-5 w-5 text-emerald-600" />
+                                ) : (
+                                    <IconX className="h-5 w-5 text-red-600" />
+                                )}
+                                <span className={cn(
+                                    "font-semibold",
+                                    burstTestMutation.data.test.ok ? "text-emerald-600" : "text-red-600"
+                                )}>
+                                    Burst (32GB) — {burstTestMutation.data.test.ok ? "Working" : "Failed"}
+                                </span>
+                                {burstTestMutation.data.test.elapsed_ms && (
+                                    <Badge variant="secondary" className="ml-auto text-xs tabular-nums">
+                                        {burstTestMutation.data.test.elapsed_ms}ms
+                                    </Badge>
+                                )}
+                            </div>
+
+                            {burstTestMutation.data.test.ok && burstTestMutation.data.test.videoInfo && (
+                                <div className="text-sm space-y-1 pt-2 border-t border-border/50">
+                                    <p><span className="text-muted-foreground">Title:</span> {burstTestMutation.data.test.videoInfo.title}</p>
+                                    <p><span className="text-muted-foreground">Channel:</span> {burstTestMutation.data.test.videoInfo.channelName}</p>
+                                    <p><span className="text-muted-foreground">Duration:</span> {Math.floor(burstTestMutation.data.test.videoInfo.duration / 60)}m {burstTestMutation.data.test.videoInfo.duration % 60}s</p>
+                                </div>
+                            )}
+
+                            {!burstTestMutation.data.test.ok && burstTestMutation.data.test.error && (
+                                <pre className="text-xs text-red-500 font-mono whitespace-pre-wrap mt-2 p-2 bg-red-500/5 rounded">
+                                    {burstTestMutation.data.test.error}
+                                </pre>
+                            )}
+                        </div>
+                    )}
+
+                    {burstTestMutation.error && (
+                        <div className="rounded-lg border border-red-500/20 bg-red-500/5 p-4">
+                            <p className="text-sm text-red-600">
+                                Burst — Failed to reach worker: {(burstTestMutation.error as Error).message}
                             </p>
                         </div>
                     )}

@@ -239,6 +239,12 @@ export function useTestYouTubeCookie() {
   });
 }
 
+export function useTestBurstYouTube() {
+  return useMutation({
+    mutationFn: (url: string) => adminApi.testBurstYouTube(url),
+  });
+}
+
 export function useWorkerStatus() {
   return useQuery({
     queryKey: ["admin", "worker-status"],

@@ -578,6 +578,11 @@ export const adminApi = {
     return response.data;
   },
 
+  testBurstYouTube: async (url: string) => {
+    const response = await api.post<YouTubeHealthStatus>("/api/admin/burst-youtube-test", { url });
+    return response.data;
+  },
+
   // Worker status (debug dashboard)
   getWorkerStatus: async () => {
     const response = await api.get("/api/admin/worker-status");
