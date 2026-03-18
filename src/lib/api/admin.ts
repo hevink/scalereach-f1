@@ -643,6 +643,15 @@ export const adminApi = {
     return response.data;
   },
 
+  getWorkerLogsLive: async (type: "out" | "err" | "both" = "both", lines = 500) => {
+    const response = await api.get<string>("/api/admin/worker-logs/live", {
+      params: { type, lines },
+      responseType: "text",
+      transformResponse: [(data: string) => data],
+    });
+    return response.data;
+  },
+
   // Affiliate management
   getAffiliateOverview: async () => {
     const response = await api.get<{ affiliates: AdminAffiliate[] }>("/api/admin/affiliate/overview");

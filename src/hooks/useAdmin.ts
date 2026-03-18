@@ -348,6 +348,16 @@ export function useBurstLogsLive(type: "out" | "error", enabled: boolean) {
   });
 }
 
+export function useWorkerLogsLive(type: "out" | "err" | "both", lines: number, enabled: boolean) {
+  return useQuery({
+    queryKey: ["admin", "worker-logs-live", type, lines],
+    queryFn: () => adminApi.getWorkerLogsLive(type, lines),
+    enabled,
+    staleTime: 10 * 1000,
+    refetchInterval: enabled ? 15 * 1000 : false,
+  });
+}
+
 export function useAdminAffiliates() {
   return useQuery({
     queryKey: ["admin", "affiliates"],
