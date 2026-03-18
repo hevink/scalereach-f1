@@ -332,6 +332,16 @@ export function useBurstLogContent(key: string | null) {
   });
 }
 
+export function useBurstLogsLive(type: "out" | "error", enabled: boolean) {
+  return useQuery({
+    queryKey: ["admin", "burst-logs-live", type],
+    queryFn: () => adminApi.getBurstLogsLive(type),
+    enabled,
+    staleTime: 10 * 1000,
+    refetchInterval: enabled ? 15 * 1000 : false,
+  });
+}
+
 export function useAdminAffiliates() {
   return useQuery({
     queryKey: ["admin", "affiliates"],
