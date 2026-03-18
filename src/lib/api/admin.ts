@@ -351,6 +351,24 @@ export interface EC2StatusResponse {
   burst: EC2Instance;
 }
 
+export interface BurstLogFile {
+  key: string;
+  size: number;
+  lastModified: string;
+  url: string;
+  type?: "out" | "error";
+  timestamp?: string | null;
+}
+
+export interface BurstLogsResponse {
+  latest: {
+    out: BurstLogFile | null;
+    error: BurstLogFile | null;
+  };
+  historical: BurstLogFile[];
+  total: number;
+}
+
 export interface AdminAffiliate {
   userId: string;
   name: string | null;
@@ -589,6 +607,11 @@ export const adminApi = {
 
   forceScalerCheck: async () => {
     const response = await api.post("/api/admin/scaler-check");
+    return response.data;
+  },
+
+  getBurstLogs: async () => {
+    const response = await api.get<BurstLogsResponse>("/api/admin/burst-logs");
     return response.data;
   },
 

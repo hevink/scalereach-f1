@@ -302,6 +302,14 @@ export function useForceScalerCheck() {
   });
 }
 
+export function useBurstLogs() {
+  return useQuery({
+    queryKey: ["admin", "burst-logs"],
+    queryFn: adminApi.getBurstLogs,
+    staleTime: 30 * 1000,
+  });
+}
+
 export function useAdminAffiliates() {
   return useQuery({
     queryKey: ["admin", "affiliates"],
