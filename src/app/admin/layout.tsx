@@ -8,6 +8,7 @@ import {
     IconShieldLock, IconArrowLeft, IconHome, IconUsers,
     IconBuildingCommunity, IconVideo, IconCreditCard, IconMenu2, IconX,
     IconAlertTriangle, IconBrandYoutube, IconServer, IconTerminal2, IconGift,
+    IconBolt,
 } from "@tabler/icons-react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
@@ -26,6 +27,7 @@ const navItems = [
     { href: "/admin/affiliate", label: "Affiliate", icon: IconGift },
     { href: "/admin/youtube", label: "YouTube", icon: IconBrandYoutube },
     { href: "/admin/worker", label: "Worker", icon: IconServer },
+    { href: "/admin/burst-logs", label: "Burst Logs", icon: IconBolt },
     { href: "/admin/logs", label: "Logs", icon: IconTerminal2 },
 ];
 

@@ -310,6 +310,28 @@ export function useBurstLogs() {
   });
 }
 
+export function useSyncBurstLogs() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: () => adminApi.syncBurstLogs(),
+    onSuccess: () => {
+      // Refetch logs after a delay to give the scaler time to sync
+      setTimeout(() => queryClient.invalidateQueries({ queryKey: ["admin", "burst-logs"] }), 10000);
+      setTimeout(() => queryClient.invalidateQueries({ queryKey: ["admin", "burst-logs"] }), 20000);
+      setTimeout(() => queryClient.invalidateQueries({ queryKey: ["admin", "burst-logs"] }), 35000);
+    },
+  });
+}
+
+export function useBurstLogContent(key: string | null) {
+  return useQuery({
+    queryKey: ["admin", "burst-log-content", key],
+    queryFn: () => adminApi.getBurstLogContent(key!),
+    enabled: !!key,
+    staleTime: 60 * 1000,
+  });
+}
+
 export function useAdminAffiliates() {
   return useQuery({
     queryKey: ["admin", "affiliates"],

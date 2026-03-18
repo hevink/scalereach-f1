@@ -14,9 +14,8 @@ import {
     IconRefresh, IconServer, IconCpu, IconDatabase,
     IconGitBranch, IconClock, IconActivity, IconPlayerPlay,
     IconPlayerStop, IconCloud, IconBolt, IconLoader2,
-    IconFileText, IconDownload,
 } from "@tabler/icons-react";
-import { useWorkerStatus, useEC2Status, useControlEC2, useBurstWorkerStatus, useScalerState, useForceScalerCheck, useBurstLogs } from "@/hooks/useAdmin";
+import { useWorkerStatus, useEC2Status, useControlEC2, useBurstWorkerStatus, useScalerState, useForceScalerCheck } from "@/hooks/useAdmin";
 import { cn } from "@/lib/utils";
 import type { EC2Instance } from "@/lib/api/admin";
 
@@ -370,106 +369,6 @@ function WorkerStatsSection({ title, icon: Icon, data, color }: {
     );
 }
 
-function formatBytes(bytes: number) {
-    if (bytes < 1024) return `${bytes} B`;
-    if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
-    return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
-}
-
-function BurstLogsSection() {
-    const { data, isLoading, refetch, isRefetching } = useBurstLogs();
-
-    if (isLoading) return <Skeleton className="h-48" />;
-    if (!data || data.error) {
-        return (
-            <Card>
-                <CardContent className="py-6 text-center text-sm text-muted-foreground">
-                    {(data as any)?.error || "Burst logs unavailable"}
-                </CardContent>
-            </Card>
-        );
-    }
-
-    return (
-        <Card>
-            <CardHeader className="pb-3">
-                <div className="flex items-center justify-between">
-                    <CardTitle className="text-sm font-semibold flex items-center gap-2">
-                        <IconFileText className="h-4 w-4" /> Burst Instance Logs
-                        <Badge variant="outline" className="text-[10px] ml-1">{data.total} snapshots</Badge>
-                    </CardTitle>
-                    <Button variant="outline" size="sm" onClick={() => refetch()} disabled={isRefetching} className="text-xs">
-                        <IconRefresh className={cn("h-3.5 w-3.5 mr-1.5", isRefetching && "animate-spin")} />
-                        Refresh
-                    </Button>
-                </div>
-            </CardHeader>
-            <CardContent className="space-y-4">
-                {/* Latest logs - quick access */}
-                {(data.latest.out || data.latest.error) && (
-                    <div>
-                        <p className="text-xs text-muted-foreground mb-2">Latest (live-updated on burst shutdown)</p>
-                        <div className="flex gap-2">
-                            {data.latest.out && (
-                                <a href={data.latest.out.url} target="_blank" rel="noopener noreferrer"
-                                    className="flex-1 flex items-center gap-2 rounded-lg border border-emerald-500/20 bg-emerald-500/5 p-3 hover:bg-emerald-500/10 transition-colors">
-                                    <IconDownload className="h-4 w-4 text-emerald-600 shrink-0" />
-                                    <div className="min-w-0">
-                                        <p className="text-xs font-medium text-emerald-600">stdout (latest)</p>
-                                        <p className="text-[10px] text-muted-foreground">{formatBytes(data.latest.out.size)}</p>
-                                    </div>
-                                </a>
-                            )}
-                            {data.latest.error && (
-                                <a href={data.latest.error.url} target="_blank" rel="noopener noreferrer"
-                                    className="flex-1 flex items-center gap-2 rounded-lg border border-red-500/20 bg-red-500/5 p-3 hover:bg-red-500/10 transition-colors">
-                                    <IconDownload className="h-4 w-4 text-red-600 shrink-0" />
-                                    <div className="min-w-0">
-                                        <p className="text-xs font-medium text-red-600">stderr (latest)</p>
-                                        <p className="text-[10px] text-muted-foreground">{formatBytes(data.latest.error.size)}</p>
-                                    </div>
-                                </a>
-                            )}
-                        </div>
-                    </div>
-                )}
-
-                {/* Historical logs */}
-                {data.historical.length > 0 && (
-                    <div>
-                        <p className="text-xs text-muted-foreground mb-2">Historical snapshots</p>
-                        <div className="max-h-64 overflow-y-auto space-y-1.5 rounded-lg border p-2">
-                            {data.historical.map((log: any) => (
-                                <a key={log.key} href={log.url} target="_blank" rel="noopener noreferrer"
-                                    className="flex items-center justify-between rounded-md px-3 py-2 hover:bg-muted/50 transition-colors text-xs group">
-                                    <div className="flex items-center gap-2 min-w-0">
-                                        <span className={cn(
-                                            "w-1.5 h-1.5 rounded-full shrink-0",
-                                            log.type === "error" ? "bg-red-500" : "bg-emerald-500"
-                                        )} />
-                                        <span className="font-mono truncate">{log.key.split("/").pop()}</span>
-                                    </div>
-                                    <div className="flex items-center gap-3 shrink-0 ml-3">
-                                        <span className="text-muted-foreground tabular-nums">{formatBytes(log.size)}</span>
-                                        <span className="text-muted-foreground tabular-nums">{new Date(log.lastModified).toLocaleString()}</span>
-                                        <IconDownload className="h-3.5 w-3.5 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
-                                    </div>
-                                </a>
-                            ))}
-                        </div>
-                    </div>
-                )}
-
-                {data.total === 0 && !data.latest.out && !data.latest.error && (
-                    <p className="text-xs text-muted-foreground text-center py-4">
-                        No burst logs yet. Logs are synced to R2 when the burst instance shuts down.
-                    </p>
-                )}
-            </CardContent>
-        </Card>
-    );
-}
-
 export default function WorkerDashboardPage() {
     const { data: baseData, isLoading: baseLoading, refetch: baseRefetch, isRefetching } = useWorkerStatus();
     const { data: burstData, isLoading: burstLoading, refetch: burstRefetch } = useBurstWorkerStatus();
@@ -565,9 +464,6 @@ export default function WorkerDashboardPage() {
                     </CardContent>
                 </Card>
             )}
-
-            {/* Burst Logs */}
-            <BurstLogsSection />
 
             {/* Worker Stats - Side by Side */}
             <div>

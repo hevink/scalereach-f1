@@ -615,6 +615,20 @@ export const adminApi = {
     return response.data;
   },
 
+  syncBurstLogs: async () => {
+    const response = await api.post("/api/admin/burst-logs/sync");
+    return response.data;
+  },
+
+  getBurstLogContent: async (key: string) => {
+    const response = await api.get<string>("/api/admin/burst-logs/content", {
+      params: { key },
+      responseType: "text",
+      transformResponse: [(data: string) => data],
+    });
+    return response.data;
+  },
+
   // Affiliate management
   getAffiliateOverview: async () => {
     const response = await api.get<{ affiliates: AdminAffiliate[] }>("/api/admin/affiliate/overview");
