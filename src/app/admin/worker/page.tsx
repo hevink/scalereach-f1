@@ -339,14 +339,27 @@ function WorkerStatsSection({ title, icon: Icon, data, color }: {
                     </div>
                 )}
 
-                {/* Queues */}
+                {/* Queues — hide queues where the worker has 0 concurrency */}
                 {data.queues && (
                     <div>
                         <p className="text-xs text-muted-foreground mb-2">Queues</p>
                         <div className="grid grid-cols-1 gap-2">
-                            {Object.entries(data.queues).map(([name, stats]: [string, any]) => (
-                                <QueueCard key={name} name={name} stats={stats} />
-                            ))}
+                            {Object.entries(data.queues)
+                                .filter(([name]) => {
+                                    // Map queue names to worker keys to hide queues this instance doesn't process
+                                    const queueToWorker: Record<string, string> = {
+                                        clipGeneration: "clipWorker",
+                                        dubbing: "dubbingWorker",
+                                        videoProcessing: "videoWorker",
+                                        translation: "translationWorker",
+                                    };
+                                    const workerKey = queueToWorker[name];
+                                    if (!workerKey || !data.workers?.[workerKey]) return true;
+                                    return data.workers[workerKey].concurrency > 0;
+                                })
+                                .map(([name, stats]: [string, any]) => (
+                                    <QueueCard key={name} name={name} stats={stats} />
+                                ))}
                         </div>
                     </div>
                 )}
