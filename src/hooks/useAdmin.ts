@@ -375,3 +375,16 @@ export function useMarkCommissionPaid() {
     },
   });
 }
+
+export function useQueueAction() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ queue, action }: { queue: string; action: string }) =>
+      adminApi.queueAction(queue, action),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["admin", "worker-status"] });
+      queryClient.invalidateQueries({ queryKey: ["admin", "burst-status"] });
+      queryClient.invalidateQueries({ queryKey: ["admin", "system-health"] });
+    },
+  });
+}

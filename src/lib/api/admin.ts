@@ -658,4 +658,16 @@ export const adminApi = {
     const response = await api.post(`/api/admin/affiliate/commissions/${commissionId}/pay`);
     return response.data;
   },
+
+  // Queue management
+  queueAction: async (queue: string, action: string) => {
+    const response = await api.post("/api/admin/queue-action", { queue, action });
+    return response.data as {
+      success: boolean;
+      action: string;
+      queue: string;
+      result: any;
+      stats: { waiting: number; active: number; completed: number; failed: number };
+    };
+  },
 };

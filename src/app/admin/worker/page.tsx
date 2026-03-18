@@ -11,13 +11,19 @@ import {
     AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import {
-    IconRefresh, IconServer, IconCpu, IconDatabase,
-    IconGitBranch, IconClock, IconActivity, IconPlayerPlay,
+    DropdownMenu, DropdownMenuContent, DropdownMenuItem,
+    DropdownMenuSeparator, DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import {
+    IconRefresh, IconServer,
+    IconPlayerPlay,
     IconPlayerStop, IconCloud, IconBolt, IconLoader2,
+    IconTrash, IconDotsVertical, IconFlame, IconCheck, IconX,
 } from "@tabler/icons-react";
-import { useWorkerStatus, useEC2Status, useControlEC2, useBurstWorkerStatus, useScalerState, useForceScalerCheck } from "@/hooks/useAdmin";
+import { useWorkerStatus, useEC2Status, useControlEC2, useBurstWorkerStatus, useScalerState, useForceScalerCheck, useQueueAction } from "@/hooks/useAdmin";
 import { cn } from "@/lib/utils";
 import type { EC2Instance } from "@/lib/api/admin";
+import { toast } from "sonner";
 
 function formatUptime(seconds: number) {
     const d = Math.floor(seconds / 86400);
@@ -28,17 +34,66 @@ function formatUptime(seconds: number) {
     return `${m}m`;
 }
 
-function QueueCard({ name, stats }: { name: string; stats: any }) {
+function QueueCard({ name, stats, onAction, isActioning }: { name: string; stats: any; onAction?: (queue: string, action: string) => void; isActioning?: boolean }) {
     if (!stats) return null;
+    const [confirmAction, setConfirmAction] = useState<{ action: string; label: string } | null>(null);
+
+    const hasWaiting = stats.waiting > 0;
+    const hasCompleted = stats.completed > 0;
+    const hasFailed = stats.failed > 0;
+    const hasActions = hasWaiting || hasCompleted || hasFailed;
+
     return (
         <div className="rounded-lg border p-3 space-y-2">
             <div className="flex items-center justify-between">
                 <span className="text-sm font-medium">{name}</span>
-                {stats.active > 0 && (
-                    <Badge className="bg-blue-500/10 text-blue-600 border-blue-500/20 text-[10px]">
-                        {stats.active} active
-                    </Badge>
-                )}
+                <div className="flex items-center gap-1.5">
+                    {stats.active > 0 && (
+                        <Badge className="bg-blue-500/10 text-blue-600 border-blue-500/20 text-[10px]">
+                            {stats.active} active
+                        </Badge>
+                    )}
+                    {hasActions && onAction && (
+                        <DropdownMenu>
+                            <DropdownMenuTrigger>
+                                <Button variant="ghost" size="sm" className="h-6 w-6 p-0" disabled={isActioning}>
+                                    {isActioning ? <IconLoader2 className="h-3.5 w-3.5 animate-spin" /> : <IconDotsVertical className="h-3.5 w-3.5" />}
+                                </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end" className="w-48">
+                                {hasWaiting && (
+                                    <DropdownMenuItem
+                                        className="text-red-600 focus:text-red-600"
+                                        onClick={() => setConfirmAction({ action: "drain", label: `Clear ${stats.waiting} waiting jobs` })}
+                                    >
+                                        <IconFlame className="h-4 w-4 mr-2" />
+                                        Drain waiting ({stats.waiting})
+                                    </DropdownMenuItem>
+                                )}
+                                {hasFailed && (
+                                    <DropdownMenuItem
+                                        className="text-orange-600 focus:text-orange-600"
+                                        onClick={() => setConfirmAction({ action: "clean-failed", label: `Clear ${stats.failed} failed jobs` })}
+                                    >
+                                        <IconX className="h-4 w-4 mr-2" />
+                                        Clear failed ({stats.failed})
+                                    </DropdownMenuItem>
+                                )}
+                                {hasCompleted && (
+                                    <>
+                                        <DropdownMenuSeparator />
+                                        <DropdownMenuItem
+                                            onClick={() => setConfirmAction({ action: "clean-completed", label: `Clear ${stats.completed} completed jobs` })}
+                                        >
+                                            <IconCheck className="h-4 w-4 mr-2" />
+                                            Clear completed ({stats.completed})
+                                        </DropdownMenuItem>
+                                    </>
+                                )}
+                            </DropdownMenuContent>
+                        </DropdownMenu>
+                    )}
+                </div>
             </div>
             <div className="grid grid-cols-4 gap-2 text-xs">
                 <div>
@@ -58,6 +113,35 @@ function QueueCard({ name, stats }: { name: string; stats: any }) {
                     <p className={cn("font-semibold tabular-nums", stats.failed > 0 && "text-red-600")}>{stats.failed}</p>
                 </div>
             </div>
+
+            {/* Confirmation dialog */}
+            <AlertDialog open={!!confirmAction} onOpenChange={(open) => !open && setConfirmAction(null)}>
+                <AlertDialogContent>
+                    <AlertDialogHeader>
+                        <AlertDialogTitle className="flex items-center gap-2">
+                            <IconTrash className="h-5 w-5 text-red-500" />
+                            {confirmAction?.label}
+                        </AlertDialogTitle>
+                        <AlertDialogDescription>
+                            This will permanently remove {confirmAction?.action === "drain" ? "all waiting/queued" : confirmAction?.action === "clean-failed" ? "all failed" : "all completed"} jobs from the <span className="font-semibold">{name}</span> queue. This cannot be undone.
+                        </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                        <AlertDialogAction
+                            className="bg-red-600 hover:bg-red-700 text-white"
+                            onClick={() => {
+                                if (confirmAction && onAction) {
+                                    onAction(name, confirmAction.action);
+                                }
+                                setConfirmAction(null);
+                            }}
+                        >
+                            Confirm
+                        </AlertDialogAction>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>
         </div>
     );
 }
@@ -266,11 +350,13 @@ function InstanceCard({ instance, onStart, onStop, isControlling, scalerState }:
     );
 }
 
-function WorkerStatsSection({ title, icon: Icon, data, color }: {
+function WorkerStatsSection({ title, icon: Icon, data, color, onQueueAction, isActioning }: {
     title: string;
     icon: React.ElementType;
     data: any;
     color: string;
+    onQueueAction?: (queue: string, action: string) => void;
+    isActioning?: boolean;
 }) {
     if (!data || data.error) {
         return (
@@ -358,7 +444,7 @@ function WorkerStatsSection({ title, icon: Icon, data, color }: {
                                     return data.workers[workerKey].concurrency > 0;
                                 })
                                 .map(([name, stats]: [string, any]) => (
-                                    <QueueCard key={name} name={name} stats={stats} />
+                                    <QueueCard key={name} name={name} stats={stats} onAction={onQueueAction} isActioning={isActioning} />
                                 ))}
                         </div>
                     </div>
@@ -389,12 +475,32 @@ export default function WorkerDashboardPage() {
     const { data: scalerData, refetch: scalerRefetch } = useScalerState();
     const controlEC2 = useControlEC2();
     const forceCheck = useForceScalerCheck();
+    const queueAction = useQueueAction();
     const [controllingId, setControllingId] = useState<string | null>(null);
 
     const handleEC2Action = (instanceId: string, action: "start" | "stop") => {
         setControllingId(instanceId);
         controlEC2.mutate({ instanceId, action }, {
             onSettled: () => setTimeout(() => setControllingId(null), 3000),
+        });
+    };
+
+    const handleQueueAction = (queueName: string, action: string) => {
+        queueAction.mutate({ queue: queueName, action }, {
+            onSuccess: (data) => {
+                toast.success(`${action === "drain" ? "Drained" : "Cleaned"} ${queueName} queue`, {
+                    description: action === "drain"
+                        ? `Waiting: ${data.stats.waiting}`
+                        : `Removed ${data.result.cleaned} ${data.result.type} jobs`,
+                });
+                baseRefetch();
+                burstRefetch();
+            },
+            onError: (err: any) => {
+                toast.error(`Failed to ${action} ${queueName}`, {
+                    description: err?.response?.data?.error || err.message,
+                });
+            },
         });
     };
 
@@ -495,12 +601,16 @@ export default function WorkerDashboardPage() {
                             icon={IconCloud}
                             data={baseData}
                             color="bg-blue-500"
+                            onQueueAction={handleQueueAction}
+                            isActioning={queueAction.isPending}
                         />
                         <WorkerStatsSection
                             title="Burst Worker (32GB)"
                             icon={IconBolt}
                             data={burstData}
                             color="bg-amber-500"
+                            onQueueAction={handleQueueAction}
+                            isActioning={queueAction.isPending}
                         />
                     </div>
                 )}
