@@ -137,17 +137,23 @@ export default function WorkerLogsPage() {
                     </div>
                 ) : error ? (
                     <p className="text-red-400 text-center py-12">
-                        {(error as any)?.response?.data?.error || (error as any)?.message || "Failed to load logs"}
+                        {(() => {
+                            const errData = (error as any)?.response?.data;
+                            if (typeof errData === "string") {
+                                try { return JSON.parse(errData)?.error || errData; } catch { return errData; }
+                            }
+                            return errData?.error || (error as any)?.message || "Failed to load logs";
+                        })()}
                     </p>
                 ) : lines.length === 0 ? (
                     <p className="text-zinc-600 text-center py-12">No log content</p>
                 ) : (
                     lines.map((line, i) => {
                         return (
-                        <div key={i} className="flex gap-3 py-px hover:bg-zinc-900/50 rounded">
-                            <span className="text-zinc-600 select-none shrink-0 text-[11px] w-10 text-right tabular-nums">{i + 1}</span>
-                            <span className={cn("whitespace-pre-wrap break-all", colorClass(line.text, line.isErr))}>{line.text}</span>
-                        </div>
+                            <div key={i} className="flex gap-3 py-px hover:bg-zinc-900/50 rounded">
+                                <span className="text-zinc-600 select-none shrink-0 text-[11px] w-10 text-right tabular-nums">{i + 1}</span>
+                                <span className={cn("whitespace-pre-wrap break-all", colorClass(line.text, line.isErr))}>{line.text}</span>
+                            </div>
                         );
                     })
                 )}

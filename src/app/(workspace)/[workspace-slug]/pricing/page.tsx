@@ -27,7 +27,7 @@ import { plans, type Plan } from "@/lib/pricing-config";
 
 // Scarcity data - update these numbers as spots fill up
 const PLAN_SCARCITY: Record<string, { total: number; claimed: number } | null> = {
-    agency: { total: 10, claimed: 4 },
+    agency: { total: 10, claimed: 5 },
     pro: { total: 100, claimed: 28 },
     starter: null,
 };
@@ -66,9 +66,8 @@ function CornerDecoration({ position }: { position: "top-left" | "top-right" | "
 
 // Scarcity - auto-increments from a base date
 // Pro: +1/day from base of 28 on Feb 25 2026, cap at 100
-// Agency: +1 every 3 days from base of 4 on Feb 25 2026, cap at 10
-function getScarcityClaimed(base: number, total: number, daysInterval: number): number {
-    const baseDate = new Date("2026-02-25");
+// Agency: +1 every 3 days from base of 5 on Mar 19 2026, cap at 10
+function getScarcityClaimed(base: number, total: number, daysInterval: number, baseDate: Date): number {
     const now = new Date();
     const daysPassed = Math.floor((now.getTime() - baseDate.getTime()) / (1000 * 60 * 60 * 24));
     return Math.min(total, base + Math.floor(daysPassed / daysInterval));
@@ -80,10 +79,10 @@ function ScarcityBar({ planKey }: { planKey: string }) {
 
     if (planKey === "pro") {
         total = 100;
-        claimed = getScarcityClaimed(28, total, 1);
+        claimed = getScarcityClaimed(28, total, 1, new Date("2026-02-25"));
     } else if (planKey === "agency") {
         total = 10;
-        claimed = getScarcityClaimed(4, total, 3);
+        claimed = getScarcityClaimed(5, total, 3, new Date("2026-03-19"));
     } else {
         return null;
     }

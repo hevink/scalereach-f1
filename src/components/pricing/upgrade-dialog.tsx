@@ -57,8 +57,7 @@ const FEATURE_MESSAGES: Record<string, { title: string; message: string; subtitl
 };
 
 // Scarcity - auto-increments from a base date
-function getScarcityClaimed(base: number, total: number, daysInterval: number): number {
-    const baseDate = new Date("2026-02-25");
+function getScarcityClaimed(base: number, total: number, daysInterval: number, baseDate: Date): number {
     const now = new Date();
     const daysPassed = Math.floor((now.getTime() - baseDate.getTime()) / (1000 * 60 * 60 * 24));
     return Math.min(total, base + Math.floor(daysPassed / daysInterval));
@@ -70,10 +69,10 @@ function ScarcityBar({ planKey }: { planKey: string }) {
 
     if (planKey === "pro") {
         total = 100;
-        claimed = getScarcityClaimed(28, total, 1);
+        claimed = getScarcityClaimed(28, total, 1, new Date("2026-02-25"));
     } else if (planKey === "agency") {
         total = 10;
-        claimed = getScarcityClaimed(4, total, 3);
+        claimed = getScarcityClaimed(5, total, 3, new Date("2026-03-19"));
     } else {
         return null;
     }
