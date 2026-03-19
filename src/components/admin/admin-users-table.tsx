@@ -30,6 +30,24 @@ import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 import { adminApi } from "@/lib/api/admin";
 
+const AUTH_METHOD_LABELS: Record<string, string> = {
+    email: "Email",
+    google: "Google",
+    passkey: "Passkey",
+};
+
+function getAuthMethodLabel(method: string) {
+    return AUTH_METHOD_LABELS[method] ?? method.charAt(0).toUpperCase() + method.slice(1);
+}
+
+function getAuthMethodDisplay(authMethods?: string[]) {
+    if (!authMethods?.length) {
+        return "Unknown";
+    }
+
+    return authMethods.map(getAuthMethodLabel).join(" + ");
+}
+
 export function AdminUsersTable() {
     const [page, setPage] = useState(1);
     const [deleteUserId, setDeleteUserId] = useState<string | null>(null);
@@ -61,9 +79,9 @@ export function AdminUsersTable() {
     const exportUsers = () => {
         if (!filteredUsers.length) return;
         const csv = [
-            ["Name", "Email", "Username", "Role", "Verified", "2FA", "Onboarded", "Joined"].join(","),
+            ["Name", "Email", "Username", "Auth Methods", "Role", "Verified", "2FA", "Onboarded", "Joined"].join(","),
             ...filteredUsers.map((u) => [
-                u.name || "", u.email, u.username || "", u.role || "user",
+                u.name || "", u.email, u.username || "", getAuthMethodDisplay(u.authMethods), u.role || "user",
                 u.emailVerified ? "Yes" : "No", u.twoFactorEnabled ? "Yes" : "No",
                 u.isOnboarded ? "Yes" : "No", format(new Date(u.createdAt), "yyyy-MM-dd"),
             ].join(","))
@@ -189,6 +207,7 @@ export function AdminUsersTable() {
                                         <TableRow className="bg-muted/50">
                                             <TableHead>User</TableHead>
                                             <TableHead>Email</TableHead>
+                                            <TableHead>Auth</TableHead>
                                             <TableHead>Role</TableHead>
                                             <TableHead>Status</TableHead>
                                             <TableHead>Joined</TableHead>
@@ -217,6 +236,17 @@ export function AdminUsersTable() {
                                                     </div>
                                                 </TableCell>
                                                 <TableCell className="text-sm text-muted-foreground">{user.email}</TableCell>
+                                                <TableCell>
+                                                    <div className="flex flex-wrap gap-1">
+                                                        {user.authMethods?.length ? user.authMethods.map((method) => (
+                                                            <Badge key={method} variant="outline" className="text-xs">
+                                                                {getAuthMethodLabel(method)}
+                                                            </Badge>
+                                                        )) : (
+                                                            <span className="text-xs text-muted-foreground">Unknown</span>
+                                                        )}
+                                                    </div>
+                                                </TableCell>
                                                 <TableCell>
                                                     <Badge variant={user.role === "admin" ? "default" : "secondary"} className="text-xs">
                                                         {user.role || "user"}
@@ -307,6 +337,17 @@ export function AdminUsersTable() {
                                             <div className="flex items-center gap-1 text-xs text-muted-foreground mt-0.5">
                                                 <IconCalendar className="h-3 w-3 shrink-0" />
                                                 {formatDistanceToNow(new Date(user.createdAt), { addSuffix: true })}
+                                            </div>
+                                            <div className="flex flex-wrap gap-1 mt-2">
+                                                {user.authMethods?.length ? user.authMethods.map((method) => (
+                                                    <Badge key={method} variant="outline" className="text-xs">
+                                                        {getAuthMethodLabel(method)}
+                                                    </Badge>
+                                                )) : (
+                                                    <Badge variant="outline" className="text-xs text-muted-foreground">
+                                                        Unknown
+                                                    </Badge>
+                                                )}
                                             </div>
                                         </div>
                                         <div onClick={(e) => e.stopPropagation()}>

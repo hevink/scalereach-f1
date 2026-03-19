@@ -53,6 +53,7 @@ export interface AdminUser {
   image?: string;
   role?: string;
   primaryPlatforms?: string[] | null;
+  authMethods?: string[];
   emailVerified: boolean;
   isOnboarded: boolean;
   twoFactorEnabled: boolean;
