@@ -41,20 +41,46 @@ export function VideoPreviewWithCaptions({
   const [internalTime, setInternalTime] = useState(0);
   const [duration, setDuration] = useState(0);
   const [containerHeight, setContainerHeight] = useState(0);
+  const [videoRect, setVideoRect] = useState<{ width: number; height: number; offsetX: number; offsetY: number } | null>(null);
 
-  // Track container height to scale font sizes relative to the 700px design space
-  // (same scaling the backend uses for FFmpeg rendering)
+  // Compute the actual rendered video rectangle inside the container.
+  // The video uses object-contain so it may be letter/pillar-boxed.
   const DESIGN_HEIGHT = 700;
   useEffect(() => {
-    const el = containerRef.current;
-    if (!el) return;
-    const observer = new ResizeObserver((entries) => {
-      for (const entry of entries) {
-        setContainerHeight(entry.contentRect.height);
+    const video = videoRef.current;
+    if (!video) return;
+
+    const update = () => {
+      if (!video.videoWidth || !video.videoHeight || !containerRef.current) return;
+      const cr = containerRef.current.getBoundingClientRect();
+      const videoAspect = video.videoWidth / video.videoHeight;
+      const containerAspect = cr.width / cr.height;
+      let w: number, h: number;
+      if (videoAspect > containerAspect) {
+        w = cr.width;
+        h = cr.width / videoAspect;
+      } else {
+        h = cr.height;
+        w = cr.height * videoAspect;
       }
-    });
-    observer.observe(el);
-    return () => observer.disconnect();
+      setVideoRect({
+        width: w,
+        height: h,
+        offsetX: (cr.width - w) / 2,
+        offsetY: (cr.height - h) / 2,
+      });
+      setContainerHeight(h);
+    };
+
+    video.addEventListener("loadedmetadata", update);
+    const observer = new ResizeObserver(() => update());
+    if (containerRef.current) observer.observe(containerRef.current);
+    update();
+
+    return () => {
+      video.removeEventListener("loadedmetadata", update);
+      observer.disconnect();
+    };
   }, []);
 
   const scaleFactor = containerHeight > 0 ? containerHeight / DESIGN_HEIGHT : 1;
@@ -168,119 +194,130 @@ export function VideoPreviewWithCaptions({
         playsInline
       />
 
-      {/* Caption Overlay */}
-      {words.length > 0 && style && (
+      {/* Caption Overlay - positioned to match actual rendered video area */}
+      {words.length > 0 && style && videoRect && (
         <div
-          className={cn(
-            "absolute inset-x-0 px-4 py-2 pointer-events-none",
-            position === "top" && "top-4",
-            position === "center" && "top-1/2 -translate-y-1/2",
-            position === "bottom" && "bottom-12"
-          )}
+          className="absolute pointer-events-none"
+          style={{
+            left: videoRect.offsetX,
+            top: videoRect.offsetY,
+            width: videoRect.width,
+            height: videoRect.height,
+          }}
         >
           <div
-            className="flex flex-wrap justify-center gap-x-2 gap-y-1 mx-auto"
-            style={{
-              textAlign: style.alignment || "center",
-              maxWidth: `${style.maxWidth ?? 90}%`,
-            }}
+            className={cn(
+              "absolute inset-x-0 px-4 py-2 pointer-events-none",
+              position === "top" && "top-4",
+              position === "center" && "top-1/2 -translate-y-1/2",
+              position === "bottom" && "bottom-12"
+            )}
           >
-            {displayWords.map((word) => {
-              const isCurrent = word.id === currentWordId;
-              const isPast = word.end < currentTime;
-              const outlineWidth = Math.round((style.outlineWidth ?? 3) * scaleFactor);
-              const highlightScale = (style.highlightScale ?? 110) / 100;
-              const glowColor = style.glowColor || style.textColor || "#FFFFFF";
-              const glowIntensity = style.glowIntensity ?? 8;
-              const glowShadow = style.glowEnabled
-                ? `, 0 0 ${glowIntensity}px ${glowColor}, 0 0 ${glowIntensity * 2}px ${glowColor}, 0 0 ${glowIntensity * 3}px ${glowColor}`
-                : "";
+            <div
+              className="flex flex-wrap justify-center gap-x-2 gap-y-1 mx-auto"
+              style={{
+                textAlign: style.alignment || "center",
+                maxWidth: `${style.maxWidth ?? 90}%`,
+              }}
+            >
+              {displayWords.map((word) => {
+                const isCurrent = word.id === currentWordId;
+                const isPast = word.end < currentTime;
+                const outlineWidth = Math.round((style.outlineWidth ?? 3) * scaleFactor);
+                const highlightScale = (style.highlightScale ?? 110) / 100;
+                const glowColor = style.glowColor || style.textColor || "#FFFFFF";
+                const glowIntensity = style.glowIntensity ?? 8;
+                const glowBlur = Math.round(glowIntensity * scaleFactor * 0.8);
+                const glowShadow = style.glowEnabled
+                  ? `, 0 0 ${glowBlur}px ${glowColor}`
+                  : "";
 
-              // Determine if word should be scaled based on animation type
-              const shouldScale =
-                (isKaraoke && isCurrent && style.highlightEnabled) ||
-                (isWordByWord && isCurrent && style.highlightEnabled) ||
-                (isBounce && isCurrent);
+                // Determine if word should be scaled based on animation type
+                const shouldScale =
+                  (isKaraoke && isCurrent && style.highlightEnabled) ||
+                  (isWordByWord && isCurrent && style.highlightEnabled) ||
+                  (isBounce && isCurrent);
 
-              const scaledFontSize = Math.round((style.fontSize || 24) * scaleFactor);
-              const scaleMargin = shouldScale ? `0 ${Math.round((highlightScale - 1) * scaledFontSize * 0.5)}px` : "0 2px";
+                const scaledFontSize = Math.round((style.fontSize || 24) * scaleFactor);
+                const scaleMargin = shouldScale ? `0 ${Math.round((highlightScale - 1) * scaledFontSize * 0.5)}px` : "0 2px";
 
-              // Build text shadow to match ASS rendering
-              const textShadow = style.shadow
-                ? `0 0 ${outlineWidth}px ${style.outlineColor || "#000000"},
+                // Build text shadow to match ASS rendering
+                const textShadow = style.shadow
+                  ? `0 0 ${outlineWidth}px ${style.outlineColor || "#000000"},
                    0 0 ${outlineWidth * 2}px ${style.outlineColor || "#000000"},
                    2px 2px 4px rgba(0, 0, 0, 0.9)${glowShadow}`
-                : `0 0 ${outlineWidth}px ${style.outlineColor || "#000000"},
+                  : `0 0 ${outlineWidth}px ${style.outlineColor || "#000000"},
                    0 0 ${outlineWidth * 2}px ${style.outlineColor || "#000000"}${glowShadow}`;
 
-              // Determine color based on animation and highlight
-              let wordColor = style.textColor || "#FFFFFF";
-              if (isCurrent) {
-                if ((isKaraoke || isWordByWord) && style.highlightEnabled && style.highlightColor) {
-                  wordColor = style.highlightColor;
-                } else if (isBounce && style.highlightEnabled && style.highlightColor) {
-                  wordColor = style.highlightColor;
-                }
-              }
-
-              // For bounce animation, calculate scale based on word timing
-              let bounceScale = 1;
-              if (isBounce && isCurrent) {
-                const wordProgress = (currentTime - word.start) / (word.end - word.start);
-                const bounceProgress = Math.min(wordProgress * 5, 1); // First 20% of word duration
-                if (bounceProgress < 0.5) {
-                  // Scale up (0 to 0.5)
-                  bounceScale = 1 + (highlightScale - 1) * 0.92 * (bounceProgress * 2);
-                } else {
-                  // Scale down (0.5 to 1)
-                  bounceScale = 1 + (highlightScale - 1) * 0.92 * (2 - bounceProgress * 2);
-                }
-              }
-
-              // For fade animation, calculate opacity
-              let fadeOpacity = 1;
-              if (isFade) {
+                // Determine color based on animation and highlight
+                let wordColor = style.textColor || "#FFFFFF";
                 if (isCurrent) {
-                  const wordProgress = (currentTime - word.start) / (word.end - word.start);
-                  fadeOpacity = Math.min(wordProgress * 5, 1); // Fade in over first 20%
-                } else if (isPast) {
-                  fadeOpacity = 1;
-                } else {
-                  fadeOpacity = 0;
+                  if ((isKaraoke || isWordByWord) && style.highlightEnabled && style.highlightColor) {
+                    wordColor = style.highlightColor;
+                  } else if (isBounce && style.highlightEnabled && style.highlightColor) {
+                    wordColor = style.highlightColor;
+                  }
                 }
-              }
 
-              return (
-                <span
-                  key={word.id}
-                  className={cn(
-                    "inline-block",
-                    (isKaraoke || isWordByWord || isBounce || isFade) && "transition-all duration-150"
-                  )}
-                  style={{
-                    fontFamily: getFontFamily(style.fontFamily) || "sans-serif",
-                    fontSize: `${Math.round((style.fontSize || 24) * scaleFactor)}px`,
-                    fontWeight: 700,
-                    margin: scaleMargin,
-                    color: wordColor,
-                    transform: isBounce && isCurrent
-                      ? `scale(${bounceScale})`
-                      : shouldScale
-                        ? `scale(${highlightScale})`
-                        : "scale(1)",
-                    opacity: isFade ? fadeOpacity : (isPast && !isWordByWord ? 0.7 : 1),
-                    WebkitTextStroke: style.outline
-                      ? `${outlineWidth}px ${style.outlineColor || "#000000"}`
-                      : undefined,
-                    paintOrder: "stroke fill",
-                    textShadow,
-                    textTransform: style.textTransform === "uppercase" ? "uppercase" : "none",
-                  }}
-                >
-                  {word.word}
-                </span>
-              );
-            })}
+                // For bounce animation, calculate scale based on word timing
+                let bounceScale = 1;
+                if (isBounce && isCurrent) {
+                  const wordProgress = (currentTime - word.start) / (word.end - word.start);
+                  const bounceProgress = Math.min(wordProgress * 5, 1); // First 20% of word duration
+                  if (bounceProgress < 0.5) {
+                    // Scale up (0 to 0.5)
+                    bounceScale = 1 + (highlightScale - 1) * 0.92 * (bounceProgress * 2);
+                  } else {
+                    // Scale down (0.5 to 1)
+                    bounceScale = 1 + (highlightScale - 1) * 0.92 * (2 - bounceProgress * 2);
+                  }
+                }
+
+                // For fade animation, calculate opacity
+                let fadeOpacity = 1;
+                if (isFade) {
+                  if (isCurrent) {
+                    const wordProgress = (currentTime - word.start) / (word.end - word.start);
+                    fadeOpacity = Math.min(wordProgress * 5, 1); // Fade in over first 20%
+                  } else if (isPast) {
+                    fadeOpacity = 1;
+                  } else {
+                    fadeOpacity = 0;
+                  }
+                }
+
+                return (
+                  <span
+                    key={word.id}
+                    className={cn(
+                      "inline-block",
+                      (isKaraoke || isWordByWord || isBounce || isFade) && "transition-all duration-150"
+                    )}
+                    style={{
+                      fontFamily: getFontFamily(style.fontFamily) || "sans-serif",
+                      fontSize: `${Math.round((style.fontSize || 24) * scaleFactor)}px`,
+                      fontWeight: 700,
+                      margin: scaleMargin,
+                      color: wordColor,
+                      transform: isBounce && isCurrent
+                        ? `scale(${bounceScale})`
+                        : shouldScale
+                          ? `scale(${highlightScale})`
+                          : "scale(1)",
+                      opacity: isFade ? fadeOpacity : (isPast && !isWordByWord ? 0.7 : 1),
+                      WebkitTextStroke: style.outline
+                        ? `${outlineWidth}px ${style.outlineColor || "#000000"}`
+                        : undefined,
+                      paintOrder: "stroke fill",
+                      textShadow,
+                      textTransform: style.textTransform === "uppercase" ? "uppercase" : "none",
+                    }}
+                  >
+                    {word.word}
+                  </span>
+                );
+              })}
+            </div>
           </div>
         </div>
       )}

@@ -56,8 +56,9 @@ export function CaptionLivePreview({
   const highlightScale = (style.highlightScale ?? 110) / 100;
   const glowColor = style.glowColor || style.textColor || "#FFFFFF";
   const glowIntensity = style.glowIntensity ?? 8;
+  const glowBlur = Math.round(glowIntensity * 0.8);
   const glowShadow = style.glowEnabled
-    ? `, 0 0 ${glowIntensity}px ${glowColor}, 0 0 ${glowIntensity * 2}px ${glowColor}, 0 0 ${glowIntensity * 3}px ${glowColor}`
+    ? `, 0 0 ${glowBlur}px ${glowColor}`
     : "";
 
   // Build text shadow to match ASS rendering

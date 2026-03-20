@@ -870,6 +870,12 @@ export const VideoCanvasEditor = forwardRef<VideoCanvasEditorRef, VideoCanvasEdi
 
         const containerScale = displaySize.width / canvasSize.width;
 
+        // Caption font scaling must match the backend's DESIGN_HEIGHT = 700 reference.
+        // The backend scales: fontSize * (outputHeight / 700).
+        // So in the editor preview we scale: fontSize * (displayHeight / 700).
+        const DESIGN_HEIGHT = 700;
+        const captionScale = displaySize.height / DESIGN_HEIGHT;
+
         // Initialize layers
         useEffect(() => {
             const fillLayer: Layer = {
@@ -1132,12 +1138,16 @@ export const VideoCanvasEditor = forwardRef<VideoCanvasEditorRef, VideoCanvasEdi
             const highlightColor = captionStyle?.highlightColor || "#FFFF00";
             const textColor = captionStyle?.textColor || "#FFFFFF";
             const outlineColor = captionStyle?.outlineColor || "#000000";
-            const scaledOutlineWidth = Math.max(2, Math.round(containerScale * (captionStyle?.outlineWidth ?? 3)));
+            const scaledOutlineWidth = Math.max(2, Math.round(captionScale * (captionStyle?.outlineWidth ?? 3)));
             const highlightScale = captionStyle?.highlightScale ?? 110;
 
             // Render each word with highlighting for the current word
             return currentCaption.words.map((word, index) => {
                 const isHighlighted = index === currentWordIndex;
+                const scaledFontSize = Math.round((captionStyle?.fontSize || 24) * captionScale);
+                const scaleMargin = isHighlighted
+                    ? `0 ${Math.round(((highlightScale / 100) - 1) * scaledFontSize * 0.5)}px`
+                    : "0 2px";
 
                 return (
                     <span
@@ -1147,7 +1157,7 @@ export const VideoCanvasEditor = forwardRef<VideoCanvasEditorRef, VideoCanvasEdi
                             transform: isHighlighted ? `scale(${highlightScale / 100})` : "scale(1)",
                             display: "inline-block",
                             transition: "transform 0.1s ease-out, color 0.1s ease-out",
-                            marginRight: `${4 * containerScale}px`,
+                            margin: scaleMargin,
                             WebkitTextStroke: `${scaledOutlineWidth}px ${outlineColor}`,
                             paintOrder: "stroke fill",
                         }}
@@ -1156,7 +1166,7 @@ export const VideoCanvasEditor = forwardRef<VideoCanvasEditorRef, VideoCanvasEdi
                     </span>
                 );
             });
-        }, [currentCaption, currentWordIndex, captionStyle, containerScale]);
+        }, [currentCaption, currentWordIndex, captionStyle, captionScale]);
 
         return (
             <div
@@ -1240,7 +1250,7 @@ export const VideoCanvasEditor = forwardRef<VideoCanvasEditorRef, VideoCanvasEdi
                     {currentCaption && (
                         <DraggableCaption
                             captionStyle={captionStyle}
-                            containerScale={containerScale}
+                            containerScale={captionScale}
                             displaySize={displaySize}
                             onPositionChange={onCaptionStyleChange}
                         >
@@ -1255,7 +1265,7 @@ export const VideoCanvasEditor = forwardRef<VideoCanvasEditorRef, VideoCanvasEdi
                             <DraggableTextOverlay
                                 key={overlay.id}
                                 overlay={overlay}
-                                containerScale={containerScale}
+                                containerScale={captionScale}
                                 displaySize={displaySize}
                                 onChange={onTextOverlayChange}
                             />

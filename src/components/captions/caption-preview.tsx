@@ -127,8 +127,9 @@ function CaptionOverlay({ caption, style, currentTime, scaleFactor }: CaptionOve
     const outlineWidth = Math.round((style.outlineWidth ?? 3) * scaleFactor);
     const glowColor = style.glowColor || style.textColor || "#FFFFFF";
     const glowIntensity = style.glowIntensity ?? 8;
+    const glowBlur = Math.round(glowIntensity * scaleFactor * 0.8);
     const glowShadow = style.glowEnabled
-        ? `, 0 0 ${glowIntensity}px ${glowColor}, 0 0 ${glowIntensity * 2}px ${glowColor}, 0 0 ${glowIntensity * 3}px ${glowColor}`
+        ? `, 0 0 ${glowBlur}px ${glowColor}`
         : "";
     const textShadow = style.shadow
         ? `0 0 ${outlineWidth}px ${style.outlineColor || "#000000"},
@@ -328,19 +329,46 @@ export function CaptionPreview({
     const [isLoading, setIsLoading] = useState(true);
     const [debouncedStyle, setDebouncedStyle] = useState(style);
     const [containerHeight, setContainerHeight] = useState(0);
+    const [videoRect, setVideoRect] = useState<{ width: number; height: number; offsetX: number; offsetY: number } | null>(null);
 
-    // Track container height to scale font sizes relative to the 854px design space
+    // Compute the actual rendered video rectangle inside the container.
+    // The video uses object-contain so it may be letter/pillar-boxed.
     const DESIGN_HEIGHT = 700;
     useEffect(() => {
-        const el = containerRef.current;
-        if (!el) return;
-        const observer = new ResizeObserver((entries) => {
-            for (const entry of entries) {
-                setContainerHeight(entry.contentRect.height);
+        const video = videoRef.current;
+        if (!video) return;
+
+        const update = () => {
+            if (!video.videoWidth || !video.videoHeight || !containerRef.current) return;
+            const cr = containerRef.current.getBoundingClientRect();
+            const videoAspect = video.videoWidth / video.videoHeight;
+            const containerAspect = cr.width / cr.height;
+            let w: number, h: number;
+            if (videoAspect > containerAspect) {
+                w = cr.width;
+                h = cr.width / videoAspect;
+            } else {
+                h = cr.height;
+                w = cr.height * videoAspect;
             }
-        });
-        observer.observe(el);
-        return () => observer.disconnect();
+            setVideoRect({
+                width: w,
+                height: h,
+                offsetX: (cr.width - w) / 2,
+                offsetY: (cr.height - h) / 2,
+            });
+            setContainerHeight(h);
+        };
+
+        video.addEventListener("loadedmetadata", update);
+        const observer = new ResizeObserver(() => update());
+        if (containerRef.current) observer.observe(containerRef.current);
+        update();
+
+        return () => {
+            video.removeEventListener("loadedmetadata", update);
+            observer.disconnect();
+        };
     }, []);
 
     const scaleFactor = containerHeight > 0 ? containerHeight / DESIGN_HEIGHT : 1;
@@ -502,13 +530,25 @@ export function CaptionPreview({
                 </div>
             )}
 
-            {/* Caption Overlay - Requirements 17.1, 17.4, 17.5 */}
-            <CaptionOverlay
-                caption={currentCaption}
-                style={debouncedStyle}
-                currentTime={effectiveTime}
-                scaleFactor={scaleFactor}
-            />
+            {/* Caption Overlay - positioned to match actual rendered video area */}
+            {videoRect && (
+                <div
+                    className="absolute pointer-events-none"
+                    style={{
+                        left: videoRect.offsetX,
+                        top: videoRect.offsetY,
+                        width: videoRect.width,
+                        height: videoRect.height,
+                    }}
+                >
+                    <CaptionOverlay
+                        caption={currentCaption}
+                        style={debouncedStyle}
+                        currentTime={effectiveTime}
+                        scaleFactor={scaleFactor}
+                    />
+                </div>
+            )}
 
             {/* Play/Pause Overlay (center) */}
             {!isPlaying && !isLoading && showControls && (
