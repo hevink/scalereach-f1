@@ -400,3 +400,20 @@ export function useQueueAction() {
     },
   });
 }
+
+export function useBaseEnvs() {
+  return useQuery({
+    queryKey: ["admin", "envs-base"],
+    queryFn: adminApi.getBaseEnvs,
+    staleTime: 60 * 1000,
+  });
+}
+
+export function useBurstEnvs() {
+  return useQuery({
+    queryKey: ["admin", "envs-burst"],
+    queryFn: adminApi.getBurstEnvs,
+    staleTime: 60 * 1000,
+    retry: 1,
+  });
+}

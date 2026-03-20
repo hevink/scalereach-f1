@@ -699,4 +699,15 @@ export const adminApi = {
       stats: { waiting: number; active: number; completed: number; failed: number };
     };
   },
+
+  // Environment variables
+  getBaseEnvs: async () => {
+    const response = await api.get<{ mode: string; envs: Record<string, string | undefined> }>("/api/admin/envs/base");
+    return response.data;
+  },
+
+  getBurstEnvs: async () => {
+    const response = await api.get<{ mode: string; envs: Record<string, string | undefined> }>("/api/admin/envs/burst");
+    return response.data;
+  },
 };
