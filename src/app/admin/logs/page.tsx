@@ -138,11 +138,13 @@ export default function WorkerLogsPage() {
                 ) : error ? (
                     <p className="text-red-400 text-center py-12">
                         {(() => {
+                            const msg = (error as any)?.message;
+                            if (msg) return msg;
                             const errData = (error as any)?.response?.data;
                             if (typeof errData === "string") {
                                 try { return JSON.parse(errData)?.error || errData; } catch { return errData; }
                             }
-                            return errData?.error || (error as any)?.message || "Failed to load logs";
+                            return errData?.error || "Failed to load logs — check if the API server is reachable";
                         })()}
                     </p>
                 ) : lines.length === 0 ? (

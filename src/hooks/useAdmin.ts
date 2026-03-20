@@ -355,6 +355,8 @@ export function useWorkerLogsLive(type: "out" | "err" | "both", lines: number, e
     enabled,
     staleTime: 10 * 1000,
     refetchInterval: enabled ? 15 * 1000 : false,
+    retry: 2,
+    retryDelay: 3000,
   });
 }
 

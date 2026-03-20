@@ -645,12 +645,31 @@ export const adminApi = {
   },
 
   getWorkerLogsLive: async (type: "out" | "err" | "both" = "both", lines = 500) => {
-    const response = await api.get<string>("/api/admin/worker-logs/live", {
-      params: { type, lines },
-      responseType: "text",
-      transformResponse: [(data: string) => data],
-    });
-    return response.data;
+    try {
+      const response = await api.get<string>("/api/admin/worker-logs/live", {
+        params: { type, lines },
+        responseType: "text",
+        transformResponse: [(data: string) => data],
+        timeout: 20_000,
+      });
+      return response.data;
+    } catch (err: any) {
+      // When responseType is "text", error response data is a raw string — try to parse it
+      const raw = err?.response?.data;
+      if (typeof raw === "string") {
+        try {
+          const parsed = JSON.parse(raw);
+          if (parsed?.error) throw new Error(parsed.error);
+        } catch (parseErr) {
+          if (parseErr instanceof SyntaxError) {
+            // not JSON, use raw string
+            throw new Error(raw || err.message || "Failed to load logs");
+          }
+          throw parseErr;
+        }
+      }
+      throw err;
+    }
   },
 
   // Affiliate management
