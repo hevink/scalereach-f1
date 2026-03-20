@@ -45,14 +45,19 @@ const FEATURE_MESSAGES: Record<string, { title: string; message: string; subtitl
         subtitle: "Upgrade to Pro to create public share links, track views & downloads, and let anyone watch your clips without signing in.",
     },
     "create workspace": {
-        title: "Upgrade Required",
-        message: "Free plan users can only have one workspace. To create additional workspaces, upgrade any existing workspace to a paid plan.",
-        subtitle: "Upgrade to Starter or Pro to unlock multiple workspaces, more minutes, and premium features.",
+        title: "Workspace Limit Reached",
+        message: "You've reached the maximum number of workspaces on your current plan.",
+        subtitle: "Upgrade to a higher plan to create more workspaces and add more team members.",
     },
     "social accounts": {
         title: "Account Limit Reached",
         message: "You've reached the maximum number of connected social accounts on your current plan.",
         subtitle: "Upgrade to a higher plan to connect more social accounts and post clips to all your platforms.",
+    },
+    "member limit": {
+        title: "Member Limit Reached",
+        message: "You've reached the maximum number of team members on your current plan.",
+        subtitle: "Upgrade to a higher plan to invite more team members and collaborate with your team.",
     },
 };
 

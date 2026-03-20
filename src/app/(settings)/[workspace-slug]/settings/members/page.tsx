@@ -46,6 +46,8 @@ import {
 import { authClient } from "@/lib/auth-client";
 import { workspaceApi } from "@/lib/api/workspace";
 import { analytics } from "@/lib/analytics";
+import { getPlanLimits } from "@/hooks/usePlanLimits";
+import { UpgradeDialog } from "@/components/pricing/upgrade-dialog";
 import type { WorkspaceInvitation, WorkspaceMember } from "@/lib/api/workspace";
 
 function getRoleIcon(role: string) {
@@ -138,13 +140,28 @@ function ConfirmDialog({
   );
 }
 
-function InviteMemberDialog({ workspaceId, workspacePlan }: { workspaceId: string; workspacePlan: string }) {
+function InviteMemberDialog({ workspaceId, workspacePlan, workspaceSlug }: { workspaceId: string; workspacePlan: string; workspaceSlug: string }) {
   const [open, setOpen] = useState(false);
+  const [showUpgradeDialog, setShowUpgradeDialog] = useState(false);
   const [email, setEmail] = useState("");
   const [role, setRole] = useState("member");
   const createInvitation = useCreateInvitation();
 
   const isAllowedPlan = workspacePlan === "starter" || workspacePlan === "pro" || workspacePlan === "pro-plus" || workspacePlan === "agency";
+  const { data: members = [] } = useWorkspaceMembers(workspaceId);
+  const { data: invitations = [] } = useWorkspaceInvitations(workspaceId);
+  const planLimits = getPlanLimits(workspacePlan);
+  const pendingInvitations = invitations.filter((inv) => inv.status === "pending");
+  const totalMemberSlots = members.length + pendingInvitations.length;
+  const isAtMemberLimit = totalMemberSlots >= planLimits.maxMembers;
+
+  const handleInviteClick = () => {
+    if (isAtMemberLimit) {
+      setShowUpgradeDialog(true);
+    } else {
+      setOpen(true);
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -158,59 +175,67 @@ function InviteMemberDialog({ workspaceId, workspacePlan }: { workspaceId: strin
   };
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger
-        render={<Button size="sm" disabled={!isAllowedPlan} />}
-        title={!isAllowedPlan ? "Upgrade to Starter or Pro plan to invite members" : undefined}
+    <>
+      <Button size="sm" disabled={!isAllowedPlan} onClick={handleInviteClick}
+        title={!isAllowedPlan ? "Upgrade to Starter or Pro plan to invite members" : isAtMemberLimit ? `Member limit reached (${planLimits.maxMembers} on ${planLimits.planName} plan)` : undefined}
       >
         <IconUserPlus className="size-4 mr-2" />
         Invite Member
-      </DialogTrigger>
-      <DialogContent>
-        <DialogHeader>
-          <DialogTitle>Invite a new member</DialogTitle>
-          <DialogDescription>
-            Send an invitation email to add someone to your workspace.
-          </DialogDescription>
-        </DialogHeader>
-        <form onSubmit={handleSubmit} className="flex flex-col gap-4">
-          <div className="flex flex-col gap-2">
-            <Label htmlFor="email">Email address</Label>
-            <Input
-              id="email"
-              type="email"
-              placeholder="colleague@example.com"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              required
-            />
-          </div>
-          <div className="flex flex-col gap-2">
-            <Label htmlFor="role">Role</Label>
-            <Select value={role} onValueChange={(value) => value && setRole(value)}>
-              <SelectTrigger>
-                <SelectValue placeholder="Select a role" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="member">Member</SelectItem>
-                <SelectItem value="admin">Admin</SelectItem>
-              </SelectContent>
-            </Select>
-            <p className="text-xs text-muted-foreground">
-              Admins can manage members and workspace settings.
-            </p>
-          </div>
-          <DialogFooter>
-            <Button type="button" variant="outline" onClick={() => setOpen(false)}>
-              Cancel
-            </Button>
-            <Button type="submit" loading={createInvitation.isPending}>
-              Send Invitation
-            </Button>
-          </DialogFooter>
-        </form>
-      </DialogContent>
-    </Dialog>
+      </Button>
+      <Dialog open={open} onOpenChange={setOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Invite a new member</DialogTitle>
+            <DialogDescription>
+              Send an invitation email to add someone to your workspace.
+            </DialogDescription>
+          </DialogHeader>
+          <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+            <div className="flex flex-col gap-2">
+              <Label htmlFor="email">Email address</Label>
+              <Input
+                id="email"
+                type="email"
+                placeholder="colleague@example.com"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                required
+              />
+            </div>
+            <div className="flex flex-col gap-2">
+              <Label htmlFor="role">Role</Label>
+              <Select value={role} onValueChange={(value) => value && setRole(value)}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select a role" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="member">Member</SelectItem>
+                  <SelectItem value="admin">Admin</SelectItem>
+                </SelectContent>
+              </Select>
+              <p className="text-xs text-muted-foreground">
+                Admins can manage members and workspace settings.
+              </p>
+            </div>
+            <DialogFooter>
+              <Button type="button" variant="outline" onClick={() => setOpen(false)}>
+                Cancel
+              </Button>
+              <Button type="submit" loading={createInvitation.isPending}>
+                Send Invitation
+              </Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
+      <UpgradeDialog
+        open={showUpgradeDialog}
+        onOpenChange={setShowUpgradeDialog}
+        workspaceSlug={workspaceSlug}
+        feature="member limit"
+        description={`Your ${planLimits.planName} plan allows up to ${planLimits.maxMembers} team member${planLimits.maxMembers === 1 ? "" : "s"}. Upgrade to add more members.`}
+      />
+    </>
   );
 }
 
@@ -587,7 +612,7 @@ export default function MembersPage({ params }: { params: Promise<{ "workspace-s
             Manage who has access to this workspace.
           </p>
         </div>
-        {canManageMembers && <InviteMemberDialog workspaceId={workspace.id} workspacePlan={workspace.plan || "free"} />}
+        {canManageMembers && <InviteMemberDialog workspaceId={workspace.id} workspacePlan={workspace.plan || "free"} workspaceSlug={slug} />}
       </div>
 
       {canManageMembers && workspace.plan === "free" && (

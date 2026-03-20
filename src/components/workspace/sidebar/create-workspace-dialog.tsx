@@ -25,9 +25,10 @@ import {
 import { Input } from "@/components/ui/input";
 import { Spinner } from "@/components/ui/spinner";
 import { Textarea } from "@/components/ui/textarea";
-import { useCreateWorkspace, useCheckSlug } from "@/hooks/useWorkspace";
+import { useCreateWorkspace, useCheckSlug, useWorkspaces } from "@/hooks/useWorkspace";
 import { workspaceApi } from "@/lib/api";
 import { UpgradeDialog } from "@/components/pricing/upgrade-dialog";
+import { getPlanLimits } from "@/hooks/usePlanLimits";
 
 const SLUG_REGEX = /^[a-zA-Z0-9_-]+$/;
 const MIN_SLUG_LENGTH = 3;
@@ -100,6 +101,21 @@ export function CreateWorkspaceDialog({
 
   const createWorkspaceMutation = useCreateWorkspace();
   const isLoading = createWorkspaceMutation.isPending;
+
+  const { data: workspaces = [] } = useWorkspaces(true);
+  const currentWorkspace = workspaces.find((w) => w.slug === currentWorkspaceSlug);
+  const currentPlan = currentWorkspace?.plan || "free";
+  const planLimits = getPlanLimits(currentPlan);
+  const ownedWorkspaces = workspaces.filter((w) => w.role === "owner");
+  const isAtWorkspaceLimit = ownedWorkspaces.length >= planLimits.maxWorkspaces;
+
+  // Intercept dialog open — if at limit, show upgrade dialog instead
+  useEffect(() => {
+    if (open && isAtWorkspaceLimit) {
+      onOpenChange(false);
+      setShowUpgradeDialog(true);
+    }
+  }, [open, isAtWorkspaceLimit, onOpenChange]);
 
   const form = useForm<WorkspaceFormData>({
     resolver: zodResolver(workspaceSchema),
@@ -407,7 +423,8 @@ export function CreateWorkspaceDialog({
             open={showUpgradeDialog}
             onOpenChange={setShowUpgradeDialog}
             workspaceSlug={currentWorkspaceSlug}
-            feature="Create Workspace"
+            feature="create workspace"
+            description={`Your ${planLimits.planName} plan allows up to ${planLimits.maxWorkspaces} workspace${planLimits.maxWorkspaces === 1 ? "" : "s"}. You currently have ${ownedWorkspaces.length}. Upgrade to create more workspaces.`}
           />
         )
       }

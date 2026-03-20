@@ -8,6 +8,8 @@ export interface PlanLimits {
   maxFileSizeGB: number; // for display
   maxDuration: number; // in seconds
   maxDurationFormatted: string; // "30 min", "2h", "3h"
+  maxWorkspaces: number;
+  maxMembers: number;
   planName: string; // "Free", "Starter", "Pro"
   canUpgrade: boolean;
   nextPlan?: string;
@@ -37,6 +39,8 @@ export function getPlanLimits(plan: string): PlanLimits {
       maxFileSizeGB: 2,
       maxDuration: 1800,
       maxDurationFormatted: "30 min",
+      maxWorkspaces: 1,
+      maxMembers: 1,
       planName: "Free",
       canUpgrade: true,
       nextPlan: "starter",
@@ -46,6 +50,8 @@ export function getPlanLimits(plan: string): PlanLimits {
       maxFileSizeGB: 4,
       maxDuration: 7200,
       maxDurationFormatted: "2h",
+      maxWorkspaces: 1,
+      maxMembers: 1,
       planName: "Starter",
       canUpgrade: true,
       nextPlan: "pro",
@@ -55,6 +61,8 @@ export function getPlanLimits(plan: string): PlanLimits {
       maxFileSizeGB: 4,
       maxDuration: 10800,
       maxDurationFormatted: "3h",
+      maxWorkspaces: 3,
+      maxMembers: 3,
       planName: "Pro",
       canUpgrade: true,
       nextPlan: "agency",
@@ -64,6 +72,8 @@ export function getPlanLimits(plan: string): PlanLimits {
       maxFileSizeGB: 4,
       maxDuration: 3 * 60 * 60,
       maxDurationFormatted: "3h",
+      maxWorkspaces: 10,
+      maxMembers: 10,
       planName: "Agency",
       canUpgrade: false,
     },
