@@ -703,11 +703,13 @@ export const adminApi = {
   // Environment variables
   getBaseEnvs: async () => {
     const response = await api.get<{ mode: string; envs: Record<string, string | undefined> }>("/api/admin/envs/base");
+    if (response.data.error) throw new Error(response.data.error);
     return response.data;
   },
 
   getBurstEnvs: async () => {
     const response = await api.get<{ mode: string; envs: Record<string, string | undefined> }>("/api/admin/envs/burst");
+    if (response.data.error) throw new Error(response.data.error);
     return response.data;
   },
 };

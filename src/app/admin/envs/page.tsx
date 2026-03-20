@@ -11,7 +11,7 @@ import { useState } from "react";
 import { Input } from "@/components/ui/input";
 
 function EnvTable({ envs, filter }: { envs: Record<string, string | undefined>; filter: string }) {
-    const entries = Object.entries(envs)
+    const entries = Object.entries(envs || {})
         .filter(([key]) => !filter || key.toLowerCase().includes(filter.toLowerCase()))
         .sort(([a], [b]) => a.localeCompare(b));
 
