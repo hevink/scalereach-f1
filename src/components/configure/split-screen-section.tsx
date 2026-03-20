@@ -31,6 +31,9 @@ const CATEGORY_EMOJIS: Record<string, string> = {
     "soap-cutting": "🧼",
     slime: "🫧",
     cooking: "🍳",
+    gta5: "🚗",
+    fortnite: "🔫",
+    trackmania: "🏎️",
 };
 
 function VideoCard({
