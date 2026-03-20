@@ -23,7 +23,6 @@ interface SplitScreenSectionProps {
 }
 
 const CATEGORY_EMOJIS: Record<string, string> = {
-    "subway-surfer": "🏃",
     minecraft: "⛏️",
     asmr: "🎧",
     satisfying: "✨",
@@ -32,8 +31,6 @@ const CATEGORY_EMOJIS: Record<string, string> = {
     slime: "🫧",
     cooking: "🍳",
     gta5: "🚗",
-    fortnite: "🔫",
-    trackmania: "🏎️",
 };
 
 function VideoCard({
