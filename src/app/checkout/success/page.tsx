@@ -7,23 +7,45 @@ import Confetti from "react-confetti";
 import { DotLottieReact } from "@lottiefiles/dotlottie-react";
 import { analytics } from "@/lib/analytics";
 
+// Dodo Payments appends query params to return_url after checkout:
+// ?payment_id=xxx&status=succeeded (for payments)
+// ?subscription_id=xxx&status=active (for subscriptions)
+// If user cancels, status will be different (e.g., "cancelled", "failed", "requires_payment_method")
+
+const SUCCESS_STATUSES = new Set([
+  "succeeded",
+  "active",
+  "processing",
+]);
+
 function CheckoutSuccessContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const workspaceSlug = searchParams.get("workspace");
   const planId = searchParams.get("plan") || "unknown";
   const planName = searchParams.get("planName") || planId;
-  const [showConfetti, setShowConfetti] = useState(true);
+  const dodoStatus = searchParams.get("status");
+  const [showConfetti, setShowConfetti] = useState(false);
   const [windowSize, setWindowSize] = useState({ width: 0, height: 0 });
 
   useEffect(() => {
-    setWindowSize({ width: window.innerWidth, height: window.innerHeight });
+    // If Dodo returned a non-success status, redirect to cancel page
+    if (dodoStatus && !SUCCESS_STATUSES.has(dodoStatus.toLowerCase())) {
+      const cancelUrl = workspaceSlug
+        ? `/checkout/cancel?workspace=${workspaceSlug}`
+        : "/checkout/cancel";
+      router.replace(cancelUrl);
+      return;
+    }
 
-    // Track subscription started
+    // Payment is successful (or no status param = legacy/direct visit)
+    setWindowSize({ width: window.innerWidth, height: window.innerHeight });
+    setShowConfetti(true);
+
     analytics.subscriptionStarted({
       planId,
       planName,
-      price: 0, // Price not available from URL params
+      price: 0,
     });
 
     const timer = setTimeout(() => {
@@ -31,7 +53,16 @@ function CheckoutSuccessContent() {
     }, 5000);
 
     return () => clearTimeout(timer);
-  }, []);
+  }, [dodoStatus, workspaceSlug, router, planId, planName]);
+
+  // Don't render success UI if we're about to redirect to cancel
+  if (dodoStatus && !SUCCESS_STATUSES.has(dodoStatus.toLowerCase())) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <div className="text-white">Redirecting...</div>
+      </div>
+    );
+  }
 
   const handleContinue = () => {
     if (workspaceSlug) {
