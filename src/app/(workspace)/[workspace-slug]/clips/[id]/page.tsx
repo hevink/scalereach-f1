@@ -192,6 +192,7 @@ interface EditorHeaderProps {
     isSaving: boolean;
     onExportClick: () => void;
     hasActiveExport: boolean;
+    isExporting?: boolean;
     workspaceSlug: string;
     videoId?: string;
     videoTitle?: string;
@@ -210,6 +211,7 @@ function EditorHeader({
     isSaving,
     onExportClick,
     hasActiveExport,
+    isExporting = false,
     workspaceSlug,
     videoId,
     videoTitle,
@@ -296,9 +298,14 @@ function EditorHeader({
                     <Button
                         onClick={onExportClick}
                         className="gap-2"
+                        disabled={isExporting || isSaving}
                     >
-                        <IconDownload className="size-4" />
-                        {hasUnsavedChanges ? "Save & Export" : "Export"}
+                        {isExporting ? (
+                            <IconLoader className="size-4 animate-spin" />
+                        ) : (
+                            <IconDownload className="size-4" />
+                        )}
+                        {isExporting ? "Exporting..." : hasUnsavedChanges ? "Save & Export" : "Export"}
                     </Button>
                 </div>
             </div>
@@ -1258,6 +1265,7 @@ export default function ClipEditorPage({ params }: ClipEditorPageProps) {
                         isSaving={isSaving}
                         onExportClick={handleSaveAndGoToClips}
                         hasActiveExport={false}
+                        isExporting={initiateExport.isPending || isSavingAll}
                         workspaceSlug={slug}
                         videoId={clip.videoId}
                         videoTitle={video?.title ?? undefined}
