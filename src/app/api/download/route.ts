@@ -11,6 +11,12 @@ export async function GET(request: NextRequest) {
   // Only allow downloading from your own CDN/storage domains
   try {
     const parsed = new URL(url);
+
+    // Block non-HTTPS in production
+    if (parsed.protocol !== "https:") {
+      return NextResponse.json({ error: "Only HTTPS URLs allowed" }, { status: 403 });
+    }
+
     const allowedHosts = [
       "cdn.scalereach.ai",
       ".r2.dev",
@@ -38,8 +44,11 @@ export async function GET(request: NextRequest) {
       );
     }
 
+    // Sanitize filename to prevent header injection
+    const safeFilename = filename.replace(/[^a-zA-Z0-9._-]/g, "_");
+
     const headers = new Headers();
-    headers.set("Content-Disposition", `attachment; filename="${filename}"`);
+    headers.set("Content-Disposition", `attachment; filename="${safeFilename}"`);
     headers.set("Content-Type", response.headers.get("Content-Type") || "video/mp4");
     const contentLength = response.headers.get("Content-Length");
     if (contentLength) {
