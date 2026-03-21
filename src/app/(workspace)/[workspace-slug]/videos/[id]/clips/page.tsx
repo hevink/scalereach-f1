@@ -563,19 +563,40 @@ export default function VideoClipsPage({ params }: VideoClipsPageProps) {
     const handleDownload = useCallback(async (clip: ClipResponse) => {
         if (clip.storageUrl) {
             analytics.clipDownloaded(clip.id);
+            const fileName = `${clip.title || "clip"}.mp4`;
             try {
-                const response = await fetch(clip.storageUrl);
+                const response = await fetch(clip.storageUrl, { mode: "cors" });
+                if (!response.ok) throw new Error("Fetch failed");
                 const blob = await response.blob();
                 const url = URL.createObjectURL(blob);
                 const link = document.createElement("a");
                 link.href = url;
-                link.download = `${clip.title || "clip"}.mp4`;
+                link.download = fileName;
                 document.body.appendChild(link);
                 link.click();
                 document.body.removeChild(link);
-                URL.revokeObjectURL(url);
+                // Delay revoke so the browser has time to start the download
+                setTimeout(() => URL.revokeObjectURL(url), 1000);
             } catch {
-                window.open(clip.storageUrl, "_blank");
+                // CORS blocked or fetch failed — use no-cors proxy approach
+                try {
+                    const proxyResponse = await fetch(
+                        `/api/download?url=${encodeURIComponent(clip.storageUrl)}&filename=${encodeURIComponent(fileName)}`
+                    );
+                    if (!proxyResponse.ok) throw new Error("Proxy failed");
+                    const blob = await proxyResponse.blob();
+                    const url = URL.createObjectURL(blob);
+                    const link = document.createElement("a");
+                    link.href = url;
+                    link.download = fileName;
+                    document.body.appendChild(link);
+                    link.click();
+                    document.body.removeChild(link);
+                    setTimeout(() => URL.revokeObjectURL(url), 1000);
+                } catch {
+                    // Last resort: open in new tab
+                    window.open(clip.storageUrl, "_blank");
+                }
             }
         }
     }, []);
