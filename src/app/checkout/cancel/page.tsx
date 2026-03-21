@@ -40,11 +40,11 @@ function CheckoutCancelContent() {
           </div>
         </div>
 
-        <h1 className="text-3xl font-bold text-white mb-3">
+        <h1 className="text-3xl font-bold text-foreground mb-3">
           Payment Cancelled
         </h1>
 
-        <p className="text-zinc-400 mb-8">
+        <p className="text-muted-foreground mb-8">
           Your payment was cancelled and you have not been charged. If you experienced any issues during checkout, please try again or contact our support team.
         </p>
 
@@ -60,16 +60,16 @@ function CheckoutCancelContent() {
           <Button
             variant="outline"
             onClick={handleGoBack}
-            className="w-full h-12 border-zinc-700 text-white hover:bg-zinc-800"
+            className="w-full h-12"
           >
             <IconArrowLeft className="size-4 mr-2" />
             Back to Dashboard
           </Button>
         </div>
 
-        <p className="text-xs text-zinc-500 mt-6">
+        <p className="text-xs text-muted-foreground mt-6">
           Need help?{" "}
-          <a href="#" onClick={(e) => { e.preventDefault(); if (window.$crisp) window.$crisp.push(["do", "chat:open"]); }} className="text-emerald-500 hover:underline">
+          <a href="#" onClick={(e) => { e.preventDefault(); if (window.$crisp) window.$crisp.push(["do", "chat:open"]); }} className="text-primary hover:underline">
             Contact Support
           </a>
         </p>
@@ -82,7 +82,7 @@ export default function CheckoutCancelPage() {
   return (
     <Suspense fallback={
       <div className="min-h-screen flex items-center justify-center bg-background">
-        <div className="text-white">Loading...</div>
+        <div className="text-foreground">Loading...</div>
       </div>
     }>
       <CheckoutCancelContent />

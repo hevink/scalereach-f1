@@ -59,7 +59,7 @@ function CheckoutSuccessContent() {
   if (dodoStatus && !SUCCESS_STATUSES.has(dodoStatus.toLowerCase())) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
-        <div className="text-white">Redirecting...</div>
+        <div className="text-foreground">Redirecting...</div>
       </div>
     );
   }
@@ -95,11 +95,11 @@ function CheckoutSuccessContent() {
           </div>
         </div>
 
-        <h1 className="text-3xl font-bold text-white mb-3">
+        <h1 className="text-3xl font-bold text-foreground mb-3">
           Payment Successful!
         </h1>
 
-        <p className="text-zinc-400 mb-8">
+        <p className="text-muted-foreground mb-8">
           Thank you for your purchase. Your credits have been added to your account and you're ready to start creating amazing clips.
         </p>
 
@@ -115,14 +115,14 @@ function CheckoutSuccessContent() {
             <Button
               variant="outline"
               onClick={() => router.push(`/${workspaceSlug}/pricing`)}
-              className="w-full h-12 border-zinc-700 text-white hover:bg-zinc-800"
+              className="w-full h-12"
             >
               View Billing Details
             </Button>
           )}
         </div>
 
-        <p className="text-xs text-zinc-500 mt-6">
+        <p className="text-xs text-muted-foreground mt-6">
           A confirmation email has been sent to your registered email address.
         </p>
       </div>
@@ -134,7 +134,7 @@ export default function CheckoutSuccessPage() {
   return (
     <Suspense fallback={
       <div className="min-h-screen flex items-center justify-center bg-background">
-        <div className="text-white">Loading...</div>
+        <div className="text-foreground">Loading...</div>
       </div>
     }>
       <CheckoutSuccessContent />
