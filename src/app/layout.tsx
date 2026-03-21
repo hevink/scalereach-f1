@@ -1,3 +1,4 @@
+import Script from "next/script";
 import type { Metadata } from "next";
 import {
   Geist,
@@ -161,6 +162,20 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" suppressHydrationWarning>
+      <head>
+        <Script
+          src="https://www.googletagmanager.com/gtag/js?id=G-41LQTQKFQP"
+          strategy="afterInteractive"
+        />
+        <Script id="google-analytics" strategy="afterInteractive">
+          {`
+            window.dataLayer = window.dataLayer || [];
+            function gtag(){dataLayer.push(arguments);}
+            gtag('js', new Date());
+            gtag('config', 'G-41LQTQKFQP');
+          `}
+        </Script>
+      </head>
       <body
         className={`${geistSans.variable} ${geistMono.variable} ${bangers.variable} ${permanentMarker.variable} ${anton.variable} ${bebasNeue.variable} ${oswald.variable} ${montserrat.variable} ${poppins.variable} ${lexend.variable} ${titanOne.variable} ${libreBaskerville.variable} ${lilitaOne.variable} ${inter.variable} ${righteous.variable} ${russoOne.variable} ${blackOpsOne.variable} ${notoSans.variable} antialiased`}
       >
