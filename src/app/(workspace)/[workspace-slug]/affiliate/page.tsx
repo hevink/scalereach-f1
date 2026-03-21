@@ -418,14 +418,14 @@ export default function AffiliatePage() {
                                                         <span className="text-muted-foreground">{i + 1}</span>
                                                     )}
                                                 </td>
-                                                <td className="px-5 py-3">
+                                                <td className="px-5 py-3 max-w-[140px]">
                                                     <Tooltip>
                                                         <TooltipTrigger asChild>
-                                                            <div className="flex items-center gap-2.5 cursor-default">
+                                                            <div className="flex items-center gap-2.5 cursor-default min-w-0">
                                                                 <div className={`size-7 rounded-full ${AVATAR_COLORS[i % AVATAR_COLORS.length]} flex items-center justify-center text-white text-xs font-medium shrink-0`}>
                                                                     {entry.name.charAt(0)}
                                                                 </div>
-                                                                <span className="font-medium">{entry.name}</span>
+                                                                <span className="font-medium truncate">{entry.name}</span>
                                                             </div>
                                                         </TooltipTrigger>
                                                         <TooltipContent side="top" className="max-w-[260px] text-center">

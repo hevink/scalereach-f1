@@ -170,4 +170,50 @@ export function EditorToolbar({
     );
 }
 
+// ============================================================================
+// MobileToolbar Component
+// ============================================================================
+
+export interface MobileToolbarProps {
+    activePanel: ToolbarPanel;
+    onPanelChange: (panel: ToolbarPanel) => void;
+    className?: string;
+}
+
+export function MobileToolbar({ activePanel, onPanelChange, className }: MobileToolbarProps) {
+    const handleItemClick = (itemId: ToolbarPanel) => {
+        onPanelChange(activePanel === itemId ? null : itemId);
+    };
+
+    return (
+        <div className={cn(
+            "shrink-0 flex items-center justify-around border-t border-zinc-800 bg-zinc-900 px-2 py-1",
+            className
+        )}>
+            {TOOLBAR_ITEMS.map((item) => {
+                const Icon = item.icon;
+                const isActive = activePanel === item.id;
+                return (
+                    <button
+                        key={item.id}
+                        onClick={() => handleItemClick(item.id)}
+                        disabled={item.disabled}
+                        className={cn(
+                            "flex flex-col items-center justify-center gap-1 flex-1 py-2 rounded-lg transition-all",
+                            "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary",
+                            isActive && "text-white bg-zinc-800",
+                            !isActive && "text-zinc-500",
+                            item.disabled && "opacity-40 cursor-not-allowed"
+                        )}
+                        aria-label={item.label}
+                    >
+                        <Icon className="size-5" />
+                        <span className="text-[10px] leading-tight">{item.label.split(' ')[0]}</span>
+                    </button>
+                );
+            })}
+        </div>
+    );
+}
+
 export default EditorToolbar;

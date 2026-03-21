@@ -380,7 +380,7 @@ export function CreditUsageTable({ workspaceSlug }: CreditUsageTableProps) {
     return (
         <div className="space-y-3">
             {/* Header with filters */}
-            <div className="flex items-center justify-between">
+            <div className="flex flex-wrap items-center justify-between gap-2">
                 <div>
                     <h3 className="text-base font-semibold">Transaction History</h3>
                     <p className="text-xs text-muted-foreground mt-0.5">
@@ -460,49 +460,51 @@ export function CreditUsageTable({ workspaceSlug }: CreditUsageTableProps) {
                 </div>
             ) : (
                 <div className="rounded-lg border border-border/50 bg-card overflow-hidden">
-                    <Table>
-                        <TableHeader>
-                            {table.getHeaderGroups().map((headerGroup) => (
-                                <TableRow key={headerGroup.id} className="hover:bg-transparent border-b border-border/50 bg-muted/20">
-                                    {headerGroup.headers.map((header) => (
-                                        <TableHead key={header.id} className="h-11">
-                                            {header.isPlaceholder
-                                                ? null
-                                                : flexRender(
-                                                    header.column.columnDef.header,
-                                                    header.getContext()
+                    <div className="overflow-x-auto">
+                        <Table>
+                            <TableHeader>
+                                {table.getHeaderGroups().map((headerGroup) => (
+                                    <TableRow key={headerGroup.id} className="hover:bg-transparent border-b border-border/50 bg-muted/20">
+                                        {headerGroup.headers.map((header) => (
+                                            <TableHead key={header.id} className="h-11">
+                                                {header.isPlaceholder
+                                                    ? null
+                                                    : flexRender(
+                                                        header.column.columnDef.header,
+                                                        header.getContext()
+                                                    )}
+                                            </TableHead>
+                                        ))}
+                                    </TableRow>
+                                ))}
+                            </TableHeader>
+                            <TableBody>
+                                {table.getRowModel().rows.map((row, index) => (
+                                    <TableRow
+                                        key={row.id}
+                                        data-state={row.getIsSelected() && "selected"}
+                                        className={cn(
+                                            "border-b border-border/50 transition-colors hover:bg-muted/30",
+                                            "animate-in fade-in slide-in-from-bottom-1"
+                                        )}
+                                        style={{
+                                            animationDelay: `${index * 30}ms`,
+                                            animationFillMode: "backwards"
+                                        }}
+                                    >
+                                        {row.getVisibleCells().map((cell) => (
+                                            <TableCell key={cell.id} className="py-3">
+                                                {flexRender(
+                                                    cell.column.columnDef.cell,
+                                                    cell.getContext()
                                                 )}
-                                        </TableHead>
-                                    ))}
-                                </TableRow>
-                            ))}
-                        </TableHeader>
-                        <TableBody>
-                            {table.getRowModel().rows.map((row, index) => (
-                                <TableRow
-                                    key={row.id}
-                                    data-state={row.getIsSelected() && "selected"}
-                                    className={cn(
-                                        "border-b border-border/50 transition-colors hover:bg-muted/30",
-                                        "animate-in fade-in slide-in-from-bottom-1"
-                                    )}
-                                    style={{
-                                        animationDelay: `${index * 30}ms`,
-                                        animationFillMode: "backwards"
-                                    }}
-                                >
-                                    {row.getVisibleCells().map((cell) => (
-                                        <TableCell key={cell.id} className="py-3">
-                                            {flexRender(
-                                                cell.column.columnDef.cell,
-                                                cell.getContext()
-                                            )}
-                                        </TableCell>
-                                    ))}
-                                </TableRow>
-                            ))}
-                        </TableBody>
-                    </Table>
+                                            </TableCell>
+                                        ))}
+                                    </TableRow>
+                                ))}
+                            </TableBody>
+                        </Table>
+                    </div>
 
                     {/* Pagination */}
                     <div className="flex items-center justify-between px-4 py-4 border-t border-border/50 bg-muted/20">

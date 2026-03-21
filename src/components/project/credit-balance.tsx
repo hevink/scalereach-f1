@@ -104,7 +104,7 @@ function CompactCreditBalance({
 
                 {!isUnlimited && (
                     <Link href={`/${workspaceSlug}/pricing`}>
-                        <Button variant="ghost" size="sm" className="h-7 gap-1 px-2 text-xs">
+                        <Button variant="ghost" size="sm" className="h-7 gap-1 px-2 text-xs hidden sm:flex">
                             <IconPlus className="size-3" />
                             Upgrade
                         </Button>

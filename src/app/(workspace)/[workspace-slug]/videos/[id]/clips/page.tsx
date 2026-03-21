@@ -853,60 +853,41 @@ export default function VideoClipsPage({ params }: VideoClipsPageProps) {
                             </div>
                         )}
 
-                        <div className="rounded-xl border bg-card/60 px-4 py-3">
-                            <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
-                                <div className="flex flex-wrap items-center gap-2">
-                                    <div className="mr-1 flex items-center gap-2 text-sm text-muted-foreground">
-                                        <IconFilter className="size-4" />
-                                        Filter
-                                    </div>
-                                    {QUICK_FILTER_OPTIONS.map((option) => {
-                                        const isActive = quickFilter === option.value;
-                                        const count = clipCounts[option.value];
-
-                                        return (
-                                            <Button
-                                                key={option.value}
-                                                type="button"
-                                                size="sm"
-                                                variant={isActive ? "default" : "outline"}
-                                                className="rounded-full"
-                                                onClick={() => setQuickFilter(option.value)}
-                                            >
-                                                {option.label}
-                                                <span className="ml-1.5 rounded-full bg-black/10 px-1.5 py-0.5 text-[11px] leading-none dark:bg-white/10">
-                                                    {count}
-                                                </span>
-                                            </Button>
-                                        );
-                                    })}
-                                </div>
-
-                                <div className="flex items-center gap-2">
-                                    <span className="shrink-0 text-xs text-muted-foreground">
-                                        Sort by
-                                    </span>
-                                    <Select
-                                        value={sortBy}
-                                        onValueChange={(value) =>
-                                            setSortBy(value as ClipFilters["sortBy"])
-                                        }
+                        <div className="flex flex-wrap items-center gap-2">
+                            {QUICK_FILTER_OPTIONS.map((option) => {
+                                const isActive = quickFilter === option.value;
+                                const count = clipCounts[option.value];
+                                return (
+                                    <Button
+                                        key={option.value}
+                                        type="button"
+                                        size="sm"
+                                        variant={isActive ? "default" : "outline"}
+                                        className="rounded-full h-7 text-xs px-3"
+                                        onClick={() => setQuickFilter(option.value)}
                                     >
-                                        <SelectTrigger className="w-[160px]">
-                                            <SelectValue />
-                                        </SelectTrigger>
-                                        <SelectContent>
-                                            <SelectItem value="createdAt">Newest</SelectItem>
-                                            <SelectItem value="score">Virality Score</SelectItem>
-                                            <SelectItem value="duration">Duration</SelectItem>
-                                        </SelectContent>
-                                    </Select>
-                                </div>
+                                        {option.label}
+                                        <span className="ml-1 opacity-60">{count}</span>
+                                    </Button>
+                                );
+                            })}
+                            <div className="ml-auto">
+                                <Select
+                                    value={sortBy}
+                                    onValueChange={(value) =>
+                                        setSortBy(value as ClipFilters["sortBy"])
+                                    }
+                                >
+                                    <SelectTrigger className="h-7 text-xs w-[130px]">
+                                        <SelectValue />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem value="createdAt">Newest</SelectItem>
+                                        <SelectItem value="score">Virality Score</SelectItem>
+                                        <SelectItem value="duration">Duration</SelectItem>
+                                    </SelectContent>
+                                </Select>
                             </div>
-
-                            <p className="mt-3 text-xs text-muted-foreground">
-                                Showing {visibleClips.length} of {clips.length} clips
-                            </p>
                         </div>
 
                         {visibleClips.length === 0 ? (

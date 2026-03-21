@@ -228,8 +228,8 @@ function EditorHeader({
     const scProcessing = scStatus === "pending" || scStatus === "processing";
     return (
         <div className="flex flex-col gap-2 px-4 py-3">
-            {/* Breadcrumb Navigation */}
-            <Breadcrumb>
+            {/* Breadcrumb Navigation - hidden on mobile */}
+            <Breadcrumb className="hidden sm:block">
                 <BreadcrumbList>
                     <BreadcrumbItem>
                         <BreadcrumbLink asChild>
@@ -258,46 +258,49 @@ function EditorHeader({
             </Breadcrumb>
 
             {/* Main Header Row */}
-            <div className="flex items-center justify-between gap-4">
-                <div className="flex items-center gap-4">
+            <div className="flex items-center justify-between gap-2">
+                <div className="flex items-center gap-2 min-w-0">
                     <Button
                         variant="ghost"
                         size="icon"
                         onClick={onBack}
                         aria-label="Go back to clips"
+                        className="shrink-0"
                     >
                         <IconArrowLeft className="size-5" />
                     </Button>
-                    <h1 className="truncate text-lg font-semibold">
+                    <h1 className="truncate text-base font-semibold sm:text-lg">
                         {title || "Untitled Clip"}
                     </h1>
-                    {/* Save status indicator */}
+                    {/* Save status indicator - hidden on mobile to save space */}
                     {isSaving && (
-                        <Badge variant="secondary" className="gap-1">
+                        <Badge variant="secondary" className="gap-1 hidden sm:flex shrink-0">
                             <IconLoader className="size-3 animate-spin" />
                             Saving...
                         </Badge>
                     )}
                     {hasUnsavedChanges && !isSaving && (
-                        <Badge variant="outline" className="gap-1 text-yellow-500 border-yellow-500">
-                            Unsaved changes
+                        <Badge variant="outline" className="gap-1 text-yellow-500 border-yellow-500 hidden sm:flex shrink-0">
+                            Unsaved
                         </Badge>
                     )}
                 </div>
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2 shrink-0">
                     {hasUnsavedChanges && onSave && (
                         <Button
                             onClick={onSave}
                             variant="outline"
+                            size="sm"
                             disabled={isSaving}
-                            className="gap-2"
+                            className="hidden sm:flex gap-2"
                         >
                             Save
                         </Button>
                     )}
                     <Button
                         onClick={onExportClick}
-                        className="gap-2"
+                        size="sm"
+                        className="gap-1.5"
                         disabled={isExporting || isSaving}
                     >
                         {isExporting ? (
@@ -305,7 +308,12 @@ function EditorHeader({
                         ) : (
                             <IconDownload className="size-4" />
                         )}
-                        {isExporting ? "Exporting..." : hasUnsavedChanges ? "Save & Export" : "Export"}
+                        <span className="hidden sm:inline">
+                            {isExporting ? "Exporting..." : hasUnsavedChanges ? "Save & Export" : "Export"}
+                        </span>
+                        <span className="sm:hidden">
+                            {isExporting ? "..." : "Export"}
+                        </span>
                     </Button>
                 </div>
             </div>

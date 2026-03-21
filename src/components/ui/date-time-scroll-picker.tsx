@@ -53,7 +53,7 @@ export function DateTimeScrollPicker({
                 <span>{value ? format(value, "MM/dd/yyyy hh:mm aa") : placeholder}</span>
                 <IconCalendar size={15} className="opacity-50" />
             </PopoverTrigger>
-            <PopoverContent className="w-auto p-0" align="start">
+            <PopoverContent className="w-auto p-0" align="start" side="bottom" sideOffset={4}>
                 <div className="sm:flex">
                     <Calendar
                         mode="single"
@@ -63,7 +63,7 @@ export function DateTimeScrollPicker({
                     />
                     <div className="flex flex-col sm:flex-row sm:h-[300px] divide-y sm:divide-y-0 sm:divide-x">
                         {/* Hours */}
-                        <ScrollArea className="w-64 sm:w-auto">
+                        <ScrollArea className="w-full sm:w-auto">
                             <div className="flex sm:flex-col p-2">
                                 {Array.from({ length: 12 }, (_, i) => i + 1).reverse().map((hour) => (
                                     <Button
@@ -80,7 +80,7 @@ export function DateTimeScrollPicker({
                             <ScrollBar orientation="horizontal" className="sm:hidden" />
                         </ScrollArea>
                         {/* Minutes */}
-                        <ScrollArea className="w-64 sm:w-auto">
+                        <ScrollArea className="w-full sm:w-auto">
                             <div className="flex sm:flex-col p-2">
                                 {Array.from({ length: 12 }, (_, i) => i * 5).map((minute) => (
                                     <Button

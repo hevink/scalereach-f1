@@ -392,7 +392,7 @@ export default function WorkspacePage({ params }: WorkspacePageProps) {
         <div className="w-full max-w-2xl pt-4 sm:pt-8 pb-8 sm:pb-12 px-4">
           {/* Header with greeting and credit balance */}
           <div className="flex items-center justify-between gap-4 mb-6 sm:mb-8">
-            <h1 className="text-xl sm:text-2xl font-semibold truncate">
+            <h1 className="text-xl sm:text-2xl font-semibold min-w-0 truncate">
               <span className="mr-1">👋</span> Hey, {session?.user?.name?.split(" ")[0] || "there"}
             </h1>
             {/* Credit Balance Display - Requirement 27.1 */}

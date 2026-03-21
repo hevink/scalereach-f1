@@ -7,7 +7,13 @@ import {
     ResizablePanel,
     ResizableHandle,
 } from "@/components/ui/resizable";
-import { EditorToolbar, type ToolbarPanel } from "./editor-toolbar";
+import { EditorToolbar, MobileToolbar, type ToolbarPanel } from "./editor-toolbar";
+import {
+    Sheet,
+    SheetContent,
+    SheetHeader,
+    SheetTitle,
+} from "@/components/ui/sheet";
 
 // ============================================================================
 // Constants
@@ -185,10 +191,25 @@ interface MobileLayoutProps {
     onToolbarPanelChange?: (panel: ToolbarPanel) => void;
 }
 
+const PANEL_TITLES: Record<NonNullable<ToolbarPanel>, string> = {
+    captions: "Captions",
+    "clip-info": "Clip Info",
+    "text-overlay": "Text Overlay",
+    background: "Background",
+};
+
 function MobileLayout({ children, header, className, activeToolbarPanel: controlledPanel, onToolbarPanelChange }: MobileLayoutProps) {
     const [internalPanel, setInternalPanel] = useState<ToolbarPanel>(null);
     const activeToolbarPanel = controlledPanel !== undefined ? controlledPanel : internalPanel;
     const setActiveToolbarPanel = onToolbarPanelChange || setInternalPanel;
+
+    const getPanelContent = (panel: ToolbarPanel): ReactNode => {
+        if (panel === "captions") return children.stylePanel;
+        if (panel === "clip-info") return children.clipInfoPanel;
+        if (panel === "text-overlay") return children.textOverlayPanel;
+        if (panel === "background") return children.backgroundPanel;
+        return null;
+    };
 
     return (
         <div
@@ -203,48 +224,57 @@ function MobileLayout({ children, header, className, activeToolbarPanel: control
                 </div>
             )}
 
-            {/* Main Content */}
-            <div className="flex flex-1 overflow-hidden">
-                {/* Scrollable Content Area */}
-                <div className="flex-1 overflow-auto">
-                    {/* Video Player (Top) */}
-                    <section
-                        className="border-b p-4"
-                        data-testid="editing-layout-video-player"
-                        aria-label="Video player"
-                    >
-                        {children.videoPlayer}
-                    </section>
+            {/* Scrollable Content Area */}
+            <div className="flex-1 overflow-auto">
+                {/* Video Player (Top) */}
+                <section
+                    className="p-3"
+                    data-testid="editing-layout-video-player"
+                    aria-label="Video player"
+                >
+                    {children.videoPlayer}
+                </section>
 
-                    {/* Caption Editor (Below Video) */}
-                    <section
-                        className="border-b p-4"
-                        data-testid="editing-layout-caption-editor"
-                        aria-label="Caption editor"
-                    >
-                        {children.captionEditor}
-                    </section>
-                </div>
-
-                {/* Right Toolbar */}
-                <EditorToolbar
-                    activePanel={activeToolbarPanel}
-                    onPanelChange={setActiveToolbarPanel}
-                    captionsPanel={children.stylePanel}
-                    aiHookPanel={children.aiHookPanel}
-                    clipInfoPanel={children.clipInfoPanel}
-                    textOverlayPanel={children.textOverlayPanel}
-                    backgroundPanel={children.backgroundPanel}
-                />
+                {/* Caption Editor (Below Video) */}
+                <section
+                    className="border-t px-3 pb-3"
+                    data-testid="editing-layout-caption-editor"
+                    aria-label="Caption editor"
+                >
+                    {children.captionEditor}
+                </section>
             </div>
 
-            {/* Timeline Editor (Bottom - Fixed) */}
+            {/* Timeline Editor */}
             <div
                 className="shrink-0 border-t bg-zinc-900"
                 data-testid="editing-layout-timeline"
             >
                 {children.timeline}
             </div>
+
+            {/* Bottom Tab Bar */}
+            <MobileToolbar
+                activePanel={activeToolbarPanel}
+                onPanelChange={setActiveToolbarPanel}
+            />
+
+            {/* Bottom Sheet Panel */}
+            <Sheet
+                open={activeToolbarPanel !== null}
+                onOpenChange={(open) => { if (!open) setActiveToolbarPanel(null); }}
+            >
+                <SheetContent side="bottom" className="bg-zinc-900 border-zinc-800 text-white max-h-[70vh] flex flex-col p-0" showCloseButton={false}>
+                    <SheetHeader className="border-b border-zinc-800 px-4 py-3 shrink-0">
+                        <SheetTitle className="text-sm font-semibold text-white">
+                            {activeToolbarPanel ? PANEL_TITLES[activeToolbarPanel] : ""}
+                        </SheetTitle>
+                    </SheetHeader>
+                    <div className="flex-1 overflow-auto p-4">
+                        {getPanelContent(activeToolbarPanel)}
+                    </div>
+                </SheetContent>
+            </Sheet>
         </div>
     );
 }

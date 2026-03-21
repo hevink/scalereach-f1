@@ -486,22 +486,22 @@ export function SchedulePostModal({
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className={cn(
-        "gap-0 p-0 overflow-hidden [&>button]:hidden",
+        "gap-0 p-0 overflow-hidden [&>button]:hidden w-full",
         step === "details" && sourceTab === "upload" && uploadMediaType === "image"
-          ? "max-w-4xl!"
-          : "max-w-3xl!"
+          ? "sm:max-w-4xl!"
+          : "sm:max-w-3xl!"
       )}>
         {/* Header */}
-        <div className="flex items-center border-b px-5 py-3.5">
+        <div className="flex items-center border-b px-4 py-3 sm:px-5 sm:py-3.5">
           <div className="flex-1 min-w-0">
             <DialogTitle className="text-sm font-semibold leading-none">Schedule Post</DialogTitle>
-            <p className="mt-0.5 text-xs text-muted-foreground">
+            <p className="mt-0.5 hidden text-xs text-muted-foreground sm:block">
               {format(new Date(), "EEEE, MMMM d, yyyy")}
             </p>
           </div>
 
           {/* Step indicator */}
-          <div className="flex items-center gap-2 text-xs">
+          <div className="flex items-center gap-1.5 text-xs sm:gap-2">
             <div className={cn(
               "flex size-5 items-center justify-center rounded-full text-[10px] font-bold transition-colors",
               step === "clip" ? "bg-primary text-primary-foreground" : "bg-emerald-500 text-white"
@@ -511,7 +511,7 @@ export function SchedulePostModal({
             <span className={cn("transition-colors", step === "clip" ? "font-medium text-foreground" : "text-muted-foreground")}>
               Pick source
             </span>
-            <div className={cn("h-px w-4 rounded-full transition-colors", step === "details" ? "bg-primary" : "bg-border")} />
+            <div className={cn("h-px w-3 rounded-full transition-colors sm:w-4", step === "details" ? "bg-primary" : "bg-border")} />
             <div className={cn(
               "flex size-5 items-center justify-center rounded-full text-[10px] font-bold transition-colors",
               step === "details" ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground"
@@ -564,7 +564,7 @@ export function SchedulePostModal({
             {sourceTab === "clip" ? (
               <>
                 {loadingClips ? (
-                  <div className="grid grid-cols-3 gap-3">
+                  <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
                     {Array.from({ length: 6 }).map((_, i) => (
                       <div key={i} className="flex flex-col overflow-hidden rounded-xl border border-border">
                         <div className="aspect-4/5 animate-pulse bg-muted/60" />
@@ -581,7 +581,7 @@ export function SchedulePostModal({
                     <p className="text-sm">No ready clips in this workspace yet.</p>
                   </div>
                 ) : (
-                  <div className="grid grid-cols-3 gap-3 max-h-[520px] overflow-y-auto p-1">
+                  <div className="grid grid-cols-2 gap-3 max-h-[520px] overflow-y-auto p-1 sm:grid-cols-3">
                     {clips.map((c) => {
                       const isSelected = selectedClip?.id === c.id;
                       const platforms = c.recommendedPlatforms || [];
@@ -812,11 +812,12 @@ export function SchedulePostModal({
 
         {/* Step 2 - Details */}
         {step === "details" && (selectedClip || (sourceTab === "upload" && uploadedMedia)) && (
-          <div className="flex divide-x">
-            {/* Left: preview */}
+          <div className="flex flex-col sm:flex-row sm:divide-x">
+            {/* Preview (hidden on mobile, shown as compact strip) */}
             <div className={cn(
               "flex shrink-0 flex-col gap-2.5 p-4",
-              sourceTab === "upload" && uploadMediaType === "image" ? "w-72" : "w-44"
+              "hidden sm:flex",
+              sourceTab === "upload" && uploadMediaType === "image" ? "sm:w-72" : "sm:w-44"
             )}>
               {sourceTab === "clip" && selectedClip ? (
                 <>
@@ -857,8 +858,36 @@ export function SchedulePostModal({
               </button>
             </div>
 
+            {/* Mobile compact preview strip */}
+            <div className="flex items-center gap-3 border-b px-4 py-3 sm:hidden">
+              <div className={cn(
+                "relative shrink-0 overflow-hidden rounded-lg bg-muted/40",
+                sourceTab === "upload" && uploadMediaType === "image" ? "size-12" : "h-14 w-8"
+              )}>
+                {sourceTab === "clip" && selectedClip ? (
+                  <ClipThumbnail clip={selectedClip} />
+                ) : uploadMediaType === "video" ? (
+                  <video src={uploadPreview || uploadedMedia?.url || ""} className="absolute inset-0 size-full object-cover" muted playsInline />
+                ) : (
+                  <img src={uploadPreview || uploadedMedia?.url || ""} alt="Preview" className="absolute inset-0 size-full object-cover" />
+                )}
+              </div>
+              <div className="min-w-0 flex-1">
+                <p className="truncate text-xs font-medium">
+                  {sourceTab === "clip" ? (selectedClip?.title || "Untitled clip") : (uploadFile?.name || "Custom media")}
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setStep("clip")}
+                className="shrink-0 text-[11px] text-muted-foreground underline hover:text-foreground"
+              >
+                Change
+              </button>
+            </div>
+
             {/* Right: form */}
-            <div className="flex flex-1 flex-col gap-4 overflow-y-auto p-5 max-h-[540px]">
+            <div className="flex flex-1 flex-col gap-4 overflow-y-auto p-4 sm:p-5 sm:max-h-[540px]">
               {/* Account */}
               <div className="flex flex-col gap-2">
                 <div className="flex items-center justify-between">
@@ -1205,7 +1234,7 @@ export function SchedulePostModal({
               )}
 
               {/* Submit */}
-              <div className="flex items-center justify-between border-t pt-3">
+              <div className="flex flex-col gap-2 border-t pt-3 sm:flex-row sm:items-center sm:justify-between">
                 <button
                   type="button"
                   onClick={() => { if (!clip) setStep("clip"); else onOpenChange(false); }}
@@ -1219,6 +1248,7 @@ export function SchedulePostModal({
                     variant="outline"
                     onClick={handlePostNow}
                     disabled={selectedAccountIds.size === 0 || schedulePost.isPending}
+                    className="flex-1 sm:flex-none"
                   >
                     {schedulePost.isPending ? "Posting..." : "Post Now"}
                   </Button>
@@ -1226,7 +1256,7 @@ export function SchedulePostModal({
                     size="sm"
                     onClick={handleSubmit}
                     disabled={selectedAccountIds.size === 0 || !scheduledAt || schedulePost.isPending}
-                    className="min-w-28"
+                    className="min-w-28 flex-1 sm:flex-none"
                   >
                     {schedulePost.isPending ? "Scheduling..." : "Schedule Post"}
                   </Button>
