@@ -599,7 +599,7 @@ export default function WorkspacePricingPage() {
                             },
                             {
                                 q: "Do unused monthly minutes roll over?",
-                                a: "No. Monthly minutes reset at the start of each billing cycle and do not roll over.",
+                                a: "Yes. Unused minutes carry forward — your new monthly allocation is added on top of your existing balance, so you never lose what you didn't use.",
                             },
                         ].map(({ q, a }) => (
                             <div key={q} className="rounded-lg border bg-card p-5">
